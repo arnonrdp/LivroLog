@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { getAuth } from "firebase/auth";
 
 import Home from "../views/Home.vue";
-import About from "../views/About.vue";
+import Buscar from "../views/Buscar.vue";
 import Login from "../views/Login.vue";
 
 const routes = [
@@ -23,9 +23,9 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: "/about",
-    name: "About",
-    component: About,
+    path: "/buscar",
+    name: "Buscar",
+    component: Buscar,
     meta: { requiresAuth: true },
   },
 ];
