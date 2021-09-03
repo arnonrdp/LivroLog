@@ -1,8 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 import { getAuth } from "firebase/auth";
 
-
-import Home from '../views/Home.vue'
+import Home from "../views/Home.vue";
 import About from "../views/About.vue";
 import Login from "../views/Login.vue";
 
@@ -10,10 +9,6 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    redirect: "/login",
-  },
-  {
-    path: "/",
     redirect: "/login",
   },
   {
@@ -37,8 +32,8 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
-  routes
-})
+  routes,
+});
 
 router.beforeEach((to, from, next) => {
   const currentUser = getAuth().currentUser;
@@ -49,4 +44,4 @@ router.beforeEach((to, from, next) => {
   else next();
 });
 
-export default router
+export default router;

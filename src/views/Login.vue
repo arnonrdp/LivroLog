@@ -17,7 +17,7 @@
         </li>
       </ul>
 
-      <form v-if="activetab === '1'" action="/login">
+      <section v-if="activetab === '1'" action="/login">
         <input
           v-model="email"
           type="email"
@@ -33,9 +33,9 @@
           required
         />
         <button @click="login">Login</button>
-      </form>
+      </section>
 
-      <form v-if="activetab === '2'">
+      <section v-if="activetab === '2'">
         <input v-model="createName" type="text" placeholder="Nome" />
         <input
           v-model="createEmail"
@@ -51,8 +51,10 @@
           required
         />
         <button @click="signUp">Registrar</button>
-      </form>
-      <button @click="googleSignIn">Entrar com Google</button>
+      </section>
+      <hr />
+      <p>Entrar com:</p>
+      <button class="social" @click="googleSignIn"><img src="/google.svg" alt="" /></button>
     </main>
   </div>
 </template>
@@ -80,11 +82,11 @@ export default {
   methods: {
     login: function() {
       const auth = getAuth();
-      signInWithEmailAndPassword(this.email, this.password).then(
+      signInWithEmailAndPassword(auth, this.email, this.password).then(
         (userCredential) => {
           const user = userCredential.user;
-          console.log("Usuário autenticado: " + user);
-          this.$router.replace("/");
+          alert("Usuário autenticado: " + user);
+          this.$router.push("/");
         },
         (err) => {
           switch (err.code) {
@@ -105,16 +107,23 @@ export default {
       );
     },
     googleSignIn: function() {
-      let provider = new GoogleAuthProvider();
+      const provider = new GoogleAuthProvider();
       const auth = getAuth();
-        signInWithPopup(auth, provider)
+      signInWithPopup(auth, provider)
         .then((result) => {
-          let user = result.user;
-          this.$router.replace("/");
-          console.log(user); // User that was authenticated
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const token = credential.accessToken;
+          const user = result.user;
+          this.$router.push("/");
         })
-        .catch((err) => {
-          console.log(err); // This will give you all the information needed to further debug any errors
+        .catch((error) => {
+          switch (error.code) {
+            case "auth/popup-closed-by-user":
+              alert("Acho que você fechou o popup.\nTente de novo.");
+              break;
+            default:
+              alert("Algo de errado não está certo:\n" + error.code);
+          }
         });
     },
     signUp: function() {
@@ -126,13 +135,12 @@ export default {
       ).then(
         (userCredential) => {
           const user = userCredential.user;
-          this.$router.replace("/"),
-            alert("Sua conta foi criada com sucesso!" + user);
+          this.$router.push("/"),
+            alert("Sua conta foi criada com sucesso!\nAgora faça login" + user);
         },
         (error) => {
-          alert("Aconteceu algo inesperado. Verifique o console");
-          console.log(error.code);
-          console.log(error.message);
+          alert(error.code);
+          alert(error.message);
         }
       );
     },
@@ -200,13 +208,13 @@ ul li a.active {
   box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
 }
 
-form {
+section {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-form input {
+section input {
   width: 20em;
   margin: 5px 0;
   padding: 10px;
@@ -219,7 +227,7 @@ form input {
   box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
 }
 
-form button {
+section button {
   margin: 5px 0 0;
   padding: 10px;
   border-radius: 6px;
@@ -228,7 +236,11 @@ form button {
   box-shadow: 3px 3px 6px #b8b9be, -3px -3px 6px #ffffff;
 }
 
-form button:hover {
+section button:hover {
   box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
+}
+
+button.social {
+  padding: 10px;
 }
 </style>

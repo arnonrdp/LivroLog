@@ -4,13 +4,13 @@ import router from "./router";
 import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ",
-  authDomain: "minha-estante-virtual-314723.firebaseapp.com",
-  projectId: "minha-estante-virtual-314723",
-  storageBucket: "minha-estante-virtual-314723.appspot.com",
-  messagingSenderId: "997565134767",
-  appId: "1:997565134767:web:6809fb3b9332953885a15a",
-  measurementId: "G-FSNN76QH38",
+  apiKey: "AIzaSyDKfpzOLiaER6Q89HTr-AMO4mAT5EByx2o",
+  authDomain: "livrero-app.firebaseapp.com",
+  projectId: "livrero-app",
+  storageBucket: "livrero-app.appspot.com",
+  messagingSenderId: "599345136110",
+  appId: "1:599345136110:web:f75a7d5be9c971f248ceff",
+  measurementId: "G-KR0XXDXD27"
 };
 
 // Initialize Firebase
