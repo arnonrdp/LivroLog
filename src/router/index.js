@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import Login from "../views/Login.vue";
 import Home from "../views/Home.vue";
@@ -51,8 +51,13 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const currentUser = getAuth().currentUser;
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) return next("login");
+  });
 
   if (requiresAuth && !currentUser) next("login");
   else if (!requiresAuth && currentUser) next("home");
