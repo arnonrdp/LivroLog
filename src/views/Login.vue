@@ -54,7 +54,9 @@
       </section>
       <hr />
       <p>Entrar com:</p>
-      <button class="social" @click="googleSignIn"><img src="/google.svg" alt="" /></button>
+      <button class="social" @click="googleSignIn">
+        <img src="/google.svg" alt="" />
+      </button>
     </main>
   </div>
 </template>
@@ -62,10 +64,12 @@
 <script>
 import {
   getAuth,
+  setPersistence,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
   GoogleAuthProvider,
+  browserSessionPersistence,
+  signInWithPopup,
 } from "firebase/auth";
 
 export default {
@@ -107,13 +111,11 @@ export default {
       );
     },
     googleSignIn: function() {
-      const provider = new GoogleAuthProvider();
       const auth = getAuth();
+      const provider = new GoogleAuthProvider();
+      setPersistence(auth, browserSessionPersistence);
       signInWithPopup(auth, provider)
-        .then((result) => {
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const token = credential.accessToken;
-          const user = result.user;
+        .then(() => {
           this.$router.push("/");
         })
         .catch((error) => {
@@ -176,7 +178,7 @@ main {
   width: 20em;
   margin: auto;
   padding: 2em 1em;
-  background-color: #e6e7ee;
+  background-color: var(--primary-bg);
   border-radius: 6px;
 }
 
@@ -199,13 +201,13 @@ ul li a {
   padding: 8px 0;
   border-radius: 6px;
   border: 0.5px solid transparent;
-  box-shadow: 3px 3px 6px #b8b9be, -3px -3px 6px #ffffff;
+  box-shadow: var(--high-shadow);
 }
 
 ul li a:hover,
 ul li a.active {
   background-color: #dee3e6;
-  box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
+  box-shadow: var(--low-shadow);
 }
 
 section {
@@ -224,7 +226,7 @@ section input {
   background-clip: padding-box;
   border: 0.5px solid #d1d9e6;
   background-color: #dee3e6;
-  box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
+  box-shadow: var(--low-shadow);
 }
 
 section button {
@@ -233,11 +235,11 @@ section button {
   border-radius: 6px;
   background-color: #dee3e6;
   border: 0.5px solid transparent;
-  box-shadow: 3px 3px 6px #b8b9be, -3px -3px 6px #ffffff;
+  box-shadow: var(--high-shadow);
 }
 
 section button:hover {
-  box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
+  box-shadow: var(--low-shadow);
 }
 
 button.social {

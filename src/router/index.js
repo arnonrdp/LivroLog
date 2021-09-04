@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { getAuth } from "firebase/auth";
 
-import Home from "../views/Home.vue";
-import Buscar from "../views/Buscar.vue";
 import Login from "../views/Login.vue";
+import Home from "../views/Home.vue";
+import Add from "../views/Add.vue";
+import Friends from "../views/Friends.vue";
+import Settings from "../views/Settings.vue";
 
 const routes = [
   {
@@ -15,18 +17,31 @@ const routes = [
     path: "/login",
     name: "Login",
     component: Login,
+    meta: { title: "Livrero - Login" },
   },
   {
     path: "/",
-    name: "Home",
+    name: "Início",
     component: Home,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, title: "Livrero" },
   },
   {
-    path: "/buscar",
-    name: "Buscar",
-    component: Buscar,
-    meta: { requiresAuth: true },
+    path: "/add",
+    name: "Adicionar",
+    component: Add,
+    meta: { requiresAuth: true, title: "Livrero - Adicionar" },
+  },
+  {
+    path: "/friends",
+    name: "Amigos",
+    component: Friends,
+    meta: { requiresAuth: true, title: "Livrero - Amigos" },
+  },
+  {
+    path: "/settings",
+    name: "Ajustes",
+    component: Settings,
+    meta: { requiresAuth: true, title: "Livrero - Ajustes" },
   },
 ];
 

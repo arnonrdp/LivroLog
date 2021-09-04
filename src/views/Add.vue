@@ -1,15 +1,13 @@
 <template>
   <Header />
-  <Shelf />
+  <h1>Pesquisa e adição de livros</h1>
 </template>
 
 <script>
 import Header from "@/components/TheHeader.vue";
-import Shelf from "@/components/Shelf.vue";
 
 export default {
-  name: "Home",
-  title: 'Livrero',
-  components: { Header, Shelf },
+  name: "Add",
+  components: { Header },
 };
 </script>

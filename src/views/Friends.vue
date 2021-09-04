@@ -1,15 +1,13 @@
 <template>
   <Header />
-  <Shelf />
+  <h1>Seguir amigos</h1>
 </template>
 
 <script>
 import Header from "@/components/TheHeader.vue";
-import Shelf from "@/components/Shelf.vue";
 
 export default {
-  name: "Home",
-  title: 'Livrero',
-  components: { Header, Shelf },
+  name: "Friends",
+  components: { Header },
 };
 </script>

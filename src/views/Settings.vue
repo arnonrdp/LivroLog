@@ -1,15 +1,13 @@
 <template>
   <Header />
-  <div class="about">
-    <h1>Pesquisa e adição de livros</h1>
-  </div>
+  <h1>Definições</h1>
 </template>
 
 <script>
 import Header from "@/components/TheHeader.vue";
 
 export default {
-  name: "Buscar",
+  name: "Settings",
   components: { Header },
 };
 </script>
