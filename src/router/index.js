@@ -11,7 +11,7 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    redirect: "/",
+    redirect: "/login",
   },
   {
     path: "/login",
@@ -57,11 +57,12 @@ router.beforeEach((to, from, next) => {
 
   onAuthStateChanged(auth, (user) => {
     if (!user) return next("login");
+    else next();
   });
 
-  if (requiresAuth && !currentUser) next("login");
-  else if (!requiresAuth && currentUser) next("home");
-  else next();
+  // if (requiresAuth && !currentUser) next("login");
+  // else if (!requiresAuth && currentUser) next("");
+  // else next();
 });
 
 export default router;
