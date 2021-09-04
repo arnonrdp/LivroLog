@@ -110,11 +110,11 @@ export default {
         }
       );
     },
-    googleSignIn: function() {
+    googleSignIn: async function() {
       const auth = getAuth();
       const provider = new GoogleAuthProvider();
-      setPersistence(auth, browserSessionPersistence);
-      signInWithPopup(auth, provider)
+      await setPersistence(auth, browserSessionPersistence);
+      await signInWithPopup(auth, provider)
         .then(() => {
           this.$router.push("/");
         })
