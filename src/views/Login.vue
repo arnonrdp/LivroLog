@@ -90,7 +90,9 @@ export default {
         (userCredential) => {
           const user = userCredential.user;
           alert("Usuário autenticado: " + user);
-          this.$router.push("/");
+          this.$router.push("/").catch((error) => {
+            console.log(error);
+          });
         },
         (err) => {
           switch (err.code) {
@@ -115,7 +117,9 @@ export default {
       const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider)
         .then(() => {
-          this.$router.push("/");
+          this.$router.push("/").catch((error) => {
+            console.log(error);
+          });
         })
         .catch((error) => {
           switch (error.code) {
@@ -136,10 +140,14 @@ export default {
       ).then(
         (userCredential) => {
           const user = userCredential.user;
-          this.$router.push("/"),
+          this.$router.push("/").catch((error) => {
+            console.log(error);
+          }),
+          // TODO: REMOVER ALERT E INSERIR MENSAGEM PERSONALIZADA
             alert("Sua conta foi criada com sucesso!\nAgora faça login" + user);
         },
         (error) => {
+          // TODO: REMOVER ALERTS E INSERIR MENSAGENS PERSONALIZADAS
           alert(error.code);
           alert(error.message);
         }
