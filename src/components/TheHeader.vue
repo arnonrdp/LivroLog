@@ -14,16 +14,12 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 export default {
   name: "Header",
   data: () => ({
-      username: "",
+    username: "",
   }),
   created() {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        this.username = user.displayName;
-      } else {
-        this.username = "deslogado";
-      }
+      if (user) this.username = user.displayName;
     });
   },
 };
@@ -31,11 +27,11 @@ export default {
 
 <style scoped>
 h1 {
-	border: 0.5px solid transparent;
-	border-radius: 6px;
-	box-shadow: var(--high-shadow);
+  border: 0.5px solid transparent;
+  border-radius: 6px;
+  box-shadow: var(--high-shadow);
   font-weight: 400;
-	letter-spacing: 1px;
+  letter-spacing: 1px;
   margin: auto;
   padding: 10px 30px;
   width: fit-content;
@@ -43,17 +39,17 @@ h1 {
 
 #nav {
   display: flex;
-	justify-content: space-evenly;
+  justify-content: space-evenly;
   padding: 30px;
 }
 
 #nav a {
-	border: 0.5px solid transparent;
-	border-radius: 6px;
-	box-shadow: var(--high-shadow);
+  border: 0.5px solid transparent;
+  border-radius: 6px;
+  box-shadow: var(--high-shadow);
   color: #2c3e50;
   display: block;
-	font-size: 80%;
+  font-size: 80%;
   font-weight: 500;
   padding: 10px;
   text-decoration: none;
@@ -62,6 +58,6 @@ h1 {
 #nav a.router-link-exact-active,
 #nav a:hover {
   background-color: #dee3e6;
-	box-shadow: var(--low-shadow);
+  box-shadow: var(--low-shadow);
 }
 </style>

@@ -10,8 +10,8 @@ import Settings from "../views/Settings.vue";
 const routes = [
   {
     path: "/:pathMatch(.*)*",
-    name: "not-found",
-    redirect: "/login",
+    name: "NotFound",
+    redirect: "/",
   },
   {
     path: "/login",
@@ -23,6 +23,7 @@ const routes = [
     path: "/",
     name: "Início",
     component: Home,
+    alias: "/home",
     meta: { requiresAuth: true, title: "Livrero" },
   },
   {
@@ -52,17 +53,13 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const auth = getAuth();
-  const currentUser = auth.currentUser;
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   onAuthStateChanged(auth, (user) => {
-    if (!user) return next("login");
-    else next();
+    if (to.meta.requiresAuth && user == null) {
+      return next({ name: "Login" });
+    } 
+    next();
   });
-
-  // if (requiresAuth && !currentUser) next("login");
-  // else if (!requiresAuth && currentUser) next("");
-  // else next();
 });
 
 export default router;

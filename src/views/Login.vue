@@ -17,7 +17,7 @@
         </li>
       </ul>
 
-      <section v-if="activetab === '1'" action="/login">
+      <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
         <input
           v-model="email"
           type="email"
@@ -33,9 +33,9 @@
           required
         />
         <button @click="login">Login</button>
-      </section>
+      </form>
 
-      <section v-if="activetab === '2'">
+      <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
         <input v-model="createName" type="text" placeholder="Nome" />
         <input
           v-model="createEmail"
@@ -51,7 +51,7 @@
           required
         />
         <button @click="signUp">Registrar</button>
-      </section>
+      </form>
       <hr />
       <p>Entrar com:</p>
       <button class="social" @click="googleSignIn">
@@ -110,11 +110,10 @@ export default {
         }
       );
     },
-    googleSignIn: async function() {
+    googleSignIn: function() {
       const auth = getAuth();
       const provider = new GoogleAuthProvider();
-      await setPersistence(auth, browserSessionPersistence);
-      await signInWithPopup(auth, provider)
+      signInWithPopup(auth, provider)
         .then(() => {
           this.$router.push("/");
         })
@@ -146,11 +145,6 @@ export default {
         }
       );
     },
-  },
-  created() {
-    if (window.localStorage.getItem("authenticated") === "true") {
-      this.$router.push("/");
-    }
   },
 };
 </script>
@@ -210,13 +204,13 @@ ul li a.active {
   box-shadow: var(--low-shadow);
 }
 
-section {
+form {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-section input {
+form input {
   width: 20em;
   margin: 5px 0;
   padding: 10px;
@@ -229,7 +223,7 @@ section input {
   box-shadow: var(--low-shadow);
 }
 
-section button {
+form button {
   margin: 5px 0 0;
   padding: 10px;
   border-radius: 6px;
@@ -238,7 +232,7 @@ section button {
   box-shadow: var(--high-shadow);
 }
 
-section button:hover {
+form button:hover {
   box-shadow: var(--low-shadow);
 }
 
