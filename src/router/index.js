@@ -11,7 +11,7 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
-    redirect: "/login",
+    redirect: "/",
   },
   {
     path: "/login",
