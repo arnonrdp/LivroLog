@@ -8,6 +8,7 @@
     />
     <Button text="Buscar" @click="search" />
   </form>
+  <h3 v-show="loading">Loading...</h3>
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
       <a href="#">+</a>
@@ -37,10 +38,10 @@ export default {
     search() {
       this.books = {};
       this.noCover = require("../assets/no_cover.jpg");
-      // IMPORTANTE CHAMAR A API EM PRODUÇÃO PRODUÇÃO => &key=${API}
+      // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
       const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
       fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=10&printType=books`
+        `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`
       )
         .then((response) => response.json())
         .then((data) => {
@@ -49,6 +50,7 @@ export default {
             authors: item.volumeInfo.authors,
             thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? this.noCover,
           }));
+          // TODO: TELA DE LOADING ENQUANTO CARREGA A LISTA
           console.table(this.books);
         });
     },

@@ -5,55 +5,57 @@
     </header>
     <main>
       <div class="menu">
-        <a @click="activetab = '1'" :class="activetab === '1' ? 'active' : ''">
-          Entrar
-        </a>
-        <a @click="activetab = '2'" :class="activetab === '2' ? 'active' : ''">
-          Registrar
-        </a>
+        <Button
+          text="Entrar"
+          @click="activetab = '1'"
+          :class="activetab === '1' ? 'active' : ''"
+        />
+        <Button
+          text="Registrar"
+          @click="activetab = '2'"
+          :class="activetab === '2' ? 'active' : ''"
+        />
       </div>
       <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
-        <!-- TODO: UTILIZAR O COMPONENT INPUT -->
-        <input
+        <Input
           v-model="email"
           type="email"
           placeholder="E-mail"
           autofocus
           required
         />
-        <input
+        <Input
           v-model="password"
           type="password"
           placeholder="Senha"
           autocomplete
           required
         />
-        <button @click="login">Login</button>
+        <Button text="Login" @click="login" />
       </form>
 
       <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
-        <!-- TODO: UTILIZAR O COMPONENT INPUT -->
-        <input v-model="createName" type="text" placeholder="Nome" />
-        <input
+        <Input v-model="createName" type="text" placeholder="Nome" />
+        <Input
           v-model="createEmail"
           type="email"
           placeholder="E-mail"
           required
         />
-        <input
+        <Input
           v-model="createPassword"
           type="password"
           placeholder="Senha"
           autocomplete
           required
         />
-        <button @click="signUp">Registrar</button>
+        <Button text="Registrar" @click="signUp" />
       </form>
       <hr />
       <p>Entrar com:</p>
-      <button @click="googleSignIn">
+      <Button img="google" @click="googleSignIn">
         <img src="/google.svg" alt="" />
-      </button>
+      </Button>
     </main>
   </div>
 </template>
@@ -66,9 +68,12 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+import Input from "@/components/BaseInput.vue";
+import Button from "@/components/BaseButton.vue";
 
 export default {
   name: "Login",
+  components: { Input, Button },
   data: () => ({
     activetab: "1",
     email: "",
@@ -185,50 +190,11 @@ main {
   display: flex;
 }
 
-.menu a {
+.menu button {
   width: 100%;
   margin: 0 15px;
 }
 
-.menu a {
-  font-size: 0.8rem;
-  padding: 8px 0;
-  border-radius: 6px;
-  border: 0.5px solid transparent;
-  box-shadow: var(--high-shadow);
-}
-
-.menu a:hover,
-.menu a.active {
-  background-color: #dee3e6;
-  box-shadow: var(--low-shadow);
-}
-
-form input {
-  width: 80%;
-  margin: 5px 0;
-  padding: 10px;
-  overflow: visible;
-  outline: 0;
-  border-radius: 18px;
-  background-clip: padding-box;
-  border: 0.5px solid #d1d9e6;
-  background-color: #dee3e6;
-  box-shadow: var(--low-shadow);
-}
-
-button {
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 6px;
-  background-color: #dee3e6;
-  border: 0.5px solid transparent;
-  box-shadow: var(--high-shadow);
-}
-
-button:hover {
-  box-shadow: var(--low-shadow);
-}
 button:hover img {
   transform: scale(0.95);
 }

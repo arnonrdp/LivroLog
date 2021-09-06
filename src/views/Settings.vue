@@ -1,17 +1,17 @@
 <template>
   <Header />
   <h1>Definições</h1>
-  <button @click="logout">SAIR</button>
+  <Button text="SAIR" @click="logout" />
 </template>
 
 <script>
 import { getAuth, signOut } from "firebase/auth";
-
 import Header from "@/components/TheHeader.vue";
+import Button from '@/components/BaseButton.vue';
 
 export default {
   name: "Settings",
-  components: { Header },
+  components: { Header, Button },
   methods: {
     logout() {
       const auth = getAuth();

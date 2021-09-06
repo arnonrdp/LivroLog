@@ -9,7 +9,7 @@ import Shelf from "@/components/Shelf.vue";
 
 export default {
   name: "Home",
-  title: 'Livrero',
+  title: "Livrero",
   components: { Header, Shelf },
 };
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <button @click="$emit('click')">{{ text }}</button>
+  <button @click="$emit('click')">{{ text }}<slot /></button>
 </template>
 
 <script>
@@ -20,10 +20,8 @@ button {
   box-shadow: var(--high-shadow);
 }
 
-button:hover {
+button:hover,
+button.active {
   box-shadow: var(--low-shadow);
-}
-button:hover img {
-  transform: scale(0.95);
 }
 </style>
