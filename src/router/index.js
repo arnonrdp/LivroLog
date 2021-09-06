@@ -55,11 +55,8 @@ router.beforeEach((to, from, next) => {
   const auth = getAuth();
 
   onAuthStateChanged(auth, (user) => {
-    if (to.meta.requiresAuth && user == null) {
-      next({ name: "Login" });
-    } else {
-      next();
-    }
+    if (to.meta.requiresAuth && user == null) next({ name: "Login" });
+    else next();
   });
 });
 
