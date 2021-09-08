@@ -65,9 +65,11 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import Input from "@/components/BaseInput.vue";
 import Button from "@/components/BaseButton.vue";
 
@@ -84,15 +86,13 @@ export default {
     errMsg: "",
   }),
   methods: {
-    login: function() {
+    login() {
       const auth = getAuth();
       signInWithEmailAndPassword(auth, this.email, this.password).then(
         (userCredential) => {
           const user = userCredential.user;
           alert("Usuário autenticado: " + user);
-          this.$router.push("/").catch((error) => {
-            console.log(error);
-          });
+          this.$router.push("/");
         },
         (err) => {
           switch (err.code) {
@@ -112,14 +112,23 @@ export default {
         }
       );
     },
-    googleSignIn: function() {
+    googleSignIn() {
       const auth = getAuth();
       const provider = new GoogleAuthProvider();
+      const db = getFirestore();
       signInWithPopup(auth, provider)
-        .then(() => {
-          this.$router.push("/").catch((error) => {
-            console.log(error);
-          });
+        .then(async (result) => {
+          // Check if user is new
+          const { isNewUser } = getAdditionalUserInfo(result);
+          const userId = result.user.uid;
+          if (isNewUser) {
+            console.log(isNewUser);
+            await setDoc(doc(db, "users", userId), {
+              email: result.user.email,
+              name: result.user.displayName,
+            });
+          }
+          this.$router.push("/");
         })
         .catch((error) => {
           switch (error.code) {
@@ -128,23 +137,28 @@ export default {
               break;
             default:
               alert("Algo de errado não está certo:\n" + error.code);
+              console.log(error);
           }
         });
     },
-    signUp: function() {
+    signUp() {
       const auth = getAuth();
+      const db = getFirestore();
       createUserWithEmailAndPassword(
         auth,
         this.createEmail,
         this.createPassword
       ).then(
-        (userCredential) => {
-          const user = userCredential.user;
-          this.$router.push("/").catch((error) => {
-            console.log(error);
-          }),
-            // TODO: REMOVER ALERT E INSERIR MENSAGEM PERSONALIZADA
-            alert("Sua conta foi criada com sucesso!\nAgora faça login" + user);
+        async (userCredential) => {
+          const userId = userCredential.user.uid;
+          console.log(userCredential);
+          await setDoc(doc(db, "users", userId), {
+            email: this.createEmail,
+            name: this.createName,
+          });
+          this.$router.push("/");
+          // TODO: REMOVER ALERT E INSERIR MENSAGEM PERSONALIZADA
+          alert("Sua conta foi criada com sucesso!");
         },
         (error) => {
           // TODO: REMOVER ALERTS E INSERIR MENSAGENS PERSONALIZADAS

@@ -17,7 +17,7 @@ const routes = [
     path: "/login",
     name: "Login",
     component: Login,
-    meta: { title: "Livrero - Login" },
+    meta: { title: "Livrero: Login" },
   },
   {
     path: "/",
@@ -30,19 +30,19 @@ const routes = [
     path: "/add",
     name: "Adicionar",
     component: Add,
-    meta: { requiresAuth: true, title: "Livrero - Adicionar" },
+    meta: { requiresAuth: true, title: "Livrero: Adicionar" },
   },
   {
     path: "/friends",
     name: "Amigos",
     component: Friends,
-    meta: { requiresAuth: true, title: "Livrero - Amigos" },
+    meta: { requiresAuth: true, title: "Livrero: Amigos" },
   },
   {
     path: "/settings",
     name: "Ajustes",
     component: Settings,
-    meta: { requiresAuth: true, title: "Livrero - Ajustes" },
+    meta: { requiresAuth: true, title: "Livrero: Ajustes" },
   },
 ];
 
@@ -58,6 +58,11 @@ router.beforeEach((to, from, next) => {
     if (to.meta.requiresAuth && user == null) next({ name: "Login" });
     else next();
   });
+});
+
+router.afterEach((to, from) => {
+  const DEFAULT_TITLE = "Livrero";
+  document.title = to.meta.title || DEFAULT_TITLE;
 });
 
 export default router;

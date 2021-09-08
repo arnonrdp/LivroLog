@@ -1,24 +1,33 @@
 <template>
   <h1>Estante de {{ username }}</h1>
   <div id="nav">
-    <router-link to="/"><img src="@/assets/books.svg"/><br>Início</router-link>
-    <router-link to="/add"><img src="@/assets/search.svg"/><br>Adicionar</router-link>
-    <router-link to="/friends"><img src="@/assets/people.svg"/><br>Amigos</router-link>
-    <router-link to="/settings"><img src="@/assets/settings.svg"/><br>Ajustes</router-link>
+    <router-link to="/">
+      <img src="@/assets/books.svg" /><br />Início
+    </router-link>
+    <router-link to="/add">
+      <img src="@/assets/search.svg" /><br />Adicionar
+    </router-link>
+    <router-link to="/friends">
+      <img src="@/assets/people.svg" /><br />Amigos
+    </router-link>
+    <router-link to="/settings">
+      <img src="@/assets/settings.svg" /><br />Ajustes
+    </router-link>
   </div>
 </template>
 
 <script>
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, getAuth } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 export default {
   name: "Header",
-  data: () => ({
-    username: "",
-  }),
+  data: () => ({ username: "" }),
   created() {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
+      console.log(auth);
+      console.log(user);
       if (user) this.username = user.displayName;
     });
   },

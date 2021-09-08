@@ -8,7 +8,6 @@
     />
     <Button text="Buscar" @click="search" />
   </form>
-  <h3 v-show="loading">Loading...</h3>
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
       <a href="#">+</a>
