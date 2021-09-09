@@ -12,7 +12,8 @@
     <figure v-for="(book, index) in books" :key="index">
       <a href="#">+</a>
       <a><img :src="book.thumbnail" alt=""/></a>
-      <figcaption>{{ book.title }}<br />{{ book.authors }}</figcaption>
+      <figcaption>{{ book.title }}</figcaption>
+      <figcaption id="authors">{{ book.authors }}</figcaption>
     </figure>
   </div>
 </template>
@@ -40,7 +41,7 @@ export default {
       // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
       const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
       fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`
+        `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=10&printType=books`
       )
         .then((response) => response.json())
         .then((data) => {
@@ -83,5 +84,10 @@ form input {
 
 #results img {
   width: 8rem;
+}
+
+#authors {
+  font-size: 12px;
+  font-weight: bold;
 }
 </style>

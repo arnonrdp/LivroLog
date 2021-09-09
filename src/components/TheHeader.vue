@@ -18,18 +18,24 @@
 
 <script>
 import { onAuthStateChanged, getAuth } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { collection, getFirestore, query, doc, getDocs, where } from "firebase/firestore";
 
 export default {
   name: "Header",
   data: () => ({ username: "" }),
   created() {
     const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-      console.log(auth);
-      console.log(user);
-      if (user) this.username = user.displayName;
-    });
+    const db = getFirestore();
+
+    const first = query(collection(db, "users"), where("name", "==", true));
+    
+    console.log(first);
+
+    // onAuthStateChanged(auth, (user) => {
+    //   console.log(auth);
+    //   console.log(user);
+    //   if (user) this.username = user.displayName;
+    // });
   },
 };
 </script>
