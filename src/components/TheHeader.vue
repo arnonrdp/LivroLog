@@ -1,86 +1,68 @@
 <template>
-  <h1>Estante de {{ username }}</h1>
-  <div id="nav">
-    <router-link to="/">
-      <img src="@/assets/books.svg" /><br />Início
-    </router-link>
-    <router-link to="/add">
-      <img src="@/assets/search.svg" /><br />Adicionar
-    </router-link>
-    <router-link to="/friends">
-      <img src="@/assets/people.svg" /><br />Amigos
-    </router-link>
-    <router-link to="/settings">
-      <img src="@/assets/settings.svg" /><br />Ajustes
-    </router-link>
-  </div>
+  <header>
+    <router-link to="/"><img src="/logo.svg" alt="Logotipo"/></router-link>
+    <nav>
+      <router-link to="/">
+        <img src="@/assets/books.svg" />&nbsp;Início
+      </router-link>
+      <router-link to="/add">
+        <img src="@/assets/search.svg" />&nbsp;Adicionar
+      </router-link>
+      <router-link to="/friends">
+        <img src="@/assets/people.svg" />&nbsp;Amigos
+      </router-link>
+      <router-link to="/settings">
+        <img src="@/assets/settings.svg" />&nbsp;Ajustes
+      </router-link>
+    </nav>
+  </header>
 </template>
 
 <script>
-import { onAuthStateChanged, getAuth } from "firebase/auth";
-import { collection, getFirestore, query, doc, getDocs, where } from "firebase/firestore";
-
 export default {
   name: "Header",
-  data: () => ({ username: "" }),
-  created() {
-    const auth = getAuth();
-    const db = getFirestore();
-
-    const first = query(collection(db, "users"), where("name", "==", true));
-    
-    console.log(first);
-
-    // onAuthStateChanged(auth, (user) => {
-    //   console.log(auth);
-    //   console.log(user);
-    //   if (user) this.username = user.displayName;
-    // });
-  },
 };
 </script>
 
 <style scoped>
-h1 {
-  border: 0.5px solid transparent;
-  border-radius: 18px;
-  box-shadow: var(--high-shadow);
-  font-size: 1.8rem;
-  font-weight: 400;
-  letter-spacing: 1px;
-  margin: auto;
-  padding: 10px 30px;
-  width: fit-content;
+header {
+  align-items: center;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
 }
 
-#nav {
+img[alt="Logotipo"] {
+  padding: 0 15px;
+  width: 200px;
+}
+
+nav {
   display: flex;
   flex-flow: row wrap;
   justify-content: space-evenly;
-  padding: 15px;
+  padding: 0 15px;
 }
 
-#nav a {
-  border: 0.5px solid transparent;
-  border-radius: 18px;
-  box-shadow: var(--high-shadow);
-  color: var(--link-color);
-  display: block;
+nav a {
+  align-items: center;
+  color: #000;
+  display: flex;
   font-size: 0.8rem;
-  font-weight: 500;
   margin: 10px;
-  min-width: 100px;
-  padding: 10px;
+  padding: 5px 10px;
   text-decoration: none;
+  height: 30px;
 }
 
-#nav a.router-link-exact-active,
-#nav a:hover {
-  background-color: #dee3e6;
-  box-shadow: var(--low-shadow);
+nav a.router-link-exact-active,
+nav a:hover {
+  outline: 1px solid rgba(0, 0, 0, 0.4);
 }
 
-#nav img {
-  height: 18px;
+nav img {
+  height: 1rem;
 }
 </style>

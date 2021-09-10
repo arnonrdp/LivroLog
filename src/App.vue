@@ -2,6 +2,14 @@
   <router-view />
 </template>
 
+<script>
+// export default {
+//   created() {
+//     document.cookie = "SameSite=Lax; Secure";
+//   },
+// };
+</script>
+
 <style>
 :root {
   --primary-bg: #e6e7ee;
@@ -46,7 +54,7 @@ html {
 }
 
 body {
-  margin: 5px;
+  margin: 0;
   background-color: var(--primary-bg);
 }
 
