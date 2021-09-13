@@ -34,6 +34,27 @@ header {
   margin-bottom: 15px;
 }
 
+@media screen and (max-width: 720px) {
+  header {
+    display: block;
+    margin-top: 15px;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  img[alt="Logotipo"] {
+    padding: 0 15px;
+    width: 150px !important;
+  }
+}
+
+@media screen and (max-width: 240px) {
+  img[alt="Logotipo"] {
+    padding: 0 15px;
+    width: 110px !important;
+  }
+}
+
 img[alt="Logotipo"] {
   padding: 0 15px;
   width: 200px;
@@ -51,10 +72,10 @@ nav a {
   color: #000;
   display: flex;
   font-size: 0.8rem;
+  height: 30px;
   margin: 10px;
   padding: 5px 10px;
   text-decoration: none;
-  height: 30px;
 }
 
 nav a.router-link-exact-active,

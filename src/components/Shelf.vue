@@ -13,17 +13,17 @@
 <script>
 import { getAuth } from "firebase/auth";
 import {
-  getFirestore,
   collection,
   doc,
   getDoc,
   getDocs,
+  getFirestore,
   query,
 } from "firebase/firestore";
 
 export default {
   name: "Shelf",
-  data: () => ({ shelfName: "", books: [], userBooks: [] }),
+  data: () => ({ shelfName: "", books: [] }),
   async mounted() {
     const auth = getAuth();
     const db = getFirestore();
@@ -32,7 +32,7 @@ export default {
     const userSnap = await getDoc(userRef);
 
     userSnap.exists()
-      ? (this.shelfName = "Estante de " + userSnap.data().name)
+      ? (this.shelfName = "Estante de " + userSnap.data().shelfName)
       : (this.shelfName = "Sua Estante");
 
     const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
@@ -73,25 +73,25 @@ h1 {
 }
 
 section {
-  min-height: 285px;
   background-image: url("~@/assets/shelfleft.png"),
     url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
-  padding: 0 30px 15px 30px;
   border-radius: 6px;
   display: flex;
   flex-flow: row wrap;
   justify-content: space-around;
+  min-height: 285px;
+  padding: 0 30px 15px 30px;
 }
 
 section figure {
-  position: relative;
-  display: flex;
   align-items: flex-end;
-  margin: 0 30px;
+  display: flex;
   height: 143.5px;
+  margin: 0 30px;
   max-width: 80px;
+  position: relative;
 }
 
 img {

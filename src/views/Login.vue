@@ -88,8 +88,8 @@ export default {
   methods: {
     login() {
       const auth = getAuth();
-      signInWithEmailAndPassword(auth, this.email, this.password)
-        .then(this.$router.push("/"),
+      signInWithEmailAndPassword(auth, this.email, this.password).then(
+        this.$router.push("/"),
         (err) => {
           switch (err.code) {
             case "auth/invalid-email":
@@ -121,6 +121,7 @@ export default {
             await setDoc(doc(db, "users", userId), {
               email: result.user.email,
               name: result.user.displayName,
+              shelfName: result.user.displayName,
             });
           }
           this.$router.push("/");
@@ -150,6 +151,7 @@ export default {
           await setDoc(doc(db, "users", userId), {
             email: this.createEmail,
             name: this.createName,
+            shelfName: this.createName,
           });
           this.$router.push("/");
           // TODO: REMOVER ALERT E INSERIR MENSAGEM PERSONALIZADA
