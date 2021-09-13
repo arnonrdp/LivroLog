@@ -2,17 +2,9 @@
   <main>
     <h1>{{ shelfName }}</h1>
     <section>
-      <figure>
-        <a href="#"><img src="#" alt="Livro"/></a>
-        <figcaption>TÍTULO</figcaption>
-      </figure>
-      <figure>
-        <a href="#"><img src="#" alt="Livro"/></a>
-        <figcaption>TÍTULO</figcaption>
-      </figure>
-      <figure>
-        <a href="#"><img src="#" alt="Livro"/></a>
-        <figcaption>TÍTULO</figcaption>
+      <figure v-for="book in books" :key="book.id">
+        <a href="#"><img :src="book.thumbnail" alt="Livro"/></a>
+        <figcaption>{{ book.title }}</figcaption>
       </figure>
     </section>
   </main>
@@ -20,23 +12,47 @@
 
 <script>
 import { getAuth } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+} from "firebase/firestore";
 
 export default {
   name: "Shelf",
-  data: () => ({ shelfName: "" }),
+  data: () => ({ shelfName: "", books: [], userBooks: [] }),
   async mounted() {
     const auth = getAuth();
     const db = getFirestore();
+    const userID = auth.currentUser.uid;
+    const userRef = doc(db, "users", userID);
+    const userSnap = await getDoc(userRef);
 
-    const docRef = doc(db, "users", auth.currentUser.uid);
-    const docSnap = await getDoc(docRef);
+    userSnap.exists()
+      ? (this.shelfName = "Estante de " + userSnap.data().name)
+      : (this.shelfName = "Sua Estante");
 
-    if (docSnap.exists()) {
-      this.shelfName = "Estante de " + docSnap.data().name;
-    } else {
-      this.shelfName = "Sua Estante";
-    }
+    const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
+    const querySnapshot = await getDocs(userBooksRef);
+    querySnapshot.forEach((doc) => {
+      this.books.push({
+        id: doc.id,
+        addedIn: doc.data().addedIn,
+        readIn: doc.data().readIn,
+      });
+    });
+
+    this.books.map(async (book) => {
+      const booksRef = doc(db, "books", book.id);
+      const bookSnap = await getDoc(booksRef);
+
+      book.authors = bookSnap.data().authors;
+      book.title = bookSnap.data().title;
+      book.thumbnail = bookSnap.data().thumbnail;
+    });
   },
 };
 </script>
@@ -76,5 +92,9 @@ section figure {
   margin: 0 30px;
   height: 143.5px;
   max-width: 80px;
+}
+
+img {
+  height: 115px;
 }
 </style>

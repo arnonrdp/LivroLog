@@ -10,7 +10,11 @@
   </form>
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
-      <a href="#" @click="add(book.id)">+</a>
+      <a
+        href="#"
+        @click="add(book.id, book.title, book.authors, book.thumbnail)"
+        >+</a
+      >
       <a><img :src="book.thumbnail" alt=""/></a>
       <figcaption>{{ book.title }}</figcaption>
       <figcaption id="authors">
@@ -24,7 +28,15 @@
 </template>
 
 <script>
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  arrayUnion,
+  updateDoc,
+  runTransaction,
+} from "firebase/firestore";
 
 import Header from "@/components/TheHeader.vue";
 import Input from "@/components/BaseInput.vue";
@@ -62,20 +74,37 @@ export default {
           // console.table(this.books);
         });
     },
-    add(id) {
+    async add(bookID, title, authors, thumbnail) {
+      const auth = getAuth();
       const db = getFirestore();
-      fetch(`https://www.googleapis.com/books/v1/volumes/${id}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setDoc(doc(db, "books", id), {
-            title: data.volumeInfo.title,
-            authors: data.volumeInfo.authors,
-            thumbnail: data.volumeInfo.imageLinks?.thumbnail ?? this.noCover
-          });
+      const userID = auth.currentUser.uid;
+      const booksRef = doc(db, "books", bookID);
 
-          console.log(data);
-        })
-
+      try {
+        await runTransaction(db, async (transaction) => {
+          const sfDoc = await transaction.get(booksRef);
+          if (!sfDoc.exists()) {
+            setDoc(doc(db, "books", bookID), {
+              title: title,
+              authors: authors,
+              thumbnail: thumbnail,
+              readers: arrayUnion(userID),
+            });
+          } else {
+            await updateDoc(booksRef, {
+              readers: arrayUnion(userID),
+            });
+          }
+        });
+      } catch (e) {
+        console.log("ERRO: ", e);
+      } finally {
+        await setDoc(doc(db, "users", userID, "addedBooks", bookID), {
+          bookRef: booksRef,
+          addedIn: new Date(),
+          readIn: "August",
+        });
+      }
     },
   },
 };

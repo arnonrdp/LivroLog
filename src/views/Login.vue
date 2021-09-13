@@ -88,12 +88,8 @@ export default {
   methods: {
     login() {
       const auth = getAuth();
-      signInWithEmailAndPassword(auth, this.email, this.password).then(
-        (userCredential) => {
-          const user = userCredential.user;
-          alert("Usuário autenticado: " + user);
-          this.$router.push("/");
-        },
+      signInWithEmailAndPassword(auth, this.email, this.password)
+        .then(this.$router.push("/"),
         (err) => {
           switch (err.code) {
             case "auth/invalid-email":
@@ -122,7 +118,6 @@ export default {
           const { isNewUser } = getAdditionalUserInfo(result);
           const userId = result.user.uid;
           if (isNewUser) {
-            console.log(isNewUser);
             await setDoc(doc(db, "users", userId), {
               email: result.user.email,
               name: result.user.displayName,
