@@ -4,9 +4,10 @@
     <Input
       v-model="seek"
       type="text"
-      placeholder="Pesquise por título, autor, editora, lançamento, ISBN..."
-    />
-    <Button text="Buscar" @click="search" />
+      label="Pesquise por título, autor, editora, lançamento, ISBN..."
+    >
+      <Button text="Buscar" @click="search" />
+    </Input>
   </form>
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
@@ -125,6 +126,17 @@ form input {
   background-clip: padding-box;
   border: 0.5px solid #d1d9e6;
   box-shadow: var(--low-shadow);
+}
+
+form button {
+  margin: 0;
+  position: absolute;
+  right: 9%;
+  top: -1px;
+}
+
+input:focus ~ button {
+  right: 6%;
 }
 
 #results {

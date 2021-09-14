@@ -12,16 +12,30 @@ export default {
 
 <style scoped>
 button {
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 18px;
-  background-color: #dee3e6;
-  border: 0.5px solid transparent;
-  box-shadow: var(--high-shadow);
+  background: #d4e1e6;
+  border: 0;
+  border-radius: 2px;
+  color: #4bb6aa;
+  cursor: pointer;
+  display: block;
+  font-size: 1rem;
+  font-weight: 300;
+  margin: 20px auto;
+  padding: 10px 20px;
+  transition: all 0.4s;
+  -webkit-transition: all 0.4s;
 }
 
-button:hover,
+button:hover {
+  background: #4bb6aa;
+  color: #fff;
+  transition: all 0.4s;
+  -webkit-transition: all 0.4s;
+}
+
+button:active,
 button.active {
-  box-shadow: var(--low-shadow);
+  background: #4bb6aa;
+  color: #263238;
 }
 </style>

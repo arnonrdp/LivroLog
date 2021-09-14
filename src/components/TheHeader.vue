@@ -31,7 +31,7 @@ header {
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: 25px;
 }
 
 @media screen and (max-width: 720px) {

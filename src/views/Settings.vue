@@ -2,11 +2,8 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-    <fieldset>
-      <legend>Ajustes da Estante</legend>
-      <Input v-model="shelfName" type="text" :placeholder="shelfName" />
+      <Input v-model="shelfName" type="text" label="Nome da Estante" />
       <Button text="Salvar" @click="update" />
-    </fieldset>
   </form>
   <form action="#" @submit.prevent="submit">
     <fieldset>

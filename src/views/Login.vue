@@ -4,6 +4,7 @@
       <h1>UM LUGAR PRA VOCÊ ORGANIZAR<br />TUDO AQUILO QUE VOCÊ JÁ LEU</h1>
     </header>
     <main>
+      <img src="/logo.svg" alt="logotipo" />
       <div class="menu">
         <Button
           text="Entrar"
@@ -17,42 +18,18 @@
         />
       </div>
       <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
-        <Input
-          v-model="email"
-          type="email"
-          placeholder="E-mail"
-          autofocus
-          required
-        />
-        <Input
-          v-model="password"
-          type="password"
-          placeholder="Senha"
-          autocomplete
-          required
-        />
+        <Input v-model="email" type="email" label="E-mail" />
+        <Input v-model="password" type="password" label="Senha" autocomplete />
         <Button text="Login" @click="login" />
       </form>
 
       <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
-        <Input v-model="createName" type="text" placeholder="Nome" />
-        <Input
-          v-model="createEmail"
-          type="email"
-          placeholder="E-mail"
-          required
-        />
-        <Input
-          v-model="createPassword"
-          type="password"
-          placeholder="Senha"
-          autocomplete
-          required
-        />
+        <Input v-model="createName" type="text" label="Nome" />
+        <Input v-model="newEmail" type="email" label="E-mail" />
+        <Input v-model="newPass" type="password" label="Senha" autocomplete />
         <Button text="Registrar" @click="signUp" />
       </form>
       <hr />
-      <p>Entrar com:</p>
       <Button img="google" @click="googleSignIn">
         <img src="/google.svg" alt="" />
       </Button>
@@ -81,8 +58,8 @@ export default {
     email: "",
     password: "",
     createName: "",
-    createEmail: "",
-    createPassword: "",
+    newEmail: "",
+    newPass: "",
     errMsg: "",
   }),
   methods: {
@@ -140,16 +117,12 @@ export default {
     signUp() {
       const auth = getAuth();
       const db = getFirestore();
-      createUserWithEmailAndPassword(
-        auth,
-        this.createEmail,
-        this.createPassword
-      ).then(
+      createUserWithEmailAndPassword(auth, this.newEmail, this.newPass).then(
         async (userCredential) => {
           const userId = userCredential.user.uid;
           console.log(userCredential);
           await setDoc(doc(db, "users", userId), {
-            email: this.createEmail,
+            email: this.newEmail,
             name: this.createName,
             shelfName: this.createName,
           });
@@ -191,22 +164,22 @@ main {
   background-color: var(--primary-bg);
   border-radius: 6px;
   margin: auto;
-  padding: 2em 1em;
+  padding: 2em 1em 0.5em;
   user-select: none;
   width: 20em;
 }
 
+img[alt="logotipo"] {
+  margin-bottom: 1.5em;
+  width: 15em;
+}
+
 .menu {
-  padding: 0 10px 20px;
   display: flex;
 }
 
 .menu button {
-  width: 100%;
   margin: 0 15px;
-}
-
-button:hover img {
-  transform: scale(0.95);
+  width: 100%;
 }
 </style>
