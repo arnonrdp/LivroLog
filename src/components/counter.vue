@@ -1,17 +1,19 @@
 v-<template>
-  <div>Contador: {{ count }}</div>
+  <p>Counter: {{ count }}</p>
+  <p><button @click="increment">+</button></p>
+  <p>(Preserve State)</p>
 </template>
 
 <script>
 import { mapState } from "vuex";
+import { mapActions } from 'vuex'
 
 export default {
   name: "Counter",
   methods: {
-    increment() {
-      this.$store.commit("increment");
-      console.log(this.$store.state.count);
-    },
+    ...mapActions([
+      'increment', // mapeia `this.increment()` para `this.$store.dispatch('increment')`
+    ]),
   },
   computed: mapState([
     // mapeia this.count para store.state.count

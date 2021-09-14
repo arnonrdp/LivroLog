@@ -1,7 +1,7 @@
 import { createApp } from "vue";
 import { createStore } from "vuex";
+import { auth } from "../main";
 
-// Cria uma nova instância do store.
 const store = createStore({
   state() {
     return {
@@ -13,7 +13,12 @@ const store = createStore({
       state.count++;
     },
   },
+  actions: {
+    increment: ({ commit }) => commit("increment"),
+  },
 });
+
+store.dispatch("increment");
 
 const app = createApp({
   /* your root component */

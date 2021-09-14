@@ -2,16 +2,14 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-      <Input v-model="shelfName" type="text" label="Nome da Estante" />
+    <Input v-model="shelfName" type="text" label="Nome da Estante">
       <Button text="Salvar" @click="update" />
-  </form>
-  <form action="#" @submit.prevent="submit">
-    <fieldset>
-      <legend>Ajustes de Livros</legend>
-      <Button text="Atualizar datas de leituras" @click="updateBooks" />
-    </fieldset>
+    </Input>
   </form>
   <Button text="Logout" @click="logout" />
+  <hr />
+  <p>Below this line I'm just testing a few things.</p>
+  <Counter />
 </template>
 
 <script>
@@ -20,13 +18,14 @@ import Header from "@/components/TheHeader.vue";
 import Input from "@/components/BaseInput.vue";
 import Button from "@/components/BaseButton.vue";
 import { doc, getDoc, getFirestore, updateDoc } from "@firebase/firestore";
+import Counter from "@/components/counter.vue";
 
 export default {
   name: "Settings",
   data: () => ({
     shelfName: "",
   }),
-  components: { Header, Input, Button },
+  components: { Header, Input, Button, Counter },
   methods: {
     async update() {
       const auth = getAuth();
@@ -40,7 +39,7 @@ export default {
       });
     },
     updateBooks() {
-      console.log("Atualizar datas de leitura")
+      console.log("Atualizar datas de leitura");
     },
     logout() {
       const auth = getAuth();
@@ -67,7 +66,14 @@ form {
   width: 70%;
 }
 
-legend {
-  text-align: left;
+form button {
+  margin: 0;
+  position: absolute;
+  right: 9%;
+  top: -1px;
+}
+
+input:focus ~ button {
+  right: 6%;
 }
 </style>
