@@ -19,13 +19,14 @@ import Input from "@/components/BaseInput.vue";
 import Button from "@/components/BaseButton.vue";
 import { doc, getDoc, getFirestore, updateDoc } from "@firebase/firestore";
 import Counter from "@/components/counter.vue";
+import Tooltip from "@adamdehaven/vue-custom-tooltip";
 
 export default {
   name: "Settings",
   data: () => ({
     shelfName: "",
   }),
-  components: { Header, Input, Button, Counter },
+  components: { Header, Input, Button, Counter, Tooltip },
   methods: {
     async update() {
       const auth = getAuth();

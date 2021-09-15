@@ -4,6 +4,8 @@ import router from "./router";
 import store from "./store/index";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { initializeApp } from "firebase/app";
+import VueCustomTooltip from "@adamdehaven/vue-custom-tooltip";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyDKfpzOLiaER6Q89HTr-AMO4mAT5EByx2o",
@@ -19,10 +21,15 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 
 const auth = getAuth();
+export { auth, signInWithEmailAndPassword };
+
+const opt = {
+  name: "Tooltip",
+  borderRadius: 4,
+};
 
 createApp(App)
   .use(router)
   .use(store)
+  .use(VueCustomTooltip, opt)
   .mount("#app");
-
-export { auth, signInWithEmailAndPassword };

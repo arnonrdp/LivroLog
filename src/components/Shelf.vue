@@ -3,8 +3,9 @@
     <h1>{{ shelfName }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
-        <a href="#"><img :src="book.thumbnail" alt="Livro"/></a>
-        <figcaption>{{ book.title }}</figcaption>
+        <Tooltip :label="book.title" position="is-bottom">
+          <a href="#"><img :src="book.thumbnail" alt="Livro"/></a>
+        </Tooltip>
       </figure>
     </section>
   </main>
@@ -20,9 +21,11 @@ import {
   getFirestore,
   query,
 } from "firebase/firestore";
+import Tooltip from "@adamdehaven/vue-custom-tooltip";
 
 export default {
   name: "Shelf",
+  components: { Tooltip },
   data: () => ({ shelfName: "", books: [] }),
   async mounted() {
     const auth = getAuth();
