@@ -13,3 +13,9 @@ export default {
   components: { Header, Shelf },
 };
 </script>
+
+<style scoped>
+* {
+  user-select: none;
+}
+</style>
