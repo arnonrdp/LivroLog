@@ -4,7 +4,7 @@
     <section>
       <figure v-for="book in books" :key="book.id">
         <Tooltip :label="book.title" position="is-bottom">
-          <a href="#"><img :src="book.thumbnail" alt="Livro"/></a>
+          <a href="#"><img :src="book.thumbnail" :alt="`Livro ${book.title}`"/></a>
         </Tooltip>
       </figure>
     </section>
