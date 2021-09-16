@@ -1,6 +1,5 @@
 import { createApp } from "vue";
 import { createStore } from "vuex";
-import { auth } from "../main";
 
 const store = createStore({
   state() {

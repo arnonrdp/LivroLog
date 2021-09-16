@@ -1,11 +1,7 @@
 <template>
   <Header />
   <form action="#" @submit.prevent="submit">
-    <Input
-      v-model="seek"
-      type="text"
-      :label="$t('addlabel')"
-    >
+    <Input v-model="seek" type="text" :label="$t('addlabel')">
       <Button :text="$t('search')" @click="search" />
     </Input>
   </form>
@@ -28,9 +24,8 @@
 </template>
 
 <script>
-import { getAuth } from "firebase/auth";
+import { auth, db } from '@/firebase';
 import {
-  getFirestore,
   doc,
   setDoc,
   arrayUnion,
@@ -76,8 +71,6 @@ export default {
         });
     },
     async add(bookID, title, authors, thumbnail) {
-      const auth = getAuth();
-      const db = getFirestore();
       const userID = auth.currentUser.uid;
       const booksRef = doc(db, "books", bookID);
 

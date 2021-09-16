@@ -43,15 +43,15 @@
 </template>
 
 <script>
+import { auth, db } from '@/firebase';
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   getAdditionalUserInfo,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import Input from "@/components/BaseInput.vue";
 import Button from "@/components/BaseButton.vue";
 
@@ -69,7 +69,6 @@ export default {
   }),
   methods: {
     login() {
-      const auth = getAuth();
       signInWithEmailAndPassword(auth, this.email, this.password).then(
         this.$router.push("/"),
         (err) => {
@@ -91,9 +90,7 @@ export default {
       );
     },
     googleSignIn() {
-      const auth = getAuth();
       const provider = new GoogleAuthProvider();
-      const db = getFirestore();
       signInWithPopup(auth, provider)
         .then(async (result) => {
           // Check if user is new
@@ -120,8 +117,6 @@ export default {
         });
     },
     signUp() {
-      const auth = getAuth();
-      const db = getFirestore();
       createUserWithEmailAndPassword(auth, this.newEmail, this.newPass).then(
         async (userCredential) => {
           const userId = userCredential.user.uid;

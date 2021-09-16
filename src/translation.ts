@@ -1,4 +1,6 @@
-export const messages = {
+import { createI18n } from "vue-i18n/index";
+
+const messages = {
   English: {
     logintitle1: "A PLACE FOR YOU TO ORGANIZE",
     logintitle2: "EVERYTHING YOU HAVE READ",
@@ -75,3 +77,11 @@ export const messages = {
     },
   },
 };
+
+// Create i18n instance with options
+export const i18n = createI18n({
+  locale: "English",
+  fallbackLocale: ["Português", "日本語"],
+  messages,
+}
+);

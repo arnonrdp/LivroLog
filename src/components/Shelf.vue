@@ -14,15 +14,8 @@
 </template>
 
 <script>
-import { getAuth } from "firebase/auth";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-} from "firebase/firestore";
+import { auth, db } from "@/firebase";
+import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
 
 export default {
@@ -30,13 +23,11 @@ export default {
   components: { Tooltip },
   data: () => ({ shelfName: "", books: [] }),
   async mounted() {
-    const auth = getAuth();
-    const db = getFirestore();
     const userID = auth.currentUser.uid;
     const userRef = doc(db, "users", userID);
     const userSnap = await getDoc(userRef);
 
-    (this.shelfName = userSnap.data().shelfName)
+    this.shelfName = userSnap.data().shelfName;
 
     const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
     const querySnapshot = await getDocs(userBooksRef);
