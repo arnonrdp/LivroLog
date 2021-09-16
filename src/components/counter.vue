@@ -1,6 +1,7 @@
 v-<template>
   <p>
-    Counter: <Tooltip label="Preserved State">{{ count }}</Tooltip>
+    {{ $t("message.counter") }}:
+    <Tooltip label="Preserved State">{{ count }}</Tooltip>
   </p>
   <p><button @click="increment">+</button></p>
 </template>

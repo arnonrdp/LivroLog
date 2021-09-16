@@ -2,14 +2,26 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-    <Input v-model="shelfName" type="text" label="Nome da Estante">
+    <Input v-model="shelfName" type="text" :label="$t('shelfname')">
       <Button text="Salvar" @click="update" />
     </Input>
   </form>
   <Button text="Logout" @click="logout" />
   <hr />
-  <p>Below this line I'm just testing a few things.</p>
+  <p>{{ $t("message.testing") }}</p>
   <Counter />
+  <hr />
+  <p>{{ $t("message.hello") }}</p>
+  <div class="locale-changer">
+    <select v-model="$i18n.locale">
+      <option
+        v-for="locale in $i18n.availableLocales"
+        :key="`locale-${locale}`"
+        :value="locale"
+        >{{ locale }}</option
+      >
+    </select>
+  </div>
 </template>
 
 <script>

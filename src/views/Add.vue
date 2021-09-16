@@ -4,9 +4,9 @@
     <Input
       v-model="seek"
       type="text"
-      label="Pesquise por título, autor, editora, lançamento, ISBN..."
+      :label="$t('addlabel')"
     >
-      <Button text="Buscar" @click="search" />
+      <Button :text="$t('search')" @click="search" />
     </Input>
   </form>
   <div id="results">
@@ -51,7 +51,7 @@ export default {
       results: "",
       books: {},
       noCover: "",
-      unknown: ["Unknown"]
+      unknown: ["Unknown"],
     };
   },
   methods: {

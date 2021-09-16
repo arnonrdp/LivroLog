@@ -1,10 +1,12 @@
 <template>
   <main>
-    <h1>{{ shelfName }}</h1>
+    <h1>{{ $t("shelf", { name: shelfName }) }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
         <Tooltip :label="book.title" position="is-bottom">
-          <a href="#"><img :src="book.thumbnail" :alt="`Livro ${book.title}`"/></a>
+          <a href="#">
+            <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+          </a>
         </Tooltip>
       </figure>
     </section>
@@ -34,9 +36,7 @@ export default {
     const userRef = doc(db, "users", userID);
     const userSnap = await getDoc(userRef);
 
-    userSnap.exists()
-      ? (this.shelfName = "Estante de " + userSnap.data().shelfName)
-      : (this.shelfName = "Sua Estante");
+    (this.shelfName = userSnap.data().shelfName)
 
     const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
     const querySnapshot = await getDocs(userBooksRef);

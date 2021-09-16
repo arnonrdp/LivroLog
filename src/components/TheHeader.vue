@@ -3,16 +3,16 @@
     <router-link to="/"><img src="/logo.svg" alt="Logotipo"/></router-link>
     <nav>
       <router-link to="/">
-        <img src="@/assets/books.svg" />&nbsp;Início
+        <img src="@/assets/books.svg" />&nbsp;{{ $t("menu.home") }}
       </router-link>
       <router-link to="/add">
-        <img src="@/assets/search.svg" />&nbsp;Adicionar
+        <img src="@/assets/search.svg" />&nbsp;{{ $t("menu.add") }}
       </router-link>
       <router-link to="/friends">
-        <img src="@/assets/people.svg" />&nbsp;Amigos
+        <img src="@/assets/people.svg" />&nbsp;{{ $t("menu.friends") }}
       </router-link>
       <router-link to="/settings">
-        <img src="@/assets/settings.svg" />&nbsp;Ajustes
+        <img src="@/assets/settings.svg" />&nbsp;{{ $t("menu.settings") }}
       </router-link>
     </nav>
   </header>

@@ -1,6 +1,6 @@
 <template>
   <Header />
-  <h1>Seguir amigos</h1>
+  <h1>{{ $t("followfriends") }}</h1>
 </template>
 
 <script>

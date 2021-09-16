@@ -1,33 +1,38 @@
 <template>
   <div class="container">
     <header>
-      <h1>UM LUGAR PRA VOCÊ ORGANIZAR<br />TUDO AQUILO QUE VOCÊ JÁ LEU</h1>
+      <h1>{{ $t("logintitle1") }}<br />{{ $t("logintitle2") }}</h1>
     </header>
     <main>
       <img src="/logo.svg" alt="logotipo" />
       <div class="menu">
         <Button
-          text="Entrar"
+          :text="$t('signin')"
           @click="activetab = '1'"
           :class="activetab === '1' ? 'active' : ''"
         />
         <Button
-          text="Registrar"
+          :text="$t('signup')"
           @click="activetab = '2'"
           :class="activetab === '2' ? 'active' : ''"
         />
       </div>
       <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
-        <Input v-model="email" type="email" label="E-mail" />
-        <Input v-model="password" type="password" label="Senha" autocomplete />
+        <Input v-model="email" type="email" :label="$t('mail')" />
+        <Input
+          v-model="password"
+          type="password"
+          :label="$t('password')"
+          autocomplete
+        />
         <Button text="Login" @click="login" />
       </form>
 
       <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
-        <Input v-model="createName" type="text" label="Nome" />
+        <Input v-model="createName" type="text" :label="$t('name')" />
         <Input v-model="newEmail" type="email" label="E-mail" />
         <Input v-model="newPass" type="password" label="Senha" autocomplete />
-        <Button text="Registrar" @click="signUp" />
+        <Button :text="$t('signup')" @click="signUp" />
       </form>
       <hr />
       <Button img="google" @click="googleSignIn">

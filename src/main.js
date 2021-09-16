@@ -2,10 +2,11 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store/index";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { createI18n } from "vue-i18n/index";
+import { messages } from "./translation";
 import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import VueCustomTooltip from "@adamdehaven/vue-custom-tooltip";
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyDKfpzOLiaER6Q89HTr-AMO4mAT5EByx2o",
@@ -23,6 +24,13 @@ initializeApp(firebaseConfig);
 const auth = getAuth();
 export { auth, signInWithEmailAndPassword };
 
+// Create i18n instance with options
+const i18n = createI18n({
+  locale: "English",
+  fallbackLocale: ["Português", "日本語"],
+  messages,
+});
+
 const opt = {
   name: "Tooltip",
   borderRadius: 4,
@@ -31,5 +39,6 @@ const opt = {
 createApp(App)
   .use(router)
   .use(store)
+  .use(i18n)
   .use(VueCustomTooltip, opt)
   .mount("#app");
