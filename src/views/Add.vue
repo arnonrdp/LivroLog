@@ -11,11 +11,10 @@
   </form>
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
-      <a
-        href="#"
+      <Button
+        text="+"
         @click="add(book.id, book.title, book.authors, book.thumbnail)"
-        >+</a
-      >
+      />
       <a><img :src="book.thumbnail" alt=""/></a>
       <figcaption>{{ book.title }}</figcaption>
       <figcaption id="authors">
@@ -52,6 +51,7 @@ export default {
       results: "",
       books: {},
       noCover: "",
+      unknown: ["Unknown"]
     };
   },
   methods: {
@@ -68,7 +68,7 @@ export default {
           this.books = data.items.map((item) => ({
             id: item.id,
             title: item.volumeInfo.title,
-            authors: item.volumeInfo.authors,
+            authors: item.volumeInfo.authors ?? this.unknown,
             thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? this.noCover,
           }));
           // TODO: TELA DE LOADING ENQUANTO CARREGA A LISTA
@@ -144,6 +144,25 @@ input:focus ~ button {
   flex-flow: row wrap;
   justify-content: center;
   align-items: baseline;
+}
+
+figure {
+  padding-top: 5px;
+}
+
+figure button {
+  margin: -2.5rem 2.5rem;
+  opacity: 0;
+  position: absolute;
+  visibility: hidden;
+}
+
+figure:hover button,
+figure button:hover {
+  font-weight: bolder;
+  opacity: 1;
+  transition: 0.5s;
+  visibility: visible;
 }
 
 #results img {

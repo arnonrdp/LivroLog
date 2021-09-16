@@ -20,8 +20,8 @@ button {
   display: block;
   font-size: 1rem;
   font-weight: 300;
-  margin: 20px auto;
-  padding: 10px 20px;
+  margin: 1.25rem auto;
+  padding: 0.625rem 1.25rem;
   transition: all 0.4s;
   -webkit-transition: all 0.4s;
 }
