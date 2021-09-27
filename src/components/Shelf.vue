@@ -45,6 +45,10 @@ export default {
       book.title = bookSnap.data().title;
       book.thumbnail = bookSnap.data().thumbnail;
     });
+    const parsed = JSON.stringify(this.books);
+    console.log(parsed)
+    localStorage.setItem("user", parsed)
+
   },
 };
 </script>
