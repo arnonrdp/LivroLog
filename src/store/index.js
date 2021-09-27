@@ -119,6 +119,10 @@ const store = createStore({
 
 store.dispatch("increment");
 
+const app = createApp({
+  /* your root component */
+});
+
 app.use(store);
 
 export default store;
