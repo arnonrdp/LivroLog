@@ -11,6 +11,9 @@ export default {
   name: "Home",
   title: "Livrero",
   components: { Header, Shelf },
+  mounted() {
+    localStorage.setItem("messi", "a7san wa7d");
+  },
 };
 </script>
 
