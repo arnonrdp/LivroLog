@@ -27,28 +27,40 @@ export default {
 
     this.shelfName = userSnap.data().shelfName;
 
-    const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
-    const querySnapshot = await getDocs(userBooksRef);
-    querySnapshot.forEach((doc) => {
-      this.books.push({
-        id: doc.id,
-        addedIn: doc.data().addedIn,
-        readIn: doc.data().readIn,
+    const storageKey = `Livrero:${this.shelfName}`;
+    const storageValue = [];
+
+    if (localStorage.getItem(storageKey)) {
+      try {
+        this.storageValue = JSON.parse(localStorage.getItem(storageKey));
+        this.books = this.storageValue;
+      } catch (error) {
+        localStorage.removeItem(storageKey);
+      }
+    } else {
+      const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
+      const querySnapshot = await getDocs(userBooksRef);
+      querySnapshot.forEach((doc) => {
+        this.books.push({
+          id: doc.id,
+          addedIn: doc.data().addedIn,
+          readIn: doc.data().readIn,
+        });
       });
-    });
 
-    this.books.map(async (book) => {
-      const booksRef = doc(db, "books", book.id);
-      const bookSnap = await getDoc(booksRef);
+      this.books.map(async (book) => {
+        const booksRef = doc(db, "books", book.id);
+        const bookSnap = await getDoc(booksRef);
 
-      book.authors = bookSnap.data().authors;
-      book.title = bookSnap.data().title;
-      book.thumbnail = bookSnap.data().thumbnail;
-    });
-    const parsed = JSON.stringify(this.books);
-    console.log(parsed)
-    localStorage.setItem("user", parsed)
+        book.authors = bookSnap.data().authors;
+        book.title = bookSnap.data().title;
+        book.thumbnail = bookSnap.data().thumbnail;
 
+        storageValue.push(book);
+        const parsed = JSON.stringify(storageValue);
+        localStorage.setItem(storageKey, parsed);
+      });
+    }
   },
 };
 </script>
@@ -59,13 +71,11 @@ main {
 }
 
 h1 {
-  border: 0.5px solid transparent;
-  border-radius: 18px;
   color: #491f00;
   font-size: 1.5rem;
   letter-spacing: 1px;
   margin: 0;
-  width: fit-content;
+  text-align: left;
 }
 
 section {
@@ -78,7 +88,7 @@ section {
   flex-flow: row wrap;
   justify-content: space-around;
   min-height: 285px;
-  padding: 0 30px 15px 30px;
+  padding: 0 50px 15px;
 }
 
 section figure {

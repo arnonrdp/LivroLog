@@ -11,7 +11,7 @@
         text="+"
         @click="add(book.id, book.title, book.authors, book.thumbnail)"
       />
-      <a><img :src="book.thumbnail" alt=""/></a>
+      <a><img :src="book.thumbnail" alt="" /></a>
       <figcaption>{{ book.title }}</figcaption>
       <figcaption id="authors">
         <span v-for="(author, i) in book.authors" :key="i">
@@ -24,9 +24,10 @@
 </template>
 
 <script>
-import { auth, db } from '@/firebase';
+import { auth, db } from "@/firebase";
 import {
   doc,
+  getDoc,
   setDoc,
   arrayUnion,
   updateDoc,
@@ -44,17 +45,36 @@ export default {
     return {
       seek: "",
       results: "",
+      shelfName: "",
       books: {},
       noCover: "",
       unknown: ["Unknown"],
+      storageValue: [],
     };
+  },
+  async mounted() {
+    const userID = auth.currentUser.uid;
+    const userRef = doc(db, "users", userID);
+    const userSnap = await getDoc(userRef);
+
+    this.shelfName = userSnap.data().shelfName;
+
+    const storageKey = `Livrero:${this.shelfName}`;
+
+    if (localStorage.getItem(storageKey)) {
+      try {
+        this.storageValue = JSON.parse(localStorage.getItem(storageKey));
+      } catch (error) {
+        localStorage.removeItem(storageKey);
+      }
+    }
   },
   methods: {
     search() {
       this.books = {};
       this.noCover = require("../assets/no_cover.jpg");
       // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
-      const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
+      // const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
       fetch(
         `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`
       )
@@ -71,9 +91,21 @@ export default {
         });
     },
     async add(bookID, title, authors, thumbnail) {
+      const tempStorage = {};
+      tempStorage.id = bookID;
+      tempStorage.addedIn = new Date();
+      tempStorage.readIn = "";
+      tempStorage.authors = authors;
+      tempStorage.thumbnail = thumbnail;
+      tempStorage.title = title;
+
+      this.storageValue.push(tempStorage);
+      const storageKey = `Livrero:${this.shelfName}`;
+      const parsed = JSON.stringify(this.storageValue);
+      localStorage.setItem(storageKey, parsed);
+
       const userID = auth.currentUser.uid;
       const booksRef = doc(db, "books", bookID);
-
       try {
         await runTransaction(db, async (transaction) => {
           const sfDoc = await transaction.get(booksRef);
@@ -91,12 +123,12 @@ export default {
           }
         });
       } catch (e) {
-        console.log("ERRO: ", e);
+        console.error("ERRO: ", e);
       } finally {
         await setDoc(doc(db, "users", userID, "addedBooks", bookID), {
           bookRef: booksRef,
           addedIn: new Date(),
-          readIn: "August",
+          readIn: "",
         });
       }
     },
