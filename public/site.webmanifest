@@ -1,6 +1,7 @@
 {
     "name": "Livrero",
-    "short_name": "",
+    "short_name": "Livrero",
+    "description": "Um lugar para você organizar tudo aquilo que você já leu.",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
