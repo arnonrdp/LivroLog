@@ -7,7 +7,7 @@ const messages = {
     signin: "Sign In",
     signup: "Sign Up",
     name: "Name",
-    mail: "Mail",
+    mail: "Email",
     password: "Password",
     menu: {
       home: "Home",

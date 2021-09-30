@@ -30,8 +30,8 @@
 
       <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
         <Input v-model="createName" type="text" :label="$t('name')" />
-        <Input v-model="newEmail" type="email" label="E-mail" />
-        <Input v-model="newPass" type="password" label="Senha" autocomplete />
+        <Input v-model="newEmail" type="email" :label="$t('mail')" />
+        <Input v-model="newPass" type="password" :label="$t('password')" autocomplete />
         <Button :text="$t('signup')" @click="signUp" />
       </form>
       <hr />
@@ -179,7 +179,7 @@ img[alt="logotipo"] {
 }
 
 .menu button {
-  margin: 0 15px;
+  margin: 0 1.5em;
   width: 100%;
 }
 </style>
