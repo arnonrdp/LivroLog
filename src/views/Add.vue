@@ -122,8 +122,8 @@ export default {
             });
           }
         });
-      } catch (e) {
-        console.error("ERRO: ", e);
+      } catch (err) {
+        console.error("ERRO: ", err);
       } finally {
         await setDoc(doc(db, "users", userID, "addedBooks", bookID), {
           bookRef: booksRef,
