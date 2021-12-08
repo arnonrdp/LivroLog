@@ -1,10 +1,12 @@
 import { createStore } from "vuex";
 
 const store = createStore({
-  state() {
-    return {
-      count: 0,
-    };
+  state: {
+    user: null,
+    count: 0,
+  },
+  getters: {
+    user: (state) => state.user,
   },
   mutations: {
     increment(state) {
