@@ -28,6 +28,7 @@
     "incorrectEmailOrPassword": "senha ou email incorretos",
     "tabClosed": "Acho que você fechou o pop-up. \\nTente novamente.",
     "weirdError": "Algo de errado não está certo: \\n",
-    "accountCreated": "Sua conta foi criada com sucesso!"
+    "accountCreated": "Sua conta foi criada com sucesso!",
+    "logout": "Sair"
   }
 }

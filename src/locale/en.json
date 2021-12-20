@@ -28,6 +28,7 @@
     "incorrectEmailOrPassword": "Incorrect email or password",
     "tabClosed": "I think you closed the popup.\\nTry again.",
     "weirdError": "Something wrong is not right:\\n",
-    "accountCreated": "Your account has been created successfully!"
+    "accountCreated": "Your account has been created successfully!",
+    "logout": "Logout"
   }
 }

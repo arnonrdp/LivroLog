@@ -28,6 +28,7 @@
     "incorrectEmailOrPassword": "メールアドレスまたはパスワードが正しくありません",
     "tabClosed": "ポップアップを閉じたと思います。\\nもう一度やり直してください。",
     "weirdError": "何かがおかしい：\\n",
-    "accountCreated": "アカウントが正常に作成されました。"
+    "accountCreated": "アカウントが正常に作成されました。",
+    "logout": "ログアウト"
   }
 }
