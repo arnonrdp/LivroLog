@@ -8,16 +8,12 @@
   </form>
   <div class="locale-changer">
     <select v-model="$i18n.locale">
-      <option
-        v-for="locale in $i18n.availableLocales"
-        :key="`locale-${locale}`"
-        :value="locale"
-      >
+      <option v-for="(locale, key) in locales" :key="key" :value="key">
         {{ locale }}
       </option>
     </select>
   </div>
-  <Button text="Logout" @click="logout" />
+  <Button :text="$t('login.logout')" @click="logout" />
   <hr />
   <p>{{ $t("message.testing") }}</p>
   <Counter />
@@ -39,6 +35,15 @@
       shelfName: "",
     }),
     components: { Header, Input, Button, Counter, Tooltip },
+    computed: {
+      locales() {
+        return {
+          en: "English",
+          ja: "日本語",
+          pt: "Português",
+        };
+      },
+    },
     methods: {
       async update() {
         const userID = auth.currentUser.uid;
