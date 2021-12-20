@@ -1,10 +1,9 @@
-import { createRouter, createWebHistory } from "vue-router";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-
-import Login from "../views/Login.vue";
-import Home from "../views/Home.vue";
+import { createRouter, createWebHistory } from "vue-router";
 import Add from "../views/Add.vue";
 import Friends from "../views/Friends.vue";
+import Home from "../views/Home.vue";
+import Login from "../views/Login.vue";
 import Settings from "../views/Settings.vue";
 
 const routes = [
