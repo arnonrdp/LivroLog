@@ -33,6 +33,8 @@
       <Button img="google" @click="googleSignIn">
         <img src="/google.svg" alt="" />
       </Button>
+      <!-- TODO: create a popup to formMessage -->
+      <p>{{ formMessage }}</p>
     </main>
   </div>
 </template>
@@ -60,29 +62,28 @@
       createName: "",
       newEmail: "",
       newPass: "",
-      errMsg: "",
+      formMessage: "",
     }),
     methods: {
       login() {
-        signInWithEmailAndPassword(auth, this.email, this.password).then(
-          this.$router.push("/"),
-          (err) => {
+        signInWithEmailAndPassword(auth, this.email, this.password)
+          .then(this.$router.push("/"))
+          .catch((err) => {
             switch (err.code) {
               case "auth/invalid-email":
-                this.errMsg = "E-mail inválido";
+                this.formMessage = $t("login.invalidMail");
                 break;
               case "auth/user-not-found":
-                this.errMsg = "Não encontrei seu usuário";
+                this.formMessage = $t("login.userNotFound");
                 break;
               case "auth/wrong-password":
-                this.errMsg = "Senha incorreta";
+                this.formMessage = $t("login.incorrectPassword");
                 break;
               default:
-                this.errMsg = "E-mail ou senha incorreta";
+                this.formMessage = $t("login.incorrectEmailOrPassword");
                 break;
             }
-          },
-        );
+          });
       },
       googleSignIn() {
         const provider = new GoogleAuthProvider();
@@ -103,11 +104,12 @@
           .catch((error) => {
             switch (error.code) {
               case "auth/popup-closed-by-user":
-                alert("Acho que você fechou o popup.\nTente de novo.");
+                this.formMessage = $t("login.tabClosed");
                 break;
               default:
-                alert("Algo de errado não está certo:\n" + error.code);
+                this.formMessage = $t("login.weirdError") + error.code;
                 console.log(error);
+                break;
             }
           });
       },
@@ -122,13 +124,11 @@
               shelfName: this.createName,
             });
             this.$router.push("/");
-            // TODO: REMOVER ALERT E INSERIR MENSAGEM PERSONALIZADA
-            alert("Sua conta foi criada com sucesso!");
+            this.formMessage = $t("login.accountCreated");
           },
           (error) => {
-            // TODO: REMOVER ALERTS E INSERIR MENSAGENS PERSONALIZADAS
-            alert(error.code);
-            alert(error.message);
+            this.formMessage = error.message;
+            console.error(error);
           },
         );
       },

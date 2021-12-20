@@ -1,0 +1,33 @@
+{
+  "signin": "Sign In",
+  "signup": "Sign Up",
+  "name": "Name",
+  "mail": "Email",
+  "password": "Password",
+  "menu": {
+    "home": "Home",
+    "add": "Add",
+    "friends": "Friends",
+    "settings": "Settings"
+  },
+  "shelf": "{name}'s Bookcase",
+  "search": "Search",
+  "addlabel": "Search by title, author, publisher, release, ISBN...",
+  "message": {
+    "testing": "Below this line I'm just testing a few things.",
+    "counter": "Counter"
+  },
+  "shelfName": "Shelf Name",
+  "loginTitle1": "A PLACE FOR YOU TO ORGANIZE",
+  "loginTitle2": "EVERYTHING YOU HAVE READ",
+  "followFriends": "Follow Friends",
+  "login": {
+    "invalidMail": "Invalid Email",
+    "userNotFound": "User not found",
+    "incorrectPassword": "Incorrect password",
+    "incorrectEmailOrPassword": "Incorrect email or password",
+    "tabClosed": "I think you closed the popup.\\nTry again.",
+    "weirdError": "Something wrong is not right:\\n",
+    "accountCreated": "Your account has been created successfully!"
+  }
+}

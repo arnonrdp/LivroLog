@@ -1,7 +1,7 @@
 import VueCustomTooltip from "@adamdehaven/vue-custom-tooltip";
 import { createApp } from "vue";
 import App from "./App.vue";
-import { i18n } from "./locale/translation.ts";
+import { i18n } from "./locale/translation.js";
 import router from "./router";
 import store from "./store/index";
 

@@ -1,0 +1,33 @@
+{
+  "signin": "Entrar",
+  "signup": "Registrar",
+  "name": "Nome",
+  "mail": "E-mail",
+  "password": "Senha",
+  "menu": {
+    "home": "Início",
+    "add": "Adicionar",
+    "friends": "Amigos",
+    "settings": "Ajustes"
+  },
+  "shelf": "Estante de {name}",
+  "search": "Buscar",
+  "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
+  "message": {
+    "testing": "Abaixo desta linha, estou apenas testando algumas coisas.",
+    "counter": "Contador"
+  },
+  "shelfName": "Nome da Estante",
+  "loginTitle1": "UM LUGAR PRA VOCÊ ORGANIZAR",
+  "loginTitle2": "TUDO AQUILO QUE VOCÊ JÁ LEU",
+  "followFriends": "Seguir Amigos",
+  "login": {
+    "invalidMail": "E-mail inválido",
+    "userNotFound": "Usuário não encontrado",
+    "incorrectPassword": "Senha incorreta",
+    "incorrectEmailOrPassword": "senha ou email incorretos",
+    "tabClosed": "Acho que você fechou o pop-up. \\nTente novamente.",
+    "weirdError": "Algo de errado não está certo: \\n",
+    "accountCreated": "Sua conta foi criada com sucesso!"
+  }
+}
