@@ -2,7 +2,7 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-    <Input v-model="shelfName" type="text" :label="$t('shelfname')">
+    <Input v-model="shelfName" type="text" :label="$t('shelfName')">
       <Button text="Salvar" @click="update" />
     </Input>
   </form>
@@ -24,64 +24,64 @@
 </template>
 
 <script>
-import { auth, db } from "@/firebase";
-import { signOut } from "firebase/auth";
-import Header from "@/components/TheHeader.vue";
-import Input from "@/components/BaseInput.vue";
-import Button from "@/components/BaseButton.vue";
-import { doc, getDoc, updateDoc } from "@firebase/firestore";
-import Counter from "@/components/counter.vue";
-import Tooltip from "@adamdehaven/vue-custom-tooltip";
+  import { auth, db } from "@/firebase";
+  import { signOut } from "firebase/auth";
+  import Header from "@/components/TheHeader.vue";
+  import Input from "@/components/BaseInput.vue";
+  import Button from "@/components/BaseButton.vue";
+  import { doc, getDoc, updateDoc } from "@firebase/firestore";
+  import Counter from "@/components/counter.vue";
+  import Tooltip from "@adamdehaven/vue-custom-tooltip";
 
-export default {
-  name: "Settings",
-  data: () => ({
-    shelfName: "",
-  }),
-  components: { Header, Input, Button, Counter, Tooltip },
-  methods: {
-    async update() {
+  export default {
+    name: "Settings",
+    data: () => ({
+      shelfName: "",
+    }),
+    components: { Header, Input, Button, Counter, Tooltip },
+    methods: {
+      async update() {
+        const userID = auth.currentUser.uid;
+        const userRef = doc(db, "users", userID);
+        const userSnap = await getDoc(userRef);
+
+        await updateDoc(userRef, {
+          shelfName: this.shelfName,
+        });
+      },
+      updateBooks() {
+        console.log("Atualizar datas de leitura");
+      },
+      logout() {
+        signOut(auth).then(() => {
+          this.$router.push({ name: "Login" });
+        });
+      },
+    },
+    async mounted() {
       const userID = auth.currentUser.uid;
       const userRef = doc(db, "users", userID);
       const userSnap = await getDoc(userRef);
 
-      await updateDoc(userRef, {
-        shelfName: this.shelfName,
-      });
+      this.shelfName = userSnap.data().shelfName;
     },
-    updateBooks() {
-      console.log("Atualizar datas de leitura");
-    },
-    logout() {
-      signOut(auth).then(() => {
-        this.$router.push({ name: "Login" });
-      });
-    },
-  },
-  async mounted() {
-    const userID = auth.currentUser.uid;
-    const userRef = doc(db, "users", userID);
-    const userSnap = await getDoc(userRef);
-
-    this.shelfName = userSnap.data().shelfName;
-  },
-};
+  };
 </script>
 
 <style scoped>
-form {
-  margin: auto;
-  width: 70%;
-}
+  form {
+    margin: auto;
+    width: 70%;
+  }
 
-form button {
-  margin: 0;
-  position: absolute;
-  right: 9%;
-  top: -1px;
-}
+  form button {
+    margin: 0;
+    position: absolute;
+    right: 9%;
+    top: -1px;
+  }
 
-input:focus ~ button {
-  right: 6%;
-}
+  input:focus ~ button {
+    right: 6%;
+  }
 </style>
