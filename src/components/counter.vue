@@ -1,4 +1,4 @@
-v-<template>
+<template>
   <p>
     {{ $t("message.counter") }}:
     <Tooltip label="Preserved State">{{ count }}</Tooltip>
