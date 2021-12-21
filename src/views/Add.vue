@@ -1,10 +1,9 @@
 <template>
   <Header />
   <form action="#" @submit.prevent="submit">
-    <Input v-model="seek" type="text" :label="$t('addlabel')">
-      <Button :text="$t('search')" @click="search" />
-    </Input>
+    <Input v-model="seek" type="text" :label="$t('addlabel')" @keyup.enter="search" />
   </form>
+  <Loading v-show="loading" />
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
       <Button text="+" @click="add(book.id, book.title, book.authors, book.thumbnail)" />
@@ -23,14 +22,15 @@
 <script>
   import { auth, db } from "@/firebase";
   import { doc, getDoc, setDoc, arrayUnion, updateDoc, runTransaction } from "firebase/firestore";
-
+  import axios from "axios";
   import Header from "@/components/TheHeader.vue";
   import Input from "@/components/BaseInput.vue";
   import Button from "@/components/BaseButton.vue";
+  import Loading from "@/components/Loading.vue";
 
   export default {
     name: "Add",
-    components: { Header, Input, Button },
+    components: { Header, Input, Button, Loading },
     data() {
       return {
         seek: "",
@@ -40,6 +40,7 @@
         noCover: "",
         unknown: ["Unknown"],
         storageValue: [],
+        loading: false,
       };
     },
     async mounted() {
@@ -63,22 +64,23 @@
       search() {
         this.books = {};
         this.noCover = require("../assets/no_cover.jpg");
-        // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
-        // const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
-        fetch(
-          `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`,
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            this.books = data.items.map((item) => ({
+        this.loading = true;
+        axios
+          .get(
+            // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
+            // const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
+            `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`,
+          )
+          .then((response) => {
+            this.books = response.data.items.map((item) => ({
               id: item.id,
               title: item.volumeInfo.title,
-              authors: item.volumeInfo.authors ?? this.unknown,
+              authors: item.volumeInfo.authors || this.unknown,
               thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? this.noCover,
             }));
-            // TODO: TELA DE LOADING ENQUANTO CARREGA A LISTA
-            // console.table(this.books);
-          });
+          })
+          .catch((error) => console.error(error))
+          .finally(() => (this.loading = false));
       },
       async add(bookID, title, authors, thumbnail) {
         const tempStorage = {};
@@ -128,22 +130,29 @@
 
 <style scoped>
   form {
-    width: 100%;
+    margin: auto;
+    width: 50%;
+  }
+
+  @media screen and (max-width: 840px) {
+    form {
+      width: 100%;
+    }
   }
 
   form input {
-    overflow: visible;
-    outline: 0;
-    width: 70%;
-    padding: 10px;
-    border-radius: 18px;
-    background-color: #dee3e6;
     background-clip: padding-box;
+    background-color: #dee3e6;
     border: 0.5px solid #d1d9e6;
+    border-radius: 18px;
     box-shadow: var(--low-shadow);
+    outline: 0;
+    overflow: visible;
+    padding: 10px;
+    width: 70%;
   }
 
-  form button {
+  /* form button {
     margin: 0;
     position: absolute;
     right: 9%;
@@ -152,13 +161,13 @@
 
   input:focus ~ button {
     right: 6%;
-  }
+  } */
 
   #results {
+    align-items: baseline;
     display: flex;
     flex-flow: row wrap;
     justify-content: center;
-    align-items: baseline;
   }
 
   figure {
