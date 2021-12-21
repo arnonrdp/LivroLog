@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <header>
-      <h1>{{ $t("loginTitle1") }}<br />{{ $t("loginTitle2") }}</h1>
+      <h1>{{ $t("loginTitle") }}</h1>
     </header>
     <main>
       <img src="/logo.svg" alt="logotipo" />
@@ -104,10 +104,10 @@
           .catch((error) => {
             switch (error.code) {
               case "auth/popup-closed-by-user":
-                this.formMessage = $t("login.tabClosed");
+                this.formMessage = this.$t("login.tabClosed");
                 break;
               default:
-                this.formMessage = $t("login.weirdError") + error.code;
+                this.formMessage = this.$t("login.weirdError") + error.code;
                 console.log(error);
                 break;
             }

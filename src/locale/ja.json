@@ -18,16 +18,15 @@
     "counter": "カウンター"
   },
   "shelfName": "棚名",
-  "loginTitle1": "あなたが整理する場所",
-  "loginTitle2": "あなたが読んだすべてのもの",
+  "loginTitle": "あなたが整理する場所\nあなたが読んだすべてのもの",
   "followFriends": "友達をフォローする",
   "login": {
     "invalidMail": "無効なメール",
     "userNotFound": "ユーザーが見つかりません",
     "incorrectPassword": "パスワードが正しくありません",
     "incorrectEmailOrPassword": "メールアドレスまたはパスワードが正しくありません",
-    "tabClosed": "ポップアップを閉じたと思います。\\nもう一度やり直してください。",
-    "weirdError": "何かがおかしい：\\n",
+    "tabClosed": "ポップアップを閉じたと思います\nもう一度やり直してください。",
+    "weirdError": "何かがおかしい：\n",
     "accountCreated": "アカウントが正常に作成されました。",
     "logout": "ログアウト"
   }

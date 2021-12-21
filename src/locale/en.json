@@ -18,16 +18,15 @@
     "counter": "Counter"
   },
   "shelfName": "Shelf Name",
-  "loginTitle1": "A PLACE FOR YOU TO ORGANIZE",
-  "loginTitle2": "EVERYTHING YOU HAVE READ",
+  "loginTitle": "A PLACE FOR YOU TO ORGANIZE\nEVERYTHING YOU HAVE READ",
   "followFriends": "Follow Friends",
   "login": {
     "invalidMail": "Invalid Email",
     "userNotFound": "User not found",
     "incorrectPassword": "Incorrect password",
     "incorrectEmailOrPassword": "Incorrect email or password",
-    "tabClosed": "I think you closed the popup.\\nTry again.",
-    "weirdError": "Something wrong is not right:\\n",
+    "tabClosed": "I think you closed the popup.\nTry again.",
+    "weirdError": "Something wrong is not right:\n",
     "accountCreated": "Your account has been created successfully!",
     "logout": "Logout"
   }

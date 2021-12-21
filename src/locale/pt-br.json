@@ -18,16 +18,15 @@
     "counter": "Contador"
   },
   "shelfName": "Nome da Estante",
-  "loginTitle1": "UM LUGAR PRA VOCÊ ORGANIZAR",
-  "loginTitle2": "TUDO AQUILO QUE VOCÊ JÁ LEU",
+  "loginTitle": "UM LUGAR PRA VOCÊ ORGANIZAR\nTUDO AQUILO QUE VOCÊ JÁ LEU",
   "followFriends": "Seguir Amigos",
   "login": {
     "invalidMail": "E-mail inválido",
     "userNotFound": "Usuário não encontrado",
     "incorrectPassword": "Senha incorreta",
     "incorrectEmailOrPassword": "senha ou email incorretos",
-    "tabClosed": "Acho que você fechou o pop-up. \\nTente novamente.",
-    "weirdError": "Algo de errado não está certo: \\n",
+    "tabClosed": "Acho que você fechou o pop-up.\nTente novamente.",
+    "weirdError": "Algo de errado não está certo:\n",
     "accountCreated": "Sua conta foi criada com sucesso!",
     "logout": "Sair"
   }
