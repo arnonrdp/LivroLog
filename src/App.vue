@@ -17,7 +17,6 @@
     --link-color: #2c3e50;
     --high-shadow: 3px 3px 6px #b8b9be, -3px -3px 6px #ffffff;
     --low-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
-    white-space: pre-line;
   }
 
   html {
@@ -62,6 +61,7 @@
   body {
     margin: 0;
     background-color: var(--primary-bg);
+    white-space: pre-line;
   }
 
   #app {
