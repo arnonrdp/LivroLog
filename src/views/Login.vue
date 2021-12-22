@@ -1,21 +1,13 @@
 <template>
   <div class="container">
     <header>
-      <h1>{{ $t("loginTitle") }}</h1>
+      <h1>{{ $t("sign.loginTitle") }}</h1>
     </header>
     <main>
       <img src="/logo.svg" alt="logotipo" />
       <div class="menu">
-        <Button
-          :text="$t('signin')"
-          @click="activetab = '1'"
-          :class="activetab === '1' ? 'active' : ''"
-        />
-        <Button
-          :text="$t('signup')"
-          @click="activetab = '2'"
-          :class="activetab === '2' ? 'active' : ''"
-        />
+        <Button :text="$t('sign.signin')" @click="activetab = '1'" :class="activetab === '1' ? 'active' : ''" />
+        <Button :text="$t('sign.signup')" @click="activetab = '2'" :class="activetab === '2' ? 'active' : ''" />
       </div>
       <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
         <Input v-model="email" type="email" :label="$t('mail')" />
@@ -24,10 +16,10 @@
       </form>
 
       <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
-        <Input v-model="createName" type="text" :label="$t('name')" />
-        <Input v-model="newEmail" type="email" :label="$t('mail')" />
-        <Input v-model="newPass" type="password" :label="$t('password')" autocomplete />
-        <Button :text="$t('signup')" @click="signUp" />
+        <Input v-model="name" type="text" :label="$t('name')" />
+        <Input v-model="email" type="email" :label="$t('mail')" />
+        <Input v-model="password" type="password" :label="$t('password')" autocomplete />
+        <Button :text="$t('sign.signup')" @click="signup" />
       </form>
       <hr />
       <Button img="google" @click="googleSignIn">
@@ -41,49 +33,45 @@
 
 <script>
   import { auth, db } from "@/firebase";
-  import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    getAdditionalUserInfo,
-    GoogleAuthProvider,
-    signInWithPopup,
-  } from "firebase/auth";
+  import { getAdditionalUserInfo, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
   import { doc, setDoc } from "firebase/firestore";
   import Input from "@/components/BaseInput.vue";
   import Button from "@/components/BaseButton.vue";
+  import { mapGetters } from "vuex";
 
   export default {
     name: "Login",
     components: { Input, Button },
     data: () => ({
       activetab: "1",
+      name: "",
       email: "",
       password: "",
-      createName: "",
-      newEmail: "",
-      newPass: "",
       formMessage: "",
+      signUpStatus: {},
+      resetStatus: {},
     }),
+    computed: {
+      ...mapGetters(["getError", "getInformation"]),
+    },
     methods: {
-      login() {
-        signInWithEmailAndPassword(auth, this.email, this.password)
-          .then(this.$router.push("/"))
-          .catch((err) => {
-            switch (err.code) {
-              case "auth/invalid-email":
-                this.formMessage = $t("login.invalidMail");
-                break;
-              case "auth/user-not-found":
-                this.formMessage = $t("login.userNotFound");
-                break;
-              case "auth/wrong-password":
-                this.formMessage = $t("login.incorrectPassword");
-                break;
-              default:
-                this.formMessage = $t("login.incorrectEmailOrPassword");
-                break;
-            }
-          });
+      async login() {
+        await this.$store.dispatch("login", {
+          email: this.email,
+          password: this.password,
+        });
+      },
+      async signup() {
+        await this.$store.dispatch("signup", {
+          name: this.name,
+          email: this.email,
+          password: this.password,
+        });
+        this.signUpStatus = this.getError?.signUp || this.getInformation?.signUp;
+      },
+      async resetPassword(data) {
+        await this.$store.dispatch("resetPassword", { email: data.email });
+        this.resetStatus = this.getError?.resetPassword || this.getInformation?.resetPassword;
       },
       googleSignIn() {
         const provider = new GoogleAuthProvider();
@@ -104,34 +92,54 @@
           .catch((error) => {
             switch (error.code) {
               case "auth/popup-closed-by-user":
-                this.formMessage = this.$t("login.tabClosed");
+                this.formMessage = this.$t("sign.tabClosed");
                 break;
               default:
-                this.formMessage = this.$t("login.weirdError") + error.code;
+                this.formMessage = this.$t("sign.weirdError" + error);
                 console.log(error);
                 break;
             }
           });
       },
-      signUp() {
-        createUserWithEmailAndPassword(auth, this.newEmail, this.newPass).then(
-          async (userCredential) => {
-            const userId = userCredential.user.uid;
-            console.log(userCredential);
-            await setDoc(doc(db, "users", userId), {
-              email: this.newEmail,
-              name: this.createName,
-              shelfName: this.createName,
-            });
-            this.$router.push("/");
-            this.formMessage = $t("login.accountCreated");
-          },
-          (error) => {
-            this.formMessage = error.message;
-            console.error(error);
-          },
-        );
-      },
+      // login() {
+      //   signInWithEmailAndPassword(auth, this.email, this.password)
+      //     .then(this.$router.push("/"))
+      //     .catch((err) => {
+      //       switch (err.code) {
+      //         case "auth/invalid-email":
+      //           this.formMessage = this.$t("sign.invalidMail");
+      //           break;
+      //         case "auth/user-not-found":
+      //           this.formMessage = this.$t("sign.userNotFound");
+      //           break;
+      //         case "auth/wrong-password":
+      //           this.formMessage = this.$t("sign.incorrectPassword");
+      //           break;
+      //         default:
+      //           this.formMessage = this.$t("sign.incorrectEmailOrPassword");
+      //           break;
+      //       }
+      //     });
+      // },
+      // signUp() {
+      //   createUserWithEmailAndPassword(auth, this.newEmail, this.newPass).then(
+      //     async (userCredential) => {
+      //       const userId = userCredential.user.uid;
+      //       console.log(userCredential);
+      //       await setDoc(doc(db, "users", userId), {
+      //         email: this.newEmail,
+      //         name: this.createName,
+      //         shelfName: this.createName,
+      //       });
+      //       this.$router.push("/");
+      //       this.formMessage = this.$t("sign.accountCreated");
+      //     },
+      //     (error) => {
+      //       this.formMessage = error.message;
+      //       console.error(error);
+      //     },
+      //   );
+      // },
     },
   };
 </script>
