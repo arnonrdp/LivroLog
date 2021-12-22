@@ -1,6 +1,4 @@
 {
-  "signin": "ログイン",
-  "signup": "サインアップ",
   "name": "名前",
   "mail": "Eメール",
   "password": "パスワード",
@@ -18,16 +16,18 @@
     "counter": "カウンター"
   },
   "shelfName": "棚名",
-  "loginTitle": "あなたが整理する場所\nあなたが読んだすべてのもの",
   "followFriends": "友達をフォローする",
-  "login": {
-    "invalidMail": "無効なメール",
-    "userNotFound": "ユーザーが見つかりません",
-    "incorrectPassword": "パスワードが正しくありません",
-    "incorrectEmailOrPassword": "メールアドレスまたはパスワードが正しくありません",
-    "tabClosed": "ポップアップを閉じたと思います\nもう一度やり直してください。",
-    "weirdError": "何かがおかしい：\n",
+  "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
-    "logout": "ログアウト"
+    "incorrectEmailOrPassword": "メールアドレスまたはパスワードが正しくありません",
+    "incorrectPassword": "パスワードが正しくありません",
+    "invalidMail": "無効なメール",
+    "loginTitle": "あなたが整理する場所\nあなたが読んだすべてのもの",
+    "logout": "ログアウト",
+    "signup": "サインアップ",
+    "signin": "ログイン",
+    "tabClosed": "ポップアップを閉じたと思います\nもう一度やり直してください。",
+    "userNotFound": "ユーザーが見つかりません",
+    "weirdError": "何かがおかしい：\n"
   }
 }

@@ -13,7 +13,7 @@
       </option>
     </select>
   </div>
-  <Button :text="$t('login.logout')" @click="logout" />
+  <Button :text="$t('sign.logout')" @click="logout" />
   <hr />
   <p>{{ $t("message.testing") }}</p>
   <Counter />
