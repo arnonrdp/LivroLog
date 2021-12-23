@@ -1,5 +1,6 @@
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { createRouter, createWebHistory } from "vue-router";
+import { auth } from "../firebase";
 import Add from "../views/Add.vue";
 import Friends from "../views/Friends.vue";
 import Home from "../views/Home.vue";
@@ -46,15 +47,15 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(),
   routes,
 });
 
+// TODO: Remove onAuthStateChanged from beforeEach:
+// https://forum.quasar-framework.org/topic/2290/firebase-onauthstatechanged-and-beforeeach-navigation-guard
 router.beforeEach((to, from, next) => {
-  const auth = getAuth();
-
   onAuthStateChanged(auth, (user) => {
-    if (to.meta.requiresAuth && user == null) next({ name: "Login" });
+    if (to.name !== "Login" && user == null) next({ name: "Login" });
     else next();
   });
 });

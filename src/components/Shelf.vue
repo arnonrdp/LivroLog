@@ -15,11 +15,15 @@
 import { auth, db } from "@/firebase";
 import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
   components: { Tooltip },
   data: () => ({ shelfName: "", books: [] }),
+  computed: {
+    ...mapGetters(["getUserProfile"]),
+  },
   async mounted() {
     const userID = auth.currentUser.uid;
     const userRef = doc(db, "users", userID);
@@ -79,8 +83,7 @@ h1 {
 }
 
 section {
-  background-image: url("~@/assets/shelfleft.png"),
-    url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
+  background-image: url("~@/assets/shelfleft.png"), url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
   border-radius: 6px;

@@ -7,6 +7,7 @@ import {
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { createStore } from "vuex";
 import { auth, db } from "../firebase";
+import router from "../router";
 
 const store = createStore({
   state: {
@@ -56,89 +57,70 @@ const store = createStore({
       await signInWithEmailAndPassword(auth, payload.email, payload.password)
         .then((firebaseData) => {
           dispatch("fetchUserProfile", firebaseData.user);
-          commit("setLoading", false);
           commit("setError", null);
         })
-        .catch((error) => {
-          commit("setLoading", false);
-          commit("setError", { login: error });
-        });
+        .catch((error) => commit("setError", { login: error }))
+        .finally(() => commit("setLoading", false));
     },
     async logout({ commit }) {
       await signOut(auth);
       commit("setUserProfile", {});
-      router.currentRoute.path !== "/auth" && router.push("/auth");
+      router.push({ name: "Login" });
     },
     async signup({ commit }, payload) {
+      console.log("payload", payload);
       commit("setLoading", true);
       await createUserWithEmailAndPassword(auth, payload.email, payload.password)
-        .then(async (firebaseData) => {
-          await setDoc(doc(db, "users", firebaseData.user.uid), {
+        .then(async (userCredential) => {
+          const userID = userCredential.user.uid;
+          await setDoc(doc(db, "users", userID), {
             name: payload.name,
             email: payload.email,
-            enable: true,
-          }).then(() => {
-            commit("setLoading", false);
-            commit("setInformation", {
-              signUp: { code: "Success", message: `User created!, use your new credentials` },
-            });
-            commit("setError", null);
+            shelfName: payload.name,
           });
+          commit("setInformation", { signUp: { code: "Success", message: `User created! Go to Login` } });
+          commit("setError", null);
         })
         .catch((error) => {
-          commit("setLoading", false);
           commit("setInformation", null);
           commit("setError", { signUp: error });
-        });
+        })
+        .finally(() => commit("setLoading", false));
     },
     async fetchUserProfile({ commit, dispatch }, user) {
       commit("setLoading", true);
-      await getDoc(doc(db, "users", user.uid))
+      const userRef = doc(db, "users", user.uid);
+      await getDoc(userRef)
         .then((firebaseData) => {
-          //TODO: userInfo returning undefined
-          console.log(firebaseData);
           const userInfo = firebaseData.data();
           commit("setUserProfile", userInfo?.enable ? userInfo : {});
-          console.log("userInfo", userInfo);
           if (userInfo) {
-            //TODO: CONFIGURE REDIRECTION TO HOME PAGE
-            console.log("this.$router", this.$route);
-            !userInfo.enable && dispatch("logout");
-            if (router.currentRoute.path === "/auth") {
-              userInfo?.enable && this.$router.push("/");
-            }
-            commit("setLoading", false);
             commit("setError", null);
+            router.push("/");
           }
         })
-        .catch((error) => {
-          commit("setError", error);
-          commit("setLoading", false);
-        });
+        .catch((error) => commit("setError", error))
+        .finally(() => commit("setLoading", false));
     },
     async resetPassword({ commit }, payload) {
       commit("setLoading", true);
       await sendPasswordResetEmail(auth, payload.email)
         .then(() => {
-          commit("setLoading", false);
           commit("setInformation", {
-            resetPassword: {
-              code: "Success",
-              message: "Success!, check your email for the password reset link",
-            },
+            resetPassword: { code: "Success", message: "Success!, check your email for the password reset link" },
           });
           commit("setError", null);
         })
         .catch((error) => {
-          commit("setLoading", false);
           commit("setInformation", null);
           commit("setError", { resetPassword: error });
-        });
+        })
+        .finally(() => commit("setLoading", false));
     },
     increment: ({ commit }) => commit("increment"),
   },
 });
 
-store.dispatch("increment");
+// store.dispatch("increment");
 
 export default store;
