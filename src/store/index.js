@@ -4,9 +4,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { createStore } from "vuex";
-import { auth, db, usersCollection } from "../firebase";
+import { auth, db } from "../firebase";
 
 const store = createStore({
   state: {
@@ -51,7 +51,6 @@ const store = createStore({
     },
   },
   actions: {
-    //TODO: CONFIGURE THIS
     async login({ commit, dispatch }, payload) {
       commit("setLoading", true);
       await signInWithEmailAndPassword(auth, payload.email, payload.password)
@@ -92,19 +91,21 @@ const store = createStore({
           commit("setError", { signUp: error });
         });
     },
-    //TODO: CONFIGURE THIS
     async fetchUserProfile({ commit, dispatch }, user) {
       commit("setLoading", true);
-      await usersCollection
-        .doc(user.uid)
-        .get()
+      await getDoc(doc(db, "users", user.uid))
         .then((firebaseData) => {
+          //TODO: userInfo returning undefined
+          console.log(firebaseData);
           const userInfo = firebaseData.data();
           commit("setUserProfile", userInfo?.enable ? userInfo : {});
+          console.log("userInfo", userInfo);
           if (userInfo) {
+            //TODO: CONFIGURE REDIRECTION TO HOME PAGE
+            console.log("this.$router", this.$route);
             !userInfo.enable && dispatch("logout");
             if (router.currentRoute.path === "/auth") {
-              userInfo?.enable && router.push("/");
+              userInfo?.enable && this.$router.push("/");
             }
             commit("setLoading", false);
             commit("setError", null);
@@ -118,7 +119,7 @@ const store = createStore({
     async resetPassword({ commit }, payload) {
       commit("setLoading", true);
       await sendPasswordResetEmail(auth, payload.email)
-        .then((_) => {
+        .then(() => {
           commit("setLoading", false);
           commit("setInformation", {
             resetPassword: {

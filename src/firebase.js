@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
@@ -12,12 +12,9 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENTID,
 };
 
-// Initialize Firebase
 initializeApp(firebaseConfig);
 
 const auth = getAuth();
 const db = getFirestore();
 
-const usersCollection = collection(db, "users");
-
-export { auth, db, usersCollection };
+export { auth, db };
