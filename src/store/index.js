@@ -2,12 +2,16 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signOut,
+  signOut
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import SecureLS from "secure-ls";
 import { createStore } from "vuex";
+import createPersistedState from "vuex-persistedstate";
 import { auth, db } from "../firebase";
 import router from "../router";
+
+const ls = new SecureLS({ isCompression: false });
 
 const store = createStore({
   state: {
@@ -17,6 +21,15 @@ const store = createStore({
     information: null,
     count: 0,
   },
+  plugins: [
+  createPersistedState({
+    storage: {
+      getItem: (key) => ls.get(key),
+      setItem: (key, value) => ls.set(key, value),
+      removeItem: (key) => ls.remove(key),
+    },
+  }),
+  ],
   getters: {
     getUserProfile(state) {
       return state.userProfile;
