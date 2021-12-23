@@ -3,9 +3,9 @@
   "mail": "Email",
   "password": "Password",
   "menu": {
-    "home": "Home",
     "add": "Add",
     "friends": "Friends",
+    "home": "Home",
     "settings": "Settings"
   },
   "shelf": "{name}'s Bookcase",

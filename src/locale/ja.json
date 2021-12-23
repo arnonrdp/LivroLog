@@ -3,9 +3,9 @@
   "mail": "Eメール",
   "password": "パスワード",
   "menu": {
-    "home": "ホーム",
     "add": "追加",
     "friends": "友達",
+    "home": "ホーム",
     "settings": "設定"
   },
   "shelf": "{name} 本棚",
@@ -19,6 +19,7 @@
   "followFriends": "友達をフォローする",
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
+    "emailAlreadyExists": "メールは既に存在します！",
     "incorrectEmailOrPassword": "メールアドレスまたはパスワードが正しくありません",
     "incorrectPassword": "パスワードが正しくありません",
     "invalidMail": "無効なメール",
