@@ -1,20 +1,9 @@
 <template>
   <router-view />
-  <button @click="userState">getUserProfile</button>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-
 export default {
-  computed: {
-    ...mapGetters(["getUserProfile"]),
-  },
-  methods: {
-    userState() {
-      console.log(this.getUserProfile);
-    },
-  },
   //   created() {
   //     document.cookie = "SameSite=Lax; Secure";
   //   },

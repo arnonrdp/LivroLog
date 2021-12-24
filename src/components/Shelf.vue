@@ -1,6 +1,6 @@
 <template>
   <main>
-    <h1>{{ $t("shelf", { name: shelfName }) }}</h1>
+    <h1>{{ $t("shelf", { name: getUserProfile.shelfName }) }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
         <Tooltip :label="book.title" position="is-bottom">
@@ -25,13 +25,12 @@ export default {
     ...mapGetters(["getUserProfile"]),
   },
   async mounted() {
-    const userID = auth.currentUser.uid;
-    const userRef = doc(db, "users", userID);
-    const userSnap = await getDoc(userRef);
+    /**
+     * TODO: VUEX-BOOK-STATE
+     */
+    const userID = this.getUserProfile.uid;
 
-    this.shelfName = userSnap.data().shelfName;
-
-    const storageKey = `Livrero:${this.shelfName}`;
+    const storageKey = `Livrero:${userID}`;
     const storageValue = [];
 
     if (localStorage.getItem(storageKey)) {
