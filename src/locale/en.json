@@ -1,7 +1,4 @@
 {
-  "name": "Name",
-  "mail": "Email",
-  "password": "Password",
   "menu": {
     "add": "Add",
     "friends": "Friends",
@@ -19,16 +16,21 @@
   "followFriends": "Follow Friends",
   "sign": {
     "accountCreated": "Your account has been created successfully!",
-    "emailAlreadyExists": "Email already exists!",
-    "incorrectEmailOrPassword": "Incorrect email or password",
-    "incorrectPassword": "Incorrect password",
-    "invalidMail": "Invalid Email",
+    "auth/email-already-in-use": "Email already exists!",
+    "auth/incorrect-email-or-password": "Incorrect email or password",
+    "auth/internal-error": "Internal Error. Please try again.",
+    "auth/invalid-email": "Invalid Email",
+    "auth/phone-number-already-exists": "Phone number already exists!",
+    "auth/popup-closed-by-user": "I think you closed the popup.\nTry again.",
+    "auth/uid-already-exists": "User already exists!",
+    "auth/user-not-found": "User not found",
+    "auth/wrong-password": "Incorrect password",
     "loginTitle": "A PLACE FOR YOU TO ORGANIZE\nEVERYTHING YOU HAVE READ",
+    "mail": "Email",
+    "name": "Name",
     "logout": "Logout",
-    "signup": "Sign Up",
+    "password": "Password",
     "signin": "Sign In",
-    "tabClosed": "I think you closed the popup.\nTry again.",
-    "userNotFound": "User not found",
-    "weirdError": "Something wrong is not right:\n"
+    "signup": "Sign Up"
   }
 }

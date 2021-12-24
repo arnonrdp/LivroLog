@@ -1,7 +1,4 @@
 {
-  "name": "名前",
-  "mail": "Eメール",
-  "password": "パスワード",
   "menu": {
     "add": "追加",
     "friends": "友達",
@@ -19,16 +16,21 @@
   "followFriends": "友達をフォローする",
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
-    "emailAlreadyExists": "メールは既に存在します！",
-    "incorrectEmailOrPassword": "メールアドレスまたはパスワードが正しくありません",
-    "incorrectPassword": "パスワードが正しくありません",
-    "invalidMail": "無効なメール",
+    "auth/email-already-in-use": "Email already exists!",
+    "auth/incorrect-email-or-password": "メールアドレスまたはパスワードが正しくありません",
+    "auth/internal-error": "内部エラー。\nもう一度やり直してください。",
+    "auth/invalid-email": "無効なメール",
+    "auth/phone-number-already-exists": "電話番号はすでに存在します！",
+    "auth/popup-closed-by-user": "ポップアップを閉じたと思います\nもう一度やり直してください。",
+    "auth/uid-already-exists": "このユーザーは既に存在します！",
+    "auth/user-not-found": "ユーザーが見つかりません",
+    "auth/wrong-password": "パスワードが正しくありません",
     "loginTitle": "あなたが整理する場所\nあなたが読んだすべてのもの",
     "logout": "ログアウト",
-    "signup": "サインアップ",
+    "mail": "Eメール",
+    "name": "名前",
+    "password": "パスワード",
     "signin": "ログイン",
-    "tabClosed": "ポップアップを閉じたと思います\nもう一度やり直してください。",
-    "userNotFound": "ユーザーが見つかりません",
-    "weirdError": "何かがおかしい：\n"
+    "signup": "サインアップ"
   }
 }

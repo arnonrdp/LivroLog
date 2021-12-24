@@ -10,22 +10,22 @@
         <Button :text="$t('sign.signup')" @click="activetab = '2'" :class="activetab === '2' ? 'active' : ''" />
       </div>
       <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
-        <Input v-model="email" type="email" :label="$t('mail')" />
-        <Input v-model="password" type="password" :label="$t('password')" autocomplete />
+        <Input v-model="email" type="email" :label="$t('sign.mail')" />
+        <Input v-model="password" type="password" :label="$t('sign.password')" autocomplete />
         <Button text="Login" @click="login" />
       </form>
 
       <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
-        <Input v-model="name" type="text" :label="$t('name')" />
-        <Input v-model="email" type="email" :label="$t('mail')" />
-        <Input v-model="password" type="password" :label="$t('password')" autocomplete />
+        <Input v-model="name" type="text" :label="$t('sign.name')" />
+        <Input v-model="email" type="email" :label="$t('sign.mail')" />
+        <Input v-model="password" type="password" :label="$t('sign.password')" autocomplete />
         <Button :text="$t('sign.signup')" @click="signup" />
       </form>
       <hr />
       <Button img="google" @click="googleSignIn">
         <img src="/google.svg" alt="" />
       </Button>
-      <p>{{ getError?.code }}</p>
+      <p v-if="getError">{{ $t("sign." + getError.code) }}</p>
     </main>
   </div>
 </template>
@@ -65,14 +65,6 @@ export default {
     async googleSignIn() {
       await this.$store.dispatch("googleSignIn");
     },
-    // TODO: CREATE AN ALERT TO DISPLAY THE ERROR MESSAGES:
-    // "auth/popup-closed-by-user": this.$t("sign.tabClosed");
-    // this.formMessage = this.$t("sign.weirdError" + error);
-    // "auth/invalid-email": this.$t("sign.invalidMail");
-    // "auth/user-not-found": this.$t("sign.userNotFound");
-    // "auth/wrong-password": this.$t("sign.incorrectPassword");
-    // this.formMessage = this.$t("sign.incorrectEmailOrPassword");
-    // this.formMessage = this.$t("sign.accountCreated");
   },
 };
 </script>

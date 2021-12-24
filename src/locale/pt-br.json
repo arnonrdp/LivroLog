@@ -1,7 +1,4 @@
 {
-  "name": "Nome",
-  "mail": "E-mail",
-  "password": "Senha",
   "menu": {
     "add": "Adicionar",
     "friends": "Amigos",
@@ -19,16 +16,21 @@
   "followFriends": "Seguir Amigos",
   "sign": {
     "accountCreated": "Sua conta foi criada com sucesso!",
-    "emailAlreadyExists": "E-mail já existe!",
-    "incorrectEmailOrPassword": "senha ou email incorretos",
-    "incorrectPassword": "Senha incorreta",
-    "invalidMail": "E-mail inválido",
+    "auth/email-already-in-use": "E-mail já existe!",
+    "auth/incorrect-email-or-password": "E-mail ou senha incorretos",
+    "auth/internal-error": "Erro interno. Por favor, tente novamente.",
+    "auth/invalid-email": "E-mail inválido.",
+    "auth/phone-number-already-exists": "Número de telefone já existe!",
+    "auth/popup-closed-by-user": "Acho que você fechou o pop-up.\nTente novamente.",
+    "auth/uid-already-exists": "Usuário já existe!",
+    "auth/user-not-found": "Usuário não encontrado",
+    "auth/wrong-password": "Senha incorreta",
     "loginTitle": "UM LUGAR PRA VOCÊ ORGANIZAR\nTUDO AQUILO QUE VOCÊ JÁ LEU",
     "logout": "Sair",
-    "signup": "Registrar",
+    "mail": "E-mail",
+    "name": "Nome",
+    "password": "Senha",
     "signin": "Entrar",
-    "tabClosed": "Acho que você fechou o pop-up.\nTente novamente.",
-    "userNotFound": "Usuário não encontrado",
-    "weirdError": "Algo de errado não está certo:\n"
+    "signup": "Registrar"
   }
 }
