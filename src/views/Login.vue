@@ -25,16 +25,12 @@
       <Button img="google" @click="googleSignIn">
         <img src="/google.svg" alt="" />
       </Button>
-      <!-- TODO: create a popup to formMessage -->
-      <p>{{ formMessage }}</p>
+      <p>{{ getError?.code }}</p>
     </main>
   </div>
 </template>
 
 <script>
-import { auth, db } from "@/firebase";
-import { getAdditionalUserInfo, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
 import Input from "@/components/BaseInput.vue";
 import Button from "@/components/BaseButton.vue";
 import { mapGetters } from "vuex";
@@ -56,90 +52,27 @@ export default {
   },
   methods: {
     async login() {
-      await this.$store.dispatch("login", {
-        email: this.email,
-        password: this.password,
-      });
+      await this.$store.dispatch("login", { email: this.email, password: this.password });
     },
     async signup() {
-      await this.$store.dispatch("signup", {
-        name: this.name,
-        email: this.email,
-        password: this.password,
-      });
-      this.signUpStatus = this.getError?.signUp || this.getInformation?.signUp;
+      await this.$store.dispatch("signup", { name: this.name, email: this.email, password: this.password });
+      this.signUpStatus = this.getError || this.getInformation?.signUp;
     },
     async resetPassword() {
       await this.$store.dispatch("resetPassword", { email: this.email });
-      this.resetStatus = this.getError?.resetPassword || this.getInformation?.resetPassword;
+      this.resetStatus = this.getError || this.getInformation?.resetPassword;
     },
-    googleSignIn() {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider)
-        .then(async (result) => {
-          // Check if user is new
-          const { isNewUser } = getAdditionalUserInfo(result);
-          const userId = result.user.uid;
-          if (isNewUser) {
-            await setDoc(doc(db, "users", userId), {
-              email: result.user.email,
-              name: result.user.displayName,
-              shelfName: result.user.displayName,
-            });
-          }
-          this.$router.push("/");
-        })
-        .catch((error) => {
-          switch (error.code) {
-            case "auth/popup-closed-by-user":
-              this.formMessage = this.$t("sign.tabClosed");
-              break;
-            default:
-              this.formMessage = this.$t("sign.weirdError" + error);
-              console.log(error);
-              break;
-          }
-        });
+    async googleSignIn() {
+      await this.$store.dispatch("googleSignIn");
     },
-    // login() {
-    //   signInWithEmailAndPassword(auth, this.email, this.password)
-    //     .then(this.$router.push("/"))
-    //     .catch((err) => {
-    //       switch (err.code) {
-    //         case "auth/invalid-email":
-    //           this.formMessage = this.$t("sign.invalidMail");
-    //           break;
-    //         case "auth/user-not-found":
-    //           this.formMessage = this.$t("sign.userNotFound");
-    //           break;
-    //         case "auth/wrong-password":
-    //           this.formMessage = this.$t("sign.incorrectPassword");
-    //           break;
-    //         default:
-    //           this.formMessage = this.$t("sign.incorrectEmailOrPassword");
-    //           break;
-    //       }
-    //     });
-    // },
-    // signUp() {
-    //   createUserWithEmailAndPassword(auth, this.newEmail, this.newPass).then(
-    //     async (userCredential) => {
-    //       const userId = userCredential.user.uid;
-    //       console.log(userCredential);
-    //       await setDoc(doc(db, "users", userId), {
-    //         email: this.newEmail,
-    //         name: this.createName,
-    //         shelfName: this.createName,
-    //       });
-    //       this.$router.push("/");
-    //       this.formMessage = this.$t("sign.accountCreated");
-    //     },
-    //     (error) => {
-    //       this.formMessage = error.message;
-    //       console.error(error);
-    //     },
-    //   );
-    // },
+    // TODO: CREATE AN ALERT TO DISPLAY THE ERROR MESSAGES:
+    // "auth/popup-closed-by-user": this.$t("sign.tabClosed");
+    // this.formMessage = this.$t("sign.weirdError" + error);
+    // "auth/invalid-email": this.$t("sign.invalidMail");
+    // "auth/user-not-found": this.$t("sign.userNotFound");
+    // "auth/wrong-password": this.$t("sign.incorrectPassword");
+    // this.formMessage = this.$t("sign.incorrectEmailOrPassword");
+    // this.formMessage = this.$t("sign.accountCreated");
   },
 };
 </script>
