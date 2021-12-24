@@ -12,8 +12,9 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENTID,
 };
 
-// Initialize Firebase
 initializeApp(firebaseConfig);
 
-export const auth = getAuth();
-export const db = getFirestore();
+const auth = getAuth();
+const db = getFirestore();
+
+export { auth, db };

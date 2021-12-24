@@ -1,6 +1,6 @@
 <template>
   <main>
-    <h1>{{ $t("shelf", { name: shelfName }) }}</h1>
+    <h1>{{ $t("shelf", { name: getUserProfile.shelfName }) }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
         <Tooltip :label="book.title" position="is-bottom">
@@ -15,19 +15,22 @@
 import { auth, db } from "@/firebase";
 import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
   components: { Tooltip },
   data: () => ({ shelfName: "", books: [] }),
+  computed: {
+    ...mapGetters(["getUserProfile"]),
+  },
   async mounted() {
-    const userID = auth.currentUser.uid;
-    const userRef = doc(db, "users", userID);
-    const userSnap = await getDoc(userRef);
+    /**
+     * TODO: VUEX-BOOK-STATE
+     */
+    const userID = this.getUserProfile.uid;
 
-    this.shelfName = userSnap.data().shelfName;
-
-    const storageKey = `Livrero:${this.shelfName}`;
+    const storageKey = `Livrero:${userID}`;
     const storageValue = [];
 
     if (localStorage.getItem(storageKey)) {
@@ -79,8 +82,7 @@ h1 {
 }
 
 section {
-  background-image: url("~@/assets/shelfleft.png"),
-    url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
+  background-image: url("~@/assets/shelfleft.png"), url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
   border-radius: 6px;

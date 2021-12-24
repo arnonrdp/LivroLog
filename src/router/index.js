@@ -1,5 +1,5 @@
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { createRouter, createWebHistory } from "vue-router";
+import store from "../store";
 import Add from "../views/Add.vue";
 import Friends from "../views/Friends.vue";
 import Home from "../views/Home.vue";
@@ -46,17 +46,14 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(),
   routes,
 });
 
 router.beforeEach((to, from, next) => {
-  const auth = getAuth();
-
-  onAuthStateChanged(auth, (user) => {
-    if (to.meta.requiresAuth && user == null) next({ name: "Login" });
-    else next();
-  });
+  let isAuthenticated = store.getters.isAuthenticated;
+  if (to.meta.requiresAuth && !isAuthenticated) next("login");
+  else next();
 });
 
 router.afterEach((to, from) => {
