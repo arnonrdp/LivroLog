@@ -4,10 +4,10 @@
 </template>
 
 <script>
-  import Header from "@/components/TheHeader.vue";
+import Header from "@/components/TheHeader.vue";
 
-  export default {
-    name: "Friends",
-    components: { Header },
-  };
+export default {
+  name: "Friends",
+  components: { Header },
+};
 </script>
