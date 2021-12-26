@@ -7,7 +7,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import SecureLS from "secure-ls";
 import { createStore } from "vuex";
 import createPersistedState from "vuex-persistedstate";
@@ -136,7 +136,7 @@ const store = createStore({
       await sendPasswordResetEmail(auth, payload.email)
         .then(() => {
           commit("setInformation", {
-            resetPassword: { code: "Success", message: "Success!, check your email for the password reset link" },
+            resetPassword: { code: "Success", message: "Success! Check your email for the password reset link" },
           });
           commit("setError", null);
         })
@@ -146,7 +146,18 @@ const store = createStore({
         })
         .finally(() => commit("setLoading", false));
     },
-    increment: ({ commit }) => commit("increment"),
+    async updateShelfName({ commit }, payload) {
+      commit("setLoading", true);
+      const userRef = doc(db, "users", this.state.userProfile.uid);
+      await updateDoc(userRef, { shelfName: payload })
+        .then(() => {
+          this.state.userProfile.shelfName = payload;
+          commit("setUserProfile", this.state.userProfile);
+          commit("setError", null);
+        })
+        .catch((error) => commit("setError", error))
+        .finally(() => commit("setLoading", false));
+    },
   },
 });
 
