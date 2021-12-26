@@ -2,10 +2,7 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-    <Input v-model="shelfName" type="text" :label="$t('shelfName')">
-      <Button text="Salvar" @click="updateShelfName" />
-    </Input>
-    <p>getUserProfile: {{ getUserProfile.shelfName }}</p>
+    <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('shelfName')" />
   </form>
   <div class="locale-changer">
     <select v-model="$i18n.locale">
@@ -21,9 +18,7 @@
 import Button from "@/components/BaseButton.vue";
 import Input from "@/components/BaseInput.vue";
 import Header from "@/components/TheHeader.vue";
-import { auth, db } from "@/firebase";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
-import { doc, getDoc, updateDoc } from "@firebase/firestore";
 import { mapGetters } from "vuex";
 
 export default {
