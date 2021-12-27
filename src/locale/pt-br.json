@@ -1,19 +1,18 @@
 {
+  "book": {
+    "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
+    "bookcase": "Estante de {name}",
+    "search": "Buscar",
+    "shelfname": "Nome da Estante",
+    "unknown-author": "Autor desconhecido"
+  },
+  "followFriends": "Seguir Amigos",
   "menu": {
     "add": "Adicionar",
     "friends": "Amigos",
     "home": "Início",
     "settings": "Ajustes"
   },
-  "shelf": "Estante de {name}",
-  "search": "Buscar",
-  "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
-  "message": {
-    "testing": "Abaixo desta linha, estou apenas testando algumas coisas.",
-    "counter": "Contador"
-  },
-  "shelfName": "Nome da Estante",
-  "followFriends": "Seguir Amigos",
   "sign": {
     "accountCreated": "Sua conta foi criada com sucesso!",
     "auth/email-already-in-use": "E-mail já existe!",

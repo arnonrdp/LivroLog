@@ -1,31 +1,30 @@
 {
+  "book": {
+    "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
+    "bookcase": "{名前}の本棚",
+    "search": "検索",
+    "shelfname": "棚名",
+    "unknown-author": "不明な作者"
+  },
+  "followFriends": "友達をフォローする",
   "menu": {
     "add": "追加",
     "friends": "友達",
-    "home": "ホーム",
+    "home": "家",
     "settings": "設定"
   },
-  "shelf": "{name} 本棚",
-  "search": "検索",
-  "addlabel": "タイトル、著者、発行者、リリース、ISBNで検索...",
-  "message": {
-    "testing": "この線の下で、私はいくつかのことをテストしています。",
-    "counter": "カウンター"
-  },
-  "shelfName": "棚名",
-  "followFriends": "友達をフォローする",
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
-    "auth/email-already-in-use": "Email already exists!",
+    "auth/email-already-in-use": "メールは既に存在します！",
     "auth/incorrect-email-or-password": "メールアドレスまたはパスワードが正しくありません",
     "auth/internal-error": "内部エラー。\nもう一度やり直してください。",
     "auth/invalid-email": "無効なメール",
     "auth/phone-number-already-exists": "電話番号はすでに存在します！",
-    "auth/popup-closed-by-user": "ポップアップを閉じたと思います\nもう一度やり直してください。",
+    "auth/popup-closed-by-user": "ポップアップを閉じたと思います。\n\n再試行。",
     "auth/uid-already-exists": "このユーザーは既に存在します！",
     "auth/user-not-found": "ユーザーが見つかりません",
     "auth/wrong-password": "パスワードが正しくありません",
-    "loginTitle": "あなたが整理する場所\nあなたが読んだすべてのもの",
+    "loginTitle": "あなたが組織するための場所\n\nあなたが読んだすべて",
     "logout": "ログアウト",
     "mail": "Eメール",
     "name": "名前",
