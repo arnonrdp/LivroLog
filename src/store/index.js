@@ -7,7 +7,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 import SecureLS from "secure-ls";
 import { createStore } from "vuex";
 import createPersistedState from "vuex-persistedstate";
@@ -19,6 +19,7 @@ const ls = new SecureLS({ isCompression: false });
 const store = createStore({
   state: {
     userProfile: {},
+    userBooks: [],
     error: null,
     information: null,
     loading: false,
@@ -35,6 +36,9 @@ const store = createStore({
   getters: {
     getUserProfile(state) {
       return state.userProfile;
+    },
+    getUserBooks(state) {
+      return state.userBooks;
     },
     isAuthenticated(state) {
       return state.userProfile.email !== undefined;
@@ -53,6 +57,9 @@ const store = createStore({
     setUserProfile(state, val) {
       state.userProfile = val;
     },
+    setUserBooks(state, val) {
+      state.userBooks.push(val);
+    },
     setError(state, payload) {
       state.error = payload;
     },
@@ -64,6 +71,7 @@ const store = createStore({
     },
   },
   actions: {
+    // AUTHENTICATION
     async login({ commit, dispatch }, payload) {
       commit("setLoading", true);
       await signInWithEmailAndPassword(auth, payload.email, payload.password)
@@ -146,6 +154,7 @@ const store = createStore({
         })
         .finally(() => commit("setLoading", false));
     },
+    // BOOKSHELF
     async updateShelfName({ commit }, payload) {
       commit("setLoading", true);
       const userRef = doc(db, "users", this.state.userProfile.uid);
@@ -157,6 +166,57 @@ const store = createStore({
         })
         .catch((error) => commit("setError", error))
         .finally(() => commit("setLoading", false));
+    },
+    async addBook({ commit }, payload) {
+      commit("setUserBooks", payload);
+      commit("setLoading", true);
+      const userID = this.state.userProfile.uid;
+      const bookRef = doc(db, "books", payload.id);
+      try {
+        await runTransaction(db, async (transaction) => {
+          const sfDoc = await transaction.get(bookRef);
+          if (sfDoc.exists()) {
+            await updateDoc(bookRef, { readers: arrayUnion(userID) });
+          } else {
+            setDoc(bookRef, { readers: arrayUnion(userID) });
+          }
+        });
+      } catch (error) {
+        commit("setError", error);
+      } finally {
+        commit("setLoading", false);
+        await setDoc(doc(db, "users", userID, "addedBooks", payload.id), {
+          bookRef: bookRef,
+          addedIn: new Date(),
+          readIn: "",
+        });
+      }
+    },
+    // TODO: MÉTODO PARA REMOVER LIVRO DO USUÁRIO
+    async removeBook({ commit }, payload) {
+      console.log(payload);
+      commit("setLoading", true);
+      const userID = this.state.userProfile.uid;
+      const bookRef = doc(db, "books", payload);
+      try {
+        await runTransaction(db, async (transaction) => {
+          const sfDoc = await transaction.get(bookRef);
+          // TODO: VERIFICAR NECESSIDADE DESTE IF
+          if (sfDoc.exists()) {
+            await updateDoc(bookRef, { readers: arrayRemove(userID) });
+          }
+        });
+      } catch (error) {
+        commit("setError", error);
+      } finally {
+        commit("setLoading", false);
+        // TODO: TESTAR REMOÇÃO DE LIVROS
+        await updateDoc(doc(db, "users", userID, "addedBooks", payload), {
+          bookRef: bookRef,
+          addedIn: new Date(),
+          readIn: "",
+        });
+      }
     },
   },
 });
