@@ -2,7 +2,7 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-    <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('shelfName')" />
+    <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('book.shelfname')" />
   </form>
   <div class="locale-changer">
     <select v-model="$i18n.locale">
@@ -19,7 +19,7 @@ import Button from "@/components/BaseButton.vue";
 import Input from "@/components/BaseInput.vue";
 import Header from "@/components/TheHeader.vue";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
-import { mapGetters } from "vuex";
+import { mapState } from "vuex";
 
 export default {
   name: "Settings",
@@ -28,7 +28,7 @@ export default {
   }),
   components: { Header, Input, Button, Tooltip },
   computed: {
-    ...mapGetters(["getUserProfile"]),
+    ...mapState(["userProfile"]),
     locales() {
       return {
         en: "English",
@@ -38,7 +38,7 @@ export default {
     },
   },
   mounted() {
-    this.shelfName = this.getUserProfile.shelfName;
+    this.shelfName = this.userProfile.shelfName;
   },
   methods: {
     updateShelfName() {
