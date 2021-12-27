@@ -1,8 +1,9 @@
 <template>
   <main>
-    <h1>{{ $t("shelf", { name: getUserProfile.shelfName }) }}</h1>
+    <h1>{{ $t("book.bookcase", { name: getUserProfile.shelfName }) }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
+        <Button text="–" @click="removeBook(book.id)" />
         <Tooltip :label="book.title" position="is-bottom">
           <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
         </Tooltip>
@@ -12,14 +13,15 @@
 </template>
 
 <script>
+import Button from "@/components/BaseButton.vue";
 import { auth, db } from "@/firebase";
-import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
-  components: { Tooltip },
+  components: { Tooltip, Button },
   data: () => ({ shelfName: "", books: [] }),
   computed: {
     ...mapGetters(["getUserProfile"]),
@@ -65,6 +67,11 @@ export default {
       });
     }
   },
+  methods: {
+    removeBook(id) {
+      this.$store.dispatch("removeBook", id);
+    },
+  },
 };
 </script>
 
@@ -100,6 +107,21 @@ section figure {
   margin: 0 30px;
   max-width: 80px;
   position: relative;
+}
+
+figure button {
+  margin: -2.5rem 2.5rem;
+  opacity: 0;
+  position: absolute;
+  visibility: hidden;
+}
+
+figure:hover button,
+figure button:hover {
+  font-weight: bolder;
+  opacity: 1;
+  transition: 0.5s;
+  visibility: visible;
 }
 
 img {
