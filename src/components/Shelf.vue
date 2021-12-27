@@ -14,7 +14,7 @@
 
 <script>
 import Button from "@/components/BaseButton.vue";
-import { auth, db } from "@/firebase";
+import { db } from "@/firebase";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
 import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import { mapGetters } from "vuex";
@@ -27,9 +27,7 @@ export default {
     ...mapGetters(["getUserProfile"]),
   },
   async mounted() {
-    /**
-     * TODO: VUEX-BOOK-STATE
-     */
+    // TODO: VUEX-BOOK-STATE
     const userID = this.getUserProfile.uid;
 
     const storageKey = `Livrero:${userID}`;

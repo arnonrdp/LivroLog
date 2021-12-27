@@ -19,7 +19,7 @@ import Button from "@/components/BaseButton.vue";
 import Input from "@/components/BaseInput.vue";
 import Header from "@/components/TheHeader.vue";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
 
 export default {
   name: "Settings",
@@ -28,7 +28,7 @@ export default {
   }),
   components: { Header, Input, Button, Tooltip },
   computed: {
-    ...mapState(["userProfile"]),
+    ...mapGetters(["getUserProfile"]),
     locales() {
       return {
         en: "English",
@@ -38,7 +38,7 @@ export default {
     },
   },
   mounted() {
-    this.shelfName = this.userProfile.shelfName;
+    this.shelfName = this.getUserProfile.shelfName;
   },
   methods: {
     updateShelfName() {

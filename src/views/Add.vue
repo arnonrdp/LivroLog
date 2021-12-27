@@ -34,7 +34,7 @@ export default {
       seek: "",
       results: "",
       shelfName: "",
-      books: {},
+      books: [],
       noCover: "",
       storageValue: [],
       loading: false,
@@ -42,27 +42,25 @@ export default {
   },
   methods: {
     search() {
-      this.books = {};
-      this.noCover = require("../assets/no_cover.jpg");
       this.loading = true;
       axios
         // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
         // const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
         .get(`https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`)
         .then((response) => {
-          this.books = response.data.items.map((item) => ({
+          response.data.items.map((item) => this.books.push({
             id: item.id,
             title: item.volumeInfo.title,
             authors: item.volumeInfo.authors || [this.$t("book.unknown-author")],
             ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier ?? item.id,
-            thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? this.noCover,
+            thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? require("../assets/no_cover.jpg"),
           }));
         })
         .catch((error) => console.error(error))
         .finally(() => (this.loading = false));
     },
     addBook(book) {
-      book = Object.assign({}, book);
+      book = { ...book };
       this.$store.dispatch("addBook", book);
     },
   },

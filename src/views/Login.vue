@@ -58,12 +58,12 @@ export default {
       this.$store.dispatch("signup", { name: this.name, email: this.email, password: this.password });
       this.signUpStatus = this.getError || this.getInformation?.signUp;
     },
+    googleSignIn() {
+      this.$store.dispatch("googleSignIn");
+    },
     resetPassword() {
       this.$store.dispatch("resetPassword", { email: this.email });
       this.resetStatus = this.getError || this.getInformation?.resetPassword;
-    },
-    googleSignIn() {
-      this.$store.dispatch("googleSignIn");
     },
   },
 };

@@ -1,25 +1,14 @@
-import {
-  createUserWithEmailAndPassword,
-  getAdditionalUserInfo,
-  GoogleAuthProvider,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
-import { arrayUnion, doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, doc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 import SecureLS from "secure-ls";
 import { createStore } from "vuex";
 import createPersistedState from "vuex-persistedstate";
-import { auth, db } from "../firebase";
-import router from "../router";
+import { db } from "../firebase";
+import authentication from "./modules/authentication";
 
 const ls = new SecureLS({ isCompression: false });
 
 const store = createStore({
   state: {
-    userProfile: {},
-    userBooks: [],
     error: null,
     information: null,
     loading: false,
@@ -34,15 +23,15 @@ const store = createStore({
     }),
   ],
   getters: {
-    getUserProfile(state) {
-      return state.userProfile;
-    },
+    // getUserProfile(state) {
+    //   return state.userProfile;
+    // },
     getUserBooks(state) {
-      return state.userBooks;
+      return state.authentication.userProfile.books;
     },
-    isAuthenticated(state) {
-      return state.userProfile.email !== undefined;
-    },
+    // isAuthenticated(state) {
+    //   return state.userProfile.email !== undefined;
+    // },
     getError(state) {
       return state.error;
     },
@@ -54,11 +43,8 @@ const store = createStore({
     },
   },
   mutations: {
-    setUserProfile(state, val) {
-      state.userProfile = val;
-    },
     setUserBooks(state, val) {
-      state.userBooks.push(val);
+      state.authentication.userProfile.books?.push(val) ?? (state.authentication.userProfile.books = [val]);
     },
     setError(state, payload) {
       state.error = payload;
@@ -71,106 +57,24 @@ const store = createStore({
     },
   },
   actions: {
-    // AUTHENTICATION
-    async login({ commit, dispatch }, payload) {
-      commit("setLoading", true);
-      await signInWithEmailAndPassword(auth, payload.email, payload.password)
-        .then((firebaseData) => {
-          dispatch("fetchUserProfile", firebaseData.user);
-          commit("setError", null);
-        })
-        .catch((error) => commit("setError", error))
-        .finally(() => commit("setLoading", false));
-    },
-    async logout({ commit }) {
-      await signOut(auth);
-      commit("setUserProfile", {});
-      router.push({ name: "Login" });
-    },
-    async signup({ commit }, payload) {
-      commit("setLoading", true);
-      await createUserWithEmailAndPassword(auth, payload.email, payload.password)
-        .then(async (userCredential) => {
-          const userID = userCredential.user.uid;
-          await setDoc(doc(db, "users", userID), {
-            displayName: payload.name,
-            email: payload.email,
-            shelfName: payload.name,
-          });
-          commit("setInformation", { code: "sign-up-success" });
-          commit("setError", null);
-        })
-        .catch((error) => {
-          commit("setInformation", null);
-          commit("setError", error);
-        })
-        .finally(() => commit("setLoading", false));
-    },
-    async googleSignIn({ commit, dispatch }) {
-      commit("setLoading", true);
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider)
-        .then(async (result) => {
-          const { isNewUser } = getAdditionalUserInfo(result);
-          if (isNewUser) {
-            await setDoc(doc(db, "users", result.user.uid), {
-              name: result.user.displayName,
-              email: result.user.email,
-              shelfName: result.user.displayName,
-            });
-          }
-          dispatch("fetchUserProfile", result.user);
-          commit("setError", null);
-        })
-        .catch((error) => commit("setError", error))
-        .finally(() => commit("setLoading", false));
-    },
-    async fetchUserProfile({ commit }, user) {
-      const userRef = doc(db, "users", user.uid);
-      await getDoc(userRef)
-        .then((firebaseData) => {
-          const userInfo = firebaseData.data();
-          userInfo.uid = firebaseData.id;
-          commit("setUserProfile", (userInfo ??= {}));
-          if (userInfo) {
-            commit("setError", null);
-            router.push("/");
-          }
-        })
-        .catch((error) => commit("setError", error));
-    },
-    async resetPassword({ commit }, payload) {
-      commit("setLoading", true);
-      await sendPasswordResetEmail(auth, payload.email)
-        .then(() => {
-          commit("setInformation", {
-            resetPassword: { code: "Success", message: "Success! Check your email for the password reset link" },
-          });
-          commit("setError", null);
-        })
-        .catch((error) => {
-          commit("setInformation", null);
-          commit("setError", error);
-        })
-        .finally(() => commit("setLoading", false));
-    },
     // BOOKSHELF
     async updateShelfName({ commit }, payload) {
       commit("setLoading", true);
-      const userRef = doc(db, "users", this.state.userProfile.uid);
+      const userRef = doc(db, "users", this.state.authentication.userProfile.uid);
       await updateDoc(userRef, { shelfName: payload })
         .then(() => {
-          this.state.userProfile.shelfName = payload;
-          commit("setUserProfile", this.state.userProfile);
+          this.state.authentication.userProfile.shelfName = payload;
+          commit("setUserProfile", this.state.authentication.userProfile);
           commit("setError", null);
         })
         .catch((error) => commit("setError", error))
         .finally(() => commit("setLoading", false));
     },
     async addBook({ commit }, payload) {
+      // TODO: NÃO PERMITIR ADICIONAR MESMO LIVRO DUAS VEZES
       commit("setUserBooks", payload);
       commit("setLoading", true);
-      const userID = this.state.userProfile.uid;
+      const userID = this.state.authentication.userProfile.uid;
       const bookRef = doc(db, "books", payload.id);
       try {
         await runTransaction(db, async (transaction) => {
@@ -196,7 +100,7 @@ const store = createStore({
     async removeBook({ commit }, payload) {
       console.log(payload);
       commit("setLoading", true);
-      const userID = this.state.userProfile.uid;
+      const userID = this.state.authentication.userProfile.uid;
       const bookRef = doc(db, "books", payload);
       try {
         await runTransaction(db, async (transaction) => {
@@ -219,6 +123,7 @@ const store = createStore({
       }
     },
   },
+  modules: { authentication },
 });
 
 export default store;
