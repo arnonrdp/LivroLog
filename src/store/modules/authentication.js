@@ -28,6 +28,9 @@ const mutations = {
   setUserProfile(state, val) {
     state.userProfile = val;
   },
+  setUserBooks(state, val) {
+    state.userProfile.books?.push(val) ?? (state.userProfile.books = val);
+  },
 };
 
 const actions = {
@@ -89,7 +92,6 @@ const actions = {
     await getDoc(userRef)
       .then((firebaseData) => {
         const userInfo = firebaseData.data();
-        console.log("userInfo", userInfo);
         userInfo.uid = firebaseData.id;
         commit("setUserProfile", (userInfo ??= {}));
         if (userInfo) {
@@ -99,7 +101,7 @@ const actions = {
       })
       .catch((error) => commit("setError", error));
   },
-  // TODO: ADICIONAR FORMA DE REDEFINIR SENHA
+  // TODO: Adicionar forma de redefinir senha
   async resetPassword({ commit }, payload) {
     commit("setLoading", true);
     await sendPasswordResetEmail(auth, payload.email)
