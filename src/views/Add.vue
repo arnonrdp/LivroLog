@@ -1,5 +1,6 @@
 <template>
   <Header />
+  <!-- TODO: Adicionar alert com temporizador informando sobre a adição de livro -->
   <form action="#" @submit.prevent="submit">
     <Input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" />
   </form>
@@ -44,8 +45,7 @@ export default {
     search() {
       this.loading = true;
       axios
-        // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
-        // const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
+        // TODO: Chamar a API em produção => &key=${process.env.GOOGLE_BOOKS_API_KEY}
         .get(`https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`)
         .then((response) => {
           response.data.items.map((item) => this.books.push({
