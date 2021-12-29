@@ -2,6 +2,7 @@
   "book": {
     "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
     "bookcase": "Estante de {name}",
+    "remove": "Remover livro",
     "search": "Buscar",
     "shelfname": "Nome da Estante",
     "unknown-author": "Autor desconhecido"

@@ -2,6 +2,7 @@
   "book": {
     "addlabel": "Search by title, author, publisher, release, ISBN...",
     "bookcase": "{name}'s Bookcase",
+    "remove": "Remove book",
     "search": "Search",
     "shelfname": "Shelf Name",
     "unknown-author": "Unknown Author"
