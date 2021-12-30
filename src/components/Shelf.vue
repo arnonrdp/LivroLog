@@ -13,12 +13,11 @@
 </template>
 
 <script>
-import Button from "@/components/BaseButton.vue";
-import { db } from "@/firebase";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
-import axios from "axios";
-import { collection, getDocs, query } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { mapGetters } from "vuex";
+import { db } from "../firebase";
+import Button from "./BaseButton.vue";
 
 export default {
   name: "Shelf",
@@ -28,16 +27,16 @@ export default {
     ...mapGetters(["getUserProfile"]),
   },
   async mounted() {
-    this.shelfName = this.getUserProfile.shelfName;
-
     const user = this.getUserProfile;
-    const querySnapshot = await getDocs(query(collection(db, "users", user.uid, "addedBooks")));
+    this.shelfName = user.shelfName;
 
+    const querySnapshot = await getDocs(collection(db, "users", user.uid, "addedBooks"));
     if (querySnapshot.size !== user.books?.length) {
-      console.log("Entrou no IF");
-      this.queryUserBooks(querySnapshot);
+      this.booksFromFirebase(querySnapshot);
     }
-    this.getBooks();
+    setTimeout(() => {
+      this.getBooks();
+    }, 800);
   },
   methods: {
     getBooks() {
@@ -46,37 +45,12 @@ export default {
     removeBook(id) {
       this.$store.dispatch("removeBook", id);
     },
-    queryUserBooks(querySnapshot) {
+    booksFromFirebase(querySnapshot) {
       let userBooks = [];
-      querySnapshot.forEach((book) =>
-        userBooks.push({
-          id: book.id,
-          addedIn: book.data().addedIn,
-          readIn: book.data().readIn,
-        }),
-      );
-      this.$store.commit("setUserBooks", this.searchByID(userBooks));
-    },
-    searchByID(array) {
-      this.$store.commit("setLoading", true);
-      let books = [];
-      array.map((arr) => {
-        axios
-          .get(`https://www.googleapis.com/books/v1/volumes/${arr.id}`)
-          .then((response) => {
-            const book = response.data.volumeInfo;
-            books.push({
-              id: response.data.id,
-              title: book.title,
-              authors: book.authors || [this.$t("book.unknown-author")],
-              ISBN: book.industryIdentifiers?.[0].identifier ?? response.data.id,
-              thumbnail: book.imageLinks?.thumbnail ?? require("../assets/no_cover.jpg"),
-            });
-          })
-          .catch((error) => console.error(error))
-          .finally(() => this.$store.commit("setLoading", false));
+      querySnapshot.forEach((doc) => {
+        userBooks.push({ id: doc.id, ...doc.data() });
       });
-      return books;
+      this.$store.commit("setUserBooks", userBooks);
     },
   },
 };
