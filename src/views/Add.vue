@@ -21,11 +21,11 @@
 </template>
 
 <script>
-import axios from "axios";
-import Header from "@/components/TheHeader.vue";
-import Input from "@/components/BaseInput.vue";
 import Button from "@/components/BaseButton.vue";
+import Input from "@/components/BaseInput.vue";
 import Loading from "@/components/Loading.vue";
+import Header from "@/components/TheHeader.vue";
+import axios from "axios";
 
 export default {
   name: "Add",
@@ -36,25 +36,27 @@ export default {
       results: "",
       shelfName: "",
       books: [],
-      noCover: "",
-      storageValue: [],
       loading: false,
     };
   },
   methods: {
     search() {
       this.loading = true;
+      this.books = [];
       axios
         // TODO: Chamar a API em produção => &key=${process.env.GOOGLE_BOOKS_API_KEY}
         .get(`https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`)
         .then((response) => {
-          response.data.items.map((item) => this.books.push({
-            id: item.id,
-            title: item.volumeInfo.title,
-            authors: item.volumeInfo.authors || [this.$t("book.unknown-author")],
-            ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier ?? item.id,
-            thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? require("../assets/no_cover.jpg"),
-          }));
+          response.data.items.map((item) =>
+            this.books.push({
+              id: item.id,
+              title: item.volumeInfo.title,
+              authors: item.volumeInfo.authors || [this.$t("book.unknown-author")],
+              ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier ?? item.id,
+              thumbnail:
+                item.volumeInfo.imageLinks?.thumbnail.replace("http", "https") ?? require("../assets/no_cover.jpg"),
+            }),
+          );
         })
         .catch((error) => console.error(error))
         .finally(() => (this.loading = false));
