@@ -31,6 +31,10 @@ const mutations = {
   setUserBooks(state, val) {
     state.userProfile.books?.push(val) ?? (state.userProfile.books = val);
   },
+  removeBook(state, id) {
+    const index = state.userProfile.books.findIndex((book) => book.id === id);
+    state.userProfile.books.splice(index, 1);
+  },
 };
 
 const actions = {
