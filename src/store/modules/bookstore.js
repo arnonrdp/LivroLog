@@ -1,9 +1,10 @@
 import { deleteDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import store from "../index";
 
 const getters = {
-  getUserBooks(state) {
-    return state.authentication.userProfile.books;
+  getUserBooks() {
+    return store.getters.getUserProfile.books;
   },
 };
 
@@ -21,7 +22,11 @@ const actions = {
       .finally(() => commit("setLoading", false));
   },
   async addBook({ commit, rootGetters }, payload) {
-    // TODO: Não permitir adicionar o mesmo livro duas vezes
+    if (getters.getUserBooks().some((userBook) => userBook.id === payload.id)) {
+      console.log("Book already exists");
+      return;
+    }
+
     commit("setUserBooks", payload);
     commit("setLoading", true);
 
@@ -32,14 +37,13 @@ const actions = {
       addedIn: new Date(),
       readIn: null,
     });
+    commit("setLoading", false);
   },
   async removeBook({ commit, rootGetters }, payload) {
-    console.log(payload);
-    commit("setLoading", true);
-    const userID = rootGetters.getUserProfile.uid;
+    commit("removeBook", payload);
 
+    const userID = rootGetters.getUserProfile.uid;
     await deleteDoc(doc(db, "users", userID, "addedBooks", payload));
-    //TODO: Remover também do LocalStorage
   },
 };
 
