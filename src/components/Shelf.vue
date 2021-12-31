@@ -1,8 +1,9 @@
 <template>
   <main>
-    <h1>{{ $t("shelf", { name: getUserProfile.shelfName }) }}</h1>
+    <h1>{{ $t("book.bookcase", { name: shelfName }) }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
+        <Button text="X" :title="$t('book.remove')" @click="removeBook(book.id)" />
         <Tooltip :label="book.title" position="is-bottom">
           <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
         </Tooltip>
@@ -12,58 +13,40 @@
 </template>
 
 <script>
-import { auth, db } from "@/firebase";
-import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import { collection, getDocs } from "firebase/firestore";
 import { mapGetters } from "vuex";
+import { db } from "../firebase";
+import Button from "./BaseButton.vue";
 
 export default {
   name: "Shelf",
-  components: { Tooltip },
+  components: { Tooltip, Button },
   data: () => ({ shelfName: "", books: [] }),
   computed: {
     ...mapGetters(["getUserProfile"]),
   },
   async mounted() {
-    /**
-     * TODO: VUEX-BOOK-STATE
-     */
-    const userID = this.getUserProfile.uid;
+    const user = this.getUserProfile;
+    this.shelfName = user.shelfName;
 
-    const storageKey = `Livrero:${userID}`;
-    const storageValue = [];
+    const querySnapshot = await getDocs(collection(db, "users", user.uid, "addedBooks"));
 
-    if (localStorage.getItem(storageKey)) {
-      try {
-        this.storageValue = JSON.parse(localStorage.getItem(storageKey));
-        this.books = this.storageValue;
-      } catch (error) {
-        localStorage.removeItem(storageKey);
-      }
-    } else {
-      const userBooksRef = query(collection(db, "users", userID, "addedBooks"));
-      const querySnapshot = await getDocs(userBooksRef);
+    if (querySnapshot.size === user.books?.length) this.books = user.books;
+    else this.booksFromFirebase(querySnapshot);
+  },
+  methods: {
+    removeBook(id) {
+      this.$store.dispatch("removeBook", id);
+    },
+    booksFromFirebase(querySnapshot) {
+      let userBooks = [];
       querySnapshot.forEach((doc) => {
-        this.books.push({
-          id: doc.id,
-          addedIn: doc.data().addedIn,
-          readIn: doc.data().readIn,
-        });
+        userBooks.push({ id: doc.id, ...doc.data() });
       });
-
-      this.books.map(async (book) => {
-        const booksRef = doc(db, "books", book.id);
-        const bookSnap = await getDoc(booksRef);
-
-        book.authors = bookSnap.data().authors;
-        book.title = bookSnap.data().title;
-        book.thumbnail = bookSnap.data().thumbnail;
-
-        storageValue.push(book);
-        const parsed = JSON.stringify(storageValue);
-        localStorage.setItem(storageKey, parsed);
-      });
-    }
+      this.books = userBooks;
+      this.$store.commit("setUserBooks", userBooks);
+    },
   },
 };
 </script>
@@ -100,6 +83,27 @@ section figure {
   margin: 0 30px;
   max-width: 80px;
   position: relative;
+}
+
+figure button {
+  border-radius: 50%;
+  opacity: 0;
+  padding: 0.3rem 0.6rem;
+  position: absolute;
+  right: -15px;
+  top: 10px;
+  visibility: hidden;
+  z-index: 1;
+}
+
+figure:hover button {
+  opacity: 1;
+  transition: 0.5s;
+  visibility: visible;
+}
+
+figure button:hover {
+  background-color: #ff0e0e;
 }
 
 img {

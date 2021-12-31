@@ -2,7 +2,7 @@
   <Header />
   <!-- <h1>Definições</h1> -->
   <form action="#" @submit.prevent="submit">
-    <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('shelfName')" />
+    <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('book.shelfname')" />
   </form>
   <div class="locale-changer">
     <select v-model="$i18n.locale">

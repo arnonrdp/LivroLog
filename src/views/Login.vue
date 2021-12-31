@@ -51,19 +51,19 @@ export default {
     ...mapGetters(["getError", "getInformation"]),
   },
   methods: {
-    async login() {
-      await this.$store.dispatch("login", { email: this.email, password: this.password });
+    login() {
+      this.$store.dispatch("login", { email: this.email, password: this.password });
     },
-    async signup() {
-      await this.$store.dispatch("signup", { name: this.name, email: this.email, password: this.password });
+    signup() {
+      this.$store.dispatch("signup", { name: this.name, email: this.email, password: this.password });
       this.signUpStatus = this.getError || this.getInformation?.signUp;
     },
-    async resetPassword() {
-      await this.$store.dispatch("resetPassword", { email: this.email });
-      this.resetStatus = this.getError || this.getInformation?.resetPassword;
+    googleSignIn() {
+      this.$store.dispatch("googleSignIn");
     },
-    async googleSignIn() {
-      await this.$store.dispatch("googleSignIn");
+    resetPassword() {
+      this.$store.dispatch("resetPassword", { email: this.email });
+      this.resetStatus = this.getError || this.getInformation?.resetPassword;
     },
   },
 };

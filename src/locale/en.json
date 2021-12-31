@@ -1,19 +1,19 @@
 {
+  "book": {
+    "addlabel": "Search by title, author, publisher, release, ISBN...",
+    "bookcase": "{name}'s Bookcase",
+    "remove": "Remove book",
+    "search": "Search",
+    "shelfname": "Shelf Name",
+    "unknown-author": "Unknown Author"
+  },
+  "followFriends": "Follow Friends",
   "menu": {
     "add": "Add",
     "friends": "Friends",
     "home": "Home",
     "settings": "Settings"
   },
-  "shelf": "{name}'s Bookcase",
-  "search": "Search",
-  "addlabel": "Search by title, author, publisher, release, ISBN...",
-  "message": {
-    "testing": "Below this line I'm just testing a few things.",
-    "counter": "Counter"
-  },
-  "shelfName": "Shelf Name",
-  "followFriends": "Follow Friends",
   "sign": {
     "accountCreated": "Your account has been created successfully!",
     "auth/email-already-in-use": "Email already exists!",
@@ -26,9 +26,9 @@
     "auth/user-not-found": "User not found",
     "auth/wrong-password": "Incorrect password",
     "loginTitle": "A PLACE FOR YOU TO ORGANIZE\nEVERYTHING YOU HAVE READ",
+    "logout": "Logout",
     "mail": "Email",
     "name": "Name",
-    "logout": "Logout",
     "password": "Password",
     "signin": "Sign In",
     "signup": "Sign Up"

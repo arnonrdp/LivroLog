@@ -1,12 +1,13 @@
 <template>
   <Header />
+  <!-- TODO: Adicionar alert com temporizador informando sobre a adição de livro -->
   <form action="#" @submit.prevent="submit">
-    <Input v-model="seek" type="text" :label="$t('addlabel')" @keyup.enter="search" />
+    <Input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" />
   </form>
   <Loading v-show="loading" />
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
-      <Button text="+" @click="add(book.id, book.title, book.authors, book.thumbnail)" />
+      <Button text="+" @click="addBook(book)" />
       <a><img :src="book.thumbnail" alt="" /></a>
       <figcaption>{{ book.title }}</figcaption>
       <figcaption id="authors">
@@ -20,8 +21,6 @@
 </template>
 
 <script>
-import { auth, db } from "@/firebase";
-import { doc, getDoc, setDoc, arrayUnion, updateDoc, runTransaction } from "firebase/firestore";
 import axios from "axios";
 import Header from "@/components/TheHeader.vue";
 import Input from "@/components/BaseInput.vue";
@@ -36,93 +35,33 @@ export default {
       seek: "",
       results: "",
       shelfName: "",
-      books: {},
+      books: [],
       noCover: "",
-      unknown: ["Unknown"],
       storageValue: [],
       loading: false,
     };
   },
-  async mounted() {
-    const userID = auth.currentUser.uid;
-    const userRef = doc(db, "users", userID);
-    const userSnap = await getDoc(userRef);
-
-    this.shelfName = userSnap.data().shelfName;
-
-    const storageKey = `Livrero:${this.shelfName}`;
-
-    if (localStorage.getItem(storageKey)) {
-      try {
-        this.storageValue = JSON.parse(localStorage.getItem(storageKey));
-      } catch (error) {
-        localStorage.removeItem(storageKey);
-      }
-    }
-  },
   methods: {
     search() {
-      this.books = {};
-      this.noCover = require("../assets/no_cover.jpg");
       this.loading = true;
       axios
-        .get(
-          // TODO: CHAMAR A API EM PRODUÇÃO => &key=${API}
-          // const API = "AIzaSyAJGXLBDW269OHGuSblb0FTg80EmdLLdBQ";
-          `https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`,
-        )
+        // TODO: Chamar a API em produção => &key=${process.env.GOOGLE_BOOKS_API_KEY}
+        .get(`https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`)
         .then((response) => {
-          this.books = response.data.items.map((item) => ({
+          response.data.items.map((item) => this.books.push({
             id: item.id,
             title: item.volumeInfo.title,
-            authors: item.volumeInfo.authors || this.unknown,
-            thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? this.noCover,
+            authors: item.volumeInfo.authors || [this.$t("book.unknown-author")],
+            ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier ?? item.id,
+            thumbnail: item.volumeInfo.imageLinks?.thumbnail ?? require("../assets/no_cover.jpg"),
           }));
         })
         .catch((error) => console.error(error))
         .finally(() => (this.loading = false));
     },
-    async add(bookID, title, authors, thumbnail) {
-      const tempStorage = {};
-      tempStorage.id = bookID;
-      tempStorage.addedIn = new Date();
-      tempStorage.readIn = "";
-      tempStorage.authors = authors;
-      tempStorage.thumbnail = thumbnail;
-      tempStorage.title = title;
-
-      this.storageValue.push(tempStorage);
-      const storageKey = `Livrero:${this.shelfName}`;
-      const parsed = JSON.stringify(this.storageValue);
-      localStorage.setItem(storageKey, parsed);
-
-      const userID = auth.currentUser.uid;
-      const booksRef = doc(db, "books", bookID);
-      try {
-        await runTransaction(db, async (transaction) => {
-          const sfDoc = await transaction.get(booksRef);
-          if (!sfDoc.exists()) {
-            setDoc(doc(db, "books", bookID), {
-              title: title,
-              authors: authors,
-              thumbnail: thumbnail,
-              readers: arrayUnion(userID),
-            });
-          } else {
-            await updateDoc(booksRef, {
-              readers: arrayUnion(userID),
-            });
-          }
-        });
-      } catch (err) {
-        console.error("ERRO: ", err);
-      } finally {
-        await setDoc(doc(db, "users", userID, "addedBooks", bookID), {
-          bookRef: booksRef,
-          addedIn: new Date(),
-          readIn: "",
-        });
-      }
+    addBook(book) {
+      book = { ...book };
+      this.$store.dispatch("addBook", book);
     },
   },
 };
@@ -151,17 +90,6 @@ form input {
   padding: 10px;
   width: 70%;
 }
-
-/* form button {
-    margin: 0;
-    position: absolute;
-    right: 9%;
-    top: -1px;
-  }
-
-  input:focus ~ button {
-    right: 6%;
-  } */
 
 #results {
   align-items: baseline;
