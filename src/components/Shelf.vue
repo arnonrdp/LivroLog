@@ -3,7 +3,7 @@
     <h1>{{ $t("book.bookcase", { name: shelfName }) }}</h1>
     <section>
       <figure v-for="book in books" :key="book.id">
-        <Button text="🗑" :title="$t('book.remove')" @click="removeBook(book.id)" />
+        <Button text="X" :title="$t('book.remove')" @click="removeBook(book.id)" />
         <Tooltip :label="book.title" position="is-bottom">
           <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
         </Tooltip>
@@ -31,17 +31,11 @@ export default {
     this.shelfName = user.shelfName;
 
     const querySnapshot = await getDocs(collection(db, "users", user.uid, "addedBooks"));
-    if (querySnapshot.size !== user.books?.length) {
-      this.booksFromFirebase(querySnapshot);
-    }
-    setTimeout(() => {
-      this.getBooks();
-    }, 800);
+
+    if (querySnapshot.size === user.books?.length) this.books = user.books;
+    else this.booksFromFirebase(querySnapshot);
   },
   methods: {
-    getBooks() {
-      this.books = this.getUserProfile.books;
-    },
     removeBook(id) {
       this.$store.dispatch("removeBook", id);
     },
@@ -50,6 +44,7 @@ export default {
       querySnapshot.forEach((doc) => {
         userBooks.push({ id: doc.id, ...doc.data() });
       });
+      this.books = userBooks;
       this.$store.commit("setUserBooks", userBooks);
     },
   },
