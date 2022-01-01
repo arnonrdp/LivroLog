@@ -3,15 +3,17 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "start": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "start": "vue-cli-service serve"
   },
   "dependencies": {
     "@adamdehaven/vue-custom-tooltip": "^2.5.1",
+    "@quasar/extras": "^1.0.0",
     "axios": "^0.24.0",
     "core-js": "^3.20.1",
     "firebase": "^9.6.1",
     "firebaseui": "^6.0.0",
+    "quasar": "^2.0.0",
     "secure-ls": "^1.2.6",
     "vue": "^3.0.0",
     "vue-axios": "^3.4.0",
@@ -27,6 +29,9 @@
     "@vue/compiler-sfc": "^3.2.26",
     "glob-parent": "^6.0.2",
     "nth-check": ">=2.0.1",
-    "set-value": ">=4.1.0"
+    "sass": "1.32.12",
+    "sass-loader": "^10.1.0",
+    "set-value": ">=4.1.0",
+    "vue-cli-plugin-quasar": "~4.0.4"
   }
 }
