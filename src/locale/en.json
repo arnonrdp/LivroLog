@@ -5,7 +5,8 @@
     "remove": "Remove book",
     "search": "Search",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author"
+    "unknown-author": "Unknown Author",
+    "added-to-shelf": "Book added to your shelf"
   },
   "followFriends": "Follow Friends",
   "menu": {

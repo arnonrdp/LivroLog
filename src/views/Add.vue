@@ -1,6 +1,5 @@
 <template>
   <Header />
-  <!-- TODO: Adicionar alert com temporizador informando sobre a adição de livro -->
   <form action="#" @submit.prevent="submit">
     <Input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" />
   </form>
@@ -64,6 +63,12 @@ export default {
     addBook(book) {
       book = { ...book };
       this.$store.dispatch("addBook", book);
+      this.showNotification();
+    },
+    showNotification() {
+      const message = this.$t('book.added-to-shelf');
+      const position = "top-right";
+      this.$q.notify({ message, position });
     },
   },
 };

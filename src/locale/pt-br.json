@@ -5,7 +5,8 @@
     "remove": "Remover livro",
     "search": "Buscar",
     "shelfname": "Nome da Estante",
-    "unknown-author": "Autor desconhecido"
+    "unknown-author": "Autor desconhecido",
+    "added-to-shelf": "Livro adicionado à sua estante"
   },
   "followFriends": "Seguir Amigos",
   "menu": {
