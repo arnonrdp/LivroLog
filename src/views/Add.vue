@@ -1,12 +1,26 @@
 <template>
   <Header />
-  <form action="#" @submit.prevent="submit">
-    <Input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" />
+  <form action="#" @submit.prevent="submit" class="q-pa-md">
+    <q-input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" dense>
+      <template v-slot:prepend>
+        <q-icon name="search" />
+      </template>
+      <template v-slot:append>
+        <q-icon
+          name="close"
+          @click="
+            seek = '';
+            books = '';
+          "
+          class="cursor-pointer"
+        />
+      </template>
+    </q-input>
   </form>
   <Loading v-show="loading" />
   <div id="results">
     <figure v-for="(book, index) in books" :key="index">
-      <Button text="+" @click="addBook(book)" />
+      <q-btn round color="primary" icon="add" @click="addBook(book)" />
       <a><img :src="book.thumbnail" alt="" /></a>
       <figcaption>{{ book.title }}</figcaption>
       <figcaption id="authors">
@@ -66,7 +80,7 @@ export default {
       this.showNotification();
     },
     showNotification() {
-      const message = this.$t('book.added-to-shelf');
+      const message = this.$t("book.added-to-shelf");
       const position = "top-right";
       this.$q.notify({ message, position });
     },
@@ -86,18 +100,6 @@ form {
   }
 }
 
-form input {
-  background-clip: padding-box;
-  background-color: #dee3e6;
-  border: 0.5px solid #d1d9e6;
-  border-radius: 18px;
-  box-shadow: var(--low-shadow);
-  outline: 0;
-  overflow: visible;
-  padding: 10px;
-  width: 70%;
-}
-
 #results {
   align-items: baseline;
   display: flex;
@@ -107,18 +109,19 @@ form input {
 
 figure {
   padding-top: 5px;
+  position: relative;
 }
 
 figure button {
-  margin: -2.5rem 2.5rem;
   opacity: 0;
   position: absolute;
+  right: -1.5rem;
+  top: -1rem;
   visibility: hidden;
 }
 
 figure:hover button,
 figure button:hover {
-  font-weight: bolder;
   opacity: 1;
   transition: 0.5s;
   visibility: visible;

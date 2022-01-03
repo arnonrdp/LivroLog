@@ -9,16 +9,14 @@
     <q-tab-panels v-model="tab" animated default>
       <q-tab-panel name="account" default>
         <div class="text-h6">Account and Profile</div>
-        <form action="#" @submit.prevent="submit">
-          <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('book.shelfname')" />
-        </form>
+          <q-input v-model="shelfName" type="text" :label="$t('book.shelfname')" @keyup.enter="updateShelfName" />
         <q-select v-model="locale" :options="localeOptions" label="Language" emit-value map-options options-dense>
           <template>
             <q-icon name="translate" />
           </template>
         </q-select>
         <br />
-        <Button :text="$t('sign.logout')" @click="logout" />
+        <q-btn color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
       </q-tab-panel>
       <q-tab-panel name="books">
         <div class="text-h6">Books</div>
