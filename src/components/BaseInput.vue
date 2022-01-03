@@ -52,8 +52,8 @@ input ~ label {
   position: absolute;
   top: 6px;
   transition: 0.3s;
-  /* width: 100%;
-  z-index: -1; */
+  /* width: 100%; */
+  z-index: -1;
 }
 
 input:focus ~ label,
