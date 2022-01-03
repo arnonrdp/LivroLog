@@ -61,7 +61,7 @@ html {
 body {
   margin: 0;
   background-color: var(--primary-bg);
-  white-space: pre-line;
+  /* white-space: pre-line; */
 }
 
 #app {
