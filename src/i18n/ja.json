@@ -1,7 +1,7 @@
 {
   "book": {
     "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
-    "bookcase": "{名前}の本棚",
+    "bookcase": "{name} シェルフ",
     "remove": "本を削除する",
     "search": "検索",
     "shelfname": "棚名",

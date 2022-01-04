@@ -4,7 +4,7 @@ import { Quasar } from "quasar";
 import { createApp } from "vue";
 import VueAxios from "vue-axios";
 import App from "./App.vue";
-import { i18n } from "./locale/translation.js";
+import { i18n } from "./i18n/index";
 import quasarUserOptions from "./quasar-user-options";
 import router from "./router";
 import store from "./store/index";

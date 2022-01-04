@@ -1,4 +1,4 @@
-import { createI18n } from "vue-i18n/index";
+import { createI18n } from "vue-i18n";
 import en from "./en.json";
 import ja from "./ja.json";
 import pt from "./pt-br.json";
