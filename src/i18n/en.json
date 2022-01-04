@@ -43,5 +43,8 @@
     "sign-google": "Sign in with Google",
     "signin": "Sign In",
     "signup": "Sign Up"
+  },
+  "friends": {
+    "feature-under-dev": "This feature is under development."
   }
 }

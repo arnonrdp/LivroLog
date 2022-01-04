@@ -43,5 +43,8 @@
     "sign-google": "Googleでサインイン",
     "signin": "ログイン",
     "signup": "サインアップ"
+  },
+  "friends": {
+    "feature-under-dev": "この機能は開発中です。"
   }
 }

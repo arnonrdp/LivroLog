@@ -43,5 +43,8 @@
     "sign-google": "Entrar com Google",
     "signin": "Entrar",
     "signup": "Registrar"
+  },
+  "friends": {
+    "feature-under-dev": "Este recurso está em desenvolvimento."
   }
 }
