@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-mx-sm">
+  <q-page class="q-mx-sm non-selectable">
     <Shelf :shelfName="shelfName" :books="books" @emitID="removeBook" />
   </q-page>
 </template>
@@ -42,9 +42,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-* {
-  user-select: none;
-}
-</style>
