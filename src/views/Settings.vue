@@ -15,7 +15,7 @@
           </template>
         </q-select>
         <br />
-        <q-btn color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
+        <q-btn flat color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
       </q-tab-panel>
       <q-tab-panel name="books">
         <div class="text-h6">Books</div>
@@ -28,13 +28,10 @@
 </template>
 
 <script>
-import Button from "@/components/BaseButton.vue";
-import Input from "@/components/BaseInput.vue";
-import Header from "@/components/TheHeader.vue";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
 import { ref } from "vue";
-import { mapGetters } from "vuex";
 import { useI18n } from "vue-i18n";
+import { mapGetters } from "vuex";
 
 export default {
   name: "Settings",
@@ -53,7 +50,7 @@ export default {
       tab: ref("account"),
     };
   },
-  components: { Header, Input, Button, Tooltip },
+  components: { Tooltip },
   computed: {
     ...mapGetters(["getUserProfile"]),
   },
