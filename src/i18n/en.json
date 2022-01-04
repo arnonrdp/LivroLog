@@ -1,12 +1,12 @@
 {
   "book": {
+    "added-to-shelf": "Book added to your shelf",
     "addlabel": "Search by title, author, publisher, release, ISBN...",
     "bookcase": "{name}'s Bookcase",
     "remove": "Remove book",
     "search": "Search",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author",
-    "added-to-shelf": "Book added to your shelf"
+    "unknown-author": "Unknown Author"
   },
   "followFriends": "Follow Friends",
   "menu": {
@@ -14,6 +14,12 @@
     "friends": "Friends",
     "home": "Home",
     "settings": "Settings"
+  },
+  "settings": {
+    "language": "Language",
+    "account-profile": "Account and Profile",
+    "account": "Account",
+    "books": "Books"
   },
   "sign": {
     "accountCreated": "Your account has been created successfully!",
@@ -26,16 +32,16 @@
     "auth/uid-already-exists": "User already exists!",
     "auth/user-not-found": "User not found",
     "auth/wrong-password": "Incorrect password",
+    "forgot-password": "I forgot my password",
     "loginTitle": "A PLACE FOR YOU TO ORGANIZE\nEVERYTHING YOU HAVE READ",
     "logout": "Logout",
     "mail": "Email",
     "name": "Name",
     "password": "Password",
-    "signin": "Sign In",
-    "signup": "Sign Up",
-    "sign-google": "Sign in with Google",
+    "recover": "Recover",
     "reset": "Reset",
-    "forgot-password": "I forgot my password",
-    "recover": "Recover"
+    "sign-google": "Sign in with Google",
+    "signin": "Sign In",
+    "signup": "Sign Up"
   }
 }
