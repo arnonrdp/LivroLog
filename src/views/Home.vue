@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-mx-sm">
-    <Shelf :shelfName="shelfName" :books="books" />
+    <Shelf :shelfName="shelfName" :books="books" @emitID="removeBook" />
   </q-page>
 </template>
 

@@ -2,7 +2,14 @@
   <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
   <section>
     <figure v-for="book in books" :key="book.id">
-      <q-btn round color="negative" icon="close" size="sm" :title="$t('book.remove')" @click="removeBook(book.id)" />
+      <q-btn
+        round
+        color="negative"
+        icon="close"
+        size="sm"
+        :title="$t('book.remove')"
+        @click="$emit('emitID', book.id)"
+      />
       <Tooltip :label="book.title" position="is-bottom">
         <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
       </Tooltip>
@@ -17,15 +24,10 @@ export default {
   name: "Shelf",
   components: { Tooltip },
   props: {
-    shelfName: {
-      type: String,
-      required: true,
-    },
-    books: {
-      type: Array,
-      required: true,
-    },
+    shelfName: { type: String, required: true },
+    books: { type: Array, required: true },
   },
+  emits: ["emitID"],
 };
 </script>
 
