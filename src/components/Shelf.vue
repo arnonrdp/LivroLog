@@ -1,50 +1,29 @@
 <template>
-  <div>
-    <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
-    <section>
-      <figure v-for="book in books" :key="book.id">
-        <q-btn round color="negative" icon="close" size="sm" :title="$t('book.remove')" @click="removeBook(book.id)" />
-        <Tooltip :label="book.title" position="is-bottom">
-          <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
-        </Tooltip>
-      </figure>
-    </section>
-  </div>
+  <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
+  <section>
+    <figure v-for="book in books" :key="book.id">
+      <q-btn round color="negative" icon="close" size="sm" :title="$t('book.remove')" @click="removeBook(book.id)" />
+      <Tooltip :label="book.title" position="is-bottom">
+        <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+      </Tooltip>
+    </figure>
+  </section>
 </template>
 
 <script>
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
-import { collection, getDocs } from "firebase/firestore";
-import { mapGetters } from "vuex";
-import { db } from "../firebase";
 
 export default {
   name: "Shelf",
   components: { Tooltip },
-  data: () => ({ shelfName: "", books: [] }),
-  computed: {
-    ...mapGetters(["getUserProfile"]),
-  },
-  async mounted() {
-    const user = this.getUserProfile;
-    this.shelfName = user.shelfName;
-
-    const querySnapshot = await getDocs(collection(db, "users", user.uid, "addedBooks"));
-
-    if (querySnapshot.size === user.books?.length) this.books = user.books;
-    else this.booksFromFirebase(querySnapshot);
-  },
-  methods: {
-    removeBook(id) {
-      this.$store.dispatch("removeBook", id);
+  props: {
+    shelfName: {
+      type: String,
+      required: true,
     },
-    booksFromFirebase(querySnapshot) {
-      let userBooks = [];
-      querySnapshot.forEach((doc) => {
-        userBooks.push({ id: doc.id, ...doc.data() });
-      });
-      this.books = userBooks;
-      this.$store.commit("setUserBooks", userBooks);
+    books: {
+      type: Array,
+      required: true,
     },
   },
 };
