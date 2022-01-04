@@ -1,5 +1,6 @@
 {
   "book": {
+    "added-to-shelf": "Livro adicionado à sua estante",
     "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
     "bookcase": "Estante de {name}",
     "remove": "Remover livro",
@@ -14,6 +15,12 @@
     "home": "Início",
     "settings": "Ajustes"
   },
+  "settings": {
+    "language": "Idioma",
+    "account-profile": "Conta e Perfil",
+    "account": "Conta",
+    "books": "Livros"
+  },
   "sign": {
     "accountCreated": "Sua conta foi criada com sucesso!",
     "auth/email-already-in-use": "E-mail já existe!",
@@ -25,11 +32,15 @@
     "auth/uid-already-exists": "Usuário já existe!",
     "auth/user-not-found": "Usuário não encontrado",
     "auth/wrong-password": "Senha incorreta",
+    "forgot-password": "Esqueci minha senha",
     "loginTitle": "UM LUGAR PRA VOCÊ ORGANIZAR\nTUDO AQUILO QUE VOCÊ JÁ LEU",
     "logout": "Sair",
     "mail": "E-mail",
     "name": "Nome",
     "password": "Senha",
+    "recover": "Recuperar",
+    "reset": "Limpar",
+    "sign-google": "Entrar com Google",
     "signin": "Entrar",
     "signup": "Registrar"
   },

@@ -1,7 +1,8 @@
 {
   "book": {
+    "added-to-shelf": "棚に追加された本",
     "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
-    "bookcase": "{名前}の本棚",
+    "bookcase": "{name} シェルフ",
     "remove": "本を削除する",
     "search": "検索",
     "shelfname": "棚名",
@@ -14,6 +15,12 @@
     "home": "家",
     "settings": "設定"
   },
+  "settings": {
+    "language": "言語",
+    "account-profile": "アカウントとプロファイル",
+    "account": "アカウント",
+    "books": "本"
+  },
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
     "auth/email-already-in-use": "メールは既に存在します！",
@@ -25,11 +32,15 @@
     "auth/uid-already-exists": "このユーザーは既に存在します！",
     "auth/user-not-found": "ユーザーが見つかりません",
     "auth/wrong-password": "パスワードが正しくありません",
+    "forgot-password": "パスワードを忘れた",
     "loginTitle": "あなたが組織するための場所\n\nあなたが読んだすべて",
     "logout": "ログアウト",
     "mail": "Eメール",
     "name": "名前",
     "password": "パスワード",
+    "recover": "回復",
+    "reset": "リセット",
+    "sign-google": "Googleでサインイン",
     "signin": "ログイン",
     "signup": "サインアップ"
   },

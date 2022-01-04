@@ -1,5 +1,6 @@
 {
   "book": {
+    "added-to-shelf": "Book added to your shelf",
     "addlabel": "Search by title, author, publisher, release, ISBN...",
     "bookcase": "{name}'s Bookcase",
     "remove": "Remove book",
@@ -14,6 +15,12 @@
     "home": "Home",
     "settings": "Settings"
   },
+  "settings": {
+    "language": "Language",
+    "account-profile": "Account and Profile",
+    "account": "Account",
+    "books": "Books"
+  },
   "sign": {
     "accountCreated": "Your account has been created successfully!",
     "auth/email-already-in-use": "Email already exists!",
@@ -25,11 +32,15 @@
     "auth/uid-already-exists": "User already exists!",
     "auth/user-not-found": "User not found",
     "auth/wrong-password": "Incorrect password",
+    "forgot-password": "I forgot my password",
     "loginTitle": "A PLACE FOR YOU TO ORGANIZE\nEVERYTHING YOU HAVE READ",
     "logout": "Logout",
     "mail": "Email",
     "name": "Name",
     "password": "Password",
+    "recover": "Recover",
+    "reset": "Reset",
+    "sign-google": "Sign in with Google",
     "signin": "Sign In",
     "signup": "Sign Up"
   },

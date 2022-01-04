@@ -1,0 +1,53 @@
+@import "./quasar.variables.scss";
+@import "~quasar-styl";
+// @import '~quasar-addon-styl';
+
+html {
+  font-size: 16px;
+}
+@media screen and (max-width: 720px) {
+  html {
+    font-size: 15px;
+  }
+}
+@media screen and (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+@media screen and (max-width: 560px) {
+  html {
+    font-size: 13px;
+  }
+}
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+}
+@media screen and (max-width: 400px) {
+  html {
+    font-size: 11px;
+  }
+}
+@media screen and (max-width: 320px) {
+  html {
+    font-size: 10px;
+  }
+}
+@media screen and (max-width: 240px) {
+  html {
+    font-size: 9px;
+  }
+}
+
+body {
+  background-color: $primary-bg;
+  margin: 0;
+}
+
+#app {
+  color: $primary-text;
+  font-family: "SF Pro", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  text-align: center;
+}

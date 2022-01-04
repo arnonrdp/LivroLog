@@ -1,34 +1,23 @@
 <template>
-  <header>
-    <router-link to="/"><img src="/logo.svg" alt="Logotipo"/></router-link>
+  <header v-if="this.$route.path !== '/login'">
+    <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
     <nav>
-      <router-link to="/">
-        <img src="@/assets/books.svg" />&nbsp;{{ $t("menu.home") }}
-      </router-link>
-      <router-link to="/add">
-        <img src="@/assets/search.svg" />&nbsp;{{ $t("menu.add") }}
-      </router-link>
-      <router-link to="/friends">
-        <img src="@/assets/people.svg" />&nbsp;{{ $t("menu.friends") }}
-      </router-link>
-      <router-link to="/settings">
-        <img src="@/assets/settings.svg" />&nbsp;{{ $t("menu.settings") }}
-      </router-link>
+      <router-link to="/"> <img src="@/assets/books.svg" />&nbsp;{{ $t("menu.home") }} </router-link>
+      <router-link to="/add"> <img src="@/assets/search.svg" />&nbsp;{{ $t("menu.add") }} </router-link>
+      <router-link to="/friends"> <img src="@/assets/people.svg" />&nbsp;{{ $t("menu.friends") }} </router-link>
+      <router-link to="/settings"> <img src="@/assets/settings.svg" />&nbsp;{{ $t("menu.settings") }} </router-link>
     </nav>
   </header>
 </template>
 
 <script>
-export default {
-  name: "Header",
-};
+export default { name: "Header" };
 </script>
 
 <style scoped>
 header {
   align-items: center;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   margin-bottom: 25px;

@@ -1,49 +1,80 @@
 <template>
-  <div class="container">
+  <q-page padding>
     <header>
-      <h1>{{ $t("sign.loginTitle") }}</h1>
+      <h1 class="text-h3">{{ $t("sign.loginTitle") }}</h1>
     </header>
-    <main>
-      <img src="/logo.svg" alt="logotipo" />
-      <div class="menu">
-        <Button :text="$t('sign.signin')" @click="activetab = '1'" :class="activetab === '1' ? 'active' : ''" />
-        <Button :text="$t('sign.signup')" @click="activetab = '2'" :class="activetab === '2' ? 'active' : ''" />
-      </div>
-      <form v-if="activetab === '1'" action="#" @submit.prevent="submit">
-        <Input v-model="email" type="email" :label="$t('sign.mail')" />
-        <Input v-model="password" type="password" :label="$t('sign.password')" autocomplete />
-        <Button text="Login" @click="login" />
-      </form>
+    <q-card>
+      <q-card-section>
+        <img src="/logo.svg" alt="logotipo" />
+      </q-card-section>
+      <q-tabs v-model="tab" class="text-teal" dense>
+        <q-tab name="signup" :label="$t('sign.signup')" />
+        <q-tab name="signin" :label="$t('sign.signin')" />
+        <q-tab name="recover" :label="$t('sign.recover')" />
+      </q-tabs>
+      <q-tab-panels v-model="tab" animated>
+        <q-tab-panel name="signup">
+          <q-form @submit="signup" @reset="onReset" class="q-gutter-md">
+            <q-input v-model="name" type="text" :label="$t('sign.name')" />
+            <q-input v-model="email" type="email" :label="$t('sign.mail')" />
+            <q-input v-model="password" type="password" :label="$t('sign.password')" />
+            <div>
+              <q-btn type="submit" :label="$t('sign.signup')" color="primary" />
+              <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
+            </div>
+          </q-form>
+        </q-tab-panel>
+        <q-tab-panel name="signin">
+          <q-form @submit="login" @reset="onReset" class="q-gutter-md">
+            <q-input v-model="email" type="email" :label="$t('sign.mail')" />
+            <q-input v-model="password" type="password" :label="$t('sign.password')" />
+            <div>
+              <q-btn type="submit" :label="$t('sign.signin')" color="primary" />
+              <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
+            </div>
+          </q-form>
+        </q-tab-panel>
+        <q-tab-panel name="recover">
+          <q-form @submit="resetPassword" @reset="onReset" class="q-gutter-md">
+            <q-input v-model="email" type="email" :label="$t('sign.mail')" />
+            <div>
+              <q-btn type="submit" :label="$t('sign.recover')" color="primary" />
+              <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
+            </div>
+          </q-form>
+        </q-tab-panel>
+      </q-tab-panels>
 
-      <form v-if="activetab === '2'" action="#" @submit.prevent="submit">
-        <Input v-model="name" type="text" :label="$t('sign.name')" />
-        <Input v-model="email" type="email" :label="$t('sign.mail')" />
-        <Input v-model="password" type="password" :label="$t('sign.password')" autocomplete />
-        <Button :text="$t('sign.signup')" @click="signup" />
-      </form>
-      <hr />
-      <Button img="google" @click="googleSignIn">
-        <img src="/google.svg" alt="" />
-      </Button>
-      <p v-if="getError">{{ $t("sign." + getError.code) }}</p>
-    </main>
-  </div>
+      <q-card-section>
+        <q-separator />
+      </q-card-section>
+
+      <q-btn @click="googleSignIn" class="btn-google">
+        <img src="/google.svg" alt="" />&nbsp;
+        <span>{{ $t("sign.sign-google") }}</span>
+      </q-btn>
+
+      <p v-if="getError">
+        <q-card-section>
+          <q-separator />
+        </q-card-section>
+        {{ $t("sign." + getError.code) }}
+      </p>
+    </q-card>
+  </q-page>
 </template>
 
 <script>
-import Input from "@/components/BaseInput.vue";
-import Button from "@/components/BaseButton.vue";
+import { ref } from "vue";
 import { mapGetters } from "vuex";
 
 export default {
   name: "Login",
-  components: { Input, Button },
+  setup: () => ({ tab: ref("signin") }),
   data: () => ({
-    activetab: "1",
     name: "",
     email: "",
     password: "",
-    formMessage: "",
     signUpStatus: {},
     resetStatus: {},
   }),
@@ -65,49 +96,49 @@ export default {
       this.$store.dispatch("resetPassword", { email: this.email });
       this.resetStatus = this.getError || this.getInformation?.resetPassword;
     },
+    onReset() {
+      this.name = "";
+      this.email = "";
+      this.password = "";
+    },
   },
 };
 </script>
 
 <style scoped>
-.container {
+.q-page {
   background-image: url("../assets/bg_login.jpg");
   background-position: top center;
   background-repeat: no-repeat;
   background-size: cover;
   font-family: "SF Pro", sans-serif;
   height: 100vh;
+  padding: 0 1em;
   text-align: center;
 }
 
 header {
+  mix-blend-mode: soft-light;
   padding: 3em 0;
 }
 
-header h1 {
-  mix-blend-mode: soft-light;
-}
-
-main {
-  background-color: var(--primary-bg);
-  border-radius: 6px;
-  margin: auto;
-  padding: 2em 1em 0.5em;
-  user-select: none;
-  width: 20em;
+.q-card {
+  margin: 0 auto;
+  max-width: 400px;
+  padding: 2em;
 }
 
 img[alt="logotipo"] {
-  margin-bottom: 1.5em;
   width: 15em;
 }
 
-.menu {
-  display: flex;
+.btn-google {
+  background-color: #fff;
+  margin-top: 1em;
+  padding: 0.5em 1em;
 }
 
-.menu button {
-  margin: 0 1.5em;
-  width: 100%;
+.btn-google img {
+  margin-right: 0.5em;
 }
 </style>

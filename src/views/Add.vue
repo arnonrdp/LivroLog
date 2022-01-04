@@ -1,35 +1,37 @@
 <template>
-  <Header />
-  <!-- TODO: Adicionar alert com temporizador informando sobre a adição de livro -->
-  <form action="#" @submit.prevent="submit">
-    <Input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" />
-  </form>
-  <Loading v-show="loading" />
-  <div id="results">
-    <figure v-for="(book, index) in books" :key="index">
-      <Button text="+" @click="addBook(book)" />
-      <a><img :src="book.thumbnail" alt="" /></a>
-      <figcaption>{{ book.title }}</figcaption>
-      <figcaption id="authors">
-        <span v-for="(author, i) in book.authors" :key="i">
-          <span>{{ author }}</span>
-          <span v-if="i + 1 < book.authors.length">, </span>
-        </span>
-      </figcaption>
-    </figure>
-  </div>
+  <q-page padding>
+    <q-input v-model="seek" type="text" class="q-py-lg" :label="$t('book.addlabel')" @keyup.enter="search" dense>
+      <template v-slot:prepend>
+        <q-icon name="search" />
+      </template>
+      <template v-slot:append>
+        <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
+      </template>
+    </q-input>
+    <Loading v-show="loading" />
+    <div id="results">
+      <figure v-for="(book, index) in books" :key="index">
+        <q-btn round color="primary" icon="add" @click="addBook(book)" />
+        <a><img :src="book.thumbnail" alt="" /></a>
+        <figcaption>{{ book.title }}</figcaption>
+        <figcaption id="authors">
+          <span v-for="(author, i) in book.authors" :key="i">
+            <span class="text-body2 text-weight-bold">{{ author }}</span>
+            <span v-if="i + 1 < book.authors.length">, </span>
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </q-page>
 </template>
 
 <script>
-import Button from "@/components/BaseButton.vue";
-import Input from "@/components/BaseInput.vue";
 import Loading from "@/components/Loading.vue";
-import Header from "@/components/TheHeader.vue";
 import axios from "axios";
 
 export default {
   name: "Add",
-  components: { Header, Input, Button, Loading },
+  components: { Loading },
   data() {
     return {
       seek: "",
@@ -40,6 +42,10 @@ export default {
     };
   },
   methods: {
+    clearSearch() {
+      this.seek = "";
+      this.books = [];
+    },
     search() {
       this.loading = true;
       this.books = [];
@@ -64,33 +70,28 @@ export default {
     addBook(book) {
       book = { ...book };
       this.$store.dispatch("addBook", book);
+      this.showNotification();
+    },
+    showNotification() {
+      const message = this.$t("book.added-to-shelf");
+      const position = "top-right";
+      const timeout = 2500;
+      this.$q.notify({ message, position, timeout });
     },
   },
 };
 </script>
 
 <style scoped>
-form {
+.q-input {
   margin: auto;
   width: 50%;
 }
 
 @media screen and (max-width: 840px) {
-  form {
+  .q-input {
     width: 100%;
   }
-}
-
-form input {
-  background-clip: padding-box;
-  background-color: #dee3e6;
-  border: 0.5px solid #d1d9e6;
-  border-radius: 18px;
-  box-shadow: var(--low-shadow);
-  outline: 0;
-  overflow: visible;
-  padding: 10px;
-  width: 70%;
 }
 
 #results {
@@ -102,18 +103,19 @@ form input {
 
 figure {
   padding-top: 5px;
+  position: relative;
 }
 
 figure button {
-  margin: -2.5rem 2.5rem;
   opacity: 0;
   position: absolute;
+  right: -1.5rem;
+  top: -1rem;
   visibility: hidden;
 }
 
 figure:hover button,
 figure button:hover {
-  font-weight: bolder;
   opacity: 1;
   transition: 0.5s;
   visibility: visible;
@@ -125,10 +127,5 @@ figure button:hover {
 
 figcaption {
   max-width: 8rem;
-}
-
-#authors {
-  font-size: 12px;
-  font-weight: bold;
 }
 </style>

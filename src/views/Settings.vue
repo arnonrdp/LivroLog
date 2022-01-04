@@ -1,24 +1,40 @@
 <template>
-  <Header />
-  <!-- <h1>Definições</h1> -->
-  <form action="#" @submit.prevent="submit">
-    <Input v-model="shelfName" type="text" @keyup.enter="updateShelfName" :label="$t('book.shelfname')" />
-  </form>
-  <div class="locale-changer">
-    <select v-model="$i18n.locale">
-      <option v-for="(locale, key) in locales" :key="key" :value="key">
-        {{ locale }}
-      </option>
-    </select>
-  </div>
-  <Button :text="$t('sign.logout')" @click="logout" />
+  <q-page padding class="flex column inline">
+    <q-tabs v-model="tab" inline-label active-color="primary" indicator-color="primary" align="justify">
+      <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
+      <q-tab name="books" icon="menu_book" :label="$t('settings.books')" />
+    </q-tabs>
+    <q-separator />
+    <q-tab-panels v-model="tab" animated default>
+      <q-tab-panel name="account" default>
+        <div class="text-h6">{{ $t("settings.account-profile") }}</div>
+        <q-input v-model="shelfName" type="text" :label="$t('book.shelfname')" @keyup.enter="updateShelfName">
+          <template v-slot:prepend>
+            <q-icon name="badge" />
+          </template>
+        </q-input>
+        <q-select v-model="locale" :options="localeOptions" :label="$t('settings.language')" emit-value map-options>
+          <template v-slot:prepend>
+            <q-icon name="translate" />
+          </template>
+        </q-select>
+        <br />
+        <q-btn flat color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
+      </q-tab-panel>
+      <q-tab-panel name="books">
+        <div class="text-h6">Books</div>
+        <!-- TODO1: Listar livros -->
+        <!-- TODO2: Adicionar datas de leitura aos livros -->
+        <p>TODO: organizar os livros por data de leitura</p>
+      </q-tab-panel>
+    </q-tab-panels>
+  </q-page>
 </template>
 
 <script>
-import Button from "@/components/BaseButton.vue";
-import Input from "@/components/BaseInput.vue";
-import Header from "@/components/TheHeader.vue";
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { mapGetters } from "vuex";
 
 export default {
@@ -26,16 +42,21 @@ export default {
   data: () => ({
     shelfName: "",
   }),
-  components: { Header, Input, Button, Tooltip },
+  setup() {
+    const { locale } = useI18n({ useScope: "global" });
+    return {
+      locale,
+      localeOptions: [
+        { value: "en", label: "English" },
+        { value: "ja", label: "日本語" },
+        { value: "pt" && "pt-BR", label: "Português" },
+      ],
+      tab: ref("account"),
+    };
+  },
+  components: { Tooltip },
   computed: {
     ...mapGetters(["getUserProfile"]),
-    locales() {
-      return {
-        en: "English",
-        ja: "日本語",
-        pt: "Português",
-      };
-    },
   },
   mounted() {
     this.shelfName = this.getUserProfile.shelfName;
@@ -53,19 +74,10 @@ export default {
 </script>
 
 <style scoped>
-form {
-  margin: auto;
-  width: 70%;
+.q-page {
+  width: 35rem;
 }
-
-form button {
-  margin: 0;
-  position: absolute;
-  right: 9%;
-  top: -1px;
-}
-
-input:focus ~ button {
-  right: 6%;
+.q-tab-panels {
+  background-color: transparent;
 }
 </style>
