@@ -1,5 +1,5 @@
 <template>
-  <header>
+  <header v-if="this.$route.path !== '/login'">
     <router-link to="/"><img src="/logo.svg" alt="Logotipo"/></router-link>
     <nav>
       <router-link to="/">
