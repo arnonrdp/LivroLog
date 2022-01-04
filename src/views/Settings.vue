@@ -1,16 +1,20 @@
 <template>
-  <q-page class="flex column inline">
-    <q-tabs v-model="tab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify">
-      <q-tab name="account" icon="account_circle" label="Account" default />
-      <q-tab name="books" icon="menu_book" label="Books" />
+  <q-page padding class="flex column inline">
+    <q-tabs v-model="tab" inline-label active-color="primary" indicator-color="primary" align="justify">
+      <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
+      <q-tab name="books" icon="menu_book" :label="$t('settings.books')" />
     </q-tabs>
     <q-separator />
     <q-tab-panels v-model="tab" animated default>
       <q-tab-panel name="account" default>
-        <div class="text-h6">Account and Profile</div>
-        <q-input v-model="shelfName" type="text" :label="$t('book.shelfname')" @keyup.enter="updateShelfName" />
-        <q-select v-model="locale" :options="localeOptions" label="Language" emit-value map-options options-dense>
-          <template>
+        <div class="text-h6">{{ $t("settings.account-profile") }}</div>
+        <q-input v-model="shelfName" type="text" :label="$t('book.shelfname')" @keyup.enter="updateShelfName">
+          <template v-slot:prepend>
+            <q-icon name="badge" />
+          </template>
+        </q-input>
+        <q-select v-model="locale" :options="localeOptions" :label="$t('settings.language')" emit-value map-options>
+          <template v-slot:prepend>
             <q-icon name="translate" />
           </template>
         </q-select>
@@ -71,7 +75,7 @@ export default {
 
 <style scoped>
 .q-page {
-  width: 500px;
+  width: 35rem;
 }
 .q-tab-panels {
   background-color: transparent;
