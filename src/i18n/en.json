@@ -8,7 +8,10 @@
     "shelfname": "Shelf Name",
     "unknown-author": "Unknown Author"
   },
-  "followFriends": "Follow Friends",
+  "friends": {
+    "feature-under-dev": "This feature is under development.",
+    "followFriends": "Follow Friends"
+  },
   "menu": {
     "add": "Add",
     "friends": "Friends",
@@ -16,10 +19,10 @@
     "settings": "Settings"
   },
   "settings": {
-    "language": "Language",
-    "account-profile": "Account and Profile",
     "account": "Account",
-    "books": "Books"
+    "account-profile": "Account and Profile",
+    "books": "Books",
+    "language": "Language"
   },
   "sign": {
     "accountCreated": "Your account has been created successfully!",
@@ -43,8 +46,5 @@
     "sign-google": "Sign in with Google",
     "signin": "Sign In",
     "signup": "Sign Up"
-  },
-  "friends": {
-    "feature-under-dev": "This feature is under development."
   }
 }

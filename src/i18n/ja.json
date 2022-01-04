@@ -8,7 +8,10 @@
     "shelfname": "棚名",
     "unknown-author": "不明な作者"
   },
-  "followFriends": "友達をフォローする",
+  "friends": {
+    "feature-under-dev": "この機能は開発中です。",
+    "followFriends": "友達をフォローする"
+  },
   "menu": {
     "add": "追加",
     "friends": "友達",
@@ -16,10 +19,10 @@
     "settings": "設定"
   },
   "settings": {
-    "language": "言語",
-    "account-profile": "アカウントとプロファイル",
     "account": "アカウント",
-    "books": "本"
+    "account-profile": "アカウントとプロファイル",
+    "books": "本",
+    "language": "言語"
   },
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
@@ -43,8 +46,5 @@
     "sign-google": "Googleでサインイン",
     "signin": "ログイン",
     "signup": "サインアップ"
-  },
-  "friends": {
-    "feature-under-dev": "この機能は開発中です。"
   }
 }
