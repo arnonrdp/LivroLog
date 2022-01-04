@@ -1,5 +1,5 @@
 <template>
-  <q-page>
+  <q-page padding>
     <header>
       <h1 class="text-h3">{{ $t("sign.loginTitle") }}</h1>
     </header>

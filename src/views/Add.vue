@@ -1,5 +1,5 @@
 <template>
-  <q-page>
+  <q-page padding>
     <q-input v-model="seek" type="text" class="q-py-lg" :label="$t('book.addlabel')" @keyup.enter="search" dense>
       <template v-slot:prepend>
         <q-icon name="search" />
