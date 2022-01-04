@@ -105,7 +105,6 @@ const actions = {
       })
       .catch((error) => commit("setError", error));
   },
-  // TODO: Adicionar forma de redefinir senha
   async resetPassword({ commit }, payload) {
     commit("setLoading", true);
     await sendPasswordResetEmail(auth, payload.email)
