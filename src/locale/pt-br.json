@@ -32,6 +32,10 @@
     "name": "Nome",
     "password": "Senha",
     "signin": "Entrar",
-    "signup": "Registrar"
+    "signup": "Registrar",
+    "sign-google": "Entrar com Google",
+    "reset": "Limpar",
+    "forgot-password": "Esqueci minha senha",
+    "recover": "Recuperar"
   }
 }
