@@ -1,13 +1,11 @@
 <template>
-  <Header />
-  <h1>{{ $t("followFriends") }}</h1>
+  <q-page>
+    <h1 class="text-h6">{{ $t("followFriends") }}</h1>
+  </q-page>
 </template>
 
 <script>
-import Header from "@/components/TheHeader.vue";
-
 export default {
   name: "Friends",
-  components: { Header },
 };
 </script>

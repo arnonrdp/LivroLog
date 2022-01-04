@@ -1,16 +1,16 @@
 <template>
-  <Header />
-  <Shelf />
+  <q-page class="q-mx-sm">
+    <Shelf />
+  </q-page>
 </template>
 
 <script>
-import Header from "@/components/TheHeader.vue";
 import Shelf from "@/components/Shelf.vue";
 
 export default {
   name: "Home",
   title: "Livrero",
-  components: { Header, Shelf },
+  components: { Shelf },
 };
 </script>
 
