@@ -22,6 +22,11 @@
     "account": "Account",
     "account-profile": "Account and Profile",
     "books": "Books",
+    "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
+    "bookshelf-add-few": "Start by adding a few.",
+    "bookshelf-empty": "Your bookcase does not have any books yet.",
+    "column-readIn": "Read In",
+    "column-title": "Title",
     "language": "Language"
   },
   "sign": {

@@ -22,6 +22,11 @@
     "account": "アカウント",
     "account-profile": "アカウントとプロファイル",
     "books": "本",
+    "books-description": "本を読み終えた日付を追加し、日付を読んで本棚を整理します",
+    "bookshelf-add-few": "いくつか追加することから始めます。",
+    "bookshelf-empty": "あなたの本棚にはまだ本がありません。",
+    "column-readIn": "読む",
+    "column-title": "タイトル",
     "language": "言語"
   },
   "sign": {
