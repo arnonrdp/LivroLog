@@ -1,6 +1,7 @@
 <template>
   <q-page class="q-mx-sm non-selectable">
     <Shelf :shelfName="shelfName" :books="books" @emitID="removeBook" />
+    <!-- TODO: Inserir ícone de filtro para ordenar os livros -->
   </q-page>
 </template>
 
@@ -28,16 +29,16 @@ export default {
     else this.booksFromFirebase(querySnapshot);
   },
   methods: {
-    removeBook(id) {
-      this.$store.dispatch("removeBook", id);
-    },
     booksFromFirebase(querySnapshot) {
       let userBooks = [];
-      querySnapshot.forEach((doc) => {
-        userBooks.push({ id: doc.id, ...doc.data() });
-      });
+      querySnapshot.forEach((doc) => userBooks.push(doc.data()));
       this.books = userBooks;
       this.$store.commit("setUserBooks", userBooks);
+    },
+    removeBook(id) {
+      //TODO: Verificar se o then/catch funciona aqui
+      this.$store.dispatch("removeBook", id);
+      this.$q.notify({ message: this.$t("book.removed-from-shelf") });
     },
   },
 };
