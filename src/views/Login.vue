@@ -58,6 +58,7 @@
         <q-card-section>
           <q-separator />
         </q-card-section>
+        // TODO: Incluir notificações de sucesso e erro
         {{ $t("sign." + getError.code) }}
       </p>
     </q-card>
