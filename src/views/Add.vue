@@ -68,15 +68,11 @@ export default {
         .finally(() => (this.loading = false));
     },
     addBook(book) {
-      book = { ...book };
+      book = { ...book, addedIn: new Date(), readIn: "" };
+      //TODO: Verificar se o dispatch funciona com then/catch para executar as notificações
       this.$store.dispatch("addBook", book);
-      this.showNotification();
-    },
-    showNotification() {
-      const message = this.$t("book.added-to-shelf");
-      const position = "top-right";
-      const timeout = 2500;
-      this.$q.notify({ message, position, timeout });
+      //TODO: Notificar o usuário caso o livro já exista na biblioteca
+      this.$q.notify({ message: this.$t("book.added-to-shelf") });
     },
   },
 };
