@@ -35,26 +35,30 @@ const mutations = {
     const index = state.userProfile.books.findIndex((book) => book.id === id);
     state.userProfile.books.splice(index, 1);
   },
+  updateBookReadDate(state, payload) {
+    payload.map((book) => {
+      const index = state.userProfile.books.findIndex((userBook) => userBook.id === book.id);
+      state.userProfile.books[index].readIn = book.readIn;
+    });
+  },
 };
 
 const actions = {
   async login({ commit, dispatch }, payload) {
-    commit("setLoading", true);
     await signInWithEmailAndPassword(auth, payload.email, payload.password)
       .then((firebaseData) => {
         dispatch("fetchUserProfile", firebaseData.user);
         commit("setError", null);
       })
-      .catch((error) => commit("setError", error))
-      .finally(() => commit("setLoading", false));
+      .catch((error) => commit("setError", error));
   },
   async logout({ commit }) {
+    //TODO: Testar logout sem async/await
     await signOut(auth);
     commit("setUserProfile", {});
     router.push("login");
   },
   async signup({ commit }, payload) {
-    commit("setLoading", true);
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
         const userID = userCredential.user.uid;
@@ -63,17 +67,11 @@ const actions = {
           email: payload.email,
           shelfName: payload.name,
         });
-        commit("setInformation", { code: "sign-up-success" });
         commit("setError", null);
       })
-      .catch((error) => {
-        commit("setInformation", null);
-        commit("setError", error);
-      })
-      .finally(() => commit("setLoading", false));
+      .catch((error) => commit("setError", error));
   },
   async googleSignIn({ commit, dispatch }) {
-    commit("setLoading", true);
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider)
       .then(async (result) => {
@@ -88,8 +86,7 @@ const actions = {
         dispatch("fetchUserProfile", result.user);
         commit("setError", null);
       })
-      .catch((error) => commit("setError", error))
-      .finally(() => commit("setLoading", false));
+      .catch((error) => commit("setError", error));
   },
   async fetchUserProfile({ commit }, user) {
     const userRef = doc(db, "users", user.uid);
@@ -106,19 +103,9 @@ const actions = {
       .catch((error) => commit("setError", error));
   },
   async resetPassword({ commit }, payload) {
-    commit("setLoading", true);
     await sendPasswordResetEmail(auth, payload.email)
-      .then(() => {
-        commit("setInformation", {
-          resetPassword: { code: "Success", message: "Success! Check your email for the password reset link" },
-        });
-        commit("setError", null);
-      })
-      .catch((error) => {
-        commit("setInformation", null);
-        commit("setError", error);
-      })
-      .finally(() => commit("setLoading", false));
+      .then(() => commit("setError", null))
+      .catch((error) => commit("setError", error));
   },
 };
 
