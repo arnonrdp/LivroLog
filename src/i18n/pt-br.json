@@ -2,8 +2,10 @@
   "book": {
     "added-to-shelf": "Livro adicionado à sua estante",
     "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
+    "already-exists": "Livro já existe",
     "bookcase": "Estante de {name}",
     "remove": "Remover livro",
+    "removed-from-shelf": "Livro removido da estante",
     "search": "Buscar",
     "shelfname": "Nome da Estante",
     "unknown-author": "Autor desconhecido"
@@ -23,6 +25,7 @@
     "account-profile": "Conta e Perfil",
     "books": "Livros",
     "books-description": "Adicione as datas em que terminou de ler os livros e organize sua estante por data de leitura",
+    "books-read-date-updated": "Data de leitura atualizada com sucesso",
     "bookshelf-add-few": "Comece adicionando alguns.",
     "bookshelf-empty": "Sua estante ainda não tem livros.",
     "column-readIn": "Lido em",

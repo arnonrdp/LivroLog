@@ -2,8 +2,10 @@
   "book": {
     "added-to-shelf": "棚に追加された本",
     "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
+    "already-exists": "本はすでに存在します",
     "bookcase": "{name} シェルフ",
     "remove": "本を削除する",
+    "removed-from-shelf": "本が棚から削除されました",
     "search": "検索",
     "shelfname": "棚名",
     "unknown-author": "不明な作者"
@@ -23,6 +25,7 @@
     "account-profile": "アカウントとプロファイル",
     "books": "本",
     "books-description": "本を読み終えた日付を追加し、日付を読んで本棚を整理します",
+    "books-read-date-updated": "読み取り日が正常に更新されました",
     "bookshelf-add-few": "いくつか追加することから始めます。",
     "bookshelf-empty": "あなたの本棚にはまだ本がありません。",
     "column-readIn": "読む",

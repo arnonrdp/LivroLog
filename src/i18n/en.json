@@ -2,8 +2,10 @@
   "book": {
     "added-to-shelf": "Book added to your shelf",
     "addlabel": "Search by title, author, publisher, release, ISBN...",
+    "already-exists": "Book already exists",
     "bookcase": "{name}'s Bookcase",
     "remove": "Remove book",
+    "removed-from-shelf": "Book removed from shelf",
     "search": "Search",
     "shelfname": "Shelf Name",
     "unknown-author": "Unknown Author"
@@ -23,6 +25,7 @@
     "account-profile": "Account and Profile",
     "books": "Books",
     "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
+    "books-read-date-updated": "Read date updated successfully",
     "bookshelf-add-few": "Start by adding a few.",
     "bookshelf-empty": "Your bookcase does not have any books yet.",
     "column-readIn": "Read In",
