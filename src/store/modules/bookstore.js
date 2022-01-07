@@ -11,40 +11,39 @@ const getters = {
 };
 
 const actions = {
-  async updateShelfName({ commit, rootState, rootGetters }, payload) {
+  async updateShelfName({ commit, rootGetters }, payload) {
     const userID = rootGetters.getUserProfile.uid;
+
     await updateDoc(doc(db, "users", userID), { shelfName: payload })
-      .then(() => {
-        //TODO: Verificar se há redundância aqui
-        rootState.authentication.userProfile.shelfName = payload;
-        commit("setUserProfile", rootState.authentication.userProfile);
-        commit("setError", null);
-      })
-      .catch((error) => commit("setError", error))
+      .then(() => commit("setUserShelfName", payload))
+      .catch((error) => console.error(error));
   },
   async addBook({ commit, rootGetters }, payload) {
     if (getters.getUserBooks().some((userBook) => userBook.id === payload.id)) {
-      return console.log("Book already exists");
+      throw new Error("Book already exists");
     }
-    commit("setUserBooks", payload);
-    
     const userID = rootGetters.getUserProfile.uid;
-    await setDoc(doc(db, "users", userID, "addedBooks", payload.id), { ...payload });
+
+    await setDoc(doc(db, "users", userID, "addedBooks", payload.id), { ...payload })
+      .then(() => commit("setUserBooks", payload))
+      .catch((error) => console.error(error));
   },
   async updateReadDates({ commit, rootGetters }, payload) {
-    commit("updateBookReadDate", payload);
-    
     const userID = rootGetters.getUserProfile.uid;
+
     payload.map((book) => {
       batch.update(doc(db, "users", userID, "addedBooks", book.id), { readIn: book.readIn });
     });
-    await batch.commit();
+    await batch.commit()
+      .then(() => commit("updateBookReadDate", payload))
+      .catch((error) => console.error(error));
   },
   async removeBook({ commit, rootGetters }, payload) {
-    commit("removeBook", payload);
-
     const userID = rootGetters.getUserProfile.uid;
-    await deleteDoc(doc(db, "users", userID, "addedBooks", payload));
+
+    await deleteDoc(doc(db, "users", userID, "addedBooks", payload))
+      .then(() => commit("removeBook", payload))
+      .catch((error) => console.error(error));
   },
 };
 
