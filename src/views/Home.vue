@@ -33,12 +33,13 @@ export default {
       let userBooks = [];
       querySnapshot.forEach((doc) => userBooks.push(doc.data()));
       this.books = userBooks;
+      // TODO: Verificar possibilidade de usar Dispatch (criar getBooks?)
       this.$store.commit("setUserBooks", userBooks);
     },
     removeBook(id) {
-      //TODO: Verificar se o then/catch funciona aqui
-      this.$store.dispatch("removeBook", id);
-      this.$q.notify({ message: this.$t("book.removed-from-shelf") });
+      this.$store.dispatch("removeBook", id)
+        .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("book.removed-success") }))
+        .catch(() => this.$q.notify({ icon: "error", message: this.$t("book.removed-error") }));
     },
   },
 };

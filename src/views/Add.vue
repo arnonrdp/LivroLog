@@ -56,11 +56,11 @@ export default {
           response.data.items.map((item) =>
             this.books.push({
               id: item.id,
-              title: item.volumeInfo.title,
+              title: item.volumeInfo.title || "",
               authors: item.volumeInfo.authors || [this.$t("book.unknown-author")],
-              ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier ?? item.id,
+              ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier || item.id,
               thumbnail:
-                item.volumeInfo.imageLinks?.thumbnail.replace("http", "https") ?? require("../assets/no_cover.jpg"),
+                item.volumeInfo.imageLinks?.thumbnail.replace("http", "https") || require("../assets/no_cover.jpg"),
             }),
           );
         })
@@ -69,10 +69,9 @@ export default {
     },
     addBook(book) {
       book = { ...book, addedIn: new Date(), readIn: "" };
-      //TODO: Verificar se o dispatch funciona com then/catch para executar as notificações
-      this.$store.dispatch("addBook", book);
-      //TODO: Notificar o usuário caso o livro já exista na biblioteca
-      this.$q.notify({ message: this.$t("book.added-to-shelf") });
+      this.$store.dispatch("addBook", book)
+        .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("book.added-to-shelf") }))
+        .catch(() => this.$q.notify({ icon: "error", message: this.$t("book.already-exists") }));
     },
   },
 };
