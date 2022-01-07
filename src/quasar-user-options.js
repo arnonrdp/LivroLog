@@ -6,9 +6,11 @@ export default {
   plugins: { Notify },
   config: {
     notify: {
+      html: true,
       position: "top",
-      timeout: 2500,
       progress: true,
+      timeout: 3000,
+      multiline: true,
     },
   },
 };
