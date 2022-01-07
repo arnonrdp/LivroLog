@@ -5,14 +5,14 @@
     "already-exists": "Livro já existe",
     "bookcase": "Estante de {name}",
     "remove": "Remover livro",
-    "removed-from-shelf": "Livro removido da estante",
-    "search": "Buscar",
+    "removed-error": "Erro ao remover livro.<br/>Atualize a página e tente novamente.",
+    "removed-success": "Livro removido da estante",
     "shelfname": "Nome da Estante",
     "unknown-author": "Autor desconhecido"
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
-    "followFriends": "Seguir Amigos"
+    "follow-friends": "Seguir Amigos"
   },
   "menu": {
     "add": "Adicionar",
@@ -25,12 +25,16 @@
     "account-profile": "Conta e Perfil",
     "books": "Livros",
     "books-description": "Adicione as datas em que terminou de ler os livros e organize sua estante por data de leitura",
-    "books-read-date-updated": "Data de leitura atualizada com sucesso",
     "bookshelf-add-few": "Comece adicionando alguns.",
     "bookshelf-empty": "Sua estante ainda não tem livros.",
     "column-readIn": "Lido em",
     "column-title": "Título",
-    "language": "Idioma"
+    "language": "Idioma",
+    "read-dates-updated": "Datas de leitura atualizadas com sucesso",
+    "read-dates-updated-error": "Erro ao atualizar as datas de leitura.<br/>Atualize a página e tente novamente.",
+    "save": "Salvar",
+    "shelfname-updated": "Nome da estante atualizado com sucesso",
+    "shelfname-updated-error": "Falha na atualização do nome da estante.<br/>Atualize a página e tente novamente."
   },
   "sign": {
     "accountCreated": "Sua conta foi criada com sucesso!",

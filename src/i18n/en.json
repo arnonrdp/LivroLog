@@ -5,14 +5,14 @@
     "already-exists": "Book already exists",
     "bookcase": "{name}'s Bookcase",
     "remove": "Remove book",
-    "removed-from-shelf": "Book removed from shelf",
-    "search": "Search",
+    "removed-error": "Error removing book. Refresh the page and try again.",
+    "removed-success": "Book removed from shelf",
     "shelfname": "Shelf Name",
     "unknown-author": "Unknown Author"
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",
-    "followFriends": "Follow Friends"
+    "follow-friends": "Follow Friends"
   },
   "menu": {
     "add": "Add",
@@ -25,12 +25,16 @@
     "account-profile": "Account and Profile",
     "books": "Books",
     "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
-    "books-read-date-updated": "Read date updated successfully",
     "bookshelf-add-few": "Start by adding a few.",
     "bookshelf-empty": "Your bookcase does not have any books yet.",
     "column-readIn": "Read In",
     "column-title": "Title",
-    "language": "Language"
+    "language": "Language",
+    "read-dates-updated": "Read dates updated successfully",
+    "read-dates-updated-error": "Error updating read dates<br/>Refresh the page and try again.",
+    "save": "Save",
+    "shelfname-updated": "Shelf name updated successfully",
+    "shelfname-updated-error": "Shelf name update failed"
   },
   "sign": {
     "accountCreated": "Your account has been created successfully!",

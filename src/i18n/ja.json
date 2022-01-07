@@ -5,14 +5,14 @@
     "already-exists": "本はすでに存在します",
     "bookcase": "{name} シェルフ",
     "remove": "本を削除する",
-    "removed-from-shelf": "本が棚から削除されました",
-    "search": "検索",
+    "removed-error": "本の削除中にエラーが発生しました<br/>ページを更新して、再試行してください。",
+    "removed-success": "本が棚から削除されました",
     "shelfname": "棚名",
     "unknown-author": "不明な作者"
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
-    "followFriends": "友達をフォローする"
+    "follow-friends": "友達をフォローする"
   },
   "menu": {
     "add": "追加",
@@ -25,22 +25,26 @@
     "account-profile": "アカウントとプロファイル",
     "books": "本",
     "books-description": "本を読み終えた日付を追加し、日付を読んで本棚を整理します",
-    "books-read-date-updated": "読み取り日が正常に更新されました",
     "bookshelf-add-few": "いくつか追加することから始めます。",
     "bookshelf-empty": "あなたの本棚にはまだ本がありません。",
     "column-readIn": "読む",
     "column-title": "タイトル",
-    "language": "言語"
+    "language": "言語",
+    "read-dates-updated": "正常に更新された日付の読み取り",
+    "read-dates-updated-error": "読み取り日の更新中にエラーが発生しました<br/>ページを更新して、再試行してください。",
+    "save": "保存する",
+    "shelfname-updated": "シェルフ名が正常に更新されました",
+    "shelfname-updated-error": "シェルフ名の更新に失敗しました<br/>ページを更新して、再試行してください。"
   },
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
-    "auth/email-already-in-use": "メールは既に存在します！",
+    "auth/email-already-in-use": "メールは既に存在します!",
     "auth/incorrect-email-or-password": "メールアドレスまたはパスワードが正しくありません",
     "auth/internal-error": "内部エラー。\nもう一度やり直してください。",
     "auth/invalid-email": "無効なメール",
-    "auth/phone-number-already-exists": "電話番号はすでに存在します！",
+    "auth/phone-number-already-exists": "電話番号はすでに存在します!",
     "auth/popup-closed-by-user": "ポップアップを閉じたと思います。\n\n再試行。",
-    "auth/uid-already-exists": "このユーザーは既に存在します！",
+    "auth/uid-already-exists": "このユーザーは既に存在します!",
     "auth/user-not-found": "ユーザーが見つかりません",
     "auth/wrong-password": "パスワードが正しくありません",
     "forgot-password": "パスワードを忘れた",
