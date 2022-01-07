@@ -6,7 +6,7 @@ export default {
   plugins: { Notify },
   config: {
     notify: {
-      position: "bottom",
+      position: "top",
       timeout: 2500,
       progress: true,
     },
