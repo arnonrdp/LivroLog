@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <h1 class="text-h6">{{ $t("friends.followFriends") }}</h1>
+    <h1 class="text-h6">{{ $t("friends.follow-friends") }}</h1>
     <Loading />
     <p>{{ $t("friends.feature-under-dev") }}</p>
   </q-page>
