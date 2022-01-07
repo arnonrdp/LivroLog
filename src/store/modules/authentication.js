@@ -19,6 +19,9 @@ const getters = {
   getUserProfile(state) {
     return state.userProfile;
   },
+  getUserShelfName(state) {
+    return state.userProfile.shelfName;
+  },
   isAuthenticated(state) {
     return state.userProfile.email !== undefined;
   },
@@ -27,6 +30,9 @@ const getters = {
 const mutations = {
   setUserProfile(state, val) {
     state.userProfile = val;
+  },
+  setUserShelfName(state, val) {
+    state.userProfile.shelfName = val;
   },
   setUserBooks(state, val) {
     state.userProfile.books?.push(val) ?? (state.userProfile.books = val);
