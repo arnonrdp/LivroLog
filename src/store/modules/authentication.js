@@ -7,77 +7,69 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import router from "../../router";
 
 const state = {
-  userProfile: {},
+  user: {},
 };
 
 const getters = {
   getUserProfile(state) {
-    return state.userProfile;
+    return state.user;
+  },
+  getUserID(state) {
+    return state.user.uid;
   },
   getUserShelfName(state) {
-    return state.userProfile.shelfName;
+    return state.user.shelfName;
   },
   isAuthenticated(state) {
-    return state.userProfile.email !== undefined;
+    return state.user.email !== undefined;
   },
 };
 
 const mutations = {
   setUserProfile(state, val) {
-    state.userProfile = val;
+    state.user = val;
   },
   setUserShelfName(state, val) {
-    state.userProfile.shelfName = val;
-  },
-  setUserBooks(state, val) {
-    state.userProfile.books?.push(val) ?? (state.userProfile.books = val);
-  },
-  removeBook(state, id) {
-    const index = state.userProfile.books.findIndex((book) => book.id === id);
-    state.userProfile.books.splice(index, 1);
-  },
-  updateBookReadDate(state, payload) {
-    payload.map((book) => {
-      const index = state.userProfile.books.findIndex((userBook) => userBook.id === book.id);
-      state.userProfile.books[index].readIn = book.readIn;
-    });
+    state.user.shelfName = val;
   },
 };
 
 const actions = {
-  async login({ commit, dispatch }, payload) {
+  async login({ dispatch }, payload) {
     await signInWithEmailAndPassword(auth, payload.email, payload.password)
-      .then((firebaseData) => {
-        dispatch("fetchUserProfile", firebaseData.user);
-        commit("setError", null);
-      })
-      .catch((error) => commit("setError", error));
+      .then((firebaseData) => dispatch("fetchUserProfile", firebaseData.user))
+      .catch((error) => {
+        throw error.code;
+      });
   },
   async logout({ commit }) {
-    //TODO: Testar logout sem async/await
-    await signOut(auth);
-    commit("setUserProfile", {});
-    router.push("login");
+    await signOut(auth).then(() => {
+      commit("setUserProfile", {});
+      commit("clearBooks");
+      router.push("login");
+    });
   },
-  async signup({ commit }, payload) {
+  async signup({}, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
+        console.log("userCredential: ", userCredential);
         const userID = userCredential.user.uid;
         await setDoc(doc(db, "users", userID), {
-          displayName: payload.name,
+          name: payload.name,
           email: payload.email,
           shelfName: payload.name,
         });
-        commit("setError", null);
       })
-      .catch((error) => commit("setError", error));
+      .catch((error) => {
+        throw error.code;
+      });
   },
-  async googleSignIn({ commit, dispatch }) {
+  async googleSignIn({ dispatch }) {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider)
       .then(async (result) => {
@@ -90,9 +82,10 @@ const actions = {
           });
         }
         dispatch("fetchUserProfile", result.user);
-        commit("setError", null);
       })
-      .catch((error) => commit("setError", error));
+      .catch((error) => {
+        throw error.code;
+      });
   },
   async fetchUserProfile({ commit }, user) {
     const userRef = doc(db, "users", user.uid);
@@ -101,23 +94,25 @@ const actions = {
         const userInfo = firebaseData.data();
         userInfo.uid = firebaseData.id;
         commit("setUserProfile", (userInfo ??= {}));
-        if (userInfo) {
-          commit("setError", null);
-          router.push("/");
-        }
+        if (userInfo) router.push("/");
       })
-      .catch((error) => commit("setError", error));
+      .catch((error) => console.error(error));
   },
-  async resetPassword({ commit }, payload) {
-    await sendPasswordResetEmail(auth, payload.email)
-      .then(() => commit("setError", null))
-      .catch((error) => commit("setError", error));
+  async resetPassword({}, payload) {
+    await sendPasswordResetEmail(auth, payload.email).catch((error) => {
+      throw error.code;
+    });
+  },
+  async updateShelfName({ commit, rootGetters }, payload) {
+    const userID = rootGetters.getUserID;
+
+    await updateDoc(doc(db, "users", userID), { shelfName: payload })
+      .then(() => commit("setUserShelfName", payload))
+      .catch((error) => console.error(error));
   },
 };
 
 export default {
-  // TODO: Verificar necessidade de uso do namespaced
-  // namespaced: true,
   state,
   getters,
   mutations,
