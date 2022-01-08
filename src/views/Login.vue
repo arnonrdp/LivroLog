@@ -15,9 +15,9 @@
       <q-tab-panels v-model="tab" animated>
         <q-tab-panel name="signup">
           <q-form @submit="signup" @reset="onReset" class="q-gutter-md">
-            <q-input v-model="name" type="text" :label="$t('sign.name')" />
-            <q-input v-model="email" type="email" :label="$t('sign.mail')" />
-            <q-input v-model="password" type="password" :label="$t('sign.password')" />
+            <q-input v-model="name" type="text" :label="$t('sign.name')" required />
+            <q-input v-model="email" type="email" :label="$t('sign.mail')" required />
+            <q-input v-model="password" type="password" :label="$t('sign.password')" :hint="$t('sign.password-hint')" />
             <div>
               <q-btn type="submit" :label="$t('sign.signup')" color="primary" />
               <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
@@ -53,14 +53,6 @@
         <img src="/google.svg" alt="" />&nbsp;
         <span>{{ $t("sign.sign-google") }}</span>
       </q-btn>
-
-      <p v-if="getError">
-        <q-card-section>
-          <q-separator />
-        </q-card-section>
-        // TODO: Incluir notificações de sucesso e erro
-        {{ $t("sign." + getError.code) }}
-      </p>
     </q-card>
   </q-page>
 </template>
@@ -79,28 +71,48 @@ export default {
     signUpStatus: {},
     resetStatus: {},
   }),
-  computed: {
-    ...mapGetters(["getError", "getInformation"]),
-  },
   methods: {
     login() {
-      this.$store.dispatch("login", { email: this.email, password: this.password });
+      this.$store
+        .dispatch("login", { email: this.email, password: this.password })
+        .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
     signup() {
-      this.$store.dispatch("signup", { name: this.name, email: this.email, password: this.password });
-      this.signUpStatus = this.getError || this.getInformation?.signUp;
+      this.$store
+        .dispatch("signup", { name: this.name, email: this.email, password: this.password })
+        .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.accountCreated") }))
+        .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
     googleSignIn() {
-      this.$store.dispatch("googleSignIn");
+      this.$store
+        .dispatch("googleSignIn")
+        .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
     resetPassword() {
-      this.$store.dispatch("resetPassword", { email: this.email });
-      this.resetStatus = this.getError || this.getInformation?.resetPassword;
+      this.$store
+        .dispatch("resetPassword", { email: this.email })
+        .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.password-reset") }))
+        .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
     onReset() {
       this.name = "";
       this.email = "";
       this.password = "";
+    },
+    passwordRules: [(val) => val.length >= 6 || "Please type your age"],
+    authErrors() {
+      return {
+        "auth/email-already-in-use": this.$t("sign.auth-email-already-in-use"),
+        "auth/incorrect-email-or-password": this.$t("sign.auth-incorrect-email-or-password"),
+        "auth/internal-error": this.$t("sign.auth-internal-error"),
+        "auth/invalid-email": this.$t("sign.auth-invalid-email"),
+        "auth/missing-email": this.$t("sign.auth-missing-email"),
+        "auth/phone-number-already-exists": this.$t("sign.auth-phone-number-already-exists"),
+        "auth/popup-closed-by-user": this.$t("sign.auth-popup-closed-by-user"),
+        "auth/user-not-found": this.$t("sign.auth-user-not-found"),
+        "auth/weak-password": this.$t("sign.auth-weak-password"),
+        "auth/wrong-password": this.$t("sign.auth-wrong-password"),
+      };
     },
   },
 };
