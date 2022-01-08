@@ -47,6 +47,7 @@
           <tfoot>
             <tr>
               <td colspan="2">
+                <!-- TODO: Prevenir cliques seguidos -->
                 <q-btn
                   class="q-ma-lg"
                   color="primary"
@@ -78,7 +79,7 @@ export default {
   }),
   components: { Tooltip },
   computed: {
-    ...mapGetters(["getUserProfile", "getUserShelfName", "getUserBooks"]),
+    ...mapGetters(["getUserShelfName", "getBooks"]),
   },
   setup() {
     const { locale } = useI18n({ useScope: "global" });
@@ -93,7 +94,7 @@ export default {
   },
   mounted() {
     this.shelfName = this.getUserShelfName;
-    this.books = this.getUserBooks;
+    this.books = this.getBooks;
   },
   methods: {
     updateShelfName() {

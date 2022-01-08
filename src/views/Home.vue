@@ -17,24 +17,26 @@ export default {
   components: { Shelf },
   data: () => ({ shelfName: "", books: [] }),
   computed: {
-    ...mapGetters(["getUserProfile"]),
+    ...mapGetters(["getUserID", "getBooks", "getUserShelfName"]),
   },
   async mounted() {
-    const user = this.getUserProfile;
-    this.shelfName = user.shelfName;
+    const userID = this.getUserID;
+    const userBooks = this.getBooks;
+    this.shelfName = this.getUserShelfName;
 
-    const querySnapshot = await getDocs(collection(db, "users", user.uid, "addedBooks"));
+    // TODO: Verificar necessidade de criar função para armazenar o horário da última atualização e, a partir desse horário, consultar ou no Firestore ou no LocalStorage
+    const querySnapshot = await getDocs(collection(db, "users", userID, "addedBooks"));
 
-    if (querySnapshot.size === user.books?.length) this.books = user.books;
+    if (querySnapshot.size === userBooks?.length) this.books = userBooks;
     else this.booksFromFirebase(querySnapshot);
   },
   methods: {
     booksFromFirebase(querySnapshot) {
-      let userBooks = [];
-      querySnapshot.forEach((doc) => userBooks.push(doc.data()));
-      this.books = userBooks;
+      let vuexBooks = [];
+      querySnapshot.forEach((doc) => vuexBooks.push(doc.data()));
+      this.books = vuexBooks;
       // TODO: Verificar possibilidade de usar Dispatch (criar getBooks?)
-      this.$store.commit("setUserBooks", userBooks);
+      this.$store.commit("setBooks", this.books);
     },
     removeBook(id) {
       this.$store.dispatch("removeBook", id)
