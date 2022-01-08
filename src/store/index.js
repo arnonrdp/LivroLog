@@ -7,13 +7,14 @@ import bookstore from "./modules/bookstore";
 const ls = new SecureLS({ isCompression: false });
 
 const store = createStore({
-  state: {
-    error: null,
-    information: null,
-    loading: false,
-  },
+  state: {},
+  getters: {},
+  mutations: {},
+  actions: {},
+  modules: { authentication, bookstore },
   plugins: [
     createPersistedState({
+      // TODO: Descomentar em produção
       // storage: {
       //   getItem: (key) => ls.get(key),
       //   setItem: (key, value) => ls.set(key, value),
@@ -21,30 +22,6 @@ const store = createStore({
       // },
     }),
   ],
-  getters: {
-    getError(state) {
-      return state.error;
-    },
-    getInformation(state) {
-      return state.information;
-    },
-    getLoading(state) {
-      return state.loading;
-    },
-  },
-  mutations: {
-    setError(state, payload) {
-      state.error = payload;
-    },
-    setInformation(state, payload) {
-      state.information = payload;
-    },
-    setLoading(state, payload) {
-      state.loading = payload;
-    },
-  },
-  actions: {},
-  modules: { authentication, bookstore },
 });
 
 export default store;
