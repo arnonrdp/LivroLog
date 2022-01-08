@@ -1,5 +1,16 @@
 <template>
-  <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
+  <div class="flex items-center justify-between">
+    <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
+    <q-btn-dropdown flat icon="filter_list" size="md">
+      <q-list dense>
+        <q-item clickable v-for="(label, name) in sortBy" :key="label" @click="orderBy(name)">
+          <q-item-section>
+            <q-item-label>{{ label }}</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-btn-dropdown>
+  </div>
   <section>
     <figure v-for="book in books" :key="book.id">
       <q-btn
@@ -27,7 +38,26 @@ export default {
     shelfName: { type: String, required: true },
     books: { type: Array, required: true },
   },
+  data: () => ({ sortBy: {} }),
   emits: ["emitID"],
+  mounted() {
+    this.sortBy = {
+      title: this.$t("book.order-by-title"),
+      author: this.$t("book.order-by-author"),
+      readIn: this.$t("book.order-by-read"),
+    };
+  },
+  methods: {
+    orderBy(order) {
+      this.books.sort((a, b) => {
+        if (order === "title") return a.title.localeCompare(b.title);
+        if (order === "author") return a.authors[0].localeCompare(b.authors[0]);
+        if (order === "readIn") return a.readIn.localeCompare(b.readIn);
+        return 0;
+      });
+      // TODO: Fazer ordenação do tipo "asc" e "desc"
+    },
+  },
 };
 </script>
 
