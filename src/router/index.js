@@ -23,25 +23,25 @@ const routes = [
     name: "Início",
     component: Home,
     alias: "/home",
-    meta: { requiresAuth: true, title: "Livrero" },
+    meta: { requiresAuth: true, title: "Início" },
   },
   {
     path: "/add",
     name: "Adicionar",
     component: Add,
-    meta: { requiresAuth: true, title: "Livrero: Adicionar" },
+    meta: { requiresAuth: true, title: "Adicionar" },
   },
   {
     path: "/friends",
     name: "Amigos",
     component: Friends,
-    meta: { requiresAuth: true, title: "Livrero: Amigos" },
+    meta: { requiresAuth: true, title: "Amigos" },
   },
   {
     path: "/settings",
     name: "Ajustes",
     component: Settings,
-    meta: { requiresAuth: true, title: "Livrero: Ajustes" },
+    meta: { requiresAuth: true, title: "Ajustes" },
   },
 ];
 
@@ -57,8 +57,8 @@ router.beforeEach((to, from, next) => {
 });
 
 router.afterEach((to, from) => {
-  const DEFAULT_TITLE = "Livrero";
-  document.title = to.meta.title || DEFAULT_TITLE;
+  const TITLE = "Livrero";
+  document.title = `${TITLE} | ${to.meta.title}` || TITLE;
 });
 
 export default router;
