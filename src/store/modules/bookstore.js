@@ -1,53 +1,64 @@
-import { deleteDoc, doc, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { deleteDoc, doc, setDoc, writeBatch } from "firebase/firestore";
 import { db } from "../../firebase";
-import store from "../index";
 
 const batch = writeBatch(db);
 
+const state = {
+  books: [],
+};
+
 const getters = {
-  getUserBooks() {
-    return store.getters.getUserProfile.books;
+  getBooks(state) {
+    return state.books;
+  },
+};
+
+const mutations = {
+  setBooks(state, val) {
+    state.books = [...state.books].concat(val);
+  },
+  clearBooks(state) {
+    state.books = [];
+  },
+  removeBook(state, id) {
+    const index = state.books.findIndex((book) => book.id === id);
+    state.books.splice(index, 1);
+  },
+  updateBookReadDate(state, payload) {
+    payload.map((book) => {
+      const index = state.books.findIndex((userBook) => userBook.id === book.id);
+      state.books[index].readIn = book.readIn;
+    });
   },
 };
 
 const actions = {
-  async updateShelfName({ commit, rootGetters }, payload) {
-    const userID = rootGetters.getUserProfile.uid;
-
-    await updateDoc(doc(db, "users", userID), { shelfName: payload })
-      .then(() => commit("setUserShelfName", payload))
-      .catch((error) => console.error(error));
-  },
   async addBook({ commit, rootGetters }, payload) {
-    if (getters.getUserBooks().some((userBook) => userBook.id === payload.id)) {
+    if (rootGetters.getBooks.some((userBook) => userBook.id === payload.id)) {
       throw new Error("Book already exists");
     }
-    const userID = rootGetters.getUserProfile.uid;
-
-    await setDoc(doc(db, "users", userID, "addedBooks", payload.id), { ...payload })
-      .then(() => commit("setUserBooks", payload))
+    await setDoc(doc(db, "users", rootGetters.getUserID, "addedBooks", payload.id), { ...payload })
+      .then(() => commit("setBooks", payload))
       .catch((error) => console.error(error));
   },
   async updateReadDates({ commit, rootGetters }, payload) {
-    const userID = rootGetters.getUserProfile.uid;
-
     payload.map((book) => {
-      batch.update(doc(db, "users", userID, "addedBooks", book.id), { readIn: book.readIn });
+      batch.update(doc(db, "users", rootGetters.getUserID, "addedBooks", book.id), { readIn: book.readIn });
     });
     await batch.commit()
       .then(() => commit("updateBookReadDate", payload))
       .catch((error) => console.error(error));
   },
   async removeBook({ commit, rootGetters }, payload) {
-    const userID = rootGetters.getUserProfile.uid;
-
-    await deleteDoc(doc(db, "users", userID, "addedBooks", payload))
+    await deleteDoc(doc(db, "users", rootGetters.getUserID, "addedBooks", payload))
       .then(() => commit("removeBook", payload))
       .catch((error) => console.error(error));
   },
 };
 
 export default {
+  state,
   getters,
+  mutations,
   actions,
 };
