@@ -11,7 +11,7 @@ const messages = {
 
 export const i18n = createI18n({
   locale: navigator.language || "en",
-  fallbackLocale: ["pt", "ja"],
+  fallbackLocale: ["en", "pt", "ja"],
   silentTranslationWarn: true,
   silentFallbackWarn: true,
   messages,
