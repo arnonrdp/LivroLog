@@ -2,10 +2,11 @@
   <div class="flex items-center justify-between">
     <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
     <q-btn-dropdown flat icon="filter_list" size="md">
-      <q-list dense>
-        <q-item clickable v-for="(label, name) in sortBy" :key="label" @click="orderBy(name)">
-          <q-item-section>
-            <q-item-label>{{ label }}</q-item-label>
+      <q-list class="non-selectable">
+        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(name, ascDesc)">
+          <q-item-section>{{ label }}</q-item-section>
+          <q-item-section avatar>
+            <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
           </q-item-section>
         </q-item>
       </q-list>
@@ -38,24 +39,26 @@ export default {
     shelfName: { type: String, required: true },
     books: { type: Array, required: true },
   },
-  data: () => ({ sortBy: {} }),
+  data: () => ({ bookLabels: {}, ascDesc: "asc", sortKey: "" }),
   emits: ["emitID"],
   mounted() {
-    this.sortBy = {
-      title: this.$t("book.order-by-title"),
-      author: this.$t("book.order-by-author"),
+    this.bookLabels = {
+      authors: this.$t("book.order-by-author"),
+      addedIn: this.$t("book.order-by-date"),
       readIn: this.$t("book.order-by-read"),
+      title: this.$t("book.order-by-title"),
     };
   },
   methods: {
-    orderBy(order) {
+    sort(label, order) {
+      const multiplier = order === "asc" ? 1 : -1;
+      this.sortKey = label;
+      this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";
       this.books.sort((a, b) => {
-        if (order === "title") return a.title.localeCompare(b.title);
-        if (order === "author") return a.authors[0].localeCompare(b.authors[0]);
-        if (order === "readIn") return a.readIn.localeCompare(b.readIn);
+        if (a[label] < b[label]) return -1 * multiplier;
+        if (a[label] > b[label]) return 1 * multiplier;
         return 0;
       });
-      // TODO: Fazer ordenação do tipo "asc" e "desc"
     },
   },
 };
