@@ -19,7 +19,6 @@
           </template>
         </q-select>
         <br />
-        <!-- TODO: O botão de salvar também deve armazenar o idioma preferido -->
         <q-btn color="primary" icon="save" :label="$t('settings.save')" @click="updateShelfName" />
         <q-btn flat color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
       </q-tab-panel>
@@ -47,7 +46,6 @@
           <tfoot>
             <tr>
               <td colspan="2">
-                <!-- TODO: Prevenir cliques seguidos -->
                 <q-btn
                   class="q-ma-lg"
                   color="primary"
@@ -107,9 +105,9 @@ export default {
     },
     async updateReadDates(updatedBooks) {
       let updatedFields = [];
-      updatedBooks.forEach((book) => {
+      for (const book of updatedBooks) {
         updatedFields.push({ id: book.id, readIn: book.readIn });
-      });
+      }
       await this.$store.dispatch("updateReadDates", updatedFields)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.read-dates-updated") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.read-dates-updated-error") }));
