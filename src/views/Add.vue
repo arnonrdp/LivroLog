@@ -68,7 +68,7 @@ export default {
         .finally(() => (this.loading = false));
     },
     addBook(book) {
-      book = { ...book, addedIn: new Date(), readIn: "" };
+      book = { ...book, addedIn: Date.now(), readIn: "" };
       this.$store.dispatch("addBook", book)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("book.added-to-shelf") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("book.already-exists") }));
