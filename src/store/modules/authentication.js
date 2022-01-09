@@ -104,13 +104,8 @@ const actions = {
     });
   },
   async updateShelfName({ commit, rootGetters }, payload) {
-    const userID = rootGetters.getUserID;
-
-    await updateDoc(doc(db, "users", userID), { shelfName: payload })
-      .then(() => {
-        commit("setUserShelfName", payload);
-        dispatch("modifiedAt");
-      })
+    await updateDoc(doc(db, "users", rootGetters.getUserID), { shelfName: payload })
+      .then(() => commit("setUserShelfName", payload))
       .catch((error) => console.error(error));
   },
 };
