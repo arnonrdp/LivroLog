@@ -99,7 +99,6 @@ export default {
       this.email = "";
       this.password = "";
     },
-    passwordRules: [(val) => val.length >= 6 || "Please type your age"],
     authErrors() {
       return {
         "auth/email-already-in-use": this.$t("sign.auth-email-already-in-use"),
