@@ -1,7 +1,5 @@
-import { deleteDoc, doc, setDoc, writeBatch } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, runTransaction, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-
-const batch = writeBatch(db);
 
 const state = {
   books: [],
@@ -33,25 +31,42 @@ const mutations = {
 };
 
 const actions = {
-  async addBook({ commit, rootGetters }, payload) {
+  async addBook({ commit, dispatch, rootGetters }, payload) {
     if (rootGetters.getBooks.some((userBook) => userBook.id === payload.id)) {
       throw new Error("Book already exists");
     }
-    await setDoc(doc(db, "users", rootGetters.getUserID, "addedBooks", payload.id), { ...payload })
-      .then(() => commit("setBooks", payload))
+    await setDoc(doc(db, "users", rootGetters.getUserID, "books", payload.id), { ...payload })
+      .then(() => {
+        commit("setBooks", payload);
+        dispatch("modifiedAt");
+      })
       .catch((error) => console.error(error));
   },
-  async updateReadDates({ commit, rootGetters }, payload) {
-    payload.map((book) => {
-      batch.update(doc(db, "users", rootGetters.getUserID, "addedBooks", book.id), { readIn: book.readIn });
-    });
-    await batch.commit()
-      .then(() => commit("updateBookReadDate", payload))
+  async updateReadDates({ dispatch, rootGetters }, payload) {
+    await runTransaction(db, async (transaction) => {
+      payload.map((book) => {
+        transaction.update(doc(db, "users", rootGetters.getUserID, "books", book.id), { readIn: book.readIn });
+      });
+    })
+      .then(() => dispatch("modifiedAt"))
       .catch((error) => console.error(error));
   },
-  async removeBook({ commit, rootGetters }, payload) {
-    await deleteDoc(doc(db, "users", rootGetters.getUserID, "addedBooks", payload))
-      .then(() => commit("removeBook", payload))
+  async removeBook({ commit, dispatch, rootGetters }, payload) {
+    await deleteDoc(doc(db, "users", rootGetters.getUserID, "books", payload))
+      .then(() => {
+        commit("removeBook", payload);
+        dispatch("modifiedAt");
+      })
+      .catch((error) => console.error(error));
+  },
+  async queryBooksFromDB({ commit, rootGetters }) {
+    await getDocs(collection(db, "users", rootGetters.getUserID, "books"))
+      .then((querySnapshot) => {
+        const books = querySnapshot.docs.map((doc) => doc.data());
+        commit("clearBooks");
+        commit("setBooks", books);
+        return books;
+      })
       .catch((error) => console.error(error));
   },
 };
