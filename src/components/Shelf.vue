@@ -19,7 +19,7 @@
         icon="close"
         size="sm"
         :title="$t('book.remove')"
-        @click="$emit('emitID', book.id)"
+        @click.once="$emit('emitID', book.id)"
       />
       <Tooltip :label="book.title" position="is-bottom">
         <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />

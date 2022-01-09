@@ -11,7 +11,7 @@
     <Loading v-show="loading" />
     <div id="results">
       <figure v-for="(book, index) in books" :key="index">
-        <q-btn round color="primary" icon="add" @click="addBook(book)" />
+        <q-btn round color="primary" icon="add" @click.once="addBook(book)" />
         <a><img :src="book.thumbnail" alt="" /></a>
         <figcaption>{{ book.title }}</figcaption>
         <figcaption id="authors">
