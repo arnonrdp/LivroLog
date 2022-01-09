@@ -1,47 +1,47 @@
 <template>
   <q-page class="q-mx-sm non-selectable">
-    <Shelf :shelfName="shelfName" :books="books" @emitID="removeBook" />
-    <!-- TODO: Inserir ícone de filtro para ordenar os livros -->
+    <Shelf :shelfName="getUserShelfName" :books="books" @emitID="removeBook" />
   </q-page>
 </template>
 
 <script>
 import Shelf from "@/components/Shelf.vue";
-import { collection, getDocs } from "firebase/firestore";
-import { mapGetters } from "vuex";
+import { doc, getDoc } from "firebase/firestore";
+import { mapActions, mapGetters } from "vuex";
 import { db } from "../firebase";
 
 export default {
   name: "Home",
   title: "Livrero",
   components: { Shelf },
-  data: () => ({ shelfName: "", books: [] }),
+  data: () => ({ shelfName: "", books: [], modifiedAtDB: null }),
   computed: {
-    ...mapGetters(["getUserID", "getBooks", "getUserShelfName"]),
+    ...mapGetters(["getUserID", "getBooks", "getUserShelfName", "getModifiedAt"]),
+    ...mapActions(["queryBooksFromDB"]),
   },
   async mounted() {
-    const userID = this.getUserID;
-    const userBooks = this.getBooks;
-    this.shelfName = this.getUserShelfName;
+    await this.queryModifiedAt();
 
-    // TODO: Verificar necessidade de criar função para armazenar o horário da última atualização e, a partir desse horário, consultar ou no Firestore ou no LocalStorage
-    const querySnapshot = await getDocs(collection(db, "users", userID, "addedBooks"));
+    if ((this.getUserID && this.getBooks.length === 0) || this.getModifiedAt !== this.modifiedAtDB) {
+      await this.queryBooksFromDB;
+    }
 
-    if (querySnapshot.size === userBooks?.length) this.books = userBooks;
-    else this.booksFromFirebase(querySnapshot);
+    this.books = this.getBooks;
   },
   methods: {
-    booksFromFirebase(querySnapshot) {
-      let vuexBooks = [];
-      querySnapshot.forEach((doc) => vuexBooks.push(doc.data()));
-      this.books = vuexBooks;
-      // TODO: Verificar possibilidade de usar Dispatch (criar getBooks?)
-      this.$store.commit("setBooks", this.books);
-    },
     removeBook(id) {
-      this.$store.dispatch("removeBook", id)
+      this.$store
+        .dispatch("removeBook", id)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("book.removed-success") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("book.removed-error") }));
+    },
+    async queryModifiedAt() {
+      await getDoc(doc(db, "users", this.getUserID))
+        .then((doc) => {
+          this.modifiedAtDB = doc.data().modifiedAt;
+          this.$store.commit("setModifiedAt", this.modifiedAtDB);
+        })
+        .catch((error) => console.error(error));
     },
   },
 };
