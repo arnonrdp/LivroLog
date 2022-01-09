@@ -51,13 +51,13 @@ const actions = {
     await signOut(auth).then(() => {
       commit("setUserProfile", {});
       commit("clearBooks");
+      commit("setModifiedAt", null);
       router.push("login");
     });
   },
   async signup({}, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
-        console.log("userCredential: ", userCredential);
         const userID = userCredential.user.uid;
         await setDoc(doc(db, "users", userID), {
           name: payload.name,
@@ -107,7 +107,10 @@ const actions = {
     const userID = rootGetters.getUserID;
 
     await updateDoc(doc(db, "users", userID), { shelfName: payload })
-      .then(() => commit("setUserShelfName", payload))
+      .then(() => {
+        commit("setUserShelfName", payload);
+        dispatch("modifiedAt");
+      })
       .catch((error) => console.error(error));
   },
 };
