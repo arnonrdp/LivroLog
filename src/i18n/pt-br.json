@@ -16,7 +16,10 @@
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
-    "follow-friends": "Seguir Amigos"
+    "follow-friends": "Seguir Amigos",
+    "follow": "Seguir",
+    "look-for-people": "Procurar pessoas",
+    "search-for-people": "Buscar pessoas"
   },
   "menu": {
     "add": "Adicionar",
