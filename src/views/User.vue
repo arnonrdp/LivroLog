@@ -1,15 +1,11 @@
 <template>
-  <div>Username: {{ $route.params.username }}</div>
-  <h1>{{ getUserShelfName }}</h1>
+  <Shelf :shelfName="this.$route.params.username" />
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import Shelf from "../components/Shelf.vue";
 
 export default {
-  computed: {
-    ...mapGetters(["getUserShelfName"]),
-  },
-  props: ["username"],
+  components: { Shelf },
 };
 </script>
