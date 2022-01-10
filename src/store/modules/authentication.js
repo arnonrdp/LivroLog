@@ -76,8 +76,9 @@ const actions = {
         const { isNewUser } = getAdditionalUserInfo(result);
         if (isNewUser) {
           await setDoc(doc(db, "users", result.user.uid), {
-            name: result.user.displayName,
             email: result.user.email,
+            name: result.user.displayName,
+            photoURL: result.user.photoURL,
             shelfName: result.user.displayName,
           });
         }
