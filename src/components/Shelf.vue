@@ -1,45 +1,60 @@
 <template>
   <div class="flex items-center justify-between">
     <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
-    <q-btn-dropdown flat icon="filter_list" size="md">
-      <q-list class="non-selectable">
-        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(name, ascDesc)">
-          <q-item-section>{{ label }}</q-item-section>
-          <q-item-section avatar>
-            <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </q-btn-dropdown>
+    <q-btn-group flat>
+      <q-btn icon="download" @click.prevent="shotPic" />
+      <q-btn-dropdown icon="filter_list">
+        <q-list class="non-selectable">
+          <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(name, ascDesc)">
+            <q-item-section>{{ label }}</q-item-section>
+            <q-item-section avatar>
+              <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+    </q-btn-group>
   </div>
-  <section>
-    <figure v-for="book in books" :key="book.id">
-      <q-btn
-        round
-        color="negative"
-        icon="close"
-        size="sm"
-        :title="$t('book.remove')"
-        @click.once="$emit('emitID', book.id)"
-      />
-      <Tooltip :label="book.title" position="is-bottom">
-        <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
-      </Tooltip>
-    </figure>
-  </section>
+  <div ref="capture">
+    <section>
+      <figure v-for="book in books" :key="book.id">
+        <q-btn
+          round
+          color="negative"
+          icon="close"
+          size="sm"
+          :title="$t('book.remove')"
+          @click.once="$emit('emitID', book.id)"
+        />
+        <Tooltip :label="book.title" position="is-bottom">
+          <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+        </Tooltip>
+      </figure>
+    </section>
+    <img :src="img" v-if="img" />
+  </div>
 </template>
 
 <script>
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import domtoimage from "dom-to-image-more";
 
 export default {
   name: "Shelf",
-  components: { Tooltip },
+  components: { Tooltip, domtoimage },
   props: {
     shelfName: { type: String, required: true },
     books: { type: Array, required: true },
   },
-  data: () => ({ bookLabels: {}, ascDesc: "asc", sortKey: "" }),
+  data: () => ({
+    bookLabels: {},
+    ascDesc: "asc",
+    sortKey: "",
+    config: {
+      value: "",
+    },
+    img: "",
+  }),
   emits: ["emitID"],
   mounted() {
     this.bookLabels = {
@@ -48,6 +63,7 @@ export default {
       readIn: this.$t("book.order-by-read"),
       title: this.$t("book.order-by-title"),
     };
+    this.config.value = "https://www.google.com/";
   },
   methods: {
     sort(label, order) {
@@ -59,6 +75,13 @@ export default {
         if (a[label] > b[label]) return 1 * multiplier;
         return 0;
       });
+    },
+    shotPic() {
+      const capture = this.$refs.capture;
+      domtoimage
+        .toPng(capture)
+        .then((dataUrl) => this.setImage(dataUrl))
+        .catch((error) => console.error("oops, something went wrong!", error));
     },
   },
 };
