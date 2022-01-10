@@ -22,6 +22,7 @@ export default {
   async mounted() {
     await this.queryModifiedAt();
 
+    // TODO: Testar adição de livro pelo celular e verificar se o livro aparece na web
     if ((this.getUserID && this.getBooks.length === 0) || this.getModifiedAt !== this.modifiedAtDB) {
       await this.queryBooksFromDB;
     }
