@@ -2,47 +2,55 @@
   <q-page>
     <h1 class="text-h6">{{ $t("friends.look-for-people") }} ~ {{ $t("friends.follow-friends") }}</h1>
     <q-separator inset />
-    <q-card>
-      <q-card-section>
-        <q-input
-          v-model="search"
-          :label="$t('friends.search-for-people')"
-          :placeholder="$t('friends.search-for-people')"
-          prepend-icon="search"
-          dense
-          flat
-          color="primary"
-          hide-details
-        />
-      </q-card-section>
-      <q-card-section>
-        <!-- <q-item-section v-for="friend in friends" :key="friend">
-          <q-item-label>
-            <q-avatar>
-              <q-img :src="friend.photoURL" alt="avatar" />
-              <q-icon name="person" />
-            </q-avatar>
-          </q-item-label>
-          <q-item-label>{{ friend.name }}</q-item-label>
-        </q-item-section> -->
-        <q-table grid :rows="this.friends" :columns="columns" row-key="name" :filter="filter">
-          <template v-slot:top-right>
-            <q-input borderless dense debounce="300" v-model="filter" placeholder="Search">
-              <template v-slot:append>
-                <q-icon name="search" />
-              </template>
-            </q-input>
-          </template>
-          <template v-slot:item="props">
-            <q-avatar>
-              <q-img :src="props.row.photoURL" alt="avatar" />
-              <q-icon name="person" />
-            </q-avatar>
-            <strong>{{ props.row.name }}</strong>
-          </template>
-        </q-table>
-      </q-card-section>
-    </q-card>
+    <div class="flex-center q-pa-md row">
+      <q-input
+        v-model="filter"
+        :label="$t('friends.search-for-people')"
+        class="col-md-7 col-sm-8 col-xs-12 q-mb-md"
+        prepend-icon="search"
+        dense
+        debounce="300"
+        flat
+        color="primary"
+        hide-details
+      >
+        <template v-slot:prepend>
+          <q-icon name="search" />
+        </template>
+      </q-input>
+      <q-table
+        grid
+        class="col-md-7 col-sm-8 col-xs-12"
+        card-container-class="column"
+        :rows="this.friends"
+        :columns="columns"
+        row-key="name"
+        :filter="filter"
+        hide-bottom
+      >
+        <template v-slot:item="props">
+          <div class="flex justify-between q-my-sm text-secondary">
+            <router-link :to="'/user/' + props.row.shelfName" class="row">
+              <q-avatar>
+                <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
+                <q-icon v-else size="md" name="person" />
+              </q-avatar>
+              <div class="column items-start q-ml-sm">
+                <strong>{{ props.row.name }}</strong>
+                <span>@{{ props.row.shelfName }}</span>
+              </div>
+            </router-link>
+            <q-btn
+              rounded
+              size="sm"
+              disable
+              :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
+              @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
+            />
+          </div>
+        </template>
+      </q-table>
+    </div>
   </q-page>
 </template>
 
