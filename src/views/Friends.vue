@@ -22,15 +22,14 @@
         grid
         class="col-md-7 col-sm-8 col-xs-12"
         card-container-class="column"
-        :rows="this.friends"
-        :columns="columns"
-        row-key="name"
+        :rows="users"
+        row-key="id"
         :filter="filter"
         hide-bottom
       >
         <template v-slot:item="props">
           <div class="flex justify-between q-my-sm text-secondary">
-            <router-link :to="'/user/' + props.row.shelfName" class="row">
+            <router-link :to="{ name: 'user_child', params: { username: props.row.shelfName } }" class="row">
               <q-avatar>
                 <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
                 <q-icon v-else size="md" name="person" />
@@ -41,9 +40,12 @@
               </div>
             </router-link>
             <q-btn
-              rounded
-              size="sm"
+              v-show="this.getUserProfile.email !== props.row.email"
               disable
+              no-caps
+              color="primary"
+              size="md"
+              padding="xs lg"
               :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
               @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
             />
@@ -57,48 +59,22 @@
 <script>
 import Loading from "@/components/Loading.vue";
 import { mapGetters } from "vuex";
-import { collection, getDocs, query } from "@firebase/firestore";
-import { db } from "../firebase";
 
 export default {
   name: "Friends",
   components: { Loading },
   data: () => ({
-    friends: [],
     filter: "",
-    search: "",
-    columns: [
-      {
-        name: "photoURL",
-        label: "Photo",
-        field: "photoURL",
-      },
-      {
-        name: "name",
-        label: "Name",
-        field: "name",
-      },
-    ],
+    friends: [],
+    users: [],
   }),
   computed: {
-    ...mapGetters(["getUserShelfName"]),
+    ...mapGetters(["getUsers", "getUserProfile"]),
   },
-  methods: {
-    async fetchFriends() {
-      const response = await this.$axios.get("/api/friends");
-      this.friends = response.data;
-    },
-
-    async queryUsersFromDB() {
-      await getDocs(collection(db, "users"))
-        .then((querySnapshot) => (this.friends = querySnapshot.docs.map((doc) => doc.data())))
-        .catch((error) => console.error(error));
-    },
-  },
-  created() {
-    // TODO: Não fazer a consulta ao DB toda vez que a página é carregada
-    // this.fetchFriends();
-    this.queryUsersFromDB();
+  async mounted() {
+    // TODO: Não fazer a consulta se os dados não mudaram
+    await this.$store.dispatch("queryUsersFromDB");
+    this.users = this.getUsers;
   },
 };
 </script>
