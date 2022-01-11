@@ -45,11 +45,19 @@ const routes = [
     meta: { requiresAuth: true, title: "Ajustes" },
   },
   {
-    path: "/user/:username",
-    name: "Usuário",
+    path: "/:username",
+    name: "user",
     component: User,
     props: true,
     meta: { requiresAuth: false, title: "Usuário" },
+    children: [
+      {
+        path: "/:username",
+        name: "user_child",
+        components: { user_details: User },
+        props: true,
+      },
+    ],
   },
 ];
 
