@@ -42,6 +42,7 @@ const actions = {
       })
       .catch((error) => console.error(error));
   },
+
   async updateReadDates({ dispatch, rootGetters }, payload) {
     await runTransaction(db, async (transaction) => {
       payload.map((book) => {
@@ -51,6 +52,7 @@ const actions = {
       .then(() => dispatch("modifiedAt"))
       .catch((error) => console.error(error));
   },
+
   async removeBook({ commit, dispatch, rootGetters }, payload) {
     await deleteDoc(doc(db, "users", rootGetters.getUserID, "books", payload))
       .then(() => {
@@ -59,6 +61,7 @@ const actions = {
       })
       .catch((error) => console.error(error));
   },
+  
   async queryBooksFromDB({ commit, rootGetters }) {
     await getDocs(collection(db, "users", rootGetters.getUserID, "books"))
       .then((querySnapshot) => {
