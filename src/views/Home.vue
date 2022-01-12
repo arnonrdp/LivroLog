@@ -26,10 +26,10 @@ export default {
     this.username = this.getUserShelfName;
 
     // TODO: Testar adição de livro pelo celular e verificar se o livro aparece na web
-    if (this.getModifiedAt(this.getUserID) !== (await this.modifiedAtDB)) {
+    // if (this.getModifiedAt !== (await this.modifiedAtDB)) {
       console.log("Home está consultando o banco de dados");
       await this.queryBooksFromDB;
-    }
+    // }
 
     this.books = this.getBooks;
   },
