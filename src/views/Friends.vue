@@ -72,8 +72,7 @@ export default {
     ...mapGetters(["getUsers", "getUserProfile"]),
   },
   async mounted() {
-    // TODO: Não fazer a consulta se os dados não mudaram
-    await this.$store.dispatch("queryUsersFromDB");
+    await this.$store.dispatch("queryDBUsers");
     this.users = this.getUsers;
   },
 };
