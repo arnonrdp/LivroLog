@@ -33,5 +33,10 @@
     "sass-loader": "^10.1.0",
     "set-value": ">=4.1.0",
     "vue-cli-plugin-quasar": "~4.0.4"
-  }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
 }

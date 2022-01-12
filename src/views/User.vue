@@ -16,7 +16,7 @@ export default {
     username: "",
   }),
   computed: {
-    ...mapGetters(["getUsers", 'getUserBooks']),
+    ...mapGetters(["getUsers", "getUserBooks"]),
   },
   async mounted() {
     this.username = this.$route.params.username;
@@ -27,10 +27,12 @@ export default {
         break;
       }
     }
-    // TODO: Só chamar a action abaixo se o horário modificado no banco for diferente do horário do Vuex
-    await this.$store.dispatch('queryBooksFromUser', this.uid);
-    this.books = this.getUserBooks(this.uid);
 
+    // TODO: Só consultar o banco de dados se o modifiedAt for diferente do que está no banco de dados
+    await this.$store.dispatch("queryDBUserBooks", this.uid);
+
+    this.books = this.getUserBooks(this.uid);
+    console.log("this.books: ", this.books);
   },
 };
 </script>
