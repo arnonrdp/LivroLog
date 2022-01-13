@@ -2,7 +2,7 @@
   <div class="flex items-center justify-between">
     <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
     <q-btn-group flat>
-      <q-btn icon="download" @click.prevent="shotPic" />
+      <q-btn icon="download" @click.prevent="download" />
       <q-btn-dropdown icon="filter_list">
         <q-list class="non-selectable">
           <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(name, ascDesc)">
@@ -32,31 +32,21 @@
         </Tooltip>
       </figure>
     </section>
-    <!-- <img :src="img" v-if="img" /> -->
   </div>
 </template>
 
 <script>
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
-import domtoimage from "dom-to-image-more";
+import html2canvas from "html2canvas";
 import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
-  components: { Tooltip, domtoimage },
+  components: { Tooltip },
   props: {
     books: { type: Array, required: true },
     shelfName: { type: String, required: true },
   },
-  data: () => ({
-    bookLabels: {},
-    ascDesc: "asc",
-    sortKey: "",
-    config: {
-      value: "",
-    },
-    // img: "",
-  }),
   emits: ["emitID"],
   data: () => ({
     ascDesc: "asc",
@@ -75,8 +65,6 @@ export default {
       title: this.$t("book.order-by-title"),
     };
     this.selfUser = this.$route.params.username === undefined || this.$route.params.username === this.getMyShelfName;
-
-    // this.config.value = "https://www.google.com/";
   },
   methods: {
     sort(label, order) {
@@ -85,12 +73,15 @@ export default {
       const multiplier = order === "asc" ? 1 : -1;
       this.books.sort((a, b) => (a[label] < b[label] ? -1 * multiplier : 1 * multiplier));
     },
-    shotPic() {
-      const capture = this.$refs.capture;
-      domtoimage
-        .toPng(capture)
-        .then((dataUrl) => this.setImage(dataUrl))
-        .catch((error) => console.error("oops, something went wrong!", error));
+    download() {
+      html2canvas(this.$refs["capture"], {
+        allowTaint: true,
+        proxy: "https://books.google.com/",
+        // scale: (1920 * 2) / window.innerWidth,
+        useCORS: true,
+      })
+        .then((canvas) => console.log("TODO: Executar download de: ", canvas.toDataURL("image/jpg"), "Livrero.jpg"))
+        .catch((error) => console.error("ERROR SAVING IMAGE", error));
     },
   },
 };
