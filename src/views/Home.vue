@@ -1,33 +1,32 @@
 <template>
   <q-page class="q-mx-sm non-selectable">
-    <Shelf :shelfName="getUserShelfName" :books="books" @emitID="removeBook" />
+    <Shelf :shelfName="username" :books="books" @emitID="removeBook" />
   </q-page>
 </template>
 
 <script>
 import Shelf from "@/components/Shelf.vue";
-import { doc, getDoc } from "firebase/firestore";
-import { mapActions, mapGetters } from "vuex";
-import { db } from "../firebase";
+import { mapGetters } from "vuex";
 
 export default {
-  name: "Home",
-  title: "Livrero",
   components: { Shelf },
-  data: () => ({ shelfName: "", books: [], modifiedAtDB: null }),
+  data: () => ({
+    books: [],
+    username: "",
+  }),
   computed: {
-    ...mapGetters(["getUserID", "getBooks", "getUserShelfName", "getModifiedAt"]),
-    ...mapActions(["queryBooksFromDB"]),
+    ...mapGetters(["getMyID", "getMyShelfName", "getMyBooks"]),
   },
   async mounted() {
-    await this.queryModifiedAt();
+    this.username = this.getMyShelfName;
 
-    // TODO: Testar adição de livro pelo celular e verificar se o livro aparece na web
-    if ((this.getUserID && this.getBooks.length === 0) || this.getModifiedAt !== this.modifiedAtDB) {
-      await this.queryBooksFromDB;
-    }
-
-    this.books = this.getBooks;
+    this.$store
+      .dispatch("compareModifiedAt", this.getMyID)
+      .then(async (equals) => {
+        if (!equals | !this.getMyBooks.length) await this.$store.dispatch("queryDBMyBooks");
+        this.books = this.getMyBooks;
+      })
+      .catch((err) => console.log("err: ", err));
   },
   methods: {
     removeBook(id) {
@@ -35,14 +34,6 @@ export default {
         .dispatch("removeBook", id)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("book.removed-success") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("book.removed-error") }));
-    },
-    async queryModifiedAt() {
-      await getDoc(doc(db, "users", this.getUserID))
-        .then((doc) => {
-          this.modifiedAtDB = doc.data().modifiedAt;
-          this.$store.commit("setModifiedAt", this.modifiedAtDB);
-        })
-        .catch((error) => console.error(error));
     },
   },
 };

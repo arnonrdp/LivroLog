@@ -16,22 +16,23 @@ export default {
     username: "",
   }),
   computed: {
-    ...mapGetters(["getUsers", 'getUserBooks']),
+    ...mapGetters(["getUsers", "getUserBooks"]),
   },
   async mounted() {
     this.username = this.$route.params.username;
 
+    // TODO: Verificar se é possível utilizar .filter() ou .find() aqui
     for (let user of this.getUsers) {
       if (user.shelfName === this.username) {
         this.uid = user.id;
         break;
       }
     }
-    // TODO: Só chamar a action abaixo se o horário modificado no banco for diferente do horário do Vuex
-    await this.$store.dispatch('queryBooksFromUser', this.uid);
-    this.books = this.getUserBooks(this.uid);
 
-    // TODO: não deve ser possível excluir o livro de um usuário que não seja o próprio
+    this.$store.dispatch("compareModifiedAt", this.uid).then(async (equals) => {
+      if (!equals | !this.getUserBooks(this.uid)) await this.$store.dispatch("queryDBUserBooks", this.uid);
+      this.books = this.getUserBooks(this.uid);
+    });
   },
 };
 </script>
