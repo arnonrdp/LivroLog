@@ -34,13 +34,13 @@
                 <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
                 <q-icon v-else size="md" name="person" />
               </q-avatar>
-              <div class="column items-start q-ml-sm">
+              <div class="column justify-center items-start q-ml-sm">
                 <strong>{{ props.row.name }}</strong>
                 <span>@{{ props.row.shelfName }}</span>
               </div>
             </router-link>
             <q-btn
-              v-show="this.getUserProfile.email !== props.row.email"
+              v-show="this.getMyProfile.email !== props.row.email"
               disable
               no-caps
               color="primary"
@@ -69,7 +69,7 @@ export default {
     users: [],
   }),
   computed: {
-    ...mapGetters(["getUsers", "getUserProfile"]),
+    ...mapGetters(["getUsers", "getMyProfile"]),
   },
   async mounted() {
     await this.$store.dispatch("queryDBUsers");

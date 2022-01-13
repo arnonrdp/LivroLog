@@ -16,14 +16,17 @@ const state = {
 };
 
 const getters = {
-  getUserProfile(state) {
+  getMyProfile(state) {
     return state.user;
   },
-  getUserID(state) {
+  getMyID(state) {
     return state.user.uid;
   },
-  getUserShelfName(state) {
+  getMyShelfName(state) {
     return state.user.shelfName;
+  },
+  getMyModifiedAt(state) {
+    return state.user.modifiedAt;
   },
   isAuthenticated(state) {
     return state.user.email !== undefined;
@@ -34,8 +37,11 @@ const mutations = {
   setUserProfile(state, val) {
     state.user = val;
   },
-  setUserShelfName(state, val) {
+  setMyShelfName(state, val) {
     state.user.shelfName = val;
+  },
+  setMyModifiedAt(state, val) {
+    state.user.modifiedAt = val;
   },
 };
 
@@ -51,7 +57,6 @@ const actions = {
     await signOut(auth).then(() => {
       commit("setUserProfile", {});
       commit("clearBooks");
-      commit("setModifiedAt", null);
       router.push("login");
     });
   },
@@ -88,6 +93,7 @@ const actions = {
         throw error.code;
       });
   },
+  // TODO: Refatorar esta função.
   async fetchUserProfile({ commit }, user) {
     const userRef = doc(db, "users", user.uid);
     await getDoc(userRef)
@@ -105,8 +111,8 @@ const actions = {
     });
   },
   async updateShelfName({ commit, rootGetters }, payload) {
-    await updateDoc(doc(db, "users", rootGetters.getUserID), { shelfName: payload })
-      .then(() => commit("setUserShelfName", payload))
+    await updateDoc(doc(db, "users", rootGetters.getMyID), { shelfName: payload })
+      .then(() => commit("setMyShelfName", payload))
       .catch((error) => console.error(error));
   },
 };

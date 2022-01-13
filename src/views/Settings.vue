@@ -79,7 +79,7 @@ export default {
   }),
   components: { Tooltip },
   computed: {
-    ...mapGetters(["getUserShelfName", "getBooks"]),
+    ...mapGetters(["getMyShelfName", "getMyBooks"]),
   },
   setup() {
     const { locale } = useI18n({ useScope: "global" });
@@ -93,8 +93,8 @@ export default {
     };
   },
   mounted() {
-    this.shelfName = this.getUserShelfName;
-    this.books = this.getBooks;
+    this.shelfName = this.getMyShelfName;
+    this.books = this.getMyBooks;
   },
   methods: {
     updateShelfName() {

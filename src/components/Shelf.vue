@@ -38,8 +38,8 @@ export default {
   name: "Shelf",
   components: { Tooltip },
   props: {
-    shelfName: { type: String, required: true },
     books: { type: Array, required: true },
+    shelfName: { type: String, required: true },
   },
   emits: ["emitID"],
   data: () => ({
@@ -49,7 +49,7 @@ export default {
     sortKey: "",
   }),
   computed: {
-    ...mapGetters(["getUserShelfName"]),
+    ...mapGetters(["getMyShelfName"]),
   },
   async mounted() {
     this.bookLabels = {
@@ -59,7 +59,7 @@ export default {
       title: this.$t("book.order-by-title"),
     };
 
-    this.selfUser = this.$route.params.username === undefined || this.$route.params.username === this.getUserShelfName;
+    this.selfUser = this.$route.params.username === undefined || this.$route.params.username === this.getMyShelfName;
   },
   methods: {
     sort(label, order) {
