@@ -108,6 +108,7 @@ figure button {
   right: -1.5rem;
   top: -1rem;
   visibility: hidden;
+  z-index: 1;
 }
 
 figure:hover button,
