@@ -5,6 +5,7 @@ import Friends from "../views/Friends.vue";
 import Home from "../views/Home.vue";
 import Login from "../views/Login.vue";
 import Settings from "../views/Settings.vue";
+import User from "../views/User.vue";
 
 const routes = [
   {
@@ -42,6 +43,21 @@ const routes = [
     name: "Ajustes",
     component: Settings,
     meta: { requiresAuth: true, title: "Ajustes" },
+  },
+  {
+    path: "/:username",
+    name: "user",
+    component: User,
+    props: true,
+    meta: { requiresAuth: false, title: "Usuário" },
+    children: [
+      {
+        path: "/:username",
+        name: "user_child",
+        components: { user_details: User },
+        props: true,
+      },
+    ],
   },
 ];
 

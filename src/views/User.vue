@@ -21,6 +21,7 @@ export default {
   async mounted() {
     this.username = this.$route.params.username;
 
+    // TODO: Verificar se é possível utilizar .filter() ou .find() aqui
     for (let user of this.getUsers) {
       if (user.shelfName === this.username) {
         this.uid = user.id;
@@ -28,11 +29,10 @@ export default {
       }
     }
 
-    // TODO: Só consultar o banco de dados se o modifiedAt for diferente do que está no banco de dados
-    await this.$store.dispatch("queryDBUserBooks", this.uid);
-
-    this.books = this.getUserBooks(this.uid);
-    console.log("this.books: ", this.books);
+    this.$store.dispatch("compareModifiedAt", this.uid).then(async (equals) => {
+      if (!equals | !this.getUserBooks(this.uid)) await this.$store.dispatch("queryDBUserBooks", this.uid);
+      this.books = this.getUserBooks(this.uid);
+    });
   },
 };
 </script>

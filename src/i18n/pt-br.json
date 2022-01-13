@@ -16,8 +16,9 @@
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
-    "follow-friends": "Seguir Amigos",
     "follow": "Seguir",
+    "follow-friends": "Seguir Amigos",
+    "following": "Seguindo",
     "look-for-people": "Procurar pessoas",
     "search-for-people": "Buscar pessoas"
   },

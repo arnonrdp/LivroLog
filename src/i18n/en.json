@@ -16,8 +16,9 @@
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",
-    "follow-friends": "Follow Friends",
     "follow": "Follow",
+    "follow-friends": "Follow Friends",
+    "following": "Following",
     "look-for-people": "Look for people",
     "search-for-people": "Search for people"
   },

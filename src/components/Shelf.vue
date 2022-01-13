@@ -15,6 +15,7 @@
   <section>
     <figure v-for="book in books" :key="book.id">
       <q-btn
+        v-if="selfUser"
         round
         color="negative"
         icon="close"
@@ -31,34 +32,41 @@
 
 <script>
 import Tooltip from "@adamdehaven/vue-custom-tooltip";
+import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
   components: { Tooltip },
   props: {
-    shelfName: { type: String, required: true },
     books: { type: Array, required: true },
+    shelfName: { type: String, required: true },
   },
-  data: () => ({ bookLabels: {}, ascDesc: "asc", sortKey: "" }),
   emits: ["emitID"],
-  mounted() {
+  data: () => ({
+    ascDesc: "asc",
+    bookLabels: {},
+    selfUser: false,
+    sortKey: "",
+  }),
+  computed: {
+    ...mapGetters(["getMyShelfName"]),
+  },
+  async mounted() {
     this.bookLabels = {
       authors: this.$t("book.order-by-author"),
       addedIn: this.$t("book.order-by-date"),
       readIn: this.$t("book.order-by-read"),
       title: this.$t("book.order-by-title"),
     };
+
+    this.selfUser = this.$route.params.username === undefined || this.$route.params.username === this.getMyShelfName;
   },
   methods: {
     sort(label, order) {
-      const multiplier = order === "asc" ? 1 : -1;
       this.sortKey = label;
       this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";
-      this.books.sort((a, b) => {
-        if (a[label] < b[label]) return -1 * multiplier;
-        if (a[label] > b[label]) return 1 * multiplier;
-        return 0;
-      });
+      const multiplier = order === "asc" ? 1 : -1;
+      this.books.sort((a, b) => (a[label] < b[label] ? -1 * multiplier : 1 * multiplier));
     },
   },
 };
@@ -77,7 +85,7 @@ section {
   display: flex;
   flex-flow: row wrap;
   justify-content: space-around;
-  min-height: 285px;
+  min-height: 302px;
   padding: 0 2rem 1rem;
 }
 

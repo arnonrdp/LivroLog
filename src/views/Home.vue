@@ -6,32 +6,27 @@
 
 <script>
 import Shelf from "@/components/Shelf.vue";
-import { mapActions, mapGetters } from "vuex";
+import { mapGetters } from "vuex";
 
 export default {
-  // TODO: Verificar a necessidade de 'name' e 'title' no export default
-  // name: "Home",
-  // title: "Livrero",
   components: { Shelf },
   data: () => ({
-    username: "",
     books: [],
-    modifiedAtDB: null,
+    username: "",
   }),
   computed: {
-    ...mapGetters(["getUserID", "getBooks", "getUserShelfName", "getModifiedAt"]),
-    ...mapActions(["queryBooksFromDB"]),
+    ...mapGetters(["getMyID", "getMyShelfName", "getMyBooks"]),
   },
   async mounted() {
-    this.username = this.getUserShelfName;
+    this.username = this.getMyShelfName;
 
-    // TODO: Testar adição de livro pelo celular e verificar se o livro aparece na web
-    // if (this.getModifiedAt !== (await this.modifiedAtDB)) {
-      console.log("Home está consultando o banco de dados");
-      await this.queryBooksFromDB;
-    // }
-
-    this.books = this.getBooks;
+    this.$store
+      .dispatch("compareModifiedAt", this.getMyID)
+      .then(async (equals) => {
+        if (!equals | !this.getMyBooks.length) await this.$store.dispatch("queryDBMyBooks");
+        this.books = this.getMyBooks;
+      })
+      .catch((err) => console.log("err: ", err));
   },
   methods: {
     removeBook(id) {
