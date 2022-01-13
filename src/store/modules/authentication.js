@@ -53,6 +53,7 @@ const actions = {
         throw error.code;
       });
   },
+
   async logout({ commit }) {
     await signOut(auth).then(() => {
       commit("setUserProfile", {});
@@ -60,6 +61,7 @@ const actions = {
       router.push("login");
     });
   },
+
   async signup({}, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
@@ -74,6 +76,7 @@ const actions = {
         throw error.code;
       });
   },
+
   async googleSignIn({ dispatch }) {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider)
@@ -93,6 +96,7 @@ const actions = {
         throw error.code;
       });
   },
+
   // TODO: Refatorar esta função.
   async fetchUserProfile({ commit }, user) {
     const userRef = doc(db, "users", user.uid);
@@ -105,15 +109,24 @@ const actions = {
       })
       .catch((error) => console.error(error));
   },
+  
   async resetPassword({}, payload) {
     await sendPasswordResetEmail(auth, payload.email).catch((error) => {
       throw error.code;
     });
   },
+
   async updateShelfName({ commit, rootGetters }, payload) {
     await updateDoc(doc(db, "users", rootGetters.getMyID), { shelfName: payload })
       .then(() => commit("setMyShelfName", payload))
       .catch((error) => console.error(error));
+  },
+
+  async compareMyModifiedAt({ commit, rootGetters }) {
+    const LSModifiedAt = rootGetters.getMyModifiedAt;
+    const DBModifiedAt = await getDoc(doc(db, "users", rootGetters.getMyID)).then((doc) => doc.data().modifiedAt);
+    commit("setMyModifiedAt", DBModifiedAt);
+    return Boolean(LSModifiedAt === DBModifiedAt);
   },
 };
 
