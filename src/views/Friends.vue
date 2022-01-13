@@ -40,12 +40,13 @@
               </div>
             </router-link>
             <q-btn
-              v-show="this.getMyProfile.email !== props.row.email"
+              v-show="this.getMyProfile.uid !== props.row.id"
               disable
               no-caps
               color="primary"
               size="md"
               padding="xs lg"
+              :title="$t('friends.feature-under-dev')"
               :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
               @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
             />
