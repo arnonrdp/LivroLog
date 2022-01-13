@@ -1,5 +1,6 @@
 <template>
   <q-page padding>
+    <!-- TODO: Resolver zoom da página no celular -->
     <q-input v-model="seek" type="text" class="q-py-lg" :label="$t('book.addlabel')" @keyup.enter="search" dense>
       <template v-slot:prepend>
         <q-icon name="search" />
@@ -107,6 +108,7 @@ figure button {
   right: -1.5rem;
   top: -1rem;
   visibility: hidden;
+  z-index: 1;
 }
 
 figure:hover button,

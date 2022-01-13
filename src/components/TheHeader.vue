@@ -1,12 +1,12 @@
 <template>
   <header v-if="this.$route.path !== '/login'">
     <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
-    <nav>
-      <router-link to="/"> <img src="@/assets/books.svg" />&nbsp;{{ $t("menu.home") }} </router-link>
-      <router-link to="/add"> <img src="@/assets/search.svg" />&nbsp;{{ $t("menu.add") }} </router-link>
-      <router-link to="/friends"> <img src="@/assets/people.svg" />&nbsp;{{ $t("menu.friends") }} </router-link>
-      <router-link to="/settings"> <img src="@/assets/settings.svg" />&nbsp;{{ $t("menu.settings") }} </router-link>
-    </nav>
+    <q-tabs>
+      <q-route-tab icon="img:/books.svg" to="/" />
+      <q-route-tab icon="search" to="/add" exact />
+      <q-route-tab icon="people" to="/friends" exact />
+      <q-route-tab icon="settings" to="/settings" exact />
+    </q-tabs>
   </header>
 </template>
 
@@ -47,32 +47,5 @@ header {
 img[alt="Logotipo"] {
   padding: 0 15px;
   width: 200px;
-}
-
-nav {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-evenly;
-  padding: 0 15px;
-}
-
-nav a {
-  align-items: center;
-  color: #000;
-  display: flex;
-  font-size: 0.8rem;
-  height: 30px;
-  margin: 10px;
-  padding: 5px 10px;
-  text-decoration: none;
-}
-
-nav a.router-link-exact-active,
-nav a:hover {
-  outline: 1px solid rgba(0, 0, 0, 0.4);
-}
-
-nav img {
-  height: 1rem;
 }
 </style>

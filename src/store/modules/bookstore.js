@@ -6,13 +6,13 @@ const state = {
 };
 
 const getters = {
-  getBooks(state) {
+  getMyBooks(state) {
     return state.books;
   },
 };
 
 const mutations = {
-  setBooks(state, val) {
+  setMyBooks(state, val) {
     state.books = [...state.books].concat(val);
   },
   clearBooks(state) {
@@ -32,39 +32,42 @@ const mutations = {
 
 const actions = {
   async addBook({ commit, dispatch, rootGetters }, payload) {
-    if (rootGetters.getBooks.some((userBook) => userBook.id === payload.id)) {
+    if (rootGetters.getMyBooks.some((userBook) => userBook.id === payload.id)) {
       throw new Error("Book already exists");
     }
-    await setDoc(doc(db, "users", rootGetters.getUserID, "books", payload.id), { ...payload })
+    await setDoc(doc(db, "users", rootGetters.getMyID, "books", payload.id), { ...payload })
       .then(() => {
-        commit("setBooks", payload);
-        dispatch("modifiedAt");
+        commit("setMyBooks", payload);
+        dispatch("modifiedAt", rootGetters.getMyID);
       })
       .catch((error) => console.error(error));
   },
+
   async updateReadDates({ dispatch, rootGetters }, payload) {
     await runTransaction(db, async (transaction) => {
       payload.map((book) => {
-        transaction.update(doc(db, "users", rootGetters.getUserID, "books", book.id), { readIn: book.readIn });
+        transaction.update(doc(db, "users", rootGetters.getMyID, "books", book.id), { readIn: book.readIn });
       });
     })
-      .then(() => dispatch("modifiedAt"))
+      .then(() => dispatch("modifiedAt", rootGetters.getMyID))
       .catch((error) => console.error(error));
   },
+
   async removeBook({ commit, dispatch, rootGetters }, payload) {
-    await deleteDoc(doc(db, "users", rootGetters.getUserID, "books", payload))
+    await deleteDoc(doc(db, "users", rootGetters.getMyID, "books", payload))
       .then(() => {
         commit("removeBook", payload);
-        dispatch("modifiedAt");
+        dispatch("modifiedAt", rootGetters.getMyID);
       })
       .catch((error) => console.error(error));
   },
-  async queryBooksFromDB({ commit, rootGetters }) {
-    await getDocs(collection(db, "users", rootGetters.getUserID, "books"))
+  
+  async queryDBMyBooks({ commit, rootGetters }) {
+    await getDocs(collection(db, "users", rootGetters.getMyID, "books"))
       .then((querySnapshot) => {
         const books = querySnapshot.docs.map((doc) => doc.data());
         commit("clearBooks");
-        commit("setBooks", books);
+        commit("setMyBooks", books);
         return books;
       })
       .catch((error) => console.error(error));

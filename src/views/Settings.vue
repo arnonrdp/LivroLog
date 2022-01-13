@@ -39,6 +39,7 @@
             <tr v-for="book in books" :key="book.id">
               <td class="text-left">{{ book.title }}</td>
               <td class="flex items-center no-wrap" style="max-width: 130px">
+                <!-- TODO: Verificar por que este input não é exibido no mobile -->
                 <q-input v-model="book.readIn" dense input-class="text-right" type="date" />
               </td>
             </tr>
@@ -50,6 +51,7 @@
                   class="q-ma-lg"
                   color="primary"
                   icon="save"
+                  :loading="saving"
                   :label="$t('settings.save')"
                   @click="updateReadDates(books)"
                 />
@@ -70,14 +72,14 @@ import { mapGetters } from "vuex";
 export default {
   name: "Settings",
   data: () => ({
-    shelfName: "",
     books: [],
+    saving: false,
+    shelfName: "",
     tab: "account",
-    filter: "",
   }),
   components: { Tooltip },
   computed: {
-    ...mapGetters(["getUserShelfName", "getBooks"]),
+    ...mapGetters(["getMyShelfName", "getMyBooks"]),
   },
   setup() {
     const { locale } = useI18n({ useScope: "global" });
@@ -91,8 +93,8 @@ export default {
     };
   },
   mounted() {
-    this.shelfName = this.getUserShelfName;
-    this.books = this.getBooks;
+    this.shelfName = this.getMyShelfName;
+    this.books = this.getMyBooks;
   },
   methods: {
     updateShelfName() {
@@ -104,13 +106,15 @@ export default {
       this.$store.dispatch("logout");
     },
     async updateReadDates(updatedBooks) {
+      this.saving = true;
       let updatedFields = [];
       for (const book of updatedBooks) {
         updatedFields.push({ id: book.id, readIn: book.readIn });
       }
       await this.$store.dispatch("updateReadDates", updatedFields)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.read-dates-updated") }))
-        .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.read-dates-updated-error") }));
+        .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.read-dates-updated-error") }))
+        .finally(() => this.saving = false);
     },
   },
 };

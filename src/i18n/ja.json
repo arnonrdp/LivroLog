@@ -16,7 +16,11 @@
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
-    "follow-friends": "友達をフォローする"
+    "follow": "従う",
+    "follow-friends": "友達をフォローする",
+    "following": "続く",
+    "look-for-people": "人を探す",
+    "search-for-people": "人を探す"
   },
   "menu": {
     "add": "追加",

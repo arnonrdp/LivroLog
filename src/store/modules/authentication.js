@@ -16,14 +16,17 @@ const state = {
 };
 
 const getters = {
-  getUserProfile(state) {
+  getMyProfile(state) {
     return state.user;
   },
-  getUserID(state) {
+  getMyID(state) {
     return state.user.uid;
   },
-  getUserShelfName(state) {
+  getMyShelfName(state) {
     return state.user.shelfName;
+  },
+  getMyModifiedAt(state) {
+    return state.user.modifiedAt;
   },
   isAuthenticated(state) {
     return state.user.email !== undefined;
@@ -34,8 +37,11 @@ const mutations = {
   setUserProfile(state, val) {
     state.user = val;
   },
-  setUserShelfName(state, val) {
+  setMyShelfName(state, val) {
     state.user.shelfName = val;
+  },
+  setMyModifiedAt(state, val) {
+    state.user.modifiedAt = val;
   },
 };
 
@@ -47,14 +53,15 @@ const actions = {
         throw error.code;
       });
   },
+
   async logout({ commit }) {
     await signOut(auth).then(() => {
       commit("setUserProfile", {});
       commit("clearBooks");
-      commit("setModifiedAt", null);
       router.push("login");
     });
   },
+
   async signup({}, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
@@ -69,6 +76,7 @@ const actions = {
         throw error.code;
       });
   },
+
   async googleSignIn({ dispatch }) {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider)
@@ -76,8 +84,9 @@ const actions = {
         const { isNewUser } = getAdditionalUserInfo(result);
         if (isNewUser) {
           await setDoc(doc(db, "users", result.user.uid), {
-            name: result.user.displayName,
             email: result.user.email,
+            name: result.user.displayName,
+            photoURL: result.user.photoURL,
             shelfName: result.user.displayName,
           });
         }
@@ -87,6 +96,8 @@ const actions = {
         throw error.code;
       });
   },
+
+  // TODO: Refatorar esta função.
   async fetchUserProfile({ commit }, user) {
     const userRef = doc(db, "users", user.uid);
     await getDoc(userRef)
@@ -98,15 +109,24 @@ const actions = {
       })
       .catch((error) => console.error(error));
   },
+  
   async resetPassword({}, payload) {
     await sendPasswordResetEmail(auth, payload.email).catch((error) => {
       throw error.code;
     });
   },
+
   async updateShelfName({ commit, rootGetters }, payload) {
-    await updateDoc(doc(db, "users", rootGetters.getUserID), { shelfName: payload })
-      .then(() => commit("setUserShelfName", payload))
+    await updateDoc(doc(db, "users", rootGetters.getMyID), { shelfName: payload })
+      .then(() => commit("setMyShelfName", payload))
       .catch((error) => console.error(error));
+  },
+
+  async compareMyModifiedAt({ commit, rootGetters }) {
+    const LSModifiedAt = rootGetters.getMyModifiedAt;
+    const DBModifiedAt = await getDoc(doc(db, "users", rootGetters.getMyID)).then((doc) => doc.data().modifiedAt);
+    commit("setMyModifiedAt", DBModifiedAt);
+    return Boolean(LSModifiedAt === DBModifiedAt);
   },
 };
 
