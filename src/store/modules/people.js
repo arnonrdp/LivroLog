@@ -40,7 +40,7 @@ const mutations = {
   setFriends(state, friends) {
     state.friends = friends;
   },
-  setModifiedAt(state, { userID, currentDate }) {
+  setUserModifiedAt(state, { userID, currentDate }) {
     state.users.find((user) => user.id === userID).modifiedAt = currentDate;
   },
 };
@@ -80,14 +80,14 @@ const actions = {
   async modifiedAt({ commit, rootGetters }, userID) {
     const currentDate = Date.now();
     await updateDoc(doc(db, "users", rootGetters.getMyID), { modifiedAt: currentDate })
-      .then(() => commit("setModifiedAt", { userID, currentDate }))
+      .then(() => commit("setUserModifiedAt", { userID, currentDate }))
       .catch((error) => console.error(error));
   },
 
-  async compareModifiedAt({ commit, rootGetters }, userID) {
+  async compareUserModifiedAt({ commit, rootGetters }, userID) {
     const LSModifiedAt = rootGetters.getModifiedAt(userID) || 0;
     const DBModifiedAt = await getDoc(doc(db, "users", userID)).then((doc) => doc.data().modifiedAt);
-    commit("setModifiedAt", { userID, currentDate: DBModifiedAt });
+    commit("setUserModifiedAt", { userID, currentDate: DBModifiedAt });
     return Boolean(DBModifiedAt === LSModifiedAt);
   },
 };

@@ -21,12 +21,12 @@ export default {
     this.username = this.getMyShelfName;
 
     this.$store
-      .dispatch("compareModifiedAt", this.getMyID)
+      .dispatch("compareMyModifiedAt")
       .then(async (equals) => {
         if (!equals | !this.getMyBooks.length) await this.$store.dispatch("queryDBMyBooks");
         this.books = this.getMyBooks;
       })
-      .catch((err) => console.log("err: ", err));
+      .catch((err) => console.error("err: ", err));
   },
   methods: {
     removeBook(id) {

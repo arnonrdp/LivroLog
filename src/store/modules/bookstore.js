@@ -49,7 +49,7 @@ const actions = {
         transaction.update(doc(db, "users", rootGetters.getMyID, "books", book.id), { readIn: book.readIn });
       });
     })
-      .then(() => dispatch("modifiedAt"))
+      .then(() => dispatch("modifiedAt", rootGetters.getMyID))
       .catch((error) => console.error(error));
   },
 
