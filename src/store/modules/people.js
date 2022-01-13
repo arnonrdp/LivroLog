@@ -1,22 +1,38 @@
-import { collection, doc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 
 const state = {
   users: [],
   friends: [],
-  lastSignAt: null,
 };
 
 const getters = {
-  getUsers: (state) => state.users,
-  getUserBooks: (state) => (userId) => state.users.find((user) => user.id === userId).books,
-  getFriends: (state) => state.friends,
-  getLastSignAt: (state) => state.lastSignAt,
+  getUser(state) {
+    return (id) => state.users.find((user) => user.id === id);
+  },
+  getUsers(state) {
+    return state.users;
+  },
+  getFriends(state) {
+    return state.friends;
+  },
+  getUserBooks(state) {
+    return (userId) => state.users.find((user) => user.id === userId).books;
+  },
+  getModifiedAt(state) {
+    return (userId) => state.users.find((user) => user.id === userId)?.modifiedAt;
+  },
 };
 
 const mutations = {
+  setUser(state, val) {
+    state.users = [...state.users].concat(val);
+  },
   setUsers(state, users) {
-    state.users = users;
+    state.users = users.map(({ ...userDB }) => {
+      let userLS = state.users.find((user) => user.id === userDB.id);
+      return { ...userLS, ...userDB };
+    }, {});
   },
   setUserBooks(state, { userID, userBooks }) {
     state.users.find((user) => user.id === userID).books = userBooks;
@@ -24,22 +40,34 @@ const mutations = {
   setFriends(state, friends) {
     state.friends = friends;
   },
-  setLastSignAt(state, lastSignAt) {
-    state.lastSignAt = lastSignAt;
+  setModifiedAt(state, { userID, currentDate }) {
+    state.users.find((user) => user.id === userID).modifiedAt = currentDate;
   },
 };
 
 const actions = {
-  async queryUsersFromDB({ commit }) {
-    let users = [];
+  async queryDBUser({ dispatch, rootGetters }, userID) {
+    const user = await getDoc(doc(db, "users", userID));
+    if ((user.data().books === undefined) | (user.data().modifiedAt !== rootGetters.getModifiedAt(userID))) {
+      dispatch("queryDBUserBooks", userID);
+    }
+  },
+
+  async queryDBUsers({ commit }) {
     await getDocs(collection(db, "users"))
       .then((querySnapshot) => {
-        users = querySnapshot.docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
+        const users = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+          shelfName: doc.data().shelfName,
+          photoURL: doc.data().photoURL,
+        }));
         commit("setUsers", users);
       })
       .catch((error) => console.error(error));
   },
-  async queryBooksFromUser({ commit }, userID) {
+
+  async queryDBUserBooks({ commit }, userID) {
     await getDocs(collection(db, "users", userID, "books"))
       .then((querySnapshot) => {
         const books = querySnapshot.docs.map((doc) => doc.data());
@@ -47,6 +75,20 @@ const actions = {
         commit("setUserBooks", payload);
       })
       .catch((error) => console.error(error));
+  },
+
+  async modifiedAt({ commit, rootGetters }, userID) {
+    const currentDate = Date.now();
+    await updateDoc(doc(db, "users", rootGetters.getMyID), { modifiedAt: currentDate })
+      .then(() => commit("setModifiedAt", { userID, currentDate }))
+      .catch((error) => console.error(error));
+  },
+
+  async compareModifiedAt({ commit, rootGetters }, userID) {
+    const LSModifiedAt = rootGetters.getModifiedAt(userID) || 0;
+    const DBModifiedAt = await getDoc(doc(db, "users", userID)).then((doc) => doc.data().modifiedAt);
+    commit("setModifiedAt", { userID, currentDate: DBModifiedAt });
+    return Boolean(DBModifiedAt === LSModifiedAt);
   },
 };
 
