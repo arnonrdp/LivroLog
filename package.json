@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@adamdehaven/vue-custom-tooltip": "^2.5.1",
-    "@quasar/extras": "^1.0.0",
+    "@quasar/extras": "^1.12.3",
     "axios": "^0.24.0",
     "core-js": "^3.20.1",
     "firebase": "^9.6.3",
