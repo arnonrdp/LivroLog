@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-mx-sm non-selectable">
+  <q-page padding :style-fn="myTweek" class="non-selectable">
     <Shelf :shelfName="username" :books="books" />
   </q-page>
 </template>
@@ -12,6 +12,7 @@ export default {
   components: { Shelf },
   data: () => ({
     books: [],
+    offset: 115,
     uid: "",
     username: "",
   }),
@@ -33,6 +34,11 @@ export default {
       if (!equals | !this.getUserBooks(this.uid)) await this.$store.dispatch("queryDBUserBooks", this.uid);
       this.books = this.getUserBooks(this.uid);
     });
+  },
+  methods: {
+    myTweek() {
+      return { minHeight: `calc(100vh - ${this.offset}px)` };
+    },
   },
 };
 </script>
