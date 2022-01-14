@@ -86,14 +86,14 @@ section {
   flex-flow: row wrap;
   justify-content: space-around;
   min-height: 302px;
-  padding: 0 2rem 1rem;
+  padding: 0 3rem 1rem;
 }
 
 section figure {
   align-items: flex-end;
   display: flex;
   height: 143.5px;
-  margin: 0 1rem;
+  margin: 0 1.5rem;
   max-width: 80px;
   position: relative;
 }
