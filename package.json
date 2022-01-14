@@ -32,7 +32,7 @@
     "node-forge": ">=1.2.0",
     "nth-check": ">=2.0.1",
     "postcss": ">=8.4.5",
-    "sass": "1.32.12",
+    "sass": "1.48.0",
     "sass-loader": "^10.1.0",
     "set-value": ">=4.1.0",
     "vue-cli-plugin-quasar": "~4.0.4"
