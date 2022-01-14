@@ -1,7 +1,7 @@
 <template>
   <header v-if="this.$route.path !== '/login'">
     <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
-    <q-tabs>
+    <q-tabs active-color="primary">
       <q-route-tab icon="img:/books.svg" to="/" />
       <q-route-tab icon="search" to="/add" exact />
       <q-route-tab icon="people" to="/friends" exact />
@@ -23,10 +23,10 @@ header {
   margin-bottom: 25px;
 }
 
-@media screen and (max-width: 720px) {
+@media screen and (max-width: 599px) {
   header {
     display: block;
-    margin-top: 15px;
+    padding-top: 15px;
   }
 }
 
