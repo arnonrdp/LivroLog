@@ -1,5 +1,5 @@
 <template>
-  <q-page padding class="flex column inline">
+  <q-page padding :style-fn="myTweek">
     <q-tabs v-model="tab" inline-label active-color="primary" indicator-color="primary" align="justify">
       <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
       <q-tab name="books" icon="menu_book" :label="$t('settings.books')" />
@@ -73,6 +73,7 @@ export default {
   name: "Settings",
   data: () => ({
     books: [],
+    offset: 115,
     saving: false,
     shelfName: "",
     tab: "account",
@@ -97,6 +98,9 @@ export default {
     this.books = this.getMyBooks;
   },
   methods: {
+    myTweak() {
+      return { minHeight: `calc(100vh - ${this.offset}px)` };
+    },
     updateShelfName() {
       this.$store.dispatch("updateShelfName", this.shelfName)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.shelfname-updated") }))
@@ -122,6 +126,7 @@ export default {
 
 <style scoped>
 .q-page {
+  margin: 0 auto;
   width: 32rem;
 }
 .q-tab-panels {

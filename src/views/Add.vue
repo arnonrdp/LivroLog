@@ -1,7 +1,7 @@
 <template>
-  <q-page padding>
+  <q-page padding :style-fn="myTweak">
     <!-- TODO: Resolver zoom da página no celular -->
-    <q-input v-model="seek" type="text" class="q-py-lg" :label="$t('book.addlabel')" @keyup.enter="search" dense>
+    <q-input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" dense>
       <template v-slot:prepend>
         <q-icon name="search" />
       </template>
@@ -35,14 +35,18 @@ export default {
   components: { Loading },
   data() {
     return {
-      seek: "",
-      results: "",
-      shelfName: "",
       books: [],
       loading: false,
+      offset: 115,
+      results: "",
+      seek: "",
+      shelfName: "",
     };
   },
   methods: {
+    myTweak() {
+      return { minHeight: `calc(100vh - ${this.offset}px)` };
+    },
     clearSearch() {
       this.seek = "";
       this.books = [];
@@ -81,13 +85,7 @@ export default {
 <style scoped>
 .q-input {
   margin: auto;
-  width: 50%;
-}
-
-@media screen and (max-width: 840px) {
-  .q-input {
-    width: 100%;
-  }
+  max-width: 32rem;
 }
 
 #results {

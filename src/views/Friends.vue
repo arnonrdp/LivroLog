@@ -1,59 +1,36 @@
 <template>
-  <q-page>
-    <h1 class="text-h6">{{ $t("friends.look-for-people") }} ~ {{ $t("friends.follow-friends") }}</h1>
-    <q-separator inset />
-    <div class="flex-center q-pa-md row">
-      <q-input
-        v-model="filter"
-        :label="$t('friends.search-for-people')"
-        class="col-md-7 col-sm-8 col-xs-12 q-mb-md"
-        prepend-icon="search"
-        dense
-        debounce="300"
-        flat
-        color="primary"
-        hide-details
-      >
-        <template v-slot:prepend>
-          <q-icon name="search" />
-        </template>
-      </q-input>
-      <q-table
-        grid
-        class="col-md-7 col-sm-8 col-xs-12"
-        card-container-class="column"
-        :rows="users"
-        row-key="id"
-        :filter="filter"
-        hide-bottom
-      >
-        <template v-slot:item="props">
-          <div class="flex justify-between q-my-sm text-secondary">
-            <router-link :to="{ name: 'user_child', params: { username: props.row.shelfName } }" class="row">
-              <q-avatar>
-                <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
-                <q-icon v-else size="md" name="person" />
-              </q-avatar>
-              <div class="column justify-center items-start q-ml-sm">
-                <strong>{{ props.row.name }}</strong>
-                <span>@{{ props.row.shelfName }}</span>
-              </div>
-            </router-link>
-            <q-btn
-              v-show="this.getMyProfile.uid !== props.row.id"
-              disable
-              no-caps
-              color="primary"
-              size="md"
-              padding="xs lg"
-              :title="$t('friends.feature-under-dev')"
-              :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
-              @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
-            />
-          </div>
-        </template>
-      </q-table>
-    </div>
+  <q-page padding :style-fn="myTweak">
+    <q-input v-model="filter" color="primary" dense debounce="300" flat :label="$t('friends.search-for-people')">
+      <template v-slot:prepend>
+        <q-icon name="search" />
+      </template>
+    </q-input>
+    <q-table grid card-container-class="column" :rows="users" row-key="id" :filter="filter" hide-bottom>
+      <template v-slot:item="props">
+        <div class="flex flex-center justify-between q-my-sm text-secondary">
+          <router-link :to="{ name: 'user_child', params: { username: props.row.shelfName } }" class="row">
+            <q-avatar>
+              <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
+              <q-icon v-else size="md" name="person" />
+            </q-avatar>
+            <div class="column justify-center items-start q-ml-sm">
+              <strong>{{ props.row.name }}</strong>
+              <span>@{{ props.row.shelfName }}</span>
+            </div>
+          </router-link>
+          <q-btn
+            v-show="this.getMyProfile.uid !== props.row.id"
+            disable
+            color="primary"
+            size="sm"
+            stretch="false"
+            :title="$t('friends.feature-under-dev')"
+            :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
+            @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
+          />
+        </div>
+      </template>
+    </q-table>
   </q-page>
 </template>
 
@@ -67,6 +44,7 @@ export default {
   data: () => ({
     filter: "",
     friends: [],
+    offset: 115,
     users: [],
   }),
   computed: {
@@ -76,5 +54,20 @@ export default {
     await this.$store.dispatch("queryDBUsers");
     this.users = this.getUsers;
   },
+  methods: {
+    myTweak() {
+      return { minHeight: `calc(100vh - ${this.offset}px)` };
+    },
+  },
 };
 </script>
+
+<style scoped>
+.q-page {
+  margin: 0 auto;
+  width: 32rem;
+}
+button {
+  height: 1.6rem;
+}
+</style>
