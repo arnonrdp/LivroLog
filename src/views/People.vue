@@ -38,7 +38,6 @@ import Loading from "@/components/Loading.vue";
 import { mapGetters } from "vuex";
 
 export default {
-  name: "Friends",
   components: { Loading },
   data: () => ({
     filter: "",

@@ -4,7 +4,7 @@
     <q-tabs active-color="primary">
       <q-route-tab icon="img:/books.svg" to="/" />
       <q-route-tab icon="search" to="/add" exact />
-      <q-route-tab icon="people" to="/friends" exact />
+      <q-route-tab icon="people" to="/people" exact />
       <q-route-tab icon="settings" to="/settings" exact />
     </q-tabs>
   </header>
