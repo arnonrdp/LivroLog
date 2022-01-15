@@ -23,7 +23,6 @@
             disable
             color="primary"
             size="sm"
-            stretch="false"
             :title="$t('friends.feature-under-dev')"
             :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
             @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"

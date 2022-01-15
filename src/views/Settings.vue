@@ -1,5 +1,5 @@
 <template>
-  <q-page padding :style-fn="myTweek">
+  <q-page padding :style-fn="myTweak">
     <q-tabs v-model="tab" inline-label active-color="primary" indicator-color="primary" align="justify">
       <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
       <q-tab name="books" icon="menu_book" :label="$t('settings.books')" />
