@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <header>
-      <h1 class="text-h3">{{ $t("sign.loginTitle") }}</h1>
+      <h1 class="text-h3 mobile-hide">{{ $t("sign.loginTitle") }}</h1>
     </header>
     <q-card>
       <q-card-section>
@@ -59,7 +59,6 @@
 
 <script>
 import { ref } from "vue";
-import { mapGetters } from "vuex";
 
 export default {
   name: "Login",
@@ -68,8 +67,6 @@ export default {
     name: "",
     email: "",
     password: "",
-    signUpStatus: {},
-    resetStatus: {},
   }),
   methods: {
     login() {
