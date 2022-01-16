@@ -1,8 +1,5 @@
 <template>
   <q-page padding>
-    <header>
-      <h1 class="text-h3 mobile-hide">{{ $t("sign.loginTitle") }}</h1>
-    </header>
     <q-card>
       <q-card-section>
         <img src="/logo.svg" alt="logotipo" />
@@ -122,17 +119,11 @@ export default {
   background-size: cover;
   font-family: "SF Pro", sans-serif;
   height: 100vh;
-  padding: 0 1em;
   text-align: center;
 }
 
-header {
-  mix-blend-mode: soft-light;
-  padding: 3em 0;
-}
-
 .q-card {
-  margin: 0 auto;
+  margin: calc((100vh - 454.63px) / 2) auto;
   max-width: 400px;
   padding: 2em;
 }
