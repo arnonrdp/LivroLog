@@ -65,7 +65,6 @@
 </template>
 
 <script>
-import Tooltip from "@adamdehaven/vue-custom-tooltip";
 import { useI18n } from "vue-i18n";
 import { mapGetters } from "vuex";
 
@@ -78,7 +77,6 @@ export default {
     shelfName: "",
     tab: "account",
   }),
-  components: { Tooltip },
   computed: {
     ...mapGetters(["getMyShelfName", "getMyBooks"]),
   },

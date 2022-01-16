@@ -7,7 +7,6 @@
     "start": "vue-cli-service serve"
   },
   "dependencies": {
-    "@adamdehaven/vue-custom-tooltip": "^2.5.1",
     "@quasar/extras": "^1.12.3",
     "axios": "^0.24.0",
     "core-js": "^3.20.1",
@@ -27,8 +26,8 @@
     "@vue/cli-plugin-router": "~4.5.15",
     "@vue/cli-service": "~4.5.15",
     "@vue/compiler-sfc": "^3.2.26",
-    "glob-parent": "^6.0.2",
     "follow-redirects": ">=1.14.7",
+    "glob-parent": "^6.0.2",
     "node-forge": ">=1.2.0",
     "nth-check": ">=2.0.1",
     "postcss": ">=8.4.5",

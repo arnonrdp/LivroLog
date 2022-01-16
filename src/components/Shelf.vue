@@ -23,20 +23,17 @@
         :title="$t('book.remove')"
         @click.once="$emit('emitID', book.id)"
       />
-      <Tooltip :label="book.title" position="is-bottom">
-        <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
-      </Tooltip>
+      <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+      <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
     </figure>
   </section>
 </template>
 
 <script>
-import Tooltip from "@adamdehaven/vue-custom-tooltip";
 import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
-  components: { Tooltip },
   props: {
     books: { type: Array, required: true },
     shelfName: { type: String, required: true },
@@ -102,7 +99,7 @@ figure button {
   opacity: 0;
   position: absolute;
   right: -1rem;
-  top: 0.5rem;
+  top: 1rem;
   visibility: hidden;
   z-index: 1;
 }
