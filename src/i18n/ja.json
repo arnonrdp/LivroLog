@@ -17,9 +17,7 @@
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
     "follow": "従う",
-    "follow-friends": "友達をフォローする",
     "following": "続く",
-    "look-for-people": "人を探す",
     "search-for-people": "人を探す"
   },
   "menu": {
@@ -53,11 +51,9 @@
     "auth-missing-email": "メールが必要です!",
     "auth-phone-number-already-exists": "電話番号はすでに存在します!",
     "auth-popup-closed-by-user": "ポップアップを閉じたと思います。<br/>再試行。",
-    "auth-uid-already-exists": "このユーザーは既に存在します!",
     "auth-user-not-found": "ユーザーが見つかりません",
     "auth-weak-password": "パスワードが弱すぎる",
     "auth-wrong-password": "パスワードが正しくありません",
-    "loginTitle": "あなたが組織するための場所\n\nあなたが読んだすべて",
     "logout": "ログアウト",
     "mail": "Eメール",
     "name": "名前",

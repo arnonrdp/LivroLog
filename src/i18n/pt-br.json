@@ -17,9 +17,7 @@
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
     "follow": "Seguir",
-    "follow-friends": "Seguir Amigos",
     "following": "Seguindo",
-    "look-for-people": "Procurar pessoas",
     "search-for-people": "Buscar pessoas"
   },
   "menu": {
@@ -53,11 +51,9 @@
     "auth-missing-email": "O email é obrigatório!",
     "auth-phone-number-already-exists": "Número de telefone já existe!",
     "auth-popup-closed-by-user": "Acho que você fechou o pop-up.<br/>Tente novamente.",
-    "auth-uid-already-exists": "Usuário já existe!",
     "auth-user-not-found": "Usuário não encontrado",
     "auth-weak-password": "a senha é muito fraca",
     "auth-wrong-password": "Senha incorreta",
-    "loginTitle": "UM LUGAR PRA VOCÊ ORGANIZAR\nTUDO AQUILO QUE VOCÊ JÁ LEU",
     "logout": "Sair",
     "mail": "E-mail",
     "name": "Nome",
