@@ -5,7 +5,14 @@
         <q-icon name="search" />
       </template>
     </q-input>
-    <q-table grid card-container-class="column" :rows="users" row-key="id" :filter="filter" hide-bottom>
+    <q-table
+      grid
+      card-container-class="column"
+      :rows="users"
+      row-key="id"
+      :filter="filter"
+      :rows-per-page-options="[0]"
+    >
       <template v-slot:item="props">
         <div class="flex flex-center justify-between q-my-sm text-secondary">
           <router-link :to="{ name: 'user_child', params: { username: props.row.shelfName } }" class="row">
@@ -18,15 +25,25 @@
               <span>@{{ props.row.shelfName }}</span>
             </div>
           </router-link>
-          <q-btn
-            v-show="this.getMyProfile.uid !== props.row.id"
+          <q-chip
+            v-if="this.getMyProfile.uid !== props.row.id"
             disable
+            class="cursor-pointer non-selectable"
             color="primary"
-            size="sm"
-            :title="$t('friends.feature-under-dev')"
-            :label="props.row.following ? $t('friends.following') : $t('friends.follow')"
+            text-color="white"
             @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
-          />
+          >
+            {{ props.row.following ? $t("friends.following") : $t("friends.follow") }}
+            <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">
+              {{ $t("friends.feature-under-dev") }}
+            </q-tooltip>
+          </q-chip>
+        </div>
+      </template>
+      <template v-slot:no-data>
+        <div class="full-width row flex-center q-gutter-sm">
+          <q-icon size="2em" name="sentiment_dissatisfied" />
+          <span>{{ $t('friends.no-one-found') }}</span>
         </div>
       </template>
     </q-table>
