@@ -9,7 +9,7 @@
   "dependencies": {
     "@quasar/extras": "^1.12.3",
     "axios": "^0.24.0",
-    "core-js": "^3.20.1",
+    "core-js": "^3.20.3",
     "firebase": "^9.6.3",
     "firebaseui": "^6.0.0",
     "quasar": "^2.4.10",
