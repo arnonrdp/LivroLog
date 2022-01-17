@@ -38,9 +38,16 @@
           <tbody>
             <tr v-for="book in books" :key="book.id">
               <td class="text-left">{{ book.title }}</td>
-              <td class="flex items-center no-wrap" style="max-width: 130px">
-                <!-- TODO: Verificar por que este input não é exibido no mobile -->
-                <q-input v-model="book.readIn" dense input-class="text-right" type="date" />
+              <td>
+                <q-input dense v-model="book.readIn" mask="####-##-##" :rules="['YYYY-MM-DD']">
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
+                        <q-date v-model="book.readIn" mask="YYYY-MM-DD" minimal />
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
               </td>
             </tr>
           </tbody>
@@ -116,7 +123,7 @@ export default {
       await this.$store.dispatch("updateReadDates", updatedFields)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.read-dates-updated") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.read-dates-updated-error") }))
-        .finally(() => this.saving = false);
+        .finally(() => (this.saving = false));
     },
   },
 };
