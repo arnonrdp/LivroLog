@@ -1,6 +1,5 @@
 <template>
   <q-page padding :style-fn="myTweak">
-    <!-- TODO: Resolver zoom da página no celular -->
     <q-input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search" dense>
       <template v-slot:prepend>
         <q-icon name="search" />
