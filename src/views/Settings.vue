@@ -38,7 +38,7 @@
           <tbody>
             <tr v-for="book in books" :key="book.id">
               <td class="text-left">{{ book.title }}</td>
-              <td>
+              <td class="input-date">
                 <q-input dense v-model="book.readIn" mask="####-##-##" :rules="['YYYY-MM-DD']">
                   <template v-slot:append>
                     <q-icon name="event" class="cursor-pointer">
@@ -136,5 +136,9 @@ export default {
 }
 .q-tab-panels {
   background-color: transparent;
+}
+.input-date, .input-date > label {
+  min-width: 50px;
+  padding-bottom: 0;
 }
 </style>
