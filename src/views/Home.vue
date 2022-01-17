@@ -1,6 +1,6 @@
 <template>
   <q-page padding :style-fn="myTweek" class="non-selectable">
-    <Shelf :shelfName="username" :books="books" @emitID="removeBook" />
+    <Shelf :shelfName="username" :books="books" @emitRemoveID="removeBook" />
   </q-page>
 </template>
 

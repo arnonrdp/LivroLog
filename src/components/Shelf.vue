@@ -21,7 +21,16 @@
         icon="close"
         size="sm"
         :title="$t('book.remove')"
-        @click.once="$emit('emitID', book.id)"
+        @click.once="$emit('emitRemoveID', book.id)"
+      />
+      <q-btn
+        v-else
+        round
+        color="primary"
+        icon="add"
+        size="sm"
+        :title="$t('book.add')"
+        @click.once="$emit('emitAddID', book)"
       />
       <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
@@ -38,7 +47,7 @@ export default {
     books: { type: Array, required: true },
     shelfName: { type: String, required: true },
   },
-  emits: ["emitID"],
+  emits: ["emitRemoveID", "emitAddID"],
   data: () => ({
     ascDesc: "asc",
     bookLabels: {},
@@ -56,7 +65,7 @@ export default {
       title: this.$t("book.order-by-title"),
     };
 
-    this.selfUser = this.$route.params.username === undefined || this.$route.params.username === this.getMyShelfName;
+    this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyShelfName;
   },
   methods: {
     sort(label, order) {
