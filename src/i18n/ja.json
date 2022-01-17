@@ -12,7 +12,8 @@
     "removed-error": "本の削除中にエラーが発生しました<br/>ページを更新して、再試行してください。",
     "removed-success": "本が棚から削除されました",
     "shelfname": "棚名",
-    "unknown-author": "不明な作者"
+    "unknown-author": "不明な作者",
+    "add": "本を追加"
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",

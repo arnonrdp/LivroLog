@@ -12,7 +12,8 @@
     "removed-error": "Error removing book. Refresh the page and try again.",
     "removed-success": "Book removed from shelf",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author"
+    "unknown-author": "Unknown Author",
+    "add": "Add book"
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",

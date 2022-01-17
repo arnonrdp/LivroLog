@@ -12,7 +12,8 @@
     "removed-error": "Erro ao remover livro.<br/>Atualize a página e tente novamente.",
     "removed-success": "Livro removido da estante",
     "shelfname": "Nome da Estante",
-    "unknown-author": "Autor desconhecido"
+    "unknown-author": "Autor desconhecido",
+    "add": "Adicionar livro"
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
