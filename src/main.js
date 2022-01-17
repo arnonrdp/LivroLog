@@ -1,4 +1,3 @@
-import VueCustomTooltip from "@adamdehaven/vue-custom-tooltip";
 import axios from "axios";
 import { Quasar } from "quasar";
 import { createApp } from "vue";
@@ -15,5 +14,4 @@ createApp(App)
   .use(store)
   .use(VueAxios, axios)
   .use(i18n)
-  .use(VueCustomTooltip)
   .mount("#app");

@@ -48,7 +48,7 @@ const mutations = {
 const actions = {
   async login({ dispatch }, payload) {
     await signInWithEmailAndPassword(auth, payload.email, payload.password)
-      .then((firebaseData) => dispatch("fetchUserProfile", firebaseData.user))
+      .then((userCredential) => dispatch("fetchUserProfile", userCredential.user))
       .catch((error) => {
         throw error.code;
       });
@@ -62,15 +62,15 @@ const actions = {
     });
   },
 
-  async signup({}, payload) {
+  async signup({ dispatch }, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
-        const userID = userCredential.user.uid;
-        await setDoc(doc(db, "users", userID), {
+        await setDoc(doc(db, "users", userCredential.user.uid), {
           name: payload.name,
           email: payload.email,
           shelfName: payload.name,
         });
+        dispatch("fetchUserProfile", userCredential.user);
       })
       .catch((error) => {
         throw error.code;
@@ -97,19 +97,16 @@ const actions = {
       });
   },
 
-  // TODO: Refatorar esta função.
   async fetchUserProfile({ commit }, user) {
-    const userRef = doc(db, "users", user.uid);
-    await getDoc(userRef)
-      .then((firebaseData) => {
-        const userInfo = firebaseData.data();
-        userInfo.uid = firebaseData.id;
+    await getDoc(doc(db, "users", user.uid))
+      .then((doc) => {
+        const userInfo = { uid: doc.id, ...doc.data() };
         commit("setUserProfile", (userInfo ??= {}));
         if (userInfo) router.push("/");
       })
       .catch((error) => console.error(error));
   },
-  
+
   async resetPassword({}, payload) {
     await sendPasswordResetEmail(auth, payload.email).catch((error) => {
       throw error.code;

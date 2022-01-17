@@ -15,39 +15,43 @@
       </q-btn-dropdown>
     </q-btn-group>
   </div>
-  <div ref="capture">
-    <section>
-      <figure v-for="book in books" :key="book.id">
-        <q-btn
-          v-if="selfUser"
-          round
-          color="negative"
-          icon="close"
-          size="sm"
-          :title="$t('book.remove')"
-          @click.once="$emit('emitID', book.id)"
-        />
-        <Tooltip :label="book.title" position="is-bottom">
-          <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
-        </Tooltip>
-      </figure>
-    </section>
-  </div>
+  <section ref="capture">
+    <figure v-for="book in books" :key="book.id">
+      <q-btn
+        v-if="selfUser"
+        round
+        color="negative"
+        icon="close"
+        size="sm"
+        :title="$t('book.remove')"
+        @click.once="$emit('emitID', book.id)"
+      />
+      <q-btn
+        v-else
+        round
+        color="primary"
+        icon="add"
+        size="sm"
+        :title="$t('book.add')"
+        @click.once="$emit('emitAddID', book)"
+      />
+      <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+      <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
+    </figure>
+  </section>
 </template>
 
 <script>
-import Tooltip from "@adamdehaven/vue-custom-tooltip";
 import html2canvas from "html2canvas";
 import { mapGetters } from "vuex";
 
 export default {
   name: "Shelf",
-  components: { Tooltip },
   props: {
     books: { type: Array, required: true },
     shelfName: { type: String, required: true },
   },
-  emits: ["emitID"],
+  emits: ["emitRemoveID", "emitAddID"],
   data: () => ({
     ascDesc: "asc",
     bookLabels: {},
@@ -64,7 +68,8 @@ export default {
       readIn: this.$t("book.order-by-read"),
       title: this.$t("book.order-by-title"),
     };
-    this.selfUser = this.$route.params.username === undefined || this.$route.params.username === this.getMyShelfName;
+
+    this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyShelfName;
   },
   methods: {
     sort(label, order) {
@@ -101,14 +106,14 @@ section {
   flex-flow: row wrap;
   justify-content: space-around;
   min-height: 302px;
-  padding: 0 2rem 1rem;
+  padding: 0 3rem 1rem;
 }
 
 section figure {
   align-items: flex-end;
   display: flex;
   height: 143.5px;
-  margin: 0 1rem;
+  margin: 0 1.5rem;
   max-width: 80px;
   position: relative;
 }
@@ -117,7 +122,7 @@ figure button {
   opacity: 0;
   position: absolute;
   right: -1rem;
-  top: 0.5rem;
+  top: 1rem;
   visibility: hidden;
   z-index: 1;
 }

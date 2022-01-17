@@ -42,19 +42,19 @@ html {
 }
 
 body {
-  background-color: $primary-bg;
+  background-color: $grey-4;
   margin: 0;
 }
 
 #app {
-  color: $primary-text;
+  color: $secondary;
   font-family: "SF Pro", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   text-align: center;
 }
 
 a, a:active, a:focus, a:visited {
   text-decoration: none;
-  color: $primary-text;
+  color: $secondary;
 }
 
 a:hover {

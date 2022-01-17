@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { i18n } from "../i18n/index";
 import store from "../store";
 import Add from "../views/Add.vue";
-import Friends from "../views/Friends.vue";
 import Home from "../views/Home.vue";
 import Login from "../views/Login.vue";
+import People from "../views/People.vue";
 import Settings from "../views/Settings.vue";
 import User from "../views/User.vue";
 
@@ -24,32 +25,32 @@ const routes = [
     name: "Início",
     component: Home,
     alias: "/home",
-    meta: { requiresAuth: true, title: "Início" },
+    meta: { requiresAuth: true, title: i18n.global.t("menu.home") },
   },
   {
     path: "/add",
     name: "Adicionar",
     component: Add,
-    meta: { requiresAuth: true, title: "Adicionar" },
+    meta: { requiresAuth: true, title: i18n.global.t("menu.add") },
   },
   {
-    path: "/friends",
-    name: "Amigos",
-    component: Friends,
-    meta: { requiresAuth: true, title: "Amigos" },
+    path: "/people",
+    name: "People",
+    component: People,
+    meta: { requiresAuth: true, title: i18n.global.t("menu.friends") },
   },
   {
     path: "/settings",
     name: "Ajustes",
     component: Settings,
-    meta: { requiresAuth: true, title: "Ajustes" },
+    meta: { requiresAuth: true, title: i18n.global.t("menu.settings") },
   },
   {
     path: "/:username",
     name: "user",
     component: User,
     props: true,
-    meta: { requiresAuth: false, title: "Usuário" },
+    meta: { requiresAuth: false },
     children: [
       {
         path: "/:username",
@@ -74,7 +75,7 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach((to, from) => {
   const TITLE = "Livrero";
-  document.title = `${TITLE} | ${to.meta.title}` || TITLE;
+  document.title = !to.meta.title ? TITLE : `${TITLE} | ${to.meta.title}`;
 });
 
 export default router;

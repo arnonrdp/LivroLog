@@ -1,5 +1,5 @@
 <template>
-  <q-page padding class="flex column inline">
+  <q-page padding :style-fn="myTweak">
     <q-tabs v-model="tab" inline-label active-color="primary" indicator-color="primary" align="justify">
       <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
       <q-tab name="books" icon="menu_book" :label="$t('settings.books')" />
@@ -38,9 +38,16 @@
           <tbody>
             <tr v-for="book in books" :key="book.id">
               <td class="text-left">{{ book.title }}</td>
-              <td class="flex items-center no-wrap" style="max-width: 130px">
-                <!-- TODO: Verificar por que este input não é exibido no mobile -->
-                <q-input v-model="book.readIn" dense input-class="text-right" type="date" />
+              <td class="input-date">
+                <q-input dense v-model="book.readIn" mask="####-##-##" :rules="['YYYY-MM-DD']">
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
+                        <q-date v-model="book.readIn" mask="YYYY-MM-DD" minimal />
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
               </td>
             </tr>
           </tbody>
@@ -65,7 +72,6 @@
 </template>
 
 <script>
-import Tooltip from "@adamdehaven/vue-custom-tooltip";
 import { useI18n } from "vue-i18n";
 import { mapGetters } from "vuex";
 
@@ -73,11 +79,11 @@ export default {
   name: "Settings",
   data: () => ({
     books: [],
+    offset: 115,
     saving: false,
     shelfName: "",
     tab: "account",
   }),
-  components: { Tooltip },
   computed: {
     ...mapGetters(["getMyShelfName", "getMyBooks"]),
   },
@@ -97,6 +103,9 @@ export default {
     this.books = this.getMyBooks;
   },
   methods: {
+    myTweak() {
+      return { minHeight: `calc(100vh - ${this.offset}px)` };
+    },
     updateShelfName() {
       this.$store.dispatch("updateShelfName", this.shelfName)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.shelfname-updated") }))
@@ -114,7 +123,7 @@ export default {
       await this.$store.dispatch("updateReadDates", updatedFields)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.read-dates-updated") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.read-dates-updated-error") }))
-        .finally(() => this.saving = false);
+        .finally(() => (this.saving = false));
     },
   },
 };
@@ -122,9 +131,14 @@ export default {
 
 <style scoped>
 .q-page {
+  margin: 0 auto;
   width: 32rem;
 }
 .q-tab-panels {
   background-color: transparent;
+}
+.input-date, .input-date > label {
+  min-width: 50px;
+  padding-bottom: 0;
 }
 </style>

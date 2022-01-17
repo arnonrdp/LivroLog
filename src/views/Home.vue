@@ -1,6 +1,6 @@
 <template>
-  <q-page class="q-mx-sm non-selectable">
-    <Shelf :shelfName="username" :books="books" @emitID="removeBook" />
+  <q-page padding :style-fn="myTweek" class="non-selectable">
+    <Shelf :shelfName="username" :books="books" @emitRemoveID="removeBook" />
   </q-page>
 </template>
 
@@ -12,6 +12,7 @@ export default {
   components: { Shelf },
   data: () => ({
     books: [],
+    offset: 115,
     username: "",
   }),
   computed: {
@@ -29,6 +30,9 @@ export default {
       .catch((err) => console.error("err: ", err));
   },
   methods: {
+    myTweek() {
+      return { minHeight: `calc(100vh - ${this.offset}px)` };
+    },
     removeBook(id) {
       this.$store
         .dispatch("removeBook", id)

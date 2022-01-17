@@ -12,14 +12,13 @@
     "removed-error": "Error removing book. Refresh the page and try again.",
     "removed-success": "Book removed from shelf",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author"
+    "unknown-author": "Unknown Author",
+    "add": "Add book"
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",
     "follow": "Follow",
-    "follow-friends": "Follow Friends",
     "following": "Following",
-    "look-for-people": "Look for people",
     "search-for-people": "Search for people"
   },
   "menu": {
@@ -53,11 +52,9 @@
     "auth-missing-email": "Email is required!",
     "auth-phone-number-already-exists": "Phone number already exists!",
     "auth-popup-closed-by-user": "I think you closed the popup.<br/>Try again.",
-    "auth-uid-already-exists": "User already exists!",
     "auth-user-not-found": "User not found",
     "auth-weak-password": "Password is too weak",
     "auth-wrong-password": "Incorrect password",
-    "loginTitle": "A PLACE FOR YOU TO ORGANIZE\nEVERYTHING YOU HAVE READ",
     "logout": "Logout",
     "mail": "Email",
     "name": "Name",
