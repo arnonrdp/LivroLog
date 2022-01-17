@@ -1,5 +1,6 @@
 {
   "book": {
+    "add": "Adicionar livro",
     "added-to-shelf": "Livro adicionado à sua estante",
     "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
     "already-exists": "Livro já existe",
@@ -12,13 +13,13 @@
     "removed-error": "Erro ao remover livro.<br/>Atualize a página e tente novamente.",
     "removed-success": "Livro removido da estante",
     "shelfname": "Nome da Estante",
-    "unknown-author": "Autor desconhecido",
-    "add": "Adicionar livro"
+    "unknown-author": "Autor desconhecido"
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
     "follow": "Seguir",
     "following": "Seguindo",
+    "no-one-found": "Bem, isso é triste... Ninguém foi encontrado!",
     "search-for-people": "Buscar pessoas"
   },
   "menu": {

@@ -1,5 +1,6 @@
 {
   "book": {
+    "add": "本を追加",
     "added-to-shelf": "棚に追加された本",
     "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
     "already-exists": "本はすでに存在します",
@@ -12,13 +13,13 @@
     "removed-error": "本の削除中にエラーが発生しました<br/>ページを更新して、再試行してください。",
     "removed-success": "本が棚から削除されました",
     "shelfname": "棚名",
-    "unknown-author": "不明な作者",
-    "add": "本を追加"
+    "unknown-author": "不明な作者"
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
     "follow": "従う",
     "following": "続く",
+    "no-one-found": "さて、これは悲しいです...誰も見つかりませんでした！",
     "search-for-people": "人を探す"
   },
   "menu": {
