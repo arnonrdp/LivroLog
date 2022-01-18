@@ -31,6 +31,7 @@
   "settings": {
     "account": "Account",
     "account-profile": "Account and Profile",
+    "add-reading-dates": "Add reading dates",
     "books": "Books",
     "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
     "bookshelf-add-few": "Start by adding a few.",
