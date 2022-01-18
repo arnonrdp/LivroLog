@@ -6,6 +6,7 @@
 
 <script>
 import Shelf from "@/components/Shelf.vue";
+import store from "@/store";
 import { mapGetters } from "vuex";
 
 export default {
@@ -16,6 +17,9 @@ export default {
     uid: "",
     username: "",
   }),
+  beforeRouteEnter(to, from, next) {
+    store.getters.getUsers.some((user) => user.shelfName === to.params.username) ? next() : next("/");
+  },
   computed: {
     ...mapGetters(["getUsers", "getUserBooks"]),
   },
