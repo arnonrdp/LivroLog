@@ -15,7 +15,7 @@
     >
       <template v-slot:item="props">
         <div class="flex flex-center justify-between q-my-sm text-secondary">
-          <router-link :to="{ name: 'user_child', params: { username: props.row.shelfName } }" class="row">
+          <router-link :to="{ name: 'user', params: { username: props.row.shelfName } }" class="row">
             <q-avatar>
               <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
               <q-icon v-else size="md" name="person" />
