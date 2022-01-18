@@ -58,8 +58,8 @@ const actions = {
     await signOut(auth).then(() => {
       commit("setUserProfile", {});
       commit("clearBooks");
-      router.push("login");
     });
+    router.push("login");
   },
 
   async signup({ dispatch }, payload) {
