@@ -1,27 +1,11 @@
 <template>
   <q-page padding :style-fn="myTweak">
     <q-tabs v-model="tab" inline-label active-color="primary" indicator-color="primary" align="justify">
-      <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
       <q-tab name="books" icon="menu_book" :label="$t('settings.books')" />
+      <q-tab name="account" icon="account_circle" :label="$t('settings.account')" default />
     </q-tabs>
     <q-separator />
     <q-tab-panels v-model="tab" animated default>
-      <q-tab-panel name="account" default>
-        <div class="text-h6">{{ $t("settings.account-profile") }}</div>
-        <q-input v-model="shelfName" :label="$t('book.shelfname')">
-          <template v-slot:prepend>
-            <q-icon name="badge" />
-          </template>
-        </q-input>
-        <q-select v-model="locale" :options="localeOptions" :label="$t('settings.language')" emit-value map-options>
-          <template v-slot:prepend>
-            <q-icon name="translate" />
-          </template>
-        </q-select>
-        <br />
-        <q-btn color="primary" icon="save" :label="$t('settings.save')" @click="updateShelfName" />
-        <q-btn flat color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
-      </q-tab-panel>
       <q-tab-panel name="books">
         <p>{{ $t("settings.books-description") }}</p>
         <p v-if="books?.length == 0">
@@ -67,6 +51,22 @@
           </tfoot>
         </table>
       </q-tab-panel>
+      <q-tab-panel name="account" default>
+        <div class="text-h6">{{ $t("settings.account-profile") }}</div>
+        <q-input v-model="shelfName" :label="$t('book.shelfname')">
+          <template v-slot:prepend>
+            <q-icon name="badge" />
+          </template>
+        </q-input>
+        <q-select v-model="locale" :options="localeOptions" :label="$t('settings.language')" emit-value map-options>
+          <template v-slot:prepend>
+            <q-icon name="translate" />
+          </template>
+        </q-select>
+        <br />
+        <q-btn color="primary" icon="save" :label="$t('settings.save')" @click="updateShelfName" />
+        <q-btn flat color="primary" icon="logout" :label="$t('sign.logout')" @click="logout" />
+      </q-tab-panel>
     </q-tab-panels>
   </q-page>
 </template>
@@ -107,7 +107,8 @@ export default {
       return { minHeight: `calc(100vh - ${this.offset}px)` };
     },
     updateShelfName() {
-      this.$store.dispatch("updateShelfName", this.shelfName)
+      this.$store
+        .dispatch("updateShelfName", this.shelfName)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.shelfname-updated") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.shelfname-updated-error") }));
     },
@@ -120,7 +121,8 @@ export default {
       for (const book of updatedBooks) {
         updatedFields.push({ id: book.id, readIn: book.readIn });
       }
-      await this.$store.dispatch("updateReadDates", updatedFields)
+      await this.$store
+        .dispatch("updateReadDates", updatedFields)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.read-dates-updated") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.read-dates-updated-error") }))
         .finally(() => (this.saving = false));
@@ -137,7 +139,8 @@ export default {
 .q-tab-panels {
   background-color: transparent;
 }
-.input-date, .input-date > label {
+.input-date,
+.input-date > label {
   min-width: 50px;
   padding-bottom: 0;
 }
