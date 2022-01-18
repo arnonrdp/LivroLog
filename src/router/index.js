@@ -6,44 +6,35 @@ import Home from "../views/Home.vue";
 import Login from "../views/Login.vue";
 import People from "../views/People.vue";
 import Settings from "../views/Settings.vue";
+import SettingsAccount from "../views/SettingsAccount.vue";
+import SettingsBooks from "../views/SettingsBooks.vue";
 import User from "../views/User.vue";
 
 const routes = [
   {
     path: "/:pathMatch(.*)*",
-    name: "NotFound",
     redirect: "/",
   },
   {
     path: "/login",
-    name: "Login",
     component: Login,
     meta: { title: "Livrero: Login" },
   },
   {
     path: "/",
-    name: "Início",
     component: Home,
     alias: "/home",
     meta: { requiresAuth: true, title: i18n.global.t("menu.home") },
   },
   {
     path: "/add",
-    name: "Adicionar",
     component: Add,
     meta: { requiresAuth: true, title: i18n.global.t("menu.add") },
   },
   {
     path: "/people",
-    name: "People",
     component: People,
     meta: { requiresAuth: true, title: i18n.global.t("menu.friends") },
-  },
-  {
-    path: "/settings",
-    name: "Ajustes",
-    component: Settings,
-    meta: { requiresAuth: true, title: i18n.global.t("menu.settings") },
   },
   {
     path: "/:username",
@@ -51,13 +42,15 @@ const routes = [
     component: User,
     props: true,
     meta: { requiresAuth: false },
+  },
+  {
+    path: "/settings",
+    component: Settings,
+    meta: { requiresAuth: true, title: i18n.global.t("menu.settings") },
     children: [
-      {
-        path: "/:username",
-        name: "user_child",
-        components: { user_details: User },
-        props: true,
-      },
+      { path: "", redirect: "account" },
+      { path: "account", component: SettingsAccount },
+      { path: "books", component: SettingsBooks },
     ],
   },
 ];
