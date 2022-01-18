@@ -65,12 +65,9 @@ const actions = {
   async signup({ dispatch }, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          name: payload.name,
-          email: payload.email,
-          shelfName: payload.name,
-        });
-        dispatch("fetchUserProfile", userCredential.user);
+        await setDoc(doc(db, "users", userCredential.user.uid), { ...payload }).then(() =>
+          dispatch("fetchUserProfile", userCredential.user),
+        );
       })
       .catch((error) => {
         throw error.code;

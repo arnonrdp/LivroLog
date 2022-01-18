@@ -56,12 +56,7 @@ const actions = {
   async queryDBUsers({ commit }) {
     await getDocs(collection(db, "users"))
       .then((querySnapshot) => {
-        const users = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data().name,
-          shelfName: doc.data().shelfName,
-          photoURL: doc.data().photoURL,
-        }));
+        const users = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         commit("setUsers", users);
       })
       .catch((error) => console.error(error));
