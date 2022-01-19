@@ -19,7 +19,7 @@
     "feature-under-dev": "この機能は開発中です。",
     "follow": "従う",
     "following": "続く",
-    "no-one-found": "さて、これは悲しいです...誰も見つかりませんでした！",
+    "no-one-found": "さて、これは悲しいです...誰も見つかりませんでした!",
     "search-for-people": "人を探す"
   },
   "menu": {
@@ -61,12 +61,13 @@
     "mail": "Eメール",
     "name": "名前",
     "password": "パスワード",
-    "password-hint": "6文字以上",
+    "password-confirmation": "パスワードの確認",
     "password-reset": "パスワードリセットメールが送信されました",
     "recover": "回復",
     "reset": "リセット",
     "sign-google": "Googleでサインイン",
     "signin": "ログイン",
-    "signup": "サインアップ"
+    "signup": "サインアップ",
+    "username": "ユーザー名"
   }
 }

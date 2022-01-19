@@ -61,12 +61,13 @@
     "mail": "E-mail",
     "name": "Nome",
     "password": "Senha",
-    "password-hint": "Mínimo de 6 caracteres",
+    "password-confirmation": "Confirmação de Senha",
     "password-reset": "Email de redefinição de senha enviado",
     "recover": "Recuperar",
     "reset": "Limpar",
     "sign-google": "Entrar com Google",
     "signin": "Entrar",
-    "signup": "Registrar"
+    "signup": "Registrar",
+    "username": "Username"
   }
 }
