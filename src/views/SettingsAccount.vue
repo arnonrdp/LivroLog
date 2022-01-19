@@ -10,9 +10,10 @@
       <q-icon name="translate" />
     </template>
   </q-select>
-  <!-- TODO: Incluir input para usuário alterar username -->
-  <!-- TODO: Permitir que o usuário altere a sua senha -->
-  <!-- TODO: Permitir que o usuário altere seu e-mail padrão -->
+  <!-- TODO: Permitir que o usuário altere seu e-mail -->
+  <!-- TODO: Permitir que o usuário altere seu username -->
+  <!-- TODO: Permitir que o usuário altere sua senha -->
+  <!-- TODO: Permitir que o usuário adicione uma foto de perfil -->
   <br />
   <q-btn color="primary" icon="save" :loading="saving" :label="$t('settings.save')" @click="updateShelfName" />
 </template>

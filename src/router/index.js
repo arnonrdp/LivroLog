@@ -41,6 +41,7 @@ const routes = [
     name: "user",
     component: User,
     props: true,
+    // TODO: Verificar a necessidade de usar o meta aqui
     meta: { requiresAuth: false },
   },
   {

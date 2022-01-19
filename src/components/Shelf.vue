@@ -13,6 +13,7 @@
     </q-btn-dropdown>
   </div>
   <section>
+    <!-- TODO: Adicionar a possibilidade de filtrar os livros -->
     <figure v-for="book in books" :key="book.id">
       <q-btn
         v-if="selfUser"
@@ -33,6 +34,7 @@
         @click.once="$emit('emitAddID', book)"
       />
       <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+      <!-- TODO: Manter tooltip ativa no mobile ao clicar na imagem do livro -->
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
     </figure>
   </section>
