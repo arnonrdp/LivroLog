@@ -79,15 +79,9 @@ const actions = {
     await signInWithPopup(auth, provider)
       .then(async (result) => {
         const { isNewUser } = getAdditionalUserInfo(result);
-        if (isNewUser) {
-          await setDoc(doc(db, "users", result.user.uid), {
-            email: result.user.email,
-            name: result.user.displayName,
-            photoURL: result.user.photoURL,
-            shelfName: result.user.displayName,
-          });
-        }
-        dispatch("fetchUserProfile", result.user);
+        const { email, displayName, photoURL, uid } = result.user;
+        if (isNewUser) await setDoc(doc(db, "users", uid), { email, displayName, photoURL });
+        dispatch("fetchUserProfile", { email, displayName, photoURL, uid });
       })
       .catch((error) => {
         throw error.code;
