@@ -4,48 +4,59 @@
       <q-card-section>
         <img src="/logo.svg" alt="logotipo" />
       </q-card-section>
-      <q-tabs v-model="tab" class="text-teal" dense>
+      <q-tabs v-model="tab" class="text-teal">
         <q-tab name="signup" :label="$t('sign.signup')" />
         <q-tab name="signin" :label="$t('sign.signin')" />
         <q-tab name="recover" :label="$t('sign.recover')" />
       </q-tabs>
-      <q-tab-panels v-model="tab" animated>
-        <q-tab-panel name="signup">
-          <q-form @submit="signup" @reset="onReset" class="q-gutter-md">
-            <q-input v-model="name" type="text" :label="$t('sign.name')" required />
-            <q-input v-model="email" type="email" :label="$t('sign.mail')" required />
-            <q-input v-model="password" type="password" :label="$t('sign.password')" :hint="$t('sign.password-hint')" />
-            <div>
-              <q-btn type="submit" :label="$t('sign.signup')" color="primary" />
-              <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
-            </div>
-          </q-form>
-        </q-tab-panel>
-        <q-tab-panel name="signin">
-          <q-form @submit="login" @reset="onReset" class="q-gutter-md">
-            <q-input v-model="email" type="email" :label="$t('sign.mail')" />
-            <q-input v-model="password" type="password" :label="$t('sign.password')" />
-            <div>
-              <q-btn type="submit" :label="$t('sign.signin')" color="primary" />
-              <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
-            </div>
-          </q-form>
-        </q-tab-panel>
-        <q-tab-panel name="recover">
-          <q-form @submit="resetPassword" @reset="onReset" class="q-gutter-md">
-            <q-input v-model="email" type="email" :label="$t('sign.mail')" />
-            <div>
-              <q-btn type="submit" :label="$t('sign.recover')" color="primary" />
-              <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
-            </div>
-          </q-form>
-        </q-tab-panel>
-      </q-tab-panels>
-
+      <q-form @submit="submit(tab)" @reset="onReset" class="q-gutter-md q-ma-sm">
+        <q-input dense v-if="tab === 'signup'" v-model="displayName" type="text" :label="$t('sign.name')" required />
+        <q-input
+          dense
+          v-if="tab === 'signup'"
+          v-model="username"
+          type="text"
+          prefix="livrero.vercel.app/"
+          debounce="500"
+          :label="$t('sign.username')"
+          :rules="[(val) => usernameValidator(val)]"
+          required
+        />
+        <q-input
+          dense
+          key="email-input"
+          v-model="email"
+          type="email"
+          :label="$t('sign.mail')"
+          :rules="[(val) => emailValidator(val)]"
+          required
+        />
+        <q-input
+          dense
+          v-if="tab !== 'recover'"
+          v-model="password"
+          type="password"
+          :label="$t('sign.password')"
+          :rules="[(val) => val.length >= 6]"
+          required
+        />
+        <q-input
+          dense
+          v-if="tab === 'signup'"
+          v-model="passwordConfirm"
+          type="password"
+          :label="$t('sign.password-confirmation')"
+          :rules="[(val) => passwordConfirmValidator(val)]"
+          required
+        />
+        <div class="q-pt-md">
+          <q-btn type="submit" :label="$t('sign.' + tab)" color="primary" />
+          <q-btn flat type="reset" :label="$t('sign.reset')" color="primary" class="q-ml-sm" />
+        </div>
+      </q-form>
       <q-card-section>
         <q-separator />
       </q-card-section>
-
       <q-btn @click="googleSignIn" class="btn-google">
         <img src="/google.svg" alt="" />&nbsp;
         <span>{{ $t("sign.sign-google") }}</span>
@@ -58,23 +69,38 @@
 import { ref } from "vue";
 
 export default {
-  name: "Login",
   setup: () => ({ tab: ref("signin") }),
   data: () => ({
-    name: "",
+    displayName: "",
+    username: "",
     email: "",
     password: "",
+    passwordConfirm: "",
   }),
   methods: {
-    login() {
+    emailValidator(email) {
+      return /^\S+@\S+\.\S+$/.test(email);
+    },
+    usernameValidator(username) {
+      return this.$store.dispatch("checkUsername", username).then((exists) => !exists);
+    },
+    passwordConfirmValidator(passwordConfirm) {
+      return passwordConfirm === this.password;
+    },
+    submit(tab) {
+      if (tab === "signup") this.signup(this.displayName, this.username, this.email, this.password);
+      if (tab === "signin") this.signin(this.email, this.password);
+      if (tab === "recover") this.recover(this.email);
+    },
+    signup(displayName, username, email, password) {
       this.$store
-        .dispatch("login", { email: this.email, password: this.password })
+        .dispatch("signup", { displayName, username, email, password })
+        .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.accountCreated") }))
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
-    signup() {
+    signin(email, password) {
       this.$store
-        .dispatch("signup", { name: this.name, email: this.email, password: this.password })
-        .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.accountCreated") }))
+        .dispatch("login", { email, password })
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
     googleSignIn() {
@@ -82,9 +108,9 @@ export default {
         .dispatch("googleSignIn")
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
-    resetPassword() {
+    resetPassword(email) {
       this.$store
-        .dispatch("resetPassword", { email: this.email })
+        .dispatch("resetPassword", { email })
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.password-reset") }))
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
@@ -92,6 +118,7 @@ export default {
       this.name = "";
       this.email = "";
       this.password = "";
+      this.passwordConfirm = "";
     },
     authErrors() {
       return {
@@ -123,7 +150,7 @@ export default {
 }
 
 .q-card {
-  margin: calc((100vh - 454.63px) / 2) auto;
+  margin: calc((100vh - 500px) / 2) auto;
   max-width: 400px;
   padding: 2em;
 }
@@ -140,5 +167,9 @@ img[alt="logotipo"] {
 
 .btn-google img {
   margin-right: 0.5em;
+}
+
+.q-field {
+  padding-bottom: 0;
 }
 </style>
