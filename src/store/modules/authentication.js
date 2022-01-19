@@ -22,8 +22,11 @@ const getters = {
   getMyID(state) {
     return state.user.uid;
   },
-  getMyShelfName(state) {
-    return state.user.shelfName;
+  getMyUsername(state) {
+    return state.user.username;
+  },
+  getMyDisplayName(state) {
+    return state.user.displayName;
   },
   getMyModifiedAt(state) {
     return state.user.modifiedAt;
@@ -37,8 +40,11 @@ const mutations = {
   setUserProfile(state, val) {
     state.user = val;
   },
-  setMyShelfName(state, val) {
-    state.user.shelfName = val;
+  setMyUsername(state, val) {
+    state.user.username = val;
+  },
+  setMyDisplayName(state, val) {
+    state.user.displayName = val;
   },
   setMyModifiedAt(state, val) {
     state.user.modifiedAt = val;
@@ -55,10 +61,9 @@ const actions = {
   },
 
   async logout({ commit }) {
-    await signOut(auth).then(() => {
-      commit("setUserProfile", {});
-      commit("clearBooks");
-    });
+    await signOut(auth);
+    commit("setUserProfile", {});
+    commit("clearBooks");
     router.push("login");
   },
 
@@ -104,9 +109,15 @@ const actions = {
     });
   },
 
-  async updateShelfName({ commit, rootGetters }, payload) {
-    await updateDoc(doc(db, "users", rootGetters.getMyID), { shelfName: payload })
-      .then(() => commit("setMyShelfName", payload))
+  async updateUsername({ commit, rootGetters }, payload) {
+    await updateDoc(doc(db, "users", rootGetters.getMyID), { username: payload })
+      .then(() => commit("setMyUsername", payload))
+      .catch((error) => console.error(error));
+  },
+
+  async updateDisplayName({ commit, rootGetters }, payload) {
+    await updateDoc(doc(db, "users", rootGetters.getMyID), { displayName: payload })
+      .then(() => commit("setMyDisplayName", payload))
       .catch((error) => console.error(error));
   },
 

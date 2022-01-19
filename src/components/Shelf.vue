@@ -57,7 +57,7 @@ export default {
     sortKey: "",
   }),
   computed: {
-    ...mapGetters(["getMyShelfName"]),
+    ...mapGetters(["getMyUsername"]),
   },
   async mounted() {
     this.bookLabels = {
@@ -67,7 +67,7 @@ export default {
       title: this.$t("book.order-by-title"),
     };
 
-    this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyShelfName;
+    this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyUsername;
   },
   methods: {
     sort(label, order) {

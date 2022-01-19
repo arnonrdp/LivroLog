@@ -1,6 +1,6 @@
 <template>
   <q-page padding :style-fn="myTweek" class="non-selectable">
-    <Shelf :shelfName="username" :books="books" @emitRemoveID="removeBook" />
+    <Shelf :shelfName="displayName" :books="books" @emitRemoveID="removeBook" />
   </q-page>
 </template>
 
@@ -12,14 +12,14 @@ export default {
   components: { Shelf },
   data: () => ({
     books: [],
+    displayName: "",
     offset: 115,
-    username: "",
   }),
   computed: {
-    ...mapGetters(["getMyID", "getMyShelfName", "getMyBooks"]),
+    ...mapGetters(["getMyDisplayName", "getMyBooks"]),
   },
   async mounted() {
-    this.username = this.getMyShelfName;
+    this.displayName = this.getMyDisplayName;
 
     this.$store
       .dispatch("compareMyModifiedAt")

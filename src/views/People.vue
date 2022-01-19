@@ -16,14 +16,14 @@
       <!-- TODO: Inserir paginação com 10 itens por página   -->
       <template v-slot:item="props">
         <div class="flex flex-center justify-between q-my-sm text-secondary">
-          <router-link :to="{ name: 'user', params: { username: props.row.shelfName } }" class="row">
+          <router-link :to="{ name: 'user', params: { username: props.row.username } }" class="row">
             <q-avatar>
               <q-img v-if="props.row.photoURL" :src="props.row.photoURL" alt="avatar" />
               <q-icon v-else size="md" name="person" />
             </q-avatar>
             <div class="column justify-center items-start q-ml-sm">
-              <strong>{{ props.row.name }}</strong>
-              <span>@{{ props.row.shelfName }}</span>
+              <strong>{{ props.row.displayName }}</strong>
+              <span>@{{ props.row.username }}</span>
             </div>
           </router-link>
           <q-chip
@@ -32,7 +32,7 @@
             class="cursor-pointer non-selectable"
             color="primary"
             text-color="white"
-            @click="props.row.following ? unfollow(props.row.shelfName) : follow(props.row.shelfName)"
+            @click="props.row.following ? unfollow(props.row.username) : follow(props.row.username)"
           >
             {{ props.row.following ? $t("friends.following") : $t("friends.follow") }}
             <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">
