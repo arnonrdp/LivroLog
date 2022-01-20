@@ -82,6 +82,8 @@ export default {
       return /^\S+@\S+\.\S+$/.test(email);
     },
     usernameValidator(username) {
+      if (["home", "add", "people", "settings", "login"].includes(username)) return false;
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return false;
       return this.$store.dispatch("checkUsername", username).then((exists) => !exists);
     },
     passwordConfirmValidator(passwordConfirm) {
