@@ -7,7 +7,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import router from "../../router";
 
@@ -60,11 +60,11 @@ const actions = {
       });
   },
 
-  async logout({ commit }) {
-    await signOut(auth);
+  logout({ commit }) {
+    signOut(auth);
     commit("setUserProfile", {});
     commit("clearBooks");
-    router.push("login");
+    router.push("/login");
   },
 
   async signup({ dispatch }, payload) {
@@ -85,7 +85,10 @@ const actions = {
       .then(async (result) => {
         const { isNewUser } = getAdditionalUserInfo(result);
         const { email, displayName, photoURL, uid } = result.user;
-        if (isNewUser) await setDoc(doc(db, "users", uid), { email, displayName, photoURL });
+        if (isNewUser) {
+          const username = email.split("@")[0] + Date.now();
+          await setDoc(doc(db, "users", uid), { email, displayName, photoURL, username });
+        }
         dispatch("fetchUserProfile", { email, displayName, photoURL, uid });
       })
       .catch((error) => {
@@ -109,16 +112,13 @@ const actions = {
     });
   },
 
-  async updateUsername({ commit, rootGetters }, payload) {
-    await updateDoc(doc(db, "users", rootGetters.getMyID), { username: payload })
-      .then(() => commit("setMyUsername", payload))
-      .catch((error) => console.error(error));
-  },
-
-  async updateDisplayName({ commit, rootGetters }, payload) {
-    await updateDoc(doc(db, "users", rootGetters.getMyID), { displayName: payload })
-      .then(() => commit("setMyDisplayName", payload))
-      .catch((error) => console.error(error));
+  async updateAccount({ commit, rootGetters }, payload) {
+    await runTransaction(db, async (transaction) => {
+      transaction.update(doc(db, "users", rootGetters.getMyID), { ...payload });
+    }).then(() => {
+      commit("setMyDisplayName", payload.displayName);
+      commit("setMyUsername", payload.username);
+    });
   },
 
   async compareMyModifiedAt({ commit, rootGetters }) {
