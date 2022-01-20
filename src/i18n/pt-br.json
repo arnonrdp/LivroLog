@@ -31,6 +31,8 @@
   "settings": {
     "account": "Conta",
     "account-profile": "Conta e Perfil",
+    "account-updated": "Conta atualizada com sucesso",
+    "account-updated-error": "Falha ao atualizar a conta. \nAtualize a página e tente novamente.",
     "add-reading-dates": "Incluir datas de leitura",
     "books": "Livros",
     "books-description": "Adicione as datas em que terminou de ler os livros e organize sua estante por data de leitura",
@@ -41,9 +43,7 @@
     "language": "Idioma",
     "read-dates-updated": "Datas de leitura atualizadas com sucesso",
     "read-dates-updated-error": "Erro ao atualizar as datas de leitura.<br/>Atualize a página e tente novamente.",
-    "save": "Salvar",
-    "shelfname-updated": "Nome da estante atualizado com sucesso",
-    "shelfname-updated-error": "Falha na atualização do nome da estante.<br/>Atualize a página e tente novamente."
+    "save": "Salvar"
   },
   "sign": {
     "accountCreated": "Sua conta foi criada com sucesso!",

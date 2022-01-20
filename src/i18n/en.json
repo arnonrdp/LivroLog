@@ -31,6 +31,8 @@
   "settings": {
     "account": "Account",
     "account-profile": "Account and Profile",
+    "account-updated": "Account successfully updated",
+    "account-updated-error": "Failed to update account. Refresh the page and try again.",
     "add-reading-dates": "Add reading dates",
     "books": "Books",
     "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
@@ -41,9 +43,7 @@
     "language": "Language",
     "read-dates-updated": "Read dates updated successfully",
     "read-dates-updated-error": "Error updating read dates<br/>Refresh the page and try again.",
-    "save": "Save",
-    "shelfname-updated": "Shelf name updated successfully",
-    "shelfname-updated-error": "Shelf name update failed"
+    "save": "Save"
   },
   "sign": {
     "accountCreated": "Your account has been created successfully!",
