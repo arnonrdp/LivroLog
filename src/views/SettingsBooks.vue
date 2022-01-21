@@ -67,8 +67,7 @@ export default {
 <style scoped>
 .input-date,
 .input-date > label {
-  /* TODO: Aumentar input para aparecer data completa no mobile */
-  min-width: 50px;
+  min-width: 70px;
   padding-bottom: 0;
 }
 </style>
