@@ -10,7 +10,7 @@
       v-model="username"
       :label="$t('sign.username')"
       debounce="500"
-      prefix="https://livrero.vercel.app/"
+      :prefix="hostname"
       :rules="[(val) => usernameValidator(val)]"
     >
       <template v-slot:prepend>
@@ -37,6 +37,7 @@ import { mapGetters } from "vuex";
 export default {
   data: () => ({
     displayName: "",
+    hostname: "",
     saving: false,
     username: "",
   }),
@@ -44,6 +45,7 @@ export default {
     ...mapGetters(["getMyDisplayName", "getMyUsername"]),
   },
   mounted() {
+    this.hostname = window.location.hostname + "/";
     this.displayName = this.getMyDisplayName;
     this.username = this.getMyUsername;
   },
