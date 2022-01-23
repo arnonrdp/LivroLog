@@ -10,7 +10,15 @@
         <q-tab name="recover" :label="$t('sign.recover')" />
       </q-tabs>
       <q-form @submit="submit(tab)" @reset="onReset" class="q-gutter-md q-ma-sm">
-        <q-input dense autofocus v-if="tab === 'signup'" v-model="displayName" type="text" :label="$t('sign.name')" required />
+        <q-input
+          dense
+          autofocus
+          v-if="tab === 'signup'"
+          v-model="displayName"
+          type="text"
+          :label="$t('sign.name')"
+          required
+        />
         <q-input
           dense
           v-if="tab === 'signup'"
@@ -65,7 +73,7 @@
   </q-page>
 </template>
 
-<script>
+<script lang>
 import { ref } from "vue";
 
 export default {
@@ -92,7 +100,7 @@ export default {
     submit(tab) {
       if (tab === "signup") this.signup(this.displayName, this.username, this.email, this.password);
       if (tab === "signin") this.signin(this.email, this.password);
-      if (tab === "recover") this.recover(this.email);
+      if (tab === "recover") this.resetPassword(this.email);
     },
     signup(displayName, username, email, password) {
       this.$store
@@ -112,7 +120,7 @@ export default {
     },
     resetPassword(email) {
       this.$store
-        .dispatch("resetPassword", { email })
+        .dispatch("resetPassword", email)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.password-reset") }))
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },

@@ -106,8 +106,8 @@ const actions = {
       .catch((error) => console.error(error));
   },
 
-  async resetPassword({}, payload) {
-    await sendPasswordResetEmail(auth, payload.email).catch((error) => {
+  async resetPassword({}, email) {
+    await sendPasswordResetEmail(auth, email).catch((error) => {
       throw error.code;
     });
   },
