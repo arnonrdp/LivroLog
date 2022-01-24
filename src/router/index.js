@@ -8,6 +8,7 @@ import People from "../views/People.vue";
 import Settings from "../views/Settings.vue";
 import SettingsAccount from "../views/SettingsAccount.vue";
 import SettingsBooks from "../views/SettingsBooks.vue";
+import SettingsProfile from "../views/SettingsProfile.vue";
 import User from "../views/User.vue";
 
 const routes = [
@@ -50,6 +51,7 @@ const routes = [
       { path: "", redirect: "account" },
       { path: "account", component: SettingsAccount },
       { path: "books", component: SettingsBooks },
+      { path: "profile", component: SettingsProfile },
     ],
   },
 ];
