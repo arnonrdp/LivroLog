@@ -6,6 +6,8 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateEmail,
+  updatePassword,
 } from "firebase/auth";
 import { doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
@@ -118,6 +120,18 @@ const actions = {
     });
   },
 
+  async updateAccount({ commit, rootGetters }, email, password) {
+    // const user = auth.currentUser;
+    // const newPassword = getASecureRandomPassword();
+
+    await updateDoc(doc(db, "users", rootGetters.getMyID), { email });
+    updateEmail(user, email).then(() => commit("setMyEmail", email));
+    // TODO: Atualizar senha do usuário
+    // updatePassword(user, password)
+    //   .then(() => console.log("password updated"))
+    //   .catch((error) => console.log(error));
+  },
+
   async updateProfile({ commit, rootGetters }, payload) {
     await runTransaction(db, async (transaction) => {
       transaction.update(doc(db, "users", rootGetters.getMyID), { ...payload });
@@ -125,10 +139,6 @@ const actions = {
       commit("setMyDisplayName", payload.displayName);
       commit("setMyUsername", payload.username);
     });
-  },
-
-  async updateAccount({}, payload) {
-    console.log(auth.currentUser);
   },
 
   async compareMyModifiedAt({ commit, rootGetters }) {
