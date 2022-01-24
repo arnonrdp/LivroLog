@@ -85,6 +85,13 @@ const actions = {
     commit("setUserModifiedAt", { userID, currentDate: DBModifiedAt });
     return Boolean(DBModifiedAt === LSModifiedAt);
   },
+
+  async checkEmail({}, email) {
+    const users = await getDocs(collection(db, "users"));
+    const emails = users.docs.map((doc) => doc.data().email);
+    return Boolean(emails.includes(email));
+  },
+
   async checkUsername({}, username) {
     const users = await getDocs(collection(db, "users"));
     const usernames = users.docs.map((doc) => doc.data().username);
