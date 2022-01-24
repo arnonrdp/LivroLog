@@ -14,6 +14,9 @@
           <q-item clickable to="/settings/books">
             <q-item-section>{{ $t("settings.add-reading-dates") }}</q-item-section>
           </q-item>
+          <q-item clickable to="/settings/profile">
+            <q-item-section>{{ $t("settings.profile") }}</q-item-section>
+          </q-item>
           <q-item clickable to="/settings/account">
             <q-item-section>{{ $t("settings.account") }}</q-item-section>
           </q-item>
