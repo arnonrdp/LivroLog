@@ -41,9 +41,13 @@
     "column-readIn": "読む",
     "column-title": "タイトル",
     "language": "言語",
+    "profile-updated": "プロファイルが正常に更新されました",
+    "profile-updated-error": "プロファイルの更新に失敗しました。\nページを更新して、再試行してください。",
     "read-dates-updated": "正常に更新された日付の読み取り",
     "read-dates-updated-error": "読み取り日の更新中にエラーが発生しました<br/>ページを更新して、再試行してください。",
-    "save": "保存する"
+    "save": "保存する",
+    "update-account": "アカウントを更新する",
+    "update-profile": "プロファイルを更新"
   },
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",

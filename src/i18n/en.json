@@ -41,9 +41,13 @@
     "column-readIn": "Read In",
     "column-title": "Title",
     "language": "Language",
+    "profile-updated": "Profile successfully updated",
+    "profile-updated-error": "Failed to update profile. Refresh the page and try again.",
     "read-dates-updated": "Read dates updated successfully",
     "read-dates-updated-error": "Error updating read dates<br/>Refresh the page and try again.",
-    "save": "Save"
+    "save": "Save",
+    "update-account": "update account",
+    "update-profile": "update profile"
   },
   "sign": {
     "accountCreated": "Your account has been created successfully!",
