@@ -30,7 +30,6 @@
   },
   "settings": {
     "account": "アカウント",
-    "account-profile": "アカウントとプロファイル",
     "account-updated": "アカウントが正常に更新されました",
     "account-updated-error": "アカウントの更新に失敗しました。\nページを更新して、再試行してください。",
     "add-reading-dates": "読書日を追加する",
@@ -41,6 +40,7 @@
     "column-readIn": "読む",
     "column-title": "タイトル",
     "language": "言語",
+    "profile": "プロフィール",
     "profile-updated": "プロファイルが正常に更新されました",
     "profile-updated-error": "プロファイルの更新に失敗しました。\nページを更新して、再試行してください。",
     "read-dates-updated": "正常に更新された日付の読み取り",

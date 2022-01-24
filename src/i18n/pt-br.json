@@ -30,7 +30,6 @@
   },
   "settings": {
     "account": "Conta",
-    "account-profile": "Conta e Perfil",
     "account-updated": "Conta atualizada com sucesso",
     "account-updated-error": "Falha ao atualizar a conta. \nAtualize a página e tente novamente.",
     "add-reading-dates": "Incluir datas de leitura",
@@ -41,6 +40,7 @@
     "column-readIn": "Lido em",
     "column-title": "Título",
     "language": "Idioma",
+    "profile": "Perfil",
     "profile-updated": "Perfil atualizado com sucesso",
     "profile-updated-error": "Falha ao atualizar o perfil. \nAtualize a página e tente novamente.",
     "read-dates-updated": "Datas de leitura atualizadas com sucesso",

@@ -30,7 +30,6 @@
   },
   "settings": {
     "account": "Account",
-    "account-profile": "Account and Profile",
     "account-updated": "Account successfully updated",
     "account-updated-error": "Failed to update account. Refresh the page and try again.",
     "add-reading-dates": "Add reading dates",
@@ -41,6 +40,7 @@
     "column-readIn": "Read In",
     "column-title": "Title",
     "language": "Language",
+    "profile": "Profile",
     "profile-updated": "Profile successfully updated",
     "profile-updated-error": "Failed to update profile. Refresh the page and try again.",
     "read-dates-updated": "Read dates updated successfully",
