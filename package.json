@@ -12,7 +12,7 @@
     "core-js": "^3.20.3",
     "firebase": "^9.6.4",
     "firebaseui": "^6.0.0",
-    "quasar": "^2.4.11",
+    "quasar": "^2.4.12",
     "secure-ls": "^1.2.6",
     "vue": "^3.2.27",
     "vue-axios": "^3.4.0",
