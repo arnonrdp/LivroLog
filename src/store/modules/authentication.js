@@ -22,6 +22,9 @@ const getters = {
   getMyID(state) {
     return state.user.uid;
   },
+  getMyEmail(state) {
+    return state.user.email;
+  },
   getMyUsername(state) {
     return state.user.username;
   },
@@ -39,6 +42,9 @@ const getters = {
 const mutations = {
   setUserProfile(state, val) {
     state.user = val;
+  },
+  setMyEmail(state, val) {
+    state.user.email = val;
   },
   setMyUsername(state, val) {
     state.user.username = val;
@@ -112,13 +118,17 @@ const actions = {
     });
   },
 
-  async updateAccount({ commit, rootGetters }, payload) {
+  async updateProfile({ commit, rootGetters }, payload) {
     await runTransaction(db, async (transaction) => {
       transaction.update(doc(db, "users", rootGetters.getMyID), { ...payload });
     }).then(() => {
       commit("setMyDisplayName", payload.displayName);
       commit("setMyUsername", payload.username);
     });
+  },
+
+  async updateAccount({}, payload) {
+    console.log(auth.currentUser);
   },
 
   async compareMyModifiedAt({ commit, rootGetters }) {
