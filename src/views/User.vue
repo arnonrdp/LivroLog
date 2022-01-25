@@ -26,10 +26,13 @@ export default {
     const { displayName, id } = this.getUsers.find((user) => user.username === this.$route.params.username);
     this.displayName = displayName;
 
-    this.$store.dispatch("compareUserModifiedAt", id).then(async (equals) => {
-      if (!equals | !this.getUserBooks(id)) await this.$store.dispatch("queryDBUserBooks", id);
-      this.books = this.getUserBooks(id);
-    });
+    this.$store
+      .dispatch("compareUserModifiedAt", id)
+      .then(async (equals) => {
+        if (!equals | !this.getUserBooks(id)) await this.$store.dispatch("queryDBUserBooks", id);
+        this.books = this.getUserBooks(id);
+      })
+      .catch((err) => console.error(err));
   },
   methods: {
     myTweek() {

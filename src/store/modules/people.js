@@ -81,7 +81,9 @@ const actions = {
 
   async compareUserModifiedAt({ commit, rootGetters }, userID) {
     const LSModifiedAt = rootGetters.getModifiedAt(userID) || 0;
-    const DBModifiedAt = await getDoc(doc(db, "users", userID)).then((doc) => doc.data().modifiedAt);
+    const DBModifiedAt = await getDoc(doc(db, "users", userID))
+      .then((doc) => doc.data().modifiedAt)
+      .catch((error) => console.error(error));
     commit("setUserModifiedAt", { userID, currentDate: DBModifiedAt });
     return Boolean(DBModifiedAt === LSModifiedAt);
   },

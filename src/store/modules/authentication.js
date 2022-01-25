@@ -80,9 +80,9 @@ const actions = {
   async signup({ dispatch }, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
-        await setDoc(doc(db, "users", userCredential.user.uid), { ...payload }).then(() =>
-          dispatch("fetchUserProfile", userCredential.user),
-        );
+        await setDoc(doc(db, "users", userCredential.user.uid), { ...payload })
+          .then(() => dispatch("fetchUserProfile", userCredential.user))
+          .catch((error) => console.error(error));
       })
       .catch((error) => {
         throw error.code;
@@ -129,7 +129,11 @@ const actions = {
     await reauthenticateWithCredential(user, credential)
       .then(async () => {
         await updateDoc(doc(db, "users", rootGetters.getMyID), { email: payload.email });
-        updateEmail(user, payload.email).then(() => commit("setMyEmail", payload.email));
+        updateEmail(user, payload.email)
+          .then(() => commit("setMyEmail", payload.email))
+          .catch((error) => {
+            throw error.code;
+          });
         updatePassword(user, payload.newPass);
       })
       .catch((error) => {
@@ -140,15 +144,21 @@ const actions = {
   async updateProfile({ commit, rootGetters }, payload) {
     await runTransaction(db, async (transaction) => {
       transaction.update(doc(db, "users", rootGetters.getMyID), { ...payload });
-    }).then(() => {
-      commit("setMyDisplayName", payload.displayName);
-      commit("setMyUsername", payload.username);
-    });
+    })
+      .then(() => {
+        commit("setMyDisplayName", payload.displayName);
+        commit("setMyUsername", payload.username);
+      })
+      .catch((error) => {
+        throw error.code;
+      });
   },
 
   async compareMyModifiedAt({ commit, rootGetters }) {
     const LSModifiedAt = rootGetters.getMyModifiedAt;
-    const DBModifiedAt = await getDoc(doc(db, "users", rootGetters.getMyID)).then((doc) => doc.data().modifiedAt);
+    const DBModifiedAt = await getDoc(doc(db, "users", rootGetters.getMyID))
+      .then((doc) => doc.data().modifiedAt)
+      .catch((error) => console.error(error));
     commit("setMyModifiedAt", DBModifiedAt);
     return Boolean(LSModifiedAt === DBModifiedAt);
   },
