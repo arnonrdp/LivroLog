@@ -3,7 +3,7 @@
     <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
     <q-btn-dropdown flat icon="filter_list" size="md">
       <q-list class="non-selectable">
-        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(name, ascDesc)">
+        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name, ascDesc)">
           <q-item-section>{{ label }}</q-item-section>
           <q-item-section avatar>
             <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
@@ -70,11 +70,11 @@ export default {
     this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyUsername;
   },
   methods: {
-    sort(label, order) {
+    sort(books, label, order) {
       this.sortKey = label;
       this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";
       const multiplier = order === "asc" ? 1 : -1;
-      this.books.sort((a, b) => (a[label] < b[label] ? -1 * multiplier : 1 * multiplier));
+      books.sort((a, b) => (a[label] > b[label] ? 1 : a[label] < b[label] ? -1 : 0) * multiplier);
     },
   },
 };
