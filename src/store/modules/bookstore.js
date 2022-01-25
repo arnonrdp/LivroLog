@@ -23,10 +23,10 @@ const mutations = {
     state.books.splice(index, 1);
   },
   updateBookReadDate(state, payload) {
-    payload.map((book) => {
+    for (const book of payload) {
       const index = state.books.findIndex((userBook) => userBook.id === book.id);
       state.books[index].readIn = book.readIn;
-    });
+    }
   },
 };
 
@@ -43,13 +43,16 @@ const actions = {
       .catch((error) => console.error(error));
   },
 
-  async updateReadDates({ dispatch, rootGetters }, payload) {
+  async updateReadDates({ commit, dispatch, rootGetters }, payload) {
     await runTransaction(db, async (transaction) => {
-      payload.map((book) => {
+      for (const book of payload) {
         transaction.update(doc(db, "users", rootGetters.getMyID, "books", book.id), { readIn: book.readIn });
-      });
+      }
     })
-      .then(() => dispatch("modifiedAt", rootGetters.getMyID))
+      .then(() => {
+        commit("updateBookReadDate", payload);
+        dispatch("modifiedAt", rootGetters.getMyID);
+      })
       .catch((error) => console.error(error));
   },
 
@@ -61,7 +64,7 @@ const actions = {
       })
       .catch((error) => console.error(error));
   },
-  
+
   async queryDBMyBooks({ commit, rootGetters }) {
     await getDocs(collection(db, "users", rootGetters.getMyID, "books"))
       .then((querySnapshot) => {
