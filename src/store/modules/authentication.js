@@ -1,13 +1,17 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   getAdditionalUserInfo,
   GoogleAuthProvider,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateEmail,
+  updatePassword,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import router from "../../router";
 
@@ -22,8 +26,14 @@ const getters = {
   getMyID(state) {
     return state.user.uid;
   },
-  getMyShelfName(state) {
-    return state.user.shelfName;
+  getMyEmail(state) {
+    return state.user.email;
+  },
+  getMyUsername(state) {
+    return state.user.username;
+  },
+  getMyDisplayName(state) {
+    return state.user.displayName;
   },
   getMyModifiedAt(state) {
     return state.user.modifiedAt;
@@ -37,8 +47,14 @@ const mutations = {
   setUserProfile(state, val) {
     state.user = val;
   },
-  setMyShelfName(state, val) {
-    state.user.shelfName = val;
+  setMyEmail(state, val) {
+    state.user.email = val;
+  },
+  setMyUsername(state, val) {
+    state.user.username = val;
+  },
+  setMyDisplayName(state, val) {
+    state.user.displayName = val;
   },
   setMyModifiedAt(state, val) {
     state.user.modifiedAt = val;
@@ -54,23 +70,19 @@ const actions = {
       });
   },
 
-  async logout({ commit }) {
-    await signOut(auth).then(() => {
-      commit("setUserProfile", {});
-      commit("clearBooks");
-      router.push("login");
-    });
+  logout({ commit }) {
+    signOut(auth);
+    commit("setUserProfile", {});
+    commit("clearBooks");
+    router.push("/login");
   },
 
   async signup({ dispatch }, payload) {
     await createUserWithEmailAndPassword(auth, payload.email, payload.password)
       .then(async (userCredential) => {
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          name: payload.name,
-          email: payload.email,
-          shelfName: payload.name,
-        });
-        dispatch("fetchUserProfile", userCredential.user);
+        await setDoc(doc(db, "users", userCredential.user.uid), { ...payload })
+          .then(() => dispatch("fetchUserProfile", userCredential.user))
+          .catch((error) => console.error(error));
       })
       .catch((error) => {
         throw error.code;
@@ -82,15 +94,12 @@ const actions = {
     await signInWithPopup(auth, provider)
       .then(async (result) => {
         const { isNewUser } = getAdditionalUserInfo(result);
+        const { email, displayName, photoURL, uid } = result.user;
         if (isNewUser) {
-          await setDoc(doc(db, "users", result.user.uid), {
-            email: result.user.email,
-            name: result.user.displayName,
-            photoURL: result.user.photoURL,
-            shelfName: result.user.displayName,
-          });
+          const username = email.split("@")[0] + Date.now();
+          await setDoc(doc(db, "users", uid), { email, displayName, photoURL, username });
         }
-        dispatch("fetchUserProfile", result.user);
+        dispatch("fetchUserProfile", { email, displayName, photoURL, uid });
       })
       .catch((error) => {
         throw error.code;
@@ -107,21 +116,49 @@ const actions = {
       .catch((error) => console.error(error));
   },
 
-  async resetPassword({}, payload) {
-    await sendPasswordResetEmail(auth, payload.email).catch((error) => {
+  async resetPassword({}, email) {
+    await sendPasswordResetEmail(auth, email).catch((error) => {
       throw error.code;
     });
   },
 
-  async updateShelfName({ commit, rootGetters }, payload) {
-    await updateDoc(doc(db, "users", rootGetters.getMyID), { shelfName: payload })
-      .then(() => commit("setMyShelfName", payload))
-      .catch((error) => console.error(error));
+  async updateAccount({ commit, rootGetters }, payload) {
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, payload.password);
+
+    await reauthenticateWithCredential(user, credential)
+      .then(async () => {
+        await updateDoc(doc(db, "users", rootGetters.getMyID), { email: payload.email });
+        updateEmail(user, payload.email)
+          .then(() => commit("setMyEmail", payload.email))
+          .catch((error) => {
+            throw error.code;
+          });
+        updatePassword(user, payload.newPass);
+      })
+      .catch((error) => {
+        throw error.code;
+      });
+  },
+
+  async updateProfile({ commit, rootGetters }, payload) {
+    await runTransaction(db, async (transaction) => {
+      transaction.update(doc(db, "users", rootGetters.getMyID), { ...payload });
+    })
+      .then(() => {
+        commit("setMyDisplayName", payload.displayName);
+        commit("setMyUsername", payload.username);
+      })
+      .catch((error) => {
+        throw error.code;
+      });
   },
 
   async compareMyModifiedAt({ commit, rootGetters }) {
     const LSModifiedAt = rootGetters.getMyModifiedAt;
-    const DBModifiedAt = await getDoc(doc(db, "users", rootGetters.getMyID)).then((doc) => doc.data().modifiedAt);
+    const DBModifiedAt = await getDoc(doc(db, "users", rootGetters.getMyID))
+      .then((doc) => doc.data().modifiedAt)
+      .catch((error) => console.error(error));
     commit("setMyModifiedAt", DBModifiedAt);
     return Boolean(LSModifiedAt === DBModifiedAt);
   },

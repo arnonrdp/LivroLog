@@ -1,5 +1,6 @@
 {
   "book": {
+    "add": "Add book",
     "added-to-shelf": "Book added to your shelf",
     "addlabel": "Search by title, author, publisher, release, ISBN...",
     "already-exists": "Book already exists",
@@ -12,13 +13,13 @@
     "removed-error": "Error removing book. Refresh the page and try again.",
     "removed-success": "Book removed from shelf",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author",
-    "add": "Add book"
+    "unknown-author": "Unknown Author"
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",
     "follow": "Follow",
     "following": "Following",
+    "no-one-found": "Well this is sad... No one was found!",
     "search-for-people": "Search for people"
   },
   "menu": {
@@ -29,7 +30,9 @@
   },
   "settings": {
     "account": "Account",
-    "account-profile": "Account and Profile",
+    "account-updated": "Account successfully updated",
+    "account-updated-error": "Failed to update account. Refresh the page and try again.",
+    "add-reading-dates": "Add reading dates",
     "books": "Books",
     "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
     "bookshelf-add-few": "Start by adding a few.",
@@ -37,11 +40,16 @@
     "column-readIn": "Read In",
     "column-title": "Title",
     "language": "Language",
+    "pass1": "New password",
+    "pass2": "Password confirmation",
+    "profile": "Profile",
+    "profile-updated": "Profile successfully updated",
+    "profile-updated-error": "Failed to update profile. Refresh the page and try again.",
     "read-dates-updated": "Read dates updated successfully",
-    "read-dates-updated-error": "Error updating read dates<br/>Refresh the page and try again.",
+    "read-dates-updated-error": "Error updating read dates.\nRefresh the page and try again.",
     "save": "Save",
-    "shelfname-updated": "Shelf name updated successfully",
-    "shelfname-updated-error": "Shelf name update failed"
+    "update-account": "update account",
+    "update-profile": "update profile"
   },
   "sign": {
     "accountCreated": "Your account has been created successfully!",
@@ -51,7 +59,7 @@
     "auth-invalid-email": "Invalid Email",
     "auth-missing-email": "Email is required!",
     "auth-phone-number-already-exists": "Phone number already exists!",
-    "auth-popup-closed-by-user": "I think you closed the popup.<br/>Try again.",
+    "auth-popup-closed-by-user": "I think you closed the popup.\nTry again.",
     "auth-user-not-found": "User not found",
     "auth-weak-password": "Password is too weak",
     "auth-wrong-password": "Incorrect password",
@@ -59,12 +67,13 @@
     "mail": "Email",
     "name": "Name",
     "password": "Password",
-    "password-hint": "Minimum of 6 characters",
+    "password-confirmation": "Password Confirmation",
     "password-reset": "Password reset email sent",
     "recover": "Recover",
     "reset": "Reset",
     "sign-google": "Sign in with Google",
     "signin": "Sign In",
-    "signup": "Sign Up"
+    "signup": "Sign Up",
+    "username": "Username"
   }
 }

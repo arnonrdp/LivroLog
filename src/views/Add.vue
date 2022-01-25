@@ -39,7 +39,6 @@ export default {
       offset: 115,
       results: "",
       seek: "",
-      shelfName: "",
     };
   },
   methods: {
@@ -54,7 +53,6 @@ export default {
       this.loading = true;
       this.books = [];
       axios
-        // TODO: Chamar a API em produção => &key=${process.env.GOOGLE_BOOKS_API_KEY}
         .get(`https://www.googleapis.com/books/v1/volumes?q=${this.seek}&maxResults=40&printType=books`)
         .then((response) => {
           response.data.items.map((item) =>

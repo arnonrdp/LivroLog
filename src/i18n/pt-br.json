@@ -1,5 +1,6 @@
 {
   "book": {
+    "add": "Adicionar livro",
     "added-to-shelf": "Livro adicionado à sua estante",
     "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
     "already-exists": "Livro já existe",
@@ -12,13 +13,13 @@
     "removed-error": "Erro ao remover livro.<br/>Atualize a página e tente novamente.",
     "removed-success": "Livro removido da estante",
     "shelfname": "Nome da Estante",
-    "unknown-author": "Autor desconhecido",
-    "add": "Adicionar livro"
+    "unknown-author": "Autor desconhecido"
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
     "follow": "Seguir",
     "following": "Seguindo",
+    "no-one-found": "Bem, isso é triste... Ninguém foi encontrado!",
     "search-for-people": "Buscar pessoas"
   },
   "menu": {
@@ -29,7 +30,9 @@
   },
   "settings": {
     "account": "Conta",
-    "account-profile": "Conta e Perfil",
+    "account-updated": "Conta atualizada com sucesso",
+    "account-updated-error": "Falha ao atualizar a conta. \nAtualize a página e tente novamente.",
+    "add-reading-dates": "Incluir datas de leitura",
     "books": "Livros",
     "books-description": "Adicione as datas em que terminou de ler os livros e organize sua estante por data de leitura",
     "bookshelf-add-few": "Comece adicionando alguns.",
@@ -37,11 +40,16 @@
     "column-readIn": "Lido em",
     "column-title": "Título",
     "language": "Idioma",
+    "pass1": "Nova Senha",
+    "pass2": "Confirmação da Senha",
+    "profile": "Perfil",
+    "profile-updated": "Perfil atualizado com sucesso",
+    "profile-updated-error": "Falha ao atualizar o perfil. \nAtualize a página e tente novamente.",
     "read-dates-updated": "Datas de leitura atualizadas com sucesso",
-    "read-dates-updated-error": "Erro ao atualizar as datas de leitura.<br/>Atualize a página e tente novamente.",
+    "read-dates-updated-error": "Erro ao atualizar as datas de leitura.\nAtualize a página e tente novamente.",
     "save": "Salvar",
-    "shelfname-updated": "Nome da estante atualizado com sucesso",
-    "shelfname-updated-error": "Falha na atualização do nome da estante.<br/>Atualize a página e tente novamente."
+    "update-account": "atualizar conta",
+    "update-profile": "atualizar perfil"
   },
   "sign": {
     "accountCreated": "Sua conta foi criada com sucesso!",
@@ -51,7 +59,7 @@
     "auth-invalid-email": "E-mail inválido.",
     "auth-missing-email": "O email é obrigatório!",
     "auth-phone-number-already-exists": "Número de telefone já existe!",
-    "auth-popup-closed-by-user": "Acho que você fechou o pop-up.<br/>Tente novamente.",
+    "auth-popup-closed-by-user": "Acho que você fechou o pop-up.\nTente novamente.",
     "auth-user-not-found": "Usuário não encontrado",
     "auth-weak-password": "a senha é muito fraca",
     "auth-wrong-password": "Senha incorreta",
@@ -59,12 +67,13 @@
     "mail": "E-mail",
     "name": "Nome",
     "password": "Senha",
-    "password-hint": "Mínimo de 6 caracteres",
+    "password-confirmation": "Confirmação de Senha",
     "password-reset": "Email de redefinição de senha enviado",
     "recover": "Recuperar",
     "reset": "Limpar",
     "sign-google": "Entrar com Google",
     "signin": "Entrar",
-    "signup": "Registrar"
+    "signup": "Registrar",
+    "username": "Username"
   }
 }

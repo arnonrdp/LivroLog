@@ -1,5 +1,6 @@
 {
   "book": {
+    "add": "本を追加",
     "added-to-shelf": "棚に追加された本",
     "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
     "already-exists": "本はすでに存在します",
@@ -12,13 +13,13 @@
     "removed-error": "本の削除中にエラーが発生しました<br/>ページを更新して、再試行してください。",
     "removed-success": "本が棚から削除されました",
     "shelfname": "棚名",
-    "unknown-author": "不明な作者",
-    "add": "本を追加"
+    "unknown-author": "不明な作者"
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
     "follow": "従う",
     "following": "続く",
+    "no-one-found": "さて、これは悲しいです...誰も見つかりませんでした!",
     "search-for-people": "人を探す"
   },
   "menu": {
@@ -29,7 +30,9 @@
   },
   "settings": {
     "account": "アカウント",
-    "account-profile": "アカウントとプロファイル",
+    "account-updated": "アカウントが正常に更新されました",
+    "account-updated-error": "アカウントの更新に失敗しました。\nページを更新して、再試行してください。",
+    "add-reading-dates": "読書日を追加する",
     "books": "本",
     "books-description": "本を読み終えた日付を追加し、日付を読んで本棚を整理します",
     "bookshelf-add-few": "いくつか追加することから始めます。",
@@ -37,11 +40,16 @@
     "column-readIn": "読む",
     "column-title": "タイトル",
     "language": "言語",
+    "pass1": "新しいパスワード",
+    "pass2": "パスワードの確認",
+    "profile": "プロフィール",
+    "profile-updated": "プロファイルが正常に更新されました",
+    "profile-updated-error": "プロファイルの更新に失敗しました。\nページを更新して、再試行してください。",
     "read-dates-updated": "正常に更新された日付の読み取り",
-    "read-dates-updated-error": "読み取り日の更新中にエラーが発生しました<br/>ページを更新して、再試行してください。",
+    "read-dates-updated-error": "読み取り日の更新中にエラーが発生しました。\nページを更新して、再試行してください。",
     "save": "保存する",
-    "shelfname-updated": "シェルフ名が正常に更新されました",
-    "shelfname-updated-error": "シェルフ名の更新に失敗しました<br/>ページを更新して、再試行してください。"
+    "update-account": "アカウントを更新する",
+    "update-profile": "プロファイルを更新"
   },
   "sign": {
     "accountCreated": "アカウントが正常に作成されました。",
@@ -51,7 +59,7 @@
     "auth-invalid-email": "無効なメール",
     "auth-missing-email": "メールが必要です!",
     "auth-phone-number-already-exists": "電話番号はすでに存在します!",
-    "auth-popup-closed-by-user": "ポップアップを閉じたと思います。<br/>再試行。",
+    "auth-popup-closed-by-user": "ポップアップを閉じたと思います。\n再試行。",
     "auth-user-not-found": "ユーザーが見つかりません",
     "auth-weak-password": "パスワードが弱すぎる",
     "auth-wrong-password": "パスワードが正しくありません",
@@ -59,12 +67,13 @@
     "mail": "Eメール",
     "name": "名前",
     "password": "パスワード",
-    "password-hint": "6文字以上",
+    "password-confirmation": "パスワードの確認",
     "password-reset": "パスワードリセットメールが送信されました",
     "recover": "回復",
     "reset": "リセット",
     "sign-google": "Googleでサインイン",
     "signin": "ログイン",
-    "signup": "サインアップ"
+    "signup": "サインアップ",
+    "username": "ユーザー名"
   }
 }

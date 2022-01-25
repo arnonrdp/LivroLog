@@ -56,12 +56,7 @@ const actions = {
   async queryDBUsers({ commit }) {
     await getDocs(collection(db, "users"))
       .then((querySnapshot) => {
-        const users = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data().name,
-          shelfName: doc.data().shelfName,
-          photoURL: doc.data().photoURL,
-        }));
+        const users = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         commit("setUsers", users);
       })
       .catch((error) => console.error(error));
@@ -86,9 +81,23 @@ const actions = {
 
   async compareUserModifiedAt({ commit, rootGetters }, userID) {
     const LSModifiedAt = rootGetters.getModifiedAt(userID) || 0;
-    const DBModifiedAt = await getDoc(doc(db, "users", userID)).then((doc) => doc.data().modifiedAt);
+    const DBModifiedAt = await getDoc(doc(db, "users", userID))
+      .then((doc) => doc.data().modifiedAt)
+      .catch((error) => console.error(error));
     commit("setUserModifiedAt", { userID, currentDate: DBModifiedAt });
     return Boolean(DBModifiedAt === LSModifiedAt);
+  },
+
+  async checkEmail({}, email) {
+    const users = await getDocs(collection(db, "users"));
+    const emails = users.docs.map((doc) => doc.data().email);
+    return Boolean(emails.includes(email));
+  },
+
+  async checkUsername({}, username) {
+    const users = await getDocs(collection(db, "users"));
+    const usernames = users.docs.map((doc) => doc.data().username);
+    return Boolean(usernames.includes(username));
   },
 };
 
