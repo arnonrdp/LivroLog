@@ -17,6 +17,6 @@
 
 - Adicione à sua estante todos os livros que você já leu:
 - Siga seus amigos, veja como é a estante de cada um e saiba o que acabaram de ler;
-- Faça downlod de uma imagem da sua esta te e utilize-a como plano de fundo em suas chamadas de vídeo.
+- Faça download de uma imagem da sua estante e utilize-a como plano de fundo em suas chamadas de vídeo.
 
 <img src="./public/main.png" />
