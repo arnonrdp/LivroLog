@@ -1,7 +1,9 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   getAdditionalUserInfo,
   GoogleAuthProvider,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -120,16 +122,19 @@ const actions = {
     });
   },
 
-  async updateAccount({ commit, rootGetters }, email, password) {
-    // const user = auth.currentUser;
-    // const newPassword = getASecureRandomPassword();
+  async updateAccount({ commit, rootGetters }, payload) {
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, payload.password);
 
-    await updateDoc(doc(db, "users", rootGetters.getMyID), { email });
-    updateEmail(user, email).then(() => commit("setMyEmail", email));
-    // TODO: Atualizar senha do usuário
-    // updatePassword(user, password)
-    //   .then(() => console.log("password updated"))
-    //   .catch((error) => console.log(error));
+    await reauthenticateWithCredential(user, credential)
+      .then(async () => {
+        await updateDoc(doc(db, "users", rootGetters.getMyID), { email: payload.email });
+        updateEmail(user, payload.email).then(() => commit("setMyEmail", payload.email));
+        updatePassword(user, payload.newPass);
+      })
+      .catch((error) => {
+        throw error.code;
+      });
   },
 
   async updateProfile({ commit, rootGetters }, payload) {
