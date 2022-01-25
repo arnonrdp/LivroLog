@@ -1,6 +1,6 @@
 <template>
   <div class="text-h6">{{ $t("settings.profile") }}</div>
-  <q-form @submit.once="updateProfile" class="q-gutter-md q-mb-md">
+  <q-form @submit.prevent="updateProfile" class="q-gutter-md q-mb-md">
     <q-input v-model="displayName" :label="$t('book.shelfname')">
       <template v-slot:prepend>
         <q-icon name="badge" />
@@ -66,7 +66,7 @@ export default {
     updateProfile() {
       this.updating = true;
       this.$store
-        .dispatch("updateProfile", this.displayName, this.username)
+        .dispatch("updateProfile", { displayName: this.displayName, username: this.username })
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("settings.profile-updated") }))
         .catch(() => this.$q.notify({ icon: "error", message: this.$t("settings.profile-updated-error") }))
         .finally(() => (this.updating = false));
