@@ -12,7 +12,8 @@
       </q-list>
     </q-btn-dropdown>
   </div>
-  <section>
+  <button type="button" @click="shotPic">screenshot</button>
+  <section id="my-node">
     <!-- TODO: Adicionar a possibilidade de filtrar os livros -->
     <figure v-for="book in books" :key="book.id">
       <q-btn
@@ -42,6 +43,7 @@
 
 <script>
 import html2canvas from "html2canvas";
+import domtoimage from "dom-to-image-more";
 import { mapGetters } from "vuex";
 
 export default {
@@ -71,6 +73,18 @@ export default {
     this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyUsername;
   },
   methods: {
+    shotPic() {
+      domtoimage
+        .toPng(document.getElementById("my-node"), { quality: 0.95 })
+        .then((dataUrl) => {
+          let link = document.createElement("a");
+          link.download = "my-image-name.jpeg";
+          link.href = dataUrl;
+          link.click();
+        })
+        .catch((error) => console.error(error));
+    },
+
     sort(books, label, order) {
       this.sortKey = label;
       this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";
