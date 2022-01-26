@@ -1,7 +1,13 @@
 <template>
-  <div class="flex items-center justify-between">
+  <div class="flex items-center">
     <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
-    <q-btn-dropdown flat icon="filter_list" size="md">
+    <q-space />
+    <q-input borderless dense debounce="300" v-model="filter" :placeholder="$t('book.search')">
+      <template v-slot:append>
+        <q-icon name="search" />
+      </template>
+    </q-input>
+    <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
         <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name, ascDesc)">
           <q-item-section>{{ label }}</q-item-section>
@@ -12,9 +18,8 @@
       </q-list>
     </q-btn-dropdown>
   </div>
-  <section>
-    <!-- TODO: Adicionar a possibilidade de filtrar os livros -->
-    <figure v-for="book in books" :key="book.id">
+  <section class="flex justify-around">
+    <figure v-for="book in books" v-show="onFilter(book, filter)" :key="book.id">
       <q-btn
         v-if="selfUser"
         round
@@ -53,6 +58,7 @@ export default {
   data: () => ({
     ascDesc: "asc",
     bookLabels: {},
+    filter: "",
     selfUser: false,
     sortKey: "",
   }),
@@ -70,6 +76,9 @@ export default {
     this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyUsername;
   },
   methods: {
+    onFilter(book, filter) {
+      return book.title.toLowerCase().includes(filter.toLowerCase());
+    },
     sort(books, label, order) {
       this.sortKey = label;
       this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";
@@ -85,14 +94,15 @@ h1 {
   letter-spacing: 1px;
 }
 
+label {
+  width: 100px;
+}
+
 section {
   background-image: url("~@/assets/shelfleft.png"), url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
   border-radius: 6px;
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-around;
   min-height: 302px;
   padding: 0 3rem 1rem;
 }
