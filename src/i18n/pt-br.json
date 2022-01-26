@@ -12,6 +12,7 @@
     "remove": "Remover livro",
     "removed-error": "Erro ao remover livro.<br/>Atualize a página e tente novamente.",
     "removed-success": "Livro removido da estante",
+    "search": "Procurar",
     "shelfname": "Nome da Estante",
     "unknown-author": "Autor desconhecido"
   },
