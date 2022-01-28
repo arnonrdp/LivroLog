@@ -1,6 +1,8 @@
 <template>
-  <div class="flex items-center justify-between">
+  <div class="flex items-center">
     <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
+    <q-space />
+    <q-btn flat icon="download" @click="download" />
     <q-btn-dropdown flat icon="filter_list" size="md">
       <q-list class="non-selectable">
         <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name, ascDesc)">
@@ -12,8 +14,7 @@
       </q-list>
     </q-btn-dropdown>
   </div>
-  <button type="button" @click="shotPic">screenshot</button>
-  <section id="my-node">
+  <section ref="capture">
     <!-- TODO: Adicionar a possibilidade de filtrar os livros -->
     <figure v-for="book in books" :key="book.id">
       <q-btn
@@ -43,7 +44,6 @@
 
 <script>
 import html2canvas from "html2canvas";
-import domtoimage from "dom-to-image-more";
 import { mapGetters } from "vuex";
 
 export default {
@@ -73,13 +73,17 @@ export default {
     this.selfUser = !this.$route.params.username || this.$route.params.username === this.getMyUsername;
   },
   methods: {
-    shotPic() {
-      domtoimage
-        .toPng(document.getElementById("my-node"), { quality: 0.95 })
-        .then((dataUrl) => {
+    download() {
+      html2canvas(this.$refs["capture"], {
+        // allowTaint: true,
+        // useCORS: true,
+        scale: 1,
+        proxy: "http://localhost:8000",
+      })
+        .then((canvas) => {
           let link = document.createElement("a");
-          link.download = "my-image-name.jpeg";
-          link.href = dataUrl;
+          link.download = "Livrero.png";
+          link.href = canvas.toDataURL("image/png");
           link.click();
         })
         .catch((error) => console.error(error));
@@ -90,16 +94,6 @@ export default {
       this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";
       const multiplier = order === "asc" ? 1 : -1;
       books.sort((a, b) => (a[label] > b[label] ? 1 : a[label] < b[label] ? -1 : 0) * multiplier);
-    },
-    download() {
-      html2canvas(this.$refs["capture"], {
-        allowTaint: true,
-        proxy: "https://books.google.com/",
-        // scale: (1920 * 2) / window.innerWidth,
-        useCORS: true,
-      })
-        .then((canvas) => console.log("TODO: Executar download de: ", canvas.toDataURL("image/jpg"), "Livrero.jpg"))
-        .catch((error) => console.error("ERROR SAVING IMAGE", error));
     },
   },
 };
