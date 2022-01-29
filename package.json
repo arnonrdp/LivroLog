@@ -1,6 +1,6 @@
 {
   "name": "livrero",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": "Arnon Rodrigues <arnonrdp@gmail.com> (https://arnon.dev)",
   "description": "A place for you to organize everything you've read.",
   "private": true,
@@ -28,6 +28,7 @@
     "@vue/cli-plugin-router": "~4.5.15",
     "@vue/cli-service": "~4.5.15",
     "@vue/compiler-sfc": "^3.2.29",
+    "ansi-regex": ">=6.0.1",
     "core-js": "^3.20.3",
     "follow-redirects": ">=1.14.7",
     "glob-parent": "^6.0.2",
