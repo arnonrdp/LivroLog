@@ -1,3 +1,4 @@
+import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -12,7 +13,8 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENTID,
 };
 
-initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+getAnalytics(app);
 
 const auth = getAuth();
 const db = getFirestore();
