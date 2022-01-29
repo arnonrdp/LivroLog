@@ -29,7 +29,7 @@
         icon="close"
         size="sm"
         :title="$t('book.remove')"
-        @click.once="$emit('emitID', book.id)"
+        @click.once="$emit('emitRemoveID', book.id)"
       />
       <q-btn
         v-else
