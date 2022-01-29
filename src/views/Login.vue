@@ -21,17 +21,6 @@
         />
         <q-input
           dense
-          v-if="tab === 'signup'"
-          v-model="username"
-          type="text"
-          prefix="livrero.vercel.app/"
-          debounce="500"
-          :label="$t('sign.username')"
-          :rules="[(val) => usernameValidator(val)]"
-          required
-        />
-        <q-input
-          dense
           key="email-input"
           v-model="email"
           type="email"
@@ -80,7 +69,6 @@ export default {
   setup: () => ({ tab: ref("signin") }),
   data: () => ({
     displayName: "",
-    username: "",
     email: "",
     password: "",
     passwordConfirm: "",
@@ -89,47 +77,51 @@ export default {
     emailValidator(email) {
       return /^\S+@\S+\.\S+$/.test(email);
     },
-    usernameValidator(username) {
-      if (["home", "add", "people", "settings", "login"].includes(username)) return false;
-      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return false;
-      return this.$store.dispatch("checkUsername", username).then((exists) => !exists);
-    },
+
     passwordConfirmValidator(passwordConfirm) {
       return passwordConfirm === this.password;
     },
+
     submit(tab) {
-      if (tab === "signup") this.signup(this.displayName, this.username, this.email, this.password);
+      if (tab === "signup") this.signup(this.displayName, this.email, this.password);
       if (tab === "signin") this.signin(this.email, this.password);
       if (tab === "recover") this.resetPassword(this.email);
     },
-    signup(displayName, username, email, password) {
+
+    signup(displayName, email, password) {
+      const username = email.split("@")[0];
       this.$store
         .dispatch("signup", { displayName, username, email, password })
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.accountCreated") }))
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
+
     signin(email, password) {
       this.$store
         .dispatch("login", { email, password })
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
+
     googleSignIn() {
       this.$store
         .dispatch("googleSignIn")
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
+
     resetPassword(email) {
       this.$store
         .dispatch("resetPassword", email)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("sign.password-reset") }))
         .catch((error) => this.$q.notify({ icon: "error", message: this.authErrors()[error] }));
     },
+
     onReset() {
       this.name = "";
       this.email = "";
       this.password = "";
       this.passwordConfirm = "";
     },
+
     authErrors() {
       return {
         "auth/email-already-in-use": this.$t("sign.auth-email-already-in-use"),

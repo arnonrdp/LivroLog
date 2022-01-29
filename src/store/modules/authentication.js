@@ -96,7 +96,7 @@ const actions = {
         const { isNewUser } = getAdditionalUserInfo(result);
         const { email, displayName, photoURL, uid } = result.user;
         if (isNewUser) {
-          const username = email.split("@")[0] + Date.now();
+          const username = email.split("@")[0];
           await setDoc(doc(db, "users", uid), { email, displayName, photoURL, username });
         }
         dispatch("fetchUserProfile", { email, displayName, photoURL, uid });
