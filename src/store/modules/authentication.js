@@ -61,13 +61,15 @@ const mutations = {
   },
 };
 
+const throwError = (error) => {
+  throw error.code;
+};
+
 const actions = {
   async login({ dispatch }, payload) {
     await signInWithEmailAndPassword(auth, payload.email, payload.password)
       .then((userCredential) => dispatch("fetchUserProfile", userCredential.user))
-      .catch((error) => {
-        throw error.code;
-      });
+      .catch(throwError);
   },
 
   logout({ commit }) {
@@ -84,9 +86,7 @@ const actions = {
           .then(() => dispatch("fetchUserProfile", userCredential.user))
           .catch((error) => console.error(error));
       })
-      .catch((error) => {
-        throw error.code;
-      });
+      .catch(throwError);
   },
 
   async googleSignIn({ dispatch }) {
@@ -101,9 +101,7 @@ const actions = {
         }
         dispatch("fetchUserProfile", { email, displayName, photoURL, uid });
       })
-      .catch((error) => {
-        throw error.code;
-      });
+      .catch(throwError);
   },
 
   async fetchUserProfile({ commit }, user) {
@@ -117,9 +115,7 @@ const actions = {
   },
 
   async resetPassword({}, email) {
-    await sendPasswordResetEmail(auth, email).catch((error) => {
-      throw error.code;
-    });
+    await sendPasswordResetEmail(auth, email).catch(throwError);
   },
 
   async updateAccount({ commit, rootGetters }, payload) {
@@ -131,14 +127,10 @@ const actions = {
         await updateDoc(doc(db, "users", rootGetters.getMyID), { email: payload.email });
         updateEmail(user, payload.email)
           .then(() => commit("setMyEmail", payload.email))
-          .catch((error) => {
-            throw error.code;
-          });
+          .catch(throwError);
         updatePassword(user, payload.newPass);
       })
-      .catch((error) => {
-        throw error.code;
-      });
+      .catch(throwError);
   },
 
   async updateProfile({ commit, rootGetters }, payload) {
@@ -149,9 +141,7 @@ const actions = {
         commit("setMyDisplayName", payload.displayName);
         commit("setMyUsername", payload.username);
       })
-      .catch((error) => {
-        throw error.code;
-      });
+      .catch(throwError);
   },
 
   async compareMyModifiedAt({ commit, rootGetters }) {

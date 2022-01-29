@@ -7,6 +7,8 @@
         <q-icon name="search" />
       </template>
     </q-input>
+    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon -->
+    <q-btn v-show="false" flat icon="download" @click="download" />
     <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
         <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name, ascDesc)">
@@ -18,7 +20,7 @@
       </q-list>
     </q-btn-dropdown>
   </div>
-  <section class="flex justify-around">
+  <section ref="capture" class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book, filter)" :key="book.id">
       <q-btn
         v-if="selfUser"
@@ -27,7 +29,7 @@
         icon="close"
         size="sm"
         :title="$t('book.remove')"
-        @click.once="$emit('emitRemoveID', book.id)"
+        @click.once="$emit('emitID', book.id)"
       />
       <q-btn
         v-else
@@ -46,6 +48,7 @@
 </template>
 
 <script>
+import html2canvas from "html2canvas";
 import { mapGetters } from "vuex";
 
 export default {
@@ -79,6 +82,18 @@ export default {
     onFilter(book, filter) {
       return book.title.toLowerCase().includes(filter.toLowerCase());
     },
+
+    download() {
+      html2canvas(this.$refs["capture"], { allowTaint: true, useCORS: true, scale: 1 })
+        .then((canvas) => {
+          let link = document.createElement("a");
+          link.download = "Livrero.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        })
+        .catch((error) => console.error(error));
+    },
+
     sort(books, label, order) {
       this.sortKey = label;
       this.ascDesc = this.ascDesc === "asc" ? "desc" : "asc";

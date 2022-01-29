@@ -1,6 +1,6 @@
 {
   "name": "livrero",
-  "version": "0.5.9",
+  "version": "0.6.0",
   "author": "Arnon Rodrigues <arnonrdp@gmail.com> (https://arnon.dev)",
   "description": "A place for you to organize everything you've read.",
   "private": true,
@@ -13,6 +13,8 @@
     "axios": "^0.25.0",
     "firebase": "^9.6.5",
     "firebaseui": "^6.0.0",
+    "html2canvas": "^1.4.1",
+    "html2canvas-proxy": "^1.0.1",
     "quasar": "^2.4.13",
     "secure-ls": "^1.2.6",
     "vue": "^3.2.29",
