@@ -45,10 +45,12 @@ export default {
     myTweak() {
       return { minHeight: `calc(100vh - ${this.offset}px)` };
     },
+    
     clearSearch() {
       this.seek = "";
       this.books = [];
     },
+
     search() {
       this.loading = true;
       this.books = [];
@@ -69,11 +71,19 @@ export default {
         .catch((error) => console.error(error))
         .finally(() => (this.loading = false));
     },
+
     addBook(book) {
       book = { ...book, addedIn: Date.now(), readIn: "" };
-      this.$store.dispatch("addBook", book)
+      this.$store
+        .dispatch("addBook", book)
         .then(() => this.$q.notify({ icon: "check_circle", message: this.$t("book.added-to-shelf") }))
-        .catch(() => this.$q.notify({ icon: "error", message: this.$t("book.already-exists") }));
+        .catch((error) => this.$q.notify({ icon: "error", message: this.errorMessages()[error] }));
+    },
+
+    errorMessages() {
+      return {
+        book_already_exists: this.$t("book.already-exists"),
+      };
     },
   },
 };

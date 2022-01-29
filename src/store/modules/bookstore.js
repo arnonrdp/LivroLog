@@ -30,17 +30,22 @@ const mutations = {
   },
 };
 
+const throwError = (error) => {
+  throw error.code;
+};
+
 const actions = {
   async addBook({ commit, dispatch, rootGetters }, payload) {
     if (rootGetters.getMyBooks.some((userBook) => userBook.id === payload.id)) {
-      throw new Error("Book already exists");
+      throwError({ code: "book_already_exists" });
     }
+
     await setDoc(doc(db, "users", rootGetters.getMyID, "books", payload.id), { ...payload })
       .then(() => {
         commit("setMyBooks", payload);
         dispatch("modifiedAt", rootGetters.getMyID);
       })
-      .catch((error) => console.error(error));
+      .catch(throwError);
   },
 
   async updateReadDates({ commit, dispatch, rootGetters }, payload) {
@@ -53,7 +58,7 @@ const actions = {
         commit("updateBookReadDate", payload);
         dispatch("modifiedAt", rootGetters.getMyID);
       })
-      .catch((error) => console.error(error));
+      .catch(throwError);
   },
 
   async removeBook({ commit, dispatch, rootGetters }, payload) {
@@ -62,7 +67,7 @@ const actions = {
         commit("removeBook", payload);
         dispatch("modifiedAt", rootGetters.getMyID);
       })
-      .catch((error) => console.error(error));
+      .catch(throwError);
   },
 
   async queryDBMyBooks({ commit, rootGetters }) {
@@ -73,7 +78,7 @@ const actions = {
         commit("setMyBooks", books);
         return books;
       })
-      .catch((error) => console.error(error));
+      .catch(throwError);
   },
 };
 
