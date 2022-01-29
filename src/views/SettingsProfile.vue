@@ -58,11 +58,13 @@ export default {
   },
   methods: {
     usernameValidator(username) {
+      const router = this.$router.options.routes;
       if (username === this.getMyUsername) return true;
-      if (["home", "add", "people", "settings", "login"].includes(username)) return false;
+      if (router.some((r) => r.path.substr(1) === username.toLowerCase())) return false;
       if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return false;
       return this.$store.dispatch("checkUsername", username).then((exists) => !exists);
     },
+
     updateProfile() {
       this.updating = true;
       this.$store
