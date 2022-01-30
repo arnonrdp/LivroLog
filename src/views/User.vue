@@ -16,15 +16,17 @@ export default {
     displayName: "",
     offset: 115,
   }),
-  beforeRouteEnter(to, from, next) {
-    store.getters.getUsers.some((user) => user.username === to.params.username) ? next() : next("/");
-  },
   computed: {
     ...mapGetters(["getUsers", "getUserBooks"]),
   },
-  async mounted() {
+  beforeRouteEnter(to, from, next) {
+    store.getters.getUsers.some((user) => user.username === to.params.username) ? next() : next("/");
+  },
+  mounted() {
     const { displayName, id } = this.getUsers.find((user) => user.username === this.$route.params.username);
     this.displayName = displayName;
+
+    document.title = `Livrero | ${displayName.split(" ")[0]}`;
 
     this.$store
       .dispatch("compareUserModifiedAt", id)
