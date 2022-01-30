@@ -36,7 +36,7 @@
           </q-td>
           <q-td key="username" :props="props" auto-width>
             <q-chip
-              v-if="this.getMyProfile.uid !== props.row.id"
+              v-if="getMyProfile.uid !== props.row.id"
               disable
               class="cursor-pointer non-selectable"
               color="primary"
