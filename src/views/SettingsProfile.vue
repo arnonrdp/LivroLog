@@ -53,6 +53,7 @@ export default {
         { value: "en", label: "English" },
         { value: "ja", label: "日本語" },
         { value: "pt" && "pt-BR", label: "Português" },
+        { value: "tr", label: "Türkçe" },
       ],
     };
   },
