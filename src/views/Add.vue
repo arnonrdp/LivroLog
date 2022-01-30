@@ -30,7 +30,6 @@ import Loading from "@/components/Loading.vue";
 import axios from "axios";
 
 export default {
-  name: "Add",
   components: { Loading },
   data() {
     return {
@@ -83,6 +82,7 @@ export default {
     errorMessages() {
       return {
         book_already_exists: this.$t("book.already-exists"),
+        // TODO: Tratar possíveis erros que a Amazon pode retornar
       };
     },
   },

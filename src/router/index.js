@@ -19,7 +19,6 @@ const routes = [
   {
     path: "/login",
     component: Login,
-    meta: { title: "Livrero: Login" },
   },
   {
     path: "/",
