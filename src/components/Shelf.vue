@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center">
-    <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", { name: shelfName }) }}</h1>
+    <h1 class="text-h5 text-secondary text-left q-my-none">{{ $t("book.bookcase", [shelfName]) }}</h1>
     <q-space />
     <q-input borderless dense debounce="300" v-model="filter" :placeholder="$t('book.search')">
       <template v-slot:append>
@@ -40,7 +40,7 @@
         :title="$t('book.add')"
         @click.once="$emit('emitAddID', book)"
       />
-      <img :src="book.thumbnail" :alt="`Livro ${book.title}`" />
+      <img :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
       <!-- TODO: Manter tooltip ativa no mobile ao clicar na imagem do livro -->
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
     </figure>
@@ -52,7 +52,6 @@ import html2canvas from "html2canvas";
 import { mapGetters } from "vuex";
 
 export default {
-  name: "Shelf",
   props: {
     books: { type: Array, required: true },
     shelfName: { type: String, required: true },
