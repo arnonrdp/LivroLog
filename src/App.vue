@@ -16,7 +16,7 @@ export default {
   components: { Header },
   setup() {
     const { t } = useI18n();
-    useMeta({
+    useMeta(() => ({
       title: "Livrero",
       meta: {
         // Primary Meta Tags
@@ -37,7 +37,7 @@ export default {
         twitterImage: { name: "twitter:image", content: "https://livrero.vercel.app/main.png" },
         twitterUrl: { name: "twitter:url", content: "https://livrero.vercel.app/" },
       },
-    });
+    }));
   },
 };
 </script>
