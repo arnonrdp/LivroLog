@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { i18n } from "../i18n/index";
+import { useI18n } from "vue-i18n";
 import store from "../store";
 import Add from "../views/Add.vue";
 import Home from "../views/Home.vue";
@@ -24,17 +24,17 @@ const routes = [
     path: "/",
     component: Home,
     alias: "/home",
-    meta: { requiresAuth: true, title: i18n.global.t("menu.home") },
+    meta: { requiresAuth: true, title: "Início" },
   },
   {
     path: "/add",
     component: Add,
-    meta: { requiresAuth: true, title: i18n.global.t("menu.add") },
+    meta: { requiresAuth: true, title: "Adicionar" },
   },
   {
     path: "/people",
     component: People,
-    meta: { requiresAuth: true, title: i18n.global.t("menu.friends") },
+    meta: { requiresAuth: true, title: "Friends" },
   },
   {
     path: "/:username",
@@ -45,7 +45,7 @@ const routes = [
   {
     path: "/settings",
     component: Settings,
-    meta: { requiresAuth: true, title: i18n.global.t("menu.settings") },
+    meta: { requiresAuth: true, title: "Ajustes" },
     children: [
       { path: "", redirect: "account" },
       { path: "account", component: SettingsAccount },
