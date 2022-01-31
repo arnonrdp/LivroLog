@@ -20,6 +20,7 @@ export default {
       title: "Livrero",
       meta: {
         // Primary Meta Tags
+        title: "Livrero",
         description: { name: "description", content: t("meta.description") },
         keywords: { name: "keywords", content: t("meta.keywords") },
         author: { name: "author", content: "Arnon Rodrigues" },
