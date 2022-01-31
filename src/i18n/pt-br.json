@@ -30,6 +30,10 @@
     "home": "Início",
     "settings": "Ajustes"
   },
+  "meta": {
+    "description": "Um lugar para você organizar tudo o que leu.",
+    "keywords": "livros, estante, estante de livros, estante pessoal, organizador de livros, rede social de livros, adicionar livros à estante, organizar estante"
+  },
   "settings": {
     "account": "Conta",
     "account-updated": "Conta atualizada com sucesso",

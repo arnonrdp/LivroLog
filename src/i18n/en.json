@@ -30,6 +30,10 @@
     "home": "Home",
     "settings": "Settings"
   },
+  "meta": {
+    "description": "A place for you to organize everything you've read.",
+    "keywords": "books, bookcase, book shelf, personal bookshelf, book organizer, book social network, add books to bookshelf, organize bookshelf"
+  },
   "settings": {
     "account": "Account",
     "account-updated": "Account successfully updated",

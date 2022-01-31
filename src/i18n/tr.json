@@ -30,6 +30,10 @@
     "home": "Ev",
     "settings": "Ayarlar"
   },
+  "meta": {
+    "description": "Okuduğunuz her şeyi organize edebileceğiniz bir yer.",
+    "keywords": "kitaplar, kitaplik, kitaplık, Kişisel kitaplık, Kitap düzenleyici, Kitap sosyal ağı, Kitaplığa kitap ekle, Kitaplığı düzenle"
+  },
   "settings": {
     "account": "Hesap",
     "account-updated": "hesap başariyla güncellendi",
