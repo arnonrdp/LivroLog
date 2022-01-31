@@ -59,9 +59,21 @@
 </template>
 
 <script>
+import { useMeta } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { mapGetters } from "vuex";
 
 export default {
+  setup() {
+    const { t } = useI18n();
+    useMeta({
+      title: `Livrero | ${t("menu.people")}`,
+      meta: {
+        ogTitle: { name: "og:title", content: `Livrero | ${t("menu.people")}` },
+        twitterTitle: { name: "twitter:title", content: `Livrero | ${t("menu.people")}` },
+      },
+    });
+  },
   data: () => ({
     columns: [
       { name: "id", field: "id" },

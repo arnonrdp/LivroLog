@@ -7,9 +7,21 @@
 <script>
 import Shelf from "@/components/Shelf.vue";
 import { mapGetters } from "vuex";
+import { useI18n } from 'vue-i18n';
+import { useMeta } from 'quasar';
 
 export default {
   components: { Shelf },
+  setup() {
+    const { t } = useI18n();
+    useMeta({
+      title: `Livrero | ${t("menu.home")}`,
+      meta: {
+        ogTitle: { name: "og:title", content: `Livrero | ${t("menu.home")}` },
+        twitterTitle: { name: "twitter:title", content: `Livrero | ${t("menu.home")}` },
+      },
+    });
+  },
   data: () => ({
     books: [],
     displayName: "",
