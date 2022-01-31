@@ -28,7 +28,8 @@
     "add": "Add",
     "friends": "Friends",
     "home": "Home",
-    "settings": "Settings"
+    "settings": "Settings",
+    "people": "People"
   },
   "meta": {
     "description": "A place for you to organize everything you've read.",
