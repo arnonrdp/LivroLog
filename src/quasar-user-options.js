@@ -1,9 +1,9 @@
 import "@quasar/extras/material-icons/material-icons.css";
-import { Notify } from "quasar";
+import { Meta, Notify } from "quasar";
 import "./styles/quasar.scss";
 
 export default {
-  plugins: { Notify },
+  plugins: { Notify, Meta },
   config: {
     notify: {
       html: true,
