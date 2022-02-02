@@ -11,17 +11,18 @@
 import Header from "@/components/TheHeader.vue";
 import { useMeta } from "quasar";
 import { useI18n } from "vue-i18n";
+import { ref } from "vue";
 
 export default {
   components: { Header },
-  created() {
+  setup() {
     const { t } = useI18n();
+    const description = ref("");
     useMeta(() => ({
       title: "Livrero",
       meta: {
         // Primary Meta Tags
-        title: "Livrero",
-        description: { name: "description", content: t("meta.description") },
+        description: description.value,
         keywords: { name: "keywords", content: t("meta.keywords") },
         author: { name: "author", content: "Arnon Rodrigues" },
         // Open Graph / Facebook
@@ -38,6 +39,12 @@ export default {
         twitterUrl: { name: "twitter:url", content: "https://livrero.vercel.app/" },
       },
     }));
+    function setLanguage() {
+      description.value = t("meta.description");
+    }
+    return {
+      setLanguage,
+    };
   },
 };
 </script>
