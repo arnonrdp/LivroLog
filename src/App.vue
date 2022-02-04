@@ -14,7 +14,7 @@ import { useI18n } from "vue-i18n";
 
 export default {
   components: { Header },
-  setup() {
+  beforeCreate() {
     const { t } = useI18n();
     useMeta(() => ({
       title: "Livrero",
