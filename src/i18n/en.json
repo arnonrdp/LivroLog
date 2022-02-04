@@ -28,11 +28,12 @@
     "add": "Add",
     "friends": "Friends",
     "home": "Home",
-    "settings": "Settings",
-    "people": "People"
+    "people": "People",
+    "settings": "Settings"
   },
   "meta": {
-    "description": "A place for you to organize everything you've read.",
+    "description": "A place for you to organize everything you've read. Add your books and see what your friends are reading.",
+    "image-alt": "Homepage of the Livrero website with a bookcase with several book covers",
     "keywords": "books, bookcase, book shelf, personal bookshelf, book organizer, book social network, add books to bookshelf, organize bookshelf"
   },
   "settings": {

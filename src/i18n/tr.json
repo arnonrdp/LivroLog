@@ -28,11 +28,12 @@
     "add": "Eklemek",
     "friends": "Arkadaşlar",
     "home": "Ev",
-    "settings": "Ayarlar",
-    "people": "İnsanlar"
+    "people": "İnsanlar",
+    "settings": "Ayarlar"
   },
   "meta": {
-    "description": "Okuduğunuz her şeyi organize edebileceğiniz bir yer.",
+    "description": "Okuduğunuz her şeyi organize edebileceğiniz bir yer. \nKitaplarınızı ekleyin ve arkadaşlarınızın ne okuduğunu görün.",
+    "image-alt": "Birkaç kitap kapağına sahip bir kitaplık içeren Livrero web sitesinin ana sayfası",
     "keywords": "kitaplar, kitaplik, kitaplık, Kişisel kitaplık, Kitap düzenleyici, Kitap sosyal ağı, Kitaplığa kitap ekle, Kitaplığı düzenle"
   },
   "settings": {
