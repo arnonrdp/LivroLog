@@ -9,7 +9,7 @@
     "start": "vue-cli-service serve"
   },
   "dependencies": {
-    "@quasar/extras": "^1.12.4",
+    "@quasar/extras": "^1.12.5",
     "axios": "^0.25.0",
     "firebase": "^9.6.6",
     "firebaseui": "^6.0.0",
