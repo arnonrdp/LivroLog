@@ -113,7 +113,7 @@ label {
 }
 
 section {
-  background-image: url("~@/assets/shelfleft.png"), url("~@/assets/shelfright.png"), url("~@/assets/shelfcenter.png");
+  background-image: url("~@/assets/shelfleft.jpg"), url("~@/assets/shelfright.jpg"), url("~@/assets/shelfcenter.jpg");
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
   border-radius: 6px;

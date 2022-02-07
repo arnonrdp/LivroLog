@@ -9,7 +9,7 @@
     "start": "vue-cli-service serve"
   },
   "dependencies": {
-    "@quasar/extras": "^1.12.4",
+    "@quasar/extras": "^1.12.5",
     "axios": "^0.25.0",
     "firebase": "^9.6.6",
     "firebaseui": "^6.0.0",
@@ -17,7 +17,7 @@
     "html2canvas-proxy": "^1.0.1",
     "quasar": "^2.5.3",
     "secure-ls": "^1.2.6",
-    "vue": "^3.2.29",
+    "vue": "^3.2.30",
     "vue-i18n": "^9.1.7",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.2",

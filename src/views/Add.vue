@@ -28,9 +28,21 @@
 <script>
 import Loading from "@/components/Loading.vue";
 import axios from "axios";
+import { useMeta } from 'quasar';
+import { useI18n } from 'vue-i18n';
 
 export default {
   components: { Loading },
+  setup() {
+    const { t } = useI18n();
+    useMeta({
+      title: `Livrero | ${t("menu.add")}`,
+      meta: {
+        ogTitle: { name: "og:title", content: `Livrero | ${t("menu.add")}` },
+        twitterTitle: { name: "twitter:title", content: `Livrero | ${t("menu.add")}` },
+      },
+    });
+  },
   data() {
     return {
       books: [],

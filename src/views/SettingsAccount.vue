@@ -26,9 +26,21 @@
 </template>
 
 <script>
+import { useMeta } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { mapGetters } from "vuex";
 
 export default {
+  setup() {
+    const { t } = useI18n();
+    useMeta({
+      title: `Livrero | ${t("settings.account")}`,
+      meta: {
+        ogTitle: { name: "og:title", content: `Livrero | ${t("settings.account")}` },
+        twitterTitle: { name: "twitter:title", content: `Livrero | ${t("settings.account")}` },
+      },
+    });
+  },
   data: () => ({
     email: "",
     password: "",
