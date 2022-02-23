@@ -32,7 +32,7 @@
     "@vue/cli-service": "~4.5.15",
     "@vue/compiler-sfc": "^3.2.31",
     "ansi-regex": ">=6.0.1",
-    "follow-redirects": ">=1.14.8",
+    "follow-redirects": ">=1.14.9",
     "glob-parent": "^6.0.2",
     "nanoid": ">=3.3.1",
     "node-fetch": ">=3.2.0",
