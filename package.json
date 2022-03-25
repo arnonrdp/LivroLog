@@ -12,7 +12,7 @@
     "@quasar/extras": "^1.13.3",
     "axios": "^0.26.1",
     "core-js": "^3.21.1",
-    "firebase": "^9.6.9",
+    "firebase": "^9.6.10",
     "firebaseui": "^6.0.1",
     "html2canvas": "^1.4.1",
     "html2canvas-proxy": "^1.0.1",
