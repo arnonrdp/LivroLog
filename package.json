@@ -41,7 +41,7 @@
     "postcss": ">=8.4.12",
     "set-value": ">=4.1.0",
     "vue-axios": "^3.4.1",
-    "vue-cli-plugin-quasar": "~4.0.4"
+    "vue-cli-plugin-quasar": "~5.0.1"
   },
   "browserslist": [
     "> 1%",
