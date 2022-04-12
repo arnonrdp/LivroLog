@@ -30,7 +30,7 @@
     "@vue/cli-plugin-babel": "~5.0.4",
     "@vue/cli-plugin-router": "~5.0.4",
     "@vue/cli-service": "~4.5.15",
-    "@vue/compiler-sfc": "^3.2.31",
+    "@vue/compiler-sfc": "^3.2.32",
     "ansi-regex": ">=6.0.1",
     "follow-redirects": ">=1.14.9",
     "glob-parent": "^6.0.2",
