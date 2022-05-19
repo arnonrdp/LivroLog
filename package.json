@@ -18,7 +18,7 @@
     "html2canvas-proxy": "^1.0.1",
     "quasar": "^2.7.0",
     "sass": "1.51.0",
-    "sass-loader": "^10.1.0",
+    "sass-loader": "^13.0.0",
     "secure-ls": "^1.2.6",
     "vue": "^3.2.33",
     "vue-i18n": "^9.1.10",
