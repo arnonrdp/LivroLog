@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~5.0.4",
-    "@vue/cli-plugin-router": "~5.0.4",
+    "@vue/cli-plugin-router": "~5.0.6",
     "@vue/cli-service": "~4.5.15",
     "@vue/compiler-sfc": "^3.2.36",
     "ansi-regex": ">=6.0.1",
