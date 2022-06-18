@@ -6,6 +6,7 @@
     "already-exists": "Kitap zaten var",
     "bookcase": "{0}'nin Kitapliği",
     "cover-image-alt": "Kitap Kapaği: {0}",
+    "no-book-found": "Hiç kitap bulamadım",
     "order-by-author": "Yazar",
     "order-by-date": "Eklenme Tarihi",
     "order-by-read": "okuma tarihi",

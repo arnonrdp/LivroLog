@@ -6,6 +6,7 @@
     "already-exists": "Book already exists",
     "bookcase": "{0}'s Bookcase",
     "cover-image-alt": "Book Cover: {0}",
+    "no-book-found": "I didn't find any books",
     "order-by-author": "Author",
     "order-by-date": "Added Date",
     "order-by-read": "Read date",

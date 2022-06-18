@@ -6,6 +6,7 @@
     "already-exists": "Livro já existe",
     "bookcase": "Estante de {0}",
     "cover-image-alt": "Capa do Livro: {0}",
+    "no-book-found": "Não encontrei nenhum livro",
     "order-by-author": "Autor",
     "order-by-date": "Data de adição",
     "order-by-read": "Data de leitura",

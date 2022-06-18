@@ -6,6 +6,7 @@
     "already-exists": "本はすでに存在します",
     "bookcase": "{0} シェルフ",
     "cover-image-alt": "ブックカバー:{0}",
+    "no-book-found": "本が見つかりませんでした",
     "order-by-author": "著者",
     "order-by-date": "追加日",
     "order-by-read": "日付を読む",
