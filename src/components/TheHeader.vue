@@ -1,5 +1,5 @@
 <template>
-  <header v-if="this.$route.path !== '/login'">
+  <header v-if="$route.path !== '/login'">
     <q-toolbar-title class="non-selectable">
       <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
       <q-badge color="red" align="top">Beta</q-badge>
@@ -12,17 +12,17 @@
       <q-btn-dropdown auto-close stretch flat icon="settings">
         <q-list>
           <q-item clickable to="/settings/books">
-            <q-item-section>{{ $t("settings.add-reading-dates") }}</q-item-section>
+            <q-item-section>{{ $t('settings.add-reading-dates') }}</q-item-section>
           </q-item>
           <q-item clickable to="/settings/profile">
-            <q-item-section>{{ $t("settings.profile") }}</q-item-section>
+            <q-item-section>{{ $t('settings.profile') }}</q-item-section>
           </q-item>
           <q-item clickable to="/settings/account">
-            <q-item-section>{{ $t("settings.account") }}</q-item-section>
+            <q-item-section>{{ $t('settings.account') }}</q-item-section>
           </q-item>
           <q-separator />
-          <q-item clickable @click="logout">
-            <q-item-section>{{ $t("sign.logout") }}</q-item-section>
+          <q-item clickable to="/login" @click="logout()">
+            <q-item-section>{{ $t('sign.logout') }}</q-item-section>
           </q-item>
         </q-list>
       </q-btn-dropdown>
@@ -30,14 +30,14 @@
   </header>
 </template>
 
-<script>
-export default {
-  methods: {
-    logout() {
-      this.$store.dispatch("logout");
-    },
-  },
-};
+<script setup lang="ts">
+import { useAuthStore } from '@/store'
+
+const authStore = useAuthStore()
+
+async function logout() {
+  authStore.logout()
+}
 </script>
 
 <style scoped>
@@ -57,12 +57,12 @@ header {
 }
 
 @media screen and (max-width: 320px) {
-  img[alt="Logotipo"] {
+  img[alt='Logotipo'] {
     width: 15rem !important;
   }
 }
 
-img[alt="Logotipo"] {
+img[alt='Logotipo'] {
   padding: 0 1rem;
   width: 13rem;
 }
