@@ -1,18 +1,10 @@
-module.exports = {
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
   pluginOptions: {
     quasar: {
-      importStrategy: "kebab",
-      rtlSupport: false,
-    },
+      importStrategy: 'kebab',
+      rtlSupport: false
+    }
   },
-  transpileDependencies: ["quasar"],
-  css: {
-    loaderOptions: {
-      sass: {
-        sassOptions: {
-          quietDeps: true,
-        },
-      },
-    },
-  },
-};
+  transpileDependencies: ['quasar']
+})
