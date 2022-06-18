@@ -1,51 +1,73 @@
 {
   "name": "livrero",
-  "version": "0.6.5",
+  "version": "0.8.0",
   "author": "Arnon Rodrigues <arnonrdp@gmail.com> (https://arnon.dev)",
   "description": "A place for you to organize everything you've read.",
   "private": true,
   "scripts": {
+    "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "start": "vue-cli-service serve"
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@quasar/extras": "^1.14.0",
+    "@quasar/extras": "^1.0.0",
     "axios": "^0.27.2",
-    "core-js": "^3.23.1",
     "firebase": "^9.8.3",
-    "firebaseui": "^6.0.1",
-    "html2canvas": "^1.4.1",
-    "html2canvas-proxy": "^1.0.1",
-    "quasar": "^2.7.1",
-    "sass": "1.52.3",
-    "sass-loader": "^10.1.0",
-    "secure-ls": "^1.2.6",
-    "vue": "^3.2.37",
+    "pinia": "^2.0.14",
+    "quasar": "^2.0.0",
+    "vue": "^3.2.13",
     "vue-i18n": "^9.1.10",
-    "vue-router": "^4.0.16",
-    "vuex": "^4.0.2",
-    "vuex-persistedstate": "^4.1.0"
+    "vue-router": "^4.0.16"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~5.0.4",
-    "@vue/cli-plugin-router": "~5.0.6",
-    "@vue/cli-service": "~5.0.6",
-    "@vue/compiler-sfc": "^3.2.36",
-    "ansi-regex": ">=6.0.1",
-    "follow-redirects": ">=1.15.1",
-    "glob-parent": "^6.0.2",
-    "nanoid": ">=4.0.0",
-    "node-fetch": ">=3.2.6",
-    "node-forge": ">=1.3.1",
-    "nth-check": ">=2.1.1",
-    "postcss": ">=8.4.14",
-    "set-value": ">=4.1.0",
-    "vue-axios": "^3.4.1",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-typescript": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "@vue/eslint-config-typescript": "^9.1.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "prettier": "^2.4.1",
+    "typescript": "~4.5.5",
     "vue-cli-plugin-quasar": "~5.0.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended",
+      "@vue/typescript/recommended",
+      "plugin:prettier/recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2020
+    },
+    "rules": {
+      "prettier/prettier": "error"
+    }
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "bracketSpacing": true,
+    "htmlWhitespaceSensitivity": "ignore",
+    "printWidth": 140,
+    "quoteProps": "consistent",
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "none",
+    "useTabs": false
   },
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not dead"
+    "not dead",
+    "not ie 11"
   ]
 }
