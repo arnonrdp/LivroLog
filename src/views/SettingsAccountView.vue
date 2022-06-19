@@ -52,7 +52,12 @@ useMeta({
 
 function isEmailValid(mail: User['email']) {
   if (mail === email.value) return true
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return false
+  if (
+    !/^(([^<>()\\[\]\\.,;:\s@"]+(\.[^<>()\\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+      mail
+    )
+  )
+    return false
   return userStore.checkEmail(mail).then((exists) => !exists)
 }
 
