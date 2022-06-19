@@ -184,8 +184,9 @@ const books: Book[] = [
   },
   {
     id: '35',
-    title: 'O desafio de amar',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/81YBMG6zHkL.jpg'
+    title: 'Provas e concursos - Arquivologia 2ª edição',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51lKxlOODrL._SX384_BO1,204,203,200_.jpg',
+    link: 'https://amzn.to/39Ir5Wh'
   },
   {
     id: '36',
