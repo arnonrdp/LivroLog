@@ -9,7 +9,7 @@
         <q-tab name="signin" :label="$t('sign.signin')" />
         <q-tab name="recover" :label="$t('sign.recover')" />
       </q-tabs>
-      <q-form @submit="submit(tab)" @reset="onReset" class="q-gutter-md q-ma-sm">
+      <q-form @submit="submit()" @reset="onReset" class="q-gutter-md q-ma-sm">
         <q-input dense autofocus v-if="tab === 'signup'" v-model="displayName" type="text" :label="$t('sign.name')" required />
         <q-input
           dense
@@ -75,30 +75,30 @@ const password = ref('')
 const passwordConfirm = ref('')
 const tab = ref('signin')
 
-function submit(tab: string) {
-  if (tab === 'signup') signup(displayName.value, email.value, password.value)
-  if (tab === 'signin') signin(email.value, password.value)
-  if (tab === 'recover') resetPassword(email.value)
+function submit() {
+  if (tab.value === 'signup') signup()
+  if (tab.value === 'signin') signin()
+  if (tab.value === 'recover') resetPassword()
 }
 
 function googleSignIn() {
   authStore.googleSignIn().catch((error: string) => $q.notify({ icon: 'error', message: authErrors[error] }))
 }
 
-function signin(email: string, password: string) {
-  authStore.login(email, password).catch((error: string) => $q.notify({ icon: 'error', message: authErrors[error] }))
+function signin() {
+  authStore.login(email.value, password.value).catch((error: string) => $q.notify({ icon: 'error', message: authErrors[error] }))
 }
 
-function signup(displayName: string, email: string, password: string) {
+function signup() {
   registerStore
-    .signup(displayName, email, password)
+    .signup(displayName.value, email.value, password.value)
     .then(() => $q.notify({ icon: 'check_circle', message: t('sign.accountCreated') }))
     .catch((error: string) => $q.notify({ icon: 'error', message: authErrors[error] }))
 }
 
-function resetPassword(email: string) {
+function resetPassword() {
   registerStore
-    .resetPassword(email)
+    .resetPassword(email.value)
     .then(() => $q.notify({ icon: 'check_circle', message: t('sign.password-reset') }))
     .catch((error: string) => $q.notify({ icon: 'error', message: authErrors[error] }))
 }

@@ -5,7 +5,7 @@
     {{ $t('settings.bookshelf-empty') }}
     <router-link to="/add">{{ $t('settings.bookshelf-add-few') }}</router-link>
   </p>
-  <table v-else class="q-mx-auto">
+  <table v-else class="q-mx-auto" :summary="t('settings.book-read-dates')">
     <thead>
       <tr>
         <th>{{ $t('settings.column-title') }}</th>

@@ -52,7 +52,7 @@ function usernameValidator(username: User['username']) {
   const routes = router.options.routes
   if (username === userStore.getUser.username) return true
   if (routes.some((r) => r.path.substr(1) === username.toLowerCase())) return false
-  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return false
+  if (!/\w{3,20}$/.test(username)) return false
   return userStore.checkUsername(username).then((exists) => !exists)
 }
 

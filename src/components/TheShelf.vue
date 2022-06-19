@@ -7,11 +7,11 @@
         <q-icon name="search" />
       </template>
     </q-input>
-    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon -->
-    <!-- <q-btn flat icon="download" @click="download" /> -->
+    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon
+    <q-btn flat icon="download" @click="download" /> -->
     <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
-        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name, ascDesc)">
+        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name)">
           <q-item-section>{{ label }}</q-item-section>
           <q-item-section avatar>
             <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
@@ -21,7 +21,7 @@
     </q-btn-dropdown>
   </div>
   <section ref="capture" class="flex justify-around">
-    <figure v-for="book in books" v-show="onFilter(book.title, filter)" :key="book.id">
+    <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
       <q-btn
         v-if="selfUser"
         round
@@ -40,7 +40,6 @@
 </template>
 
 <script setup lang="ts">
-// import html2canvas from 'html2canvas'
 import { Book, User } from '@/models'
 import { useUserStore } from '@/store'
 import { defineEmits, defineProps, ref } from 'vue'
@@ -70,16 +69,23 @@ const bookLabels = ref({
   title: t('book.order-by-title')
 })
 
-function onFilter(title: Book['title'], filter: string) {
-  return title.toLowerCase().includes(filter.toLowerCase())
+function onFilter(title: Book['title']) {
+  return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function sort(books: Book[] | undefined, label: string | number = 'readIn', order: string) {
+function sort(books: Book[] | undefined, label: string | number) {
   sortKey.value = label
   ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
-  const multiplier = order === 'asc' ? 1 : -1
-  books?.sort((a, b) => (a[label] > b[label] ? 1 : a[label] < b[label] ? -1 : 0) * multiplier)
+
+  const multiplier = ascDesc.value === 'asc' ? 1 : -1
+
+  return books?.sort((a, b) => {
+    if (a[label] > b[label]) {
+      return 1 * multiplier
+    }
+    return a[label] < b[label] ? -1 : 0 * multiplier
+  })
 }
 </script>
 

@@ -3,7 +3,7 @@ export interface Book {
   authors: string[] | string
   id: string
   ISBN: string
-  readIn?: string | number | null | undefined | Date
+  readIn?: string | number | null | Date
   thumbnail?: string
   title: string
 }

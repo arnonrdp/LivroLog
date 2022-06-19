@@ -23,9 +23,9 @@ export const useUserStore = defineStore('user', {
   actions: {
     async fetchUserProfile(user: UserInfo) {
       await getDoc(doc(db, 'users', user.uid))
-        .then((doc) =>
+        .then((document) =>
           this.$patch({
-            _user: { uid: doc.id, ...doc.data() }
+            _user: { uid: document.id, ...document.data() }
           })
         )
         .catch(throwError)
@@ -39,7 +39,7 @@ export const useUserStore = defineStore('user', {
     async checkEmail(email: User['email']) {
       const users = await getDocs(collection(db, 'users'))
 
-      const emails = users.docs.map((doc) => doc.data().email)
+      const emails = users.docs.map((document) => document.data().email)
 
       return Boolean(emails.includes(email))
     },
@@ -47,7 +47,7 @@ export const useUserStore = defineStore('user', {
     async checkUsername(username: User['username']) {
       const users = await getDocs(collection(db, 'users'))
 
-      const usernames = users.docs.map((doc) => doc.data().username.toLowerCase())
+      const usernames = users.docs.map((document) => document.data().username.toLowerCase())
 
       return Boolean(usernames.includes(username.toLowerCase()))
     },

@@ -28,7 +28,7 @@ export const useBookStore = defineStore('book', {
     async fetchBooks() {
       await getDocs(collection(db, 'users', this.getUserUid, 'books'))
         .then((querySnapshot) => {
-          const books = querySnapshot.docs.map((doc) => doc.data())
+          const books = querySnapshot.docs.map((docBook) => docBook.data())
           this._books = []
           this.$patch({ _books: books })
           return books
@@ -40,7 +40,7 @@ export const useBookStore = defineStore('book', {
     },
 
     async addBook(book: Book, userUid: User['uid']) {
-      if (this.getBooks.some((userBook) => userBook.id === book.id)) {
+      if (this.getBooks.some((document) => document.id === book.id)) {
         throwError({ code: 'book_already_exists' })
       }
 
