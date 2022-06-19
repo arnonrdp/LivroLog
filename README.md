@@ -15,9 +15,6 @@
 <img src="https://img.shields.io/github/package-json/dependency-version/arnonrdp/Livrero/vue-i18n" />
 </p>
 
-<img src="https://img.shields.io/github/languages/code-size/arnonrdp/Livrero" />
-<img src="https://img.shields.io/github/size/arnonrdp/Livrero" />
-
 - Adicione à sua estante todos os livros que você já leu:
 - Siga seus amigos, veja como é a estante de cada um e saiba o que acabaram de ler;
 - Faça download de uma imagem da sua estante e utilize-a como plano de fundo em suas chamadas de vídeo.
