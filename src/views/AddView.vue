@@ -43,8 +43,7 @@ const { t } = useI18n()
 
 const loading = ref(false)
 const seek = ref('')
-
-let books = ref<Book[]>([])
+const books = ref<Book[]>([])
 
 useMeta({
   title: `Livrero | ${t('menu.add')}`,

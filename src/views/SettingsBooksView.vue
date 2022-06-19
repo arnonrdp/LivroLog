@@ -57,7 +57,7 @@ useMeta({
 
 async function updateReadDates(updatedBooks: Book[]) {
   saving.value = true
-  let updatedFields: Pick<Book, 'id' | 'readIn'>[] = []
+  const updatedFields: Pick<Book, 'id' | 'readIn'>[] = []
   for (const book of updatedBooks) {
     updatedFields.push({ id: book.id, readIn: book.readIn })
   }

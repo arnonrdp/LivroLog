@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import TheHeader from '@/components/TheHeader.vue'
-import { defineComponent } from '@vue/runtime-core'
+import { defineComponent } from 'vue'
 import { useMeta } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
