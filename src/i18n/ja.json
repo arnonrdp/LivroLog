@@ -42,6 +42,7 @@
     "account-updated": "アカウントが正常に更新されました",
     "account-updated-error": "アカウントの更新に失敗しました。\nページを更新して、再試行してください。",
     "add-reading-dates": "読書日を追加する",
+    "book-read-dates": "本のタイトルと読書日",
     "books": "本",
     "books-description": "本を読み終えた日付を追加し、日付を読んで本棚を整理します",
     "bookshelf-add-few": "いくつか追加することから始めます。",

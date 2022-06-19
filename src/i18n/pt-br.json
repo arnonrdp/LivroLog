@@ -42,6 +42,7 @@
     "account-updated": "Conta atualizada com sucesso",
     "account-updated-error": "Falha ao atualizar a conta.\nAtualize a página e tente novamente.",
     "add-reading-dates": "Incluir datas de leitura",
+    "book-read-dates": "Títulos de livros e datas de leitura",
     "books": "Livros",
     "books-description": "Adicione as datas em que terminou de ler os livros e organize sua estante por data de leitura",
     "bookshelf-add-few": "Comece adicionando alguns.",

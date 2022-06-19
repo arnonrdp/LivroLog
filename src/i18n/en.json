@@ -42,6 +42,7 @@
     "account-updated": "Account successfully updated",
     "account-updated-error": "Failed to update account.\nRefresh the page and try again.",
     "add-reading-dates": "Add reading dates",
+    "book-read-dates": "Book titles and reading dates",
     "books": "Books",
     "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
     "bookshelf-add-few": "Start by adding a few.",
