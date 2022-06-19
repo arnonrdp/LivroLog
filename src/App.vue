@@ -1,6 +1,6 @@
 <template>
   <q-layout>
-    <TheHeader />
+    <TheHeader v-if="userStore.getUser.uid && $route.path !== '/login'" />
     <q-page-container>
       <router-view :style-fn="myTweak" />
     </q-page-container>
@@ -12,9 +12,11 @@ import TheHeader from '@/components/TheHeader.vue'
 import { defineComponent } from 'vue'
 import { useMeta } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import { useUserStore } from './store'
 
 defineComponent({ TheHeader })
 
+const userStore = useUserStore()
 const { t } = useI18n()
 
 function myTweak() {
