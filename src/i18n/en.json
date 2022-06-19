@@ -73,6 +73,8 @@
     "auth-user-not-found": "User not found",
     "auth-weak-password": "Password is too weak",
     "auth-wrong-password": "Incorrect password",
+    "description-bottom": "And find out what your friends have read",
+    "description-top": "A place for you to organize everything you've read",
     "logout": "Logout",
     "mail": "Email",
     "name": "Name",

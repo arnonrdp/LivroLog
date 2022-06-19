@@ -1,5 +1,5 @@
 <template>
-  <header v-if="$route.path !== '/login'">
+  <header>
     <q-toolbar-title class="non-selectable">
       <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
       <q-badge color="red" align="top">Beta</q-badge>

@@ -1,8 +1,9 @@
 export interface Book {
   addedIn?: Date | string | number
-  authors: string[] | string
+  authors?: string[] | string
   id: string
-  ISBN: string
+  ISBN?: string
+  link?: string
   readIn?: string | number | null | Date
   thumbnail?: string
   title: string

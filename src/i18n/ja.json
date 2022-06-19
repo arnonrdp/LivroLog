@@ -73,6 +73,8 @@
     "auth-user-not-found": "ユーザーが見つかりません",
     "auth-weak-password": "パスワードが弱すぎる",
     "auth-wrong-password": "パスワードが正しくありません",
+    "description-bottom": "そして、あなたの友達が読んだものを見つけてください",
+    "description-top": "あなたが読んだすべてを整理するための場所",
     "logout": "ログアウト",
     "mail": "Eメール",
     "name": "名前",
