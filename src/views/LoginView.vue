@@ -3,9 +3,9 @@
     <div class="container">
       <LoginForm class="the-form" />
     </div>
-    <h3 class="text-primary mobile-hide q-my-lg">A place for you to organize everything you've read.</h3>
+    <h3 class="text-primary mobile-hide q-my-lg">{{ $t('sign.description-top') }}</h3>
     <ShowcaseBooks />
-    <h3 class="text-primary mobile-hide bottom-description">Add find out what your friends have read.</h3>
+    <h3 class="text-primary mobile-hide bottom-description">{{ $t('sign.description-bottom') }}</h3>
   </q-page>
 </template>
 

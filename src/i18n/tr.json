@@ -73,6 +73,8 @@
     "auth-user-not-found": "Kullanici bulunamadi",
     "auth-weak-password": "Şifre çok zayif",
     "auth-wrong-password": "yanliş parola",
+    "description-bottom": "Ve arkadaşlarınızın ne okuduğunu öğrenin",
+    "description-top": "Okuduğunuz her şeyi organize edebileceğiniz bir yer",
     "logout": "Çikiş Yap",
     "mail": "E-posta",
     "name": "İsim",

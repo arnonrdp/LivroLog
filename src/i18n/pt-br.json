@@ -73,6 +73,8 @@
     "auth-user-not-found": "Usuário não encontrado",
     "auth-weak-password": "a senha é muito fraca",
     "auth-wrong-password": "Senha incorreta",
+    "description-bottom": "E descubrir o que seus amigos leram",
+    "description-top": "Um lugar para você organizar tudo o que leu",
     "logout": "Sair",
     "mail": "E-mail",
     "name": "Nome",
