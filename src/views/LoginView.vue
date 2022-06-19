@@ -1,11 +1,13 @@
 <template>
-  <q-page padding>
+  <q-page>
     <div class="container">
       <LoginForm class="the-form" />
     </div>
-    <h3 class="text-primary mobile-hide q-my-lg">{{ $t('sign.description-top') }}</h3>
-    <ShowcaseBooks />
-    <h3 class="text-primary mobile-hide bottom-description">{{ $t('sign.description-bottom') }}</h3>
+    <div class="text-primary window-height">
+      <h3>{{ $t('sign.description-top') }}</h3>
+      <ShowcaseBooks />
+      <h3 class="q-my-none q-pb-xl">{{ $t('sign.description-bottom') }}</h3>
+    </div>
   </q-page>
 </template>
 
@@ -20,31 +22,23 @@ defineComponent({ LoginForm, ShowcaseBooks })
 <style scoped>
 .q-page {
   font-family: 'SF Pro', sans-serif;
-  height: 100vh;
   text-align: center;
-  padding: 0;
-  overflow: hidden;
-}
-
-.bottom-description {
-  background-color: var(--q-background);
-  bottom: 0;
-  margin: 0;
-  padding: 1.5rem;
-  position: absolute;
-  width: 100%;
 }
 
 .container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
+  background-image: url('@/assets/bg_login.jpg');
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100vh;
+  position: relative;
 }
 
 .the-form {
-  position: relative;
+  left: 50%;
   padding: 1.5rem;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 </style>

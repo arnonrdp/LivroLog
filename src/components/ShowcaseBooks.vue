@@ -1,5 +1,5 @@
 <template>
-  <section class="flex content-start justify-around">
+  <section class="flex justify-around">
     <figure v-for="book in books" :key="book.id">
       <img :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
     </figure>
@@ -185,8 +185,8 @@ const books = [
   },
   {
     id: 36,
-    title: 'Perigoso!',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/517ZzYgUcaL._SX434_BO1,204,203,200_.jpg'
+    title: 'Refatoração: Aperfeiçoando o Design de Códigos Existentes',
+    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/4125lRe2M9L._SX347_BO1,204,203,200_.jpg'
   },
   {
     id: 37,
@@ -197,216 +197,6 @@ const books = [
     id: 38,
     title: 'A revolução dos bichos: Um conto de fadas',
     thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/61owA5ey3iL._SX324_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 39,
-    title: 'Torto arado',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41fQpp33yUL._SX327_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 40,
-    title: 'O casal que mora ao lado',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41upASGsAmL._SX335_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 41,
-    title: 'O lado feio do amor',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51RT++oGS6L._SX322_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 42,
-    title: 'Heartstopper: Um passo adiante (vol. 3)',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51SUDnygEUL._SX347_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 43,
-    title: 'Leitura de verão',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41bRdJEhzfL._SX342_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 44,
-    title: 'Where the Crawdads Sing',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41rzRPDRxJL._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 45,
-    title: 'Battle for the American Mind: Uprooting a Century of Miseducation',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41TAXKY0vaL._SX329_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 46,
-    title: "It's Not Summer Without You",
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51ky4TIb1bL._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 47,
-    title: 'It Ends with Us: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51zhNb8Ei4L._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 48,
-    title: 'Why a Daughter Needs a Dad',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51MfovVHFBL._SY498_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 49,
-    title: 'The Summer I Turned Pretty',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41-KzR9ASUL._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 50,
-    title: "We'll Always Have Summer",
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41ju3aS6WVS._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 51,
-    title: 'Ugly Love: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41g9RfNVZBL._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 52,
-    title: 'The Seven Husbands of Evelyn Hugo: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41u+GBPJQXL._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 53,
-    title: 'Reminders of Him: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41n9-p6-PpL._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 54,
-    title: 'Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51-uspgqWIL._SX329_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 55,
-    title: 'Dad Jokes',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41LD+nVemVL._SX312_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 56,
-    title: 'The Hotel Nantucket',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41D9XenJeVL._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 57,
-    title: 'The Body Keeps the Score: Brain, Mind, and Body in the Healing of Trauma',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41D3enj6JVS._SX324_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 58,
-    title: 'Every Summer After',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41Tb9TLd5UL._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 59,
-    title: 'My First Learn-to-Write Workbook',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51ABc0hukNL._SX384_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 60,
-    title: 'Os Quatro Acordos: A Practical Guide to Personal Liberdade De Don Miguel Ruiz',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51EA+bXwJsL._SX343_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 61,
-    title: 'People We Meet on Vacation',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/416m2cCJV9L._SX324_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 62,
-    title: "Fathers Day Gifts: Dad Tell Me Your Story: A Father's Guided Journal to Share His Life and His Love",
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41XVjX0HMGL._SX348_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 63,
-    title: "Oh, the Places You'll Go!",
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51x8pmqjY0L._SX376_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 64,
-    title: 'Sparring Partners (Jake Brigance)',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41HE+g156iL._SX327_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 65,
-    title: 'Nova o 48 Leis do Poder',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41KY-NORo9L._SX355_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 66,
-    title: 'The Very Hungry Caterpillar',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41lkouDhm5L._SY354_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 67,
-    title: 'Beach Read',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41szdIaNv9L._SX331_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 68,
-    title: 'The Last Thing He Told Me: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51aJ7twCu0L._SX327_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 69,
-    title: 'The Power of One More: The Ultimate Guide to Happiness and Success',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41EwHiQzu2L._SX336_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 70,
-    title: 'All Your Perfects: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41GVW9gyGtL._SX318_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 71,
-    title: 'Book Lovers',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41W5Iq70wrL._SX330_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 72,
-    title: 'November 9: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41HB7HlN27L._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 73,
-    title: "I'd Like to Play Alone, Please: Essays",
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51-1dSKGZ+L._SX338_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 74,
-    title: 'The Midnight Library: A Novel',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41ATfFjhelL._SX329_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 75,
-    title: 'How to Win Friends & Influence People',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41FYFMn7lZL._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 76,
-    title: 'Heart Bones',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51fK9K+JzzL._SX316_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 77,
-    title: 'It Starts with Us',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51b3jkk15SL._SX320_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 78,
-    title: 'The Alchemist, 25th Anniversary: A Fable About Following Your Dream',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51kcX5PpaZL._SX329_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 79,
-    title: 'I Love You to the Moon and Back',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51p2SDOCV9L._SX482_BO1,204,203,200_.jpg'
-  },
-  {
-    id: 80,
-    title: 'I Love Dad with The Very Hungry Caterpillar',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/41G63Ek+mML._SX410_BO1,204,203,200_.jpg'
   }
 ]
 
@@ -417,26 +207,12 @@ for (let i = books.length - 1; i > 0; i--) {
 </script>
 
 <style scoped>
-section {
-  background-image: url('~@/assets/shelfcenter.jpg');
-  background-repeat: repeat;
-  border-radius: 6px;
-
-  height: 100vh;
-  min-height: 302px;
-}
-
-section figure {
-  align-items: flex-end;
-  display: flex;
-  height: 143.5px;
+section > figure {
+  height: 14rem;
   margin: 0 1.5rem;
-  max-width: 80px;
-  position: relative;
-  z-index: 0;
 }
 
-img {
-  height: 115px;
+section > figure > img {
+  height: 11rem;
 }
 </style>
