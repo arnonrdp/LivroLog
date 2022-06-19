@@ -50,6 +50,44 @@ useMeta(() => ({
 </script>
 
 <style>
+html {
+  font-size: 16px;
+}
+@media screen and (max-width: 720px) {
+  html {
+    font-size: 15px;
+  }
+}
+@media screen and (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+@media screen and (max-width: 560px) {
+  html {
+    font-size: 13px;
+  }
+}
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+}
+@media screen and (max-width: 400px) {
+  html {
+    font-size: 11px;
+  }
+}
+@media screen and (max-width: 320px) {
+  html {
+    font-size: 10px;
+  }
+}
+@media screen and (max-width: 240px) {
+  html {
+    font-size: 9px;
+  }
+}
 body {
   background: var(--q-background);
 }
