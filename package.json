@@ -10,7 +10,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@quasar/extras": "^1.14.2",
+    "@quasar/extras": "^1.14.3",
     "axios": "^0.27.2",
     "firebase": "^9.9.0",
     "pinia": "^2.0.16",
