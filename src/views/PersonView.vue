@@ -9,10 +9,8 @@ import TheShelf from '@/components/TheShelf.vue'
 import { useBookStore, usePeopleStore } from '@/store'
 import type { Book } from '@/models'
 import { useMeta, useQuasar } from 'quasar'
-import { defineComponent, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-defineComponent({ TheShelf })
 
 const peopleStore = usePeopleStore()
 const bookStore = useBookStore()

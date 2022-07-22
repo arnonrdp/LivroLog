@@ -9,12 +9,9 @@
 
 <script setup lang="ts">
 import TheHeader from '@/components/TheHeader.vue'
-import { defineComponent } from 'vue'
 import { useMeta } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from './store'
-
-defineComponent({ TheHeader })
 
 const userStore = useUserStore()
 const { t } = useI18n()
