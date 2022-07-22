@@ -40,9 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { Book, User } from '@/models'
+import type { Book, User } from '@/models'
 import { useUserStore } from '@/store'
-import { defineEmits, defineProps, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 

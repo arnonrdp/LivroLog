@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { Book } from '@/models'
+import type { Book } from '@/models'
 
 const books: Book[] = [
   {

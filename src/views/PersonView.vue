@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import TheShelf from '@/components/TheShelf.vue'
 import { useBookStore, usePeopleStore } from '@/store'
-import { Book } from '@/models'
+import type { Book } from '@/models'
 import { useMeta, useQuasar } from 'quasar'
 import { defineComponent, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'

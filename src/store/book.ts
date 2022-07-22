@@ -1,5 +1,5 @@
 import { db } from '@/firebase'
-import { Book, User } from '@/models'
+import type { Book, User } from '@/models'
 import { useUserStore } from '@/store'
 import { collection, deleteDoc, doc, getDocs, runTransaction, setDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'

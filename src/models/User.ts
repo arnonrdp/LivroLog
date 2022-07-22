@@ -1,4 +1,4 @@
-import { Book } from '@/models'
+import type { Book } from '@/models'
 
 export interface User {
   uid: string

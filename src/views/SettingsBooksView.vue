@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { Book } from '@/models'
+import type { Book } from '@/models'
 import { useBookStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'
 import { ref } from 'vue'

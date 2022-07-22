@@ -3,12 +3,12 @@ import AddView from '@/views/AddView.vue'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import PeopleView from '@/views/PeopleView.vue'
+import PersonView from '@/views/PersonView.vue'
 import SettingsAccount from '@/views/SettingsAccountView.vue'
 import SettingsBooks from '@/views/SettingsBooksView.vue'
 import SettingsProfile from '@/views/SettingsProfileView.vue'
 import SettingsView from '@/views/SettingsView.vue'
-import PersonView from '@/views/PersonView.vue'
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
   {

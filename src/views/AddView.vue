@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import TheLoading from '@/components/TheLoading.vue'
-import { Book, GoogleBook } from '@/models'
+import type { Book, GoogleBook } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import axios from 'axios'
 import { useMeta, useQuasar } from 'quasar'

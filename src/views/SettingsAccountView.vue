@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { User } from '@/models'
+import type { User } from '@/models'
 import { useUserStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'
 import { ref } from 'vue'
