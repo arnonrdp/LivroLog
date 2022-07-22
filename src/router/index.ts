@@ -1,13 +1,4 @@
 import { useUserStore } from '@/store'
-import AddView from '@/views/AddView.vue'
-import HomeView from '@/views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
-import PeopleView from '@/views/PeopleView.vue'
-import PersonView from '@/views/PersonView.vue'
-import SettingsAccount from '@/views/SettingsAccountView.vue'
-import SettingsBooks from '@/views/SettingsBooksView.vue'
-import SettingsProfile from '@/views/SettingsProfileView.vue'
-import SettingsView from '@/views/SettingsView.vue'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
@@ -17,45 +8,45 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/login',
-    component: LoginView
+    component: () => import('@/views/LoginView.vue')
   },
   {
     path: '/',
     alias: '/home',
-    component: HomeView,
+    component: () => import('@/views/HomeView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/add',
-    component: AddView,
+    component: () => import('@/views/AddView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/people',
-    component: PeopleView,
+    component: () => import('@/views/PeopleView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/:username',
     name: 'user',
-    component: PersonView,
+    component: () => import('@/views/PersonView.vue'),
     props: true
   },
   {
     path: '/settings',
-    component: SettingsView,
+    component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true },
     children: [
       { path: '', redirect: 'account' },
-      { path: 'account', component: SettingsAccount },
-      { path: 'books', component: SettingsBooks },
-      { path: 'profile', component: SettingsProfile }
+      { path: 'account', component: () => import('@/views/SettingsAccountView.vue') },
+      { path: 'books', component: () => import('@/views/SettingsBooksView.vue') },
+      { path: 'profile', component: () => import('@/views/SettingsProfileView.vue') }
     ]
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
