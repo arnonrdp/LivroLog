@@ -7,14 +7,13 @@
         <q-icon name="search" />
       </template>
     </q-input>
-    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon
-    <q-btn flat icon="download" @click="download" /> -->
+    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon -> <q-btn flat icon="download" @click="download" /> -->
     <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
-        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books as Book[], name)">
+        <q-item clickable v-for="(label, value) in bookLabels" :key="label" @click="sort(books as Book[], value)">
           <q-item-section>{{ label }}</q-item-section>
           <q-item-section avatar>
-            <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
+            <q-icon v-if="value === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
           </q-item-section>
         </q-item>
       </q-list>
@@ -81,10 +80,9 @@ function sort(books: Book[], label: string | number) {
   const multiplier = ascDesc.value === 'asc' ? 1 : -1
 
   return books.sort((a: any, b: any) => {
-    if (a[label] > b[label]) {
-      return 1 * multiplier
-    }
-    return a[label] < b[label] ? -1 : 0 * multiplier
+    if (a[label] > b[label]) return 1 * multiplier
+    if (a[label] < b[label]) return -1 * multiplier
+    return 0
   })
 }
 </script>
