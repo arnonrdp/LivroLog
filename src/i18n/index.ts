@@ -6,9 +6,7 @@ import tr from './tr.json'
 
 const messages = { en, pt, ja, tr }
 
-type MessageSchema = typeof en
-
-const i18n = createI18n<MessageSchema>({
+const i18n = createI18n({
   locale: navigator.language || 'en',
   fallbackLocale: ['en', 'pt', 'ja', 'tr'],
   silentTranslationWarn: true,

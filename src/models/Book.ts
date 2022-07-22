@@ -4,7 +4,7 @@ export interface Book {
   id: string
   ISBN?: string
   link?: string
-  readIn?: string | number | null | Date
+  readIn?: string | number | null
   thumbnail?: string | null
   title: string
 }

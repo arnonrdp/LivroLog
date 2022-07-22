@@ -11,7 +11,7 @@
     <q-btn flat icon="download" @click="download" /> -->
     <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
-        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name)">
+        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books as Book[], name)">
           <q-item-section>{{ label }}</q-item-section>
           <q-item-section avatar>
             <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
@@ -74,13 +74,13 @@ function onFilter(title: Book['title']) {
   return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
-function sort(books: Book[] | undefined, label: string | number) {
+function sort(books: Book[], label: string | number) {
   sortKey.value = label
   ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
 
   const multiplier = ascDesc.value === 'asc' ? 1 : -1
 
-  return books?.sort((a, b) => {
+  return books.sort((a: any, b: any) => {
     if (a[label] > b[label]) {
       return 1 * multiplier
     }
