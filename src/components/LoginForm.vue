@@ -9,7 +9,7 @@
       <q-tab name="recover" :label="$t('sign.recover')" />
     </q-tabs>
     <q-form @submit="submit()" @reset="onReset" class="q-gutter-md q-ma-sm">
-      <q-input dense autofocus v-if="tab === 'signup'" v-model="displayName" type="text" :label="$t('sign.name')" required />
+      <q-input dense autofocus v-if="tab === 'signup'" v-model="displayName" :label="$t('sign.name')" required />
       <q-input
         dense
         key="email-input"

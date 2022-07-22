@@ -5,7 +5,7 @@ export interface Book {
   ISBN?: string
   link?: string
   readIn?: string | number | null | Date
-  thumbnail?: string
+  thumbnail?: string | null
   title: string
 }
 

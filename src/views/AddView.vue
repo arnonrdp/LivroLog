@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <q-input v-model="seek" type="text" :label="$t('book.addlabel')" @keyup.enter="search()" dense>
+    <q-input v-model="seek" :label="$t('book.addlabel')" @keyup.enter="search()" dense>
       <template v-slot:prepend>
         <q-icon name="search" />
       </template>
@@ -12,12 +12,15 @@
     <div id="results">
       <figure v-for="(book, index) in books" :key="index">
         <q-btn round color="primary" icon="add" @click.once="addBook(book)" />
-        <a><img :src="book.thumbnail" alt="" /></a>
+        <a>
+          <img v-if="book.thumbnail" :src="book.thumbnail" alt="" />
+          <img v-else src="../assets/no_cover.jpg" alt="" />
+        </a>
         <figcaption>{{ book.title }}</figcaption>
         <figcaption id="authors">
           <span v-for="(author, i) in book.authors" :key="i">
             <span class="text-body2 text-weight-bold">{{ author }}</span>
-            <span v-if="i + 1 < book.authors.length">,</span>
+            <span v-if="book.authors && i + 1 < book.authors.length">,</span>
           </span>
         </figcaption>
       </figure>
@@ -31,10 +34,8 @@ import type { Book, GoogleBook } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import axios from 'axios'
 import { useMeta, useQuasar } from 'quasar'
-import { defineComponent, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-defineComponent({ TheLoading })
 
 const userStore = useUserStore()
 const bookStore = useBookStore()
@@ -65,7 +66,7 @@ function search() {
           title: item.volumeInfo.title || '',
           authors: item.volumeInfo.authors || [t('book.unknown-author')],
           ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier || item.id,
-          thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || require('@/assets/no_cover.jpg')
+          thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null
         })
       )
     })

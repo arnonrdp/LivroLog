@@ -32,7 +32,8 @@
         @click.once="$emit('emitRemoveID', book.id)"
       />
       <q-btn v-else round color="primary" icon="add" size="sm" :title="$t('book.add')" @click.once="$emit('emitAddID', book)" />
-      <img :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
+      <img v-if="book.thumbnail" :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
+      <img v-else src="../assets/no_cover.jpg" alt="{{ $t('book.cover-image-alt', [book.title]) }}" />
       <!-- TODO: Manter tooltip ativa no mobile ao clicar na imagem do livro -->
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
     </figure>
@@ -73,7 +74,6 @@ function onFilter(title: Book['title']) {
   return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function sort(books: Book[] | undefined, label: string | number) {
   sortKey.value = label
   ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
@@ -99,7 +99,7 @@ label {
 }
 
 section {
-  background-image: url('~@/assets/shelfleft.jpg'), url('~@/assets/shelfright.jpg'), url('~@/assets/shelfcenter.jpg');
+  background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
   border-radius: 6px;
