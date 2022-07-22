@@ -1,6 +1,6 @@
 {
   "name": "livrero",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": "Arnon Rodrigues <arnonrdp@gmail.com> (https://arnon.dev)",
   "description": "A place for you to organize everything you've read.",
   "private": true,
@@ -44,10 +44,10 @@
       "node": true
     },
     "extends": [
-      "plugin:vue/vue3-essential",
-      "eslint:recommended",
       "@vue/typescript/recommended",
-      "plugin:prettier/recommended"
+      "eslint:recommended",
+      "plugin:prettier/recommended",
+      "plugin:vue/vue3-essential"
     ],
     "parserOptions": {
       "ecmaVersion": 2020
