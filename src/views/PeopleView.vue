@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { User } from '@/models'
+import type { User } from '@/models'
 import { usePeopleStore } from '@/store'
 import type { QTableColumn } from 'quasar'
 import { useMeta } from 'quasar'

@@ -1,9 +1,17 @@
 import { createPinia } from 'pinia'
 import { Quasar } from 'quasar'
 import { createApp } from 'vue'
-import App from './App.vue'
 import { i18n } from './i18n'
 import quasarUserOptions from './quasar-user-options'
+
+import App from './App.vue'
 import router from './router'
 
-createApp(App).use(Quasar, quasarUserOptions).use(router).use(createPinia()).use(i18n).mount('#app')
+const app = createApp(App)
+
+app.use(Quasar, quasarUserOptions)
+app.use(router)
+app.use(createPinia())
+app.use(i18n)
+
+app.mount('#app')

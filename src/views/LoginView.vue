@@ -14,9 +14,6 @@
 <script setup lang="ts">
 import LoginForm from '@/components/LoginForm.vue'
 import ShowcaseBooks from '@/components/ShowcaseBooks.vue'
-import { defineComponent } from 'vue'
-
-defineComponent({ LoginForm, ShowcaseBooks })
 </script>
 
 <style scoped>

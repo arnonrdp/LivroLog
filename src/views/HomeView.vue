@@ -6,13 +6,11 @@
 
 <script setup lang="ts">
 import TheShelf from '@/components/TheShelf.vue'
-import { Book } from '@/models'
+import type { Book } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'
-import { defineComponent, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-defineComponent({ TheShelf })
 
 const userStore = useUserStore()
 const bookStore = useBookStore()

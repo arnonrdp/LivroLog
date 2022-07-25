@@ -1,7 +1,14 @@
 import { auth, db } from '@/firebase'
 import router from '@/router'
 import { useUserStore } from '@/store'
-import { getAdditionalUserInfo, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, signOut, UserInfo } from 'firebase/auth'
+import {
+  getAdditionalUserInfo,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  type UserInfo
+} from 'firebase/auth'
 import { doc, setDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { LocalStorage } from 'quasar'

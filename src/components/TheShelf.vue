@@ -7,14 +7,13 @@
         <q-icon name="search" />
       </template>
     </q-input>
-    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon
-    <q-btn flat icon="download" @click="download" /> -->
+    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon -> <q-btn flat icon="download" @click="download" /> -->
     <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
-        <q-item clickable v-for="(label, name) in bookLabels" :key="label" @click="sort(books, name)">
+        <q-item clickable v-for="(label, value) in bookLabels" :key="label" @click="sort(books as Book[], value)">
           <q-item-section>{{ label }}</q-item-section>
           <q-item-section avatar>
-            <q-icon v-if="name === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
+            <q-icon v-if="value === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
           </q-item-section>
         </q-item>
       </q-list>
@@ -32,7 +31,8 @@
         @click.once="$emit('emitRemoveID', book.id)"
       />
       <q-btn v-else round color="primary" icon="add" size="sm" :title="$t('book.add')" @click.once="$emit('emitAddID', book)" />
-      <img :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
+      <img v-if="book.thumbnail" :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
+      <img v-else src="../assets/no_cover.jpg" alt="{{ $t('book.cover-image-alt', [book.title]) }}" />
       <!-- TODO: Manter tooltip ativa no mobile ao clicar na imagem do livro -->
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
     </figure>
@@ -40,9 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { Book, User } from '@/models'
+import type { Book, User } from '@/models'
 import { useUserStore } from '@/store'
-import { defineEmits, defineProps, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
@@ -73,18 +73,16 @@ function onFilter(title: Book['title']) {
   return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function sort(books: Book[] | undefined, label: string | number) {
+function sort(books: Book[], label: string | number) {
   sortKey.value = label
   ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
 
   const multiplier = ascDesc.value === 'asc' ? 1 : -1
 
-  return books?.sort((a, b) => {
-    if (a[label] > b[label]) {
-      return 1 * multiplier
-    }
-    return a[label] < b[label] ? -1 : 0 * multiplier
+  return books.sort((a: any, b: any) => {
+    if (a[label] > b[label]) return 1 * multiplier
+    if (a[label] < b[label]) return -1 * multiplier
+    return 0
   })
 }
 </script>
@@ -99,7 +97,7 @@ label {
 }
 
 section {
-  background-image: url('~@/assets/shelfleft.jpg'), url('~@/assets/shelfright.jpg'), url('~@/assets/shelfcenter.jpg');
+  background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
   background-repeat: repeat-y, repeat-y, repeat;
   background-position: top left, top right, 240px 0;
   border-radius: 6px;

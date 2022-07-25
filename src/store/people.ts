@@ -1,5 +1,5 @@
 import { db } from '@/firebase'
-import { User } from '@/models'
+import type { User } from '@/models'
 import { collection, getDocs, query, where } from '@firebase/firestore'
 import { defineStore } from 'pinia'
 import { useRoute } from 'vue-router'

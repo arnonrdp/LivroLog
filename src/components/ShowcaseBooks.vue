@@ -2,14 +2,15 @@
   <section class="flex justify-around">
     <figure v-for="book in books" :key="book.id">
       <a :href="book.link" target="_blank">
-        <img :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
+        <img v-if="book.thumbnail" :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
+        <img v-else src="../assets/no_cover.jpg" :alt="$t('book.cover-image-alt', [book.title])" />
       </a>
     </figure>
   </section>
 </template>
 
 <script setup lang="ts">
-import { Book } from '@/models'
+import type { Book } from '@/models'
 
 const books: Book[] = [
   {

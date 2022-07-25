@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { localeOptions } from '@/i18n'
-import { User } from '@/models'
+import type { User } from '@/models'
 import router from '@/router'
 import { useUserStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'

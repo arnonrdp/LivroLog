@@ -1,5 +1,5 @@
 import { db } from '@/firebase'
-import { Book, User } from '@/models'
+import type { Book, User } from '@/models'
 import { useUserStore } from '@/store'
 import { collection, deleteDoc, doc, getDocs, runTransaction, setDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
@@ -8,6 +8,15 @@ import { LocalStorage } from 'quasar'
 function throwError(error: { code: string }) {
   console.error(error)
   throw error.code
+}
+
+function sortBooksByReadDate(books: Book[]) {
+  return books.sort((a: Book, b: Book) => {
+    if (!a.readIn || !b.readIn) return 0
+    if (a.readIn < b.readIn) return 1
+    if (a.readIn > b.readIn) return -1
+    return 0
+  })
 }
 
 export const useBookStore = defineStore('book', {
@@ -29,6 +38,7 @@ export const useBookStore = defineStore('book', {
       await getDocs(collection(db, 'users', this.getUserUid, 'books'))
         .then((querySnapshot) => {
           const books = querySnapshot.docs.map((docBook) => docBook.data())
+          sortBooksByReadDate(books as Book[])
           this._books = []
           this.$patch({ _books: books })
           return books

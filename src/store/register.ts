@@ -1,6 +1,6 @@
 import { auth, db } from '@/firebase'
 import { useUserStore } from '@/store'
-import { createUserWithEmailAndPassword, sendPasswordResetEmail, UserInfo } from '@firebase/auth'
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, type UserInfo } from '@firebase/auth'
 import { doc, setDoc } from '@firebase/firestore'
 import { defineStore } from 'pinia'
 
