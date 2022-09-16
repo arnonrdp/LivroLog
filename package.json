@@ -15,10 +15,10 @@
   "dependencies": {
     "@quasar/extras": "^1.15.3",
     "axios": "^0.27.2",
-    "firebase": "^9.9.4",
+    "firebase": "^9.10.0",
     "pinia": "^2.0.22",
     "quasar": "^2.7.7",
-    "vue": "^3.2.38",
+    "vue": "^3.2.39",
     "vue-i18n": "^9.1.10",
     "vue-router": "^4.1.5"
   },
