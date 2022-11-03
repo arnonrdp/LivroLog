@@ -175,8 +175,9 @@ const books: Book[] = [
   },
   {
     id: '33',
-    title: 'Todas as suas (im)perfeições',
-    thumbnail: 'https://images-na.ssl-images-amazon.com/images/I/51is1KDs5zL._SX337_BO1,204,203,200_.jpg'
+    title: 'Arsène Lupin: O Ladrão de Casaca',
+    thumbnail: 'https://m.media-amazon.com/images/I/41630dVJMjL._SX331_BO1,204,203,200_.jpg',
+    link: 'https://amzn.to/3h7XuJg'
   },
   {
     id: '34',
