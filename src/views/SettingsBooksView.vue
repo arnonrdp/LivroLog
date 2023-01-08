@@ -48,10 +48,10 @@ const books = ref(bookStore.getBooks)
 const saving = ref(false)
 
 useMeta({
-  title: `Livrero | ${t('settings.books')}`,
+  title: `LivroLog | ${t('settings.books')}`,
   meta: {
-    ogTitle: { name: 'og:title', content: `Livrero | ${t('settings.books')}` },
-    twitterTitle: { name: 'twitter:title', content: `Livrero | ${t('settings.books')}` }
+    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.books')}` },
+    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.books')}` }
   }
 })
 

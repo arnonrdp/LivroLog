@@ -57,10 +57,10 @@ const columns: QTableColumn<User>[] = [
 ]
 
 useMeta({
-  title: `Livrero | ${t('menu.people')}`,
+  title: `LivroLog | ${t('menu.people')}`,
   meta: {
-    ogTitle: { name: 'og:title', content: `Livrero | ${t('menu.people')}` },
-    twitterTitle: { name: 'twitter:title', content: `Livrero | ${t('menu.people')}` }
+    ogTitle: { name: 'og:title', content: `LivroLog | ${t('menu.people')}` },
+    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('menu.people')}` }
   }
 })
 </script>

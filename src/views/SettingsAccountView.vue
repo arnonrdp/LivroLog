@@ -43,10 +43,10 @@ const confPass = ref('')
 const updating = ref(false)
 
 useMeta({
-  title: `Livrero | ${t('settings.account')}`,
+  title: `LivroLog | ${t('settings.account')}`,
   meta: {
-    ogTitle: { name: 'og:title', content: `Livrero | ${t('settings.account')}` },
-    twitterTitle: { name: 'twitter:title', content: `Livrero | ${t('settings.account')}` }
+    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.account')}` },
+    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.account')}` }
   }
 })
 

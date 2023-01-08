@@ -3,7 +3,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "vue"],
-  "i18n-ally.extract.ignored": ["Livrero"],
+  "i18n-ally.extract.ignored": ["LivroLog"],
   "i18n-ally.keystyle": "nested",
   "i18n-ally.localesPaths": ["src/i18n"],
   "i18n-ally.sourceLanguage": "en",

@@ -23,10 +23,10 @@ const books = ref(bookStore.getBooks)
 bookStore.fetchBooks()
 
 useMeta({
-  title: `Livrero | ${t('menu.home')}`,
+  title: `LivroLog | ${t('menu.home')}`,
   meta: {
-    ogTitle: { name: 'og:title', content: `Livrero | ${t('menu.home')}` },
-    twitterTitle: { name: 'twitter:title', content: `Livrero | ${t('menu.home')}` }
+    ogTitle: { name: 'og:title', content: `LivroLog | ${t('menu.home')}` },
+    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('menu.home')}` }
   }
 })
 

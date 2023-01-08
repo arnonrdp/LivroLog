@@ -27,10 +27,10 @@ watch(
 )
 
 useMeta({
-  title: person.value.displayName ? `Livrero | ${person.value.displayName}` : 'Livrero',
+  title: person.value.displayName ? `LivroLog | ${person.value.displayName}` : 'LivroLog',
   meta: {
-    ogTitle: { name: 'og:title', content: person.value.displayName ? `Livrero | ${person.value.displayName}` : 'Livrero' },
-    twitterTitle: { name: 'twitter:title', content: person.value.displayName ? `Livrero | ${person.value.displayName}` : 'Livrero' }
+    ogTitle: { name: 'og:title', content: person.value.displayName ? `LivroLog | ${person.value.displayName}` : 'LivroLog' },
+    twitterTitle: { name: 'twitter:title', content: person.value.displayName ? `LivroLog | ${person.value.displayName}` : 'LivroLog' }
   }
 })
 

@@ -21,7 +21,7 @@ function myTweak() {
 }
 
 useMeta(() => ({
-  title: 'Livrero',
+  title: 'LivroLog',
   meta: {
     // Primary Meta Tags
     description: { name: 'description', content: t('meta.description') },
@@ -30,18 +30,18 @@ useMeta(() => ({
 
     // Open Graph / Facebook
     ogType: { name: 'og:type', content: 'website' },
-    ogTitle: { name: 'og:title', content: 'Livrero' },
+    ogTitle: { name: 'og:title', content: 'LivroLog' },
     ogDescription: { name: 'og:description', content: t('meta.description') },
-    ogImage: { name: 'og:image', content: 'https://livrero.vercel.app/main.jpg' },
-    ogUrl: { name: 'og:url', content: 'https://livrero.vercel.app/' },
+    ogImage: { name: 'og:image', content: 'https://livrolog.com/main.jpg' },
+    ogUrl: { name: 'og:url', content: 'https://livrolog.com/' },
     ogProperty: { name: 'og:image:alt', content: t('meta.image-alt') },
 
     // Twitter
     twitterCard: { name: 'twitter:card', content: 'summary_large_image' },
-    twitterTitle: { name: 'twitter:title', content: 'Livrero' },
+    twitterTitle: { name: 'twitter:title', content: 'LivroLog' },
     twitterDescription: { name: 'twitter:description', content: t('meta.description') },
-    twitterImage: { name: 'twitter:image', content: 'https://livrero.vercel.app/main.jpg' },
-    twitterUrl: { name: 'twitter:url', content: 'https://livrero.vercel.app/' }
+    twitterImage: { name: 'twitter:image', content: 'https://livrolog.com/main.jpg' },
+    twitterUrl: { name: 'twitter:url', content: 'https://livrolog.com/' }
   }
 }))
 </script>

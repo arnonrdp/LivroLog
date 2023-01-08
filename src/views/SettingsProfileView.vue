@@ -39,10 +39,10 @@ const hostname = window.location.hostname + '/'
 const updating = ref(false)
 
 useMeta({
-  title: `Livrero | ${t('settings.profile')}`,
+  title: `LivroLog | ${t('settings.profile')}`,
   meta: {
-    ogTitle: { name: 'og:title', content: `Livrero | ${t('settings.profile')}` },
-    twitterTitle: { name: 'twitter:title', content: `Livrero | ${t('settings.profile')}` }
+    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.profile')}` },
+    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.profile')}` }
   }
 })
 

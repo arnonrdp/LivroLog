@@ -47,10 +47,10 @@ const seek = ref('')
 const books = ref<Book[]>([])
 
 useMeta({
-  title: `Livrero | ${t('menu.add')}`,
+  title: `LivroLog | ${t('menu.add')}`,
   meta: {
-    ogTitle: { name: 'og:title', content: `Livrero | ${t('menu.add')}` },
-    twitterTitle: { name: 'twitter:title', content: `Livrero | ${t('menu.add')}` }
+    ogTitle: { name: 'og:title', content: `LivroLog | ${t('menu.add')}` },
+    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('menu.add')}` }
   }
 })
 
