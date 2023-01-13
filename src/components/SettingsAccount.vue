@@ -1,6 +1,5 @@
 <template>
-  <div class="flex justify-between text-h6">
-    {{ $t('settings.account') }}
+  <div class="text-right">
     <q-btn color="negative" flat icon="logout" round @click="logout()">
       <q-tooltip>{{ $t('sign.logout') }}</q-tooltip>
     </q-btn>

@@ -1,5 +1,4 @@
 <template>
-  <div class="text-h6">{{ $t('settings.books') }}</div>
   <p>{{ $t('settings.books-description') }}</p>
   <p v-if="books?.length == 0">
     {{ $t('settings.bookshelf-empty') }}

@@ -1,5 +1,4 @@
 <template>
-  <div class="text-h6">{{ $t('sign.password') }}</div>
   <q-form @submit.prevent="updateAccount" class="q-gutter-md q-mt-md">
     <q-input v-model="oldPass" type="password" :label="$t('sign.password')" :rules="[(val) => isPasswordValid(val)]">
       <template v-slot:prepend>

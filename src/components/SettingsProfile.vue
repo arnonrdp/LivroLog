@@ -1,5 +1,4 @@
 <template>
-  <div class="text-h6">{{ $t('settings.profile') }}</div>
   <q-form @submit.prevent="updateProfile" class="q-gutter-md q-mb-md">
     <q-input v-model="displayName" :label="$t('book.shelfname')">
       <template v-slot:prepend>
