@@ -1,14 +1,11 @@
 <template>
   <q-page padding>
-    <q-input v-model="seek" :label="$t('book.addlabel')" @keyup.enter="search()" dense>
+    <q-input clearable dense :label="$t('book.addlabel')" v-model="seek" @clear="clearSearch" @keyup.enter="search()">
       <template v-slot:prepend>
         <q-icon name="search" />
       </template>
-      <template v-slot:append>
-        <q-icon name="close" @click="clearSearch" class="cursor-pointer" />
-      </template>
     </q-input>
-    <TheLoading v-show="loading" />
+    <TheLoading v-show="isLoading" />
     <div id="results">
       <figure v-for="(book, index) in books" :key="index">
         <q-btn round color="primary" icon="add" @click.once="addBook(book)" />
@@ -42,9 +39,9 @@ const bookStore = useBookStore()
 const $q = useQuasar()
 const { t } = useI18n()
 
-const loading = ref(false)
-const seek = ref('')
 const books = ref<Book[]>([])
+const isLoading = ref(false)
+const seek = ref('')
 
 useMeta({
   title: `LivroLog | ${t('menu.add')}`,
@@ -55,7 +52,7 @@ useMeta({
 })
 
 function search() {
-  loading.value = true
+  isLoading.value = true
   books.value = []
   axios
     .get(`https://www.googleapis.com/books/v1/volumes?q=${seek.value}&maxResults=40&printType=books`)
@@ -71,7 +68,7 @@ function search() {
       )
     })
     .catch(() => $q.notify({ icon: 'error', message: t('book.no-book-found') }))
-    .finally(() => (loading.value = false))
+    .finally(() => (isLoading.value = false))
 }
 
 function addBook(book: Book) {
