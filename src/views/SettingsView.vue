@@ -28,11 +28,11 @@
 </template>
 
 <script setup lang="ts">
+import SettingsAccountView from '@/components/SettingsAccount.vue'
+import SettingsBooksView from '@/components/SettingsBooks.vue'
+import SettingsPasswordView from '@/components/SettingsPassword.vue'
+import SettingsProfileView from '@/components/SettingsProfile.vue'
 import { ref } from 'vue'
-import SettingsAccountView from './SettingsAccountView.vue'
-import SettingsBooksView from './SettingsBooksView.vue'
-import SettingsPasswordView from './SettingsPasswordView.vue'
-import SettingsProfileView from './SettingsProfileView.vue'
 
 const tab = ref('readDates')
 </script>
