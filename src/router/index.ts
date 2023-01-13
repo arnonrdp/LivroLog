@@ -28,20 +28,13 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/:username',
-    name: 'user',
     component: () => import('@/views/PersonView.vue'),
     props: true
   },
   {
     path: '/settings',
     component: () => import('@/views/SettingsView.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      { path: '', redirect: 'account' },
-      { path: 'account', component: () => import('@/views/SettingsAccountView.vue') },
-      { path: 'books', component: () => import('@/views/SettingsBooksView.vue') },
-      { path: 'profile', component: () => import('@/views/SettingsProfileView.vue') }
-    ]
+    meta: { requiresAuth: true }
   }
 ]
 
