@@ -1,45 +1,41 @@
 <template>
-  <div class="text-h6">{{ $t('settings.account') }}</div>
+  <div class="flex justify-between text-h6">
+    {{ $t('settings.account') }}
+    <q-btn color="negative" flat icon="logout" round @click="logout()">
+      <q-tooltip>{{ $t('sign.logout') }}</q-tooltip>
+    </q-btn>
+  </div>
   <q-form @submit.prevent="updateAccount" class="q-gutter-md q-mt-md">
     <q-input v-model="userStore.getUser.email" :label="$t('sign.mail')" :rules="[(val) => isEmailValid(val)]" required>
       <template v-slot:prepend>
         <q-icon name="mail" />
       </template>
     </q-input>
-    <q-input v-model="oldPass" type="password" :label="$t('sign.password')" :rules="[(val) => isPasswordValid(val)]">
+    <q-input v-model="password" type="password" :label="$t('sign.password')" :rules="[(val) => isPasswordValid(val)]">
       <template v-slot:prepend>
         <q-icon name="lock" />
       </template>
     </q-input>
-    <q-input v-model="newPass" type="password" :label="$t('settings.pass1')" :rules="[(val) => isPasswordValid(val)]">
-      <template v-slot:prepend>
-        <q-icon name="lock" />
-      </template>
-    </q-input>
-    <q-input v-model="confPass" type="password" :label="$t('settings.pass2')" :rules="[(val) => isConfirmationPassword(val)]">
-      <template v-slot:prepend>
-        <q-icon name="lock" />
-      </template>
-    </q-input>
-    <q-btn :label="$t('settings.update-account')" type="submit" color="primary" icon="save" :loading="updating" />
+    <div class="text-center">
+      <q-btn :label="$t('settings.update-account')" type="submit" color="primary" icon="save" :loading="updating" />
+    </div>
   </q-form>
 </template>
 
 <script setup lang="ts">
 import type { User } from '@/models'
-import { useUserStore } from '@/store'
+import { useAuthStore, useUserStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+const authStore = useAuthStore()
 const userStore = useUserStore()
 const $q = useQuasar()
 const { t } = useI18n()
 
 const email = ref(userStore.getUser.email)
-const oldPass = ref('')
-const newPass = ref('')
-const confPass = ref('')
+const password = ref('')
 const updating = ref(false)
 
 useMeta({
@@ -49,6 +45,10 @@ useMeta({
     twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.account')}` }
   }
 })
+
+function logout() {
+  authStore.logout()
+}
 
 function isEmailValid(mail: User['email']) {
   if (mail === email.value) return true
@@ -66,13 +66,9 @@ function isPasswordValid(password: string) {
   return password.length >= 6
 }
 
-function isConfirmationPassword(password: string) {
-  return password === newPass.value
-}
-
 function updateAccount() {
   updating.value = true
-  const credential = { email: email.value, password: oldPass.value, newPass: newPass.value }
+  const credential = { email: email.value, password: password.value }
 
   userStore
     .updateAccount(credential)

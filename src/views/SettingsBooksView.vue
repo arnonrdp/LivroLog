@@ -30,7 +30,9 @@
     </tbody>
   </table>
   <br />
-  <q-btn color="primary" icon="save" :loading="saving" :label="$t('settings.save')" @click="updateReadDates(books)" />
+  <div class="text-center">
+    <q-btn color="primary" icon="save" :loading="saving" :label="$t('settings.save')" @click="updateReadDates(books)" />
+  </div>
 </template>
 
 <script setup lang="ts">

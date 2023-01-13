@@ -16,7 +16,9 @@
         <q-icon name="translate" />
       </template>
     </q-select>
-    <q-btn :label="$t('settings.update-profile')" type="submit" color="primary" icon="save" :loading="updating" />
+    <div class="text-center">
+      <q-btn :label="$t('settings.update-profile')" type="submit" color="primary" icon="save" :loading="updating" />
+    </div>
   </q-form>
 </template>
 
