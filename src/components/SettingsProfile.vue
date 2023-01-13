@@ -10,11 +10,6 @@
         <q-icon name="link" />
       </template>
     </q-input>
-    <q-select v-model="locale" :options="localeOptions" :label="$t('settings.language')" emit-value map-options>
-      <template v-slot:prepend>
-        <q-icon name="translate" />
-      </template>
-    </q-select>
     <div class="text-center">
       <q-btn :label="$t('settings.update-profile')" type="submit" color="primary" icon="save" :loading="updating" />
     </div>
@@ -22,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { localeOptions } from '@/i18n'
 import type { User } from '@/models'
 import router from '@/router'
 import { useUserStore } from '@/store'
@@ -46,8 +40,6 @@ useMeta({
     twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.profile')}` }
   }
 })
-
-const { locale } = useI18n({ useScope: 'global' })
 
 function usernameValidator(username: User['username']) {
   const routes = router.options.routes
