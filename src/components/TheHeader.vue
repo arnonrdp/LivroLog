@@ -9,36 +9,10 @@
       <q-route-tab icon="img:/books.svg" to="/" />
       <q-route-tab icon="search" to="/add" exact />
       <q-route-tab icon="people" to="/people" exact />
-      <q-btn-dropdown auto-close stretch flat icon="settings">
-        <q-list>
-          <q-item clickable to="/settings/books">
-            <q-item-section>{{ $t('settings.add-reading-dates') }}</q-item-section>
-          </q-item>
-          <q-item clickable to="/settings/profile">
-            <q-item-section>{{ $t('settings.profile') }}</q-item-section>
-          </q-item>
-          <q-item clickable to="/settings/account">
-            <q-item-section>{{ $t('settings.account') }}</q-item-section>
-          </q-item>
-          <q-separator />
-          <q-item clickable to="/login" @click="logout()">
-            <q-item-section>{{ $t('sign.logout') }}</q-item-section>
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
+      <q-route-tab icon="settings" to="/settings" exact />
     </q-tabs>
   </header>
 </template>
-
-<script setup lang="ts">
-import { useAuthStore } from '@/store'
-
-const authStore = useAuthStore()
-
-async function logout() {
-  authStore.logout()
-}
-</script>
 
 <style scoped>
 header {
@@ -65,9 +39,5 @@ header {
 img[alt='Logotipo'] {
   padding: 0 1rem;
   width: 13rem;
-}
-
-.q-btn-dropdown {
-  opacity: 0.85;
 }
 </style>
