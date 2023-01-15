@@ -8,10 +8,12 @@ const messages = { en, pt, ja, tr }
 
 const i18n = createI18n({
   locale: navigator.language || 'en',
+  messages,
+  allowComposition: true,
+  legacy: false,
   fallbackLocale: ['en', 'pt', 'ja', 'tr'],
-  silentTranslationWarn: true,
-  silentFallbackWarn: true,
-  messages
+  fallbackWarn: false,
+  missingWarn: false
 })
 
 const localeOptions = [
