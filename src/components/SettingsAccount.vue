@@ -5,12 +5,12 @@
     </q-btn>
   </div>
   <q-form @submit.prevent="updateAccount" class="q-gutter-md q-mt-md">
-    <q-input v-model="userStore.getUser.email" :label="$t('sign.mail')" :rules="[(val) => isEmailValid(val)]" required>
+    <q-input v-model="userStore.getUser.email" :label="$t('sign.mail')" lazy-rules required :rules="[(val, rules) => rules.email(val)]">
       <template v-slot:prepend>
         <q-icon name="mail" />
       </template>
     </q-input>
-    <q-input v-model="password" type="password" :label="$t('sign.password')" :rules="[(val) => isPasswordValid(val)]">
+    <q-input v-model="password" type="password" :label="$t('sign.password')" lazy-rules required :rules="[(val) => val.length >= 6]">
       <template v-slot:prepend>
         <q-icon name="lock" />
       </template>
@@ -22,7 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '@/models'
 import { useAuthStore, useUserStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'
 import { ref } from 'vue'
@@ -47,22 +46,6 @@ useMeta({
 
 function logout() {
   authStore.logout()
-}
-
-function isEmailValid(mail: User['email']) {
-  if (mail === email.value) return true
-  if (
-    // TODO: Mover para /validators
-    !/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
-      mail
-    )
-  )
-    return false
-  return userStore.checkEmail(mail).then((exists) => !exists)
-}
-
-function isPasswordValid(password: string) {
-  return password.length >= 6
 }
 
 function updateAccount() {
