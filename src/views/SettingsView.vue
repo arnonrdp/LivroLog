@@ -46,6 +46,7 @@ const tab = ref('readDates')
 <style scoped>
 .q-page {
   margin: 0 auto;
-  width: 32rem;
+  max-width: 95vw;
+  width: 40rem;
 }
 </style>
