@@ -14,7 +14,9 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from './store'
 
 const userStore = useUserStore()
-const { t } = useI18n()
+const { locale, t } = useI18n({ useScope: 'global' })
+
+locale.value = userStore.getUser.locale
 
 function myTweak() {
   return { minHeight: `calc(100vh - 115px)` }

@@ -81,6 +81,17 @@ export const useUserStore = defineStore('user', {
           this._user.username = user.username
         })
         .catch(throwError)
+    },
+
+    async updateLocale(locale: User['locale']) {
+      await runTransaction(db, async (transaction) => {
+        transaction.update(doc(db, 'users', this.getUser.uid), { locale })
+      })
+        .then(() => {
+          this._user.locale = locale
+          LocalStorage.set('user', this._user)
+        })
+        .catch(throwError)
     }
   }
 })

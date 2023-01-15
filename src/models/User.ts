@@ -4,7 +4,7 @@ export interface User {
   uid: string
   displayName: string
   email: string
-  locale?: string
+  locale: object | string
   modifiedAt?: Date
   password: string
   photoURL?: string

@@ -1,5 +1,5 @@
 <template>
-  <q-form @submit.prevent="preferedLanguage" class="q-gutter-md q-mb-md">
+  <q-form @submit.prevent="saveLocale" class="q-gutter-md q-mb-md">
     <q-select v-model="locale" :options="localeOptions" :label="$t('settings.language')" emit-value map-options>
       <template v-slot:prepend>
         <q-icon name="translate" />
@@ -13,11 +13,13 @@
 
 <script setup lang="ts">
 import { localeOptions } from '@/i18n'
+import { useUserStore } from '@/store'
 import { useMeta } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+const { locale, t } = useI18n({ useScope: 'global' })
+const userStore = useUserStore()
 const updating = ref(false)
 
 useMeta({
@@ -28,13 +30,9 @@ useMeta({
   }
 })
 
-const { locale } = useI18n({ useScope: 'global' })
-
-function preferedLanguage() {
-  // TODO: develop this function
-  updating.value = true
-  setTimeout(() => {
+function saveLocale() {
+  userStore.updateLocale(locale.value).then(() => {
     updating.value = false
-  }, 1000)
+  })
 }
 </script>
