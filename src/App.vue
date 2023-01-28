@@ -2,7 +2,7 @@
   <q-layout>
     <TheHeader v-if="userStore.getUser.uid && $route.path !== '/login'" />
     <q-page-container>
-      <router-view :style-fn="myTweak" />
+      <router-view />
     </q-page-container>
   </q-layout>
 </template>
@@ -17,11 +17,6 @@ const userStore = useUserStore()
 const { locale, t } = useI18n({ useScope: 'global' })
 
 locale.value = userStore.getUser.locale
-
-function myTweak() {
-  return { minHeight: `calc(100vh - 115px)` }
-}
-
 useMeta(() => ({
   title: 'LivroLog',
   meta: {
