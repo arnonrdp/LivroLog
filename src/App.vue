@@ -16,7 +16,8 @@ import { useUserStore } from './store'
 const userStore = useUserStore()
 const { locale, t } = useI18n({ useScope: 'global' })
 
-locale.value = userStore.getUser.locale
+locale.value = userStore.getUser.locale || navigator.language
+
 useMeta(() => ({
   title: 'LivroLog',
   meta: {
