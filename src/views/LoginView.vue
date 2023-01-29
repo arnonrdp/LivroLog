@@ -3,7 +3,7 @@
   <q-page class="q-mx-auto" style="width: 1100px; max-width: 75vw">
     <section class="q-pt-lg q-pb-xl relative-position window-height">
       <div class="row">
-        <q-img fit="contain" src="logo.svg" width="300px" />
+        <TheLogo color="white" width="300px" />
         <div class="col-grow"></div>
         <q-btn class="text-bold" color="white" flat :label="$t('sign.signup-signin')" @click="login = true" />
       </div>
@@ -27,13 +27,14 @@
   </q-page>
 
   <q-dialog v-model="login">
-    <LoginForm class="the-form" />
+    <LoginForm />
   </q-dialog>
 </template>
 
 <script setup lang="ts">
 import LoginForm from '@/components/LoginForm.vue'
 import ShowcaseBooks from '@/components/ShowcaseBooks.vue'
+import TheLogo from '@/components/TheLogo.vue'
 import { ref } from 'vue'
 
 const login = ref(false)
@@ -59,13 +60,5 @@ const login = ref(false)
   top: 0;
   width: 100%;
   z-index: -1;
-}
-
-.the-form {
-  left: 50%;
-  padding: 1.5rem;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
 }
 </style>
