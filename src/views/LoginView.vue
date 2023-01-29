@@ -15,7 +15,7 @@
             {{ $t('sign.subtitle2') }}
           </p>
         </div>
-        <q-img class="col-md-5 col-sm-12 rounded-borders" src="src/assets/full_shelf.jpg" />
+        <img class="col-md-5 col-sm-12 rounded-borders" src="@/assets/full_shelf.jpg" />
       </div>
     </section>
 
