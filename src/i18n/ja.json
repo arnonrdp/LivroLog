@@ -16,7 +16,8 @@
     "removed-success": "本が棚から削除されました",
     "search": "検索",
     "shelfname": "棚名",
-    "unknown-author": "不明な作者"
+    "unknown-author": "不明な作者",
+    "sort": "書籍の並べ替え"
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",

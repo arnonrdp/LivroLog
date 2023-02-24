@@ -16,7 +16,8 @@
     "removed-success": "Livro removido da estante",
     "search": "Procurar",
     "shelfname": "Nome da Estante",
-    "unknown-author": "Autor desconhecido"
+    "unknown-author": "Autor desconhecido",
+    "sort": "Ordenar livros por"
   },
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",

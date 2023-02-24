@@ -16,7 +16,8 @@
     "removed-success": "Kitap raftan kaldirildi",
     "search": "Aramak",
     "shelfname": "Raf Adi",
-    "unknown-author": "Bilinmeyen Yazar"
+    "unknown-author": "Bilinmeyen Yazar",
+    "sort": "Kitapları şuna göre sırala:"
   },
   "friends": {
     "feature-under-dev": "Bu özellik geliştirme aşamasindadir.",

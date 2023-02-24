@@ -16,7 +16,8 @@
     "removed-success": "Book removed from shelf",
     "search": "Search",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author"
+    "unknown-author": "Unknown Author",
+    "sort": "Sort books by"
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",
