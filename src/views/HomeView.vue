@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import TheShelf from '@/components/TheShelf.vue'
+import TheShelf from '@/components/home/TheShelf.vue'
 import type { Book } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'

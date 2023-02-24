@@ -32,9 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import LoginForm from '@/components/LoginForm.vue'
-import ShowcaseBooks from '@/components/ShowcaseBooks.vue'
-import TheLogo from '@/components/TheLogo.vue'
+import LoginForm from '@/components/login/LoginForm.vue'
+import ShowcaseBooks from '@/components/login/ShowcaseBooks.vue'
+import TheLogo from '@/components/login/TheLogo.vue'
 import { ref } from 'vue'
 
 const login = ref(false)

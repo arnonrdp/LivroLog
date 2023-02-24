@@ -7,7 +7,7 @@
         <q-icon name="search" />
       </template>
     </q-input>
-    <!-- TODO: Habilitar botão quando os livros forem oriundos da Amazon -> <q-btn flat icon="download" @click="download" /> -->
+
     <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
       <q-list class="non-selectable">
         <q-item clickable v-for="(label, value) in bookLabels" :key="label" @click="sort(books as Book[], value)">
@@ -18,8 +18,28 @@
         </q-item>
       </q-list>
     </q-btn-dropdown>
+    <q-btn flat icon="menu" @click="shelfMenu = true" />
+
+    <q-dialog v-model="shelfMenu" position="right">
+      <q-card style="width: 350px">
+        <q-linear-progress :value="0.6" color="pink" />
+
+        <q-card-section class="row items-center no-wrap">
+          <div>
+            <div class="text-weight-bold">The Walker</div>
+            <div class="text-grey">Fitz & The Tantrums</div>
+          </div>
+
+          <q-space />
+
+          <q-btn flat round icon="fast_rewind" />
+          <q-btn flat round icon="pause" />
+          <q-btn flat round icon="fast_forward" />
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
-  <section ref="capture" class="flex justify-around">
+  <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
       <q-btn
         v-if="selfUser"
@@ -32,7 +52,7 @@
       />
       <q-btn v-else round color="primary" icon="add" size="sm" :title="$t('book.add')" @click.once="$emit('emitAddID', book)" />
       <img v-if="book.thumbnail" :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
-      <img v-else src="../assets/no_cover.jpg" alt="{{ $t('book.cover-image-alt', [book.title]) }}" />
+      <img v-else src="@/assets/no_cover.jpg" alt="{{ $t('book.cover-image-alt', [book.title]) }}" />
       <!-- TODO: Manter tooltip ativa no mobile ao clicar na imagem do livro -->
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
     </figure>
@@ -61,6 +81,7 @@ const filter = ref('')
 const ascDesc = ref('asc')
 const sortKey = ref<string | number>('')
 const selfUser = ref(!route.params.username || route.params.username === userStore.getUser.username)
+const shelfMenu = ref(false)
 
 const bookLabels = ref({
   authors: t('book.order-by-author'),

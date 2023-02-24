@@ -11,7 +11,7 @@
         <q-btn round color="primary" icon="add" @click.once="addBook(book)" />
         <a>
           <img v-if="book.thumbnail" :src="book.thumbnail" alt="" />
-          <img v-else src="../assets/no_cover.jpg" alt="" />
+          <img v-else src="@/assets/no_cover.jpg" alt="" />
         </a>
         <figcaption>{{ book.title }}</figcaption>
         <figcaption id="authors">
@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import TheLoading from '@/components/TheLoading.vue'
+import TheLoading from '@/components/add/TheLoading.vue'
 import type { Book, GoogleBook } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import axios from 'axios'

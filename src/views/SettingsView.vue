@@ -33,11 +33,11 @@
 </template>
 
 <script setup lang="ts">
-import SettingsAccount from '@/components/SettingsAccount.vue'
-import SettingsBooks from '@/components/SettingsBooks.vue'
-import SettingsLanguage from '@/components/SettingsLanguage.vue'
-import SettingsPassword from '@/components/SettingsPassword.vue'
-import SettingsProfile from '@/components/SettingsProfile.vue'
+import SettingsAccount from '@/components/settings/SettingsAccount.vue'
+import SettingsBooks from '@/components/settings/SettingsBooks.vue'
+import SettingsLanguage from '@/components/settings/SettingsLanguage.vue'
+import SettingsPassword from '@/components/settings/SettingsPassword.vue'
+import SettingsProfile from '@/components/settings/SettingsProfile.vue'
 import { ref } from 'vue'
 
 const tab = ref('readDates')
