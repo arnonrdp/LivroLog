@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <q-tabs v-model="tab" class="text-teal">
+    <q-tabs align="justify" v-model="tab" class="text-teal">
       <q-tab name="readDates" icon="event" :label="$t('settings.books')" />
       <q-tab name="profile" icon="person" :label="$t('settings.profile')" />
       <q-tab name="language" icon="translate" :label="$t('settings.language')" />
@@ -46,7 +46,7 @@ const tab = ref('readDates')
 <style scoped>
 .q-page {
   margin: 0 auto;
-  max-width: 95vw;
+  max-width: 100vw;
   width: 40rem;
 }
 </style>

@@ -19,10 +19,10 @@
       </div>
     </section>
 
-    <section class="text-primary window-height">
-      <h3>{{ $t('sign.description-top') }}</h3>
+    <section class="text-primary">
+      <h4>{{ $t('sign.description-top') }}</h4>
       <ShowcaseBooks />
-      <h3 class="q-my-none q-pb-xl">{{ $t('sign.description-bottom') }}</h3>
+      <h4 class="q-my-none q-pb-xl">{{ $t('sign.description-bottom') }}</h4>
     </section>
   </q-page>
 
