@@ -8,36 +8,7 @@
       </template>
     </q-input>
 
-    <q-btn-dropdown flat icon="filter_list" class="q-pr-none" size="md">
-      <q-list class="non-selectable">
-        <q-item clickable v-for="(label, value) in bookLabels" :key="label" @click="sort(books as Book[], value)">
-          <q-item-section>{{ label }}</q-item-section>
-          <q-item-section avatar>
-            <q-icon v-if="value === sortKey" size="xs" :name="ascDesc === 'asc' ? 'arrow_downward' : 'arrow_upward'" />
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </q-btn-dropdown>
-    <q-btn flat icon="menu" @click="shelfMenu = true" />
-
-    <q-dialog v-model="shelfMenu" position="right">
-      <q-card style="width: 350px">
-        <q-linear-progress :value="0.6" color="pink" />
-
-        <q-card-section class="row items-center no-wrap">
-          <div>
-            <div class="text-weight-bold">The Walker</div>
-            <div class="text-grey">Fitz & The Tantrums</div>
-          </div>
-
-          <q-space />
-
-          <q-btn flat round icon="fast_rewind" />
-          <q-btn flat round icon="pause" />
-          <q-btn flat round icon="fast_forward" />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <ShelfDialog @sort="sort" />
   </div>
   <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
@@ -60,13 +31,13 @@
 </template>
 
 <script setup lang="ts">
+import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import type { Book, User } from '@/models'
 import { useUserStore } from '@/store'
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
-defineProps<{
+const props = defineProps<{
   books: User['books']
   shelfName: User['shelfName']
 }>()
@@ -74,33 +45,28 @@ defineProps<{
 defineEmits(['emitRemoveID', 'emitAddID'])
 
 const userStore = useUserStore()
-const { t } = useI18n()
 const route = useRoute()
 
-const filter = ref('')
 const ascDesc = ref('asc')
-const sortKey = ref<string | number>('')
+const filter = ref('')
 const selfUser = ref(!route.params.username || route.params.username === userStore.getUser.username)
-const shelfMenu = ref(false)
-
-const bookLabels = ref({
-  authors: t('book.order-by-author'),
-  addedIn: t('book.order-by-date'),
-  readIn: t('book.order-by-read'),
-  title: t('book.order-by-title')
-})
+const sortKey = ref<string | number>('')
 
 function onFilter(title: Book['title']) {
   return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
-function sort(books: Book[], label: string | number) {
+function sort(label: string | number) {
   sortKey.value = label
   ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
 
   const multiplier = ascDesc.value === 'asc' ? 1 : -1
 
-  return books.sort((a: any, b: any) => {
+  if (!props.books) {
+    return
+  }
+  // eslint-disable-next-line vue/no-mutating-props, @typescript-eslint/no-explicit-any
+  return props.books.sort((a: any, b: any) => {
     if (a[label] > b[label]) return 1 * multiplier
     if (a[label] < b[label]) return -1 * multiplier
     return 0
