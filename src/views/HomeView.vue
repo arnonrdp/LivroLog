@@ -35,14 +35,6 @@ watch(
   () => (books.value = bookStore.getBooks)
 )
 
-// bookStore
-//   .compareMyModifiedAt()
-//   .then(async (equals) => {
-//     if (!equals | !this.getMyBooks.length) await this.$store.dispatch('queryDBMyBooks')
-//     this.books = this.getMyBooks
-//   })
-//   .catch((err) => console.error('err: ', err))
-
 function removeBook(id: Book['id']) {
   bookStore
     .removeBook(id)
