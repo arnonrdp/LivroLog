@@ -1,8 +1,8 @@
 <template>
   <header>
     <q-toolbar-title class="non-selectable">
+      <q-badge align="top" class="absolute rotate-315" color="red" style="top: 5px; left: -5px">Beta</q-badge>
       <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
-      <q-badge color="red" align="top">Beta</q-badge>
     </q-toolbar-title>
 
     <q-tabs active-color="primary">
