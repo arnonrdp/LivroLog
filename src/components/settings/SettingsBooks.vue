@@ -38,14 +38,14 @@
 import type { Book } from '@/models'
 import { useBookStore } from '@/store'
 import { useMeta, useQuasar } from 'quasar'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const bookStore = useBookStore()
 const $q = useQuasar()
 const { t } = useI18n()
 
-const books = ref(bookStore.getBooks)
+const books = ref([] as Book[])
 const saving = ref(false)
 
 useMeta({
@@ -54,6 +54,10 @@ useMeta({
     ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.books')}` },
     twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.books')}` }
   }
+})
+
+onMounted(() => {
+  books.value = bookStore.getBooks.reverse()
 })
 
 async function updateReadDates(updatedBooks: Book[]) {
