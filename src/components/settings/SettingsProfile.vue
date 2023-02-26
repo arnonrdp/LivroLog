@@ -46,13 +46,13 @@ function usernameValidator(username: User['username']) {
   if (username === userStore.getUser.username) return true
   if (routes.some((r) => r.path.substr(1) === username.toLowerCase())) return false
   if (!/\w{3,20}$/.test(username)) return false
-  return userStore.checkUsername(username).then((exists) => !exists)
+  return userStore.checkUsername(username.trim()).then((exists) => !exists)
 }
 
 function updateProfile() {
   updating.value = true
   userStore
-    .updateProfile({ displayName: displayName.value, username: username.value })
+    .updateProfile({ displayName: displayName.value, username: username.value.trim().toLowerCase() })
     .then(() => $q.notify({ icon: 'check_circle', message: t('settings.profile-updated') }))
     .catch(() => $q.notify({ icon: 'error', message: t('settings.profile-updated-error') }))
     .finally(() => (updating.value = false))

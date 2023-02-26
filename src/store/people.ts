@@ -33,12 +33,8 @@ export const usePeopleStore = defineStore('people', {
     },
 
     async fetchPersonAndBooks() {
-      const q = query(collection(db, 'users'), where('username', '==', this.getRouteUsername))
-
-      await getDocs(q)
-        .then((firebasePerson) => {
-          this._person = { uid: firebasePerson.docs[0].id, ...firebasePerson.docs[0].data() } as User
-        })
+      await getDocs(query(collection(db, 'users'), where('username', '==', this.getRouteUsername.toLowerCase())))
+        .then((querySnapshot) => (this._person = { uid: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as User))
         .catch(throwError)
 
       this.fetchBooks(this._person.uid)
@@ -46,9 +42,7 @@ export const usePeopleStore = defineStore('people', {
 
     async fetchBooks(personUid: User['uid']) {
       await getDocs(collection(db, 'users', personUid, 'books'))
-        .then((querySnapshot) => {
-          this._person.books = querySnapshot.docs.map((doc) => doc.data()) as User['books']
-        })
+        .then((querySnapshot) => (this._person.books = querySnapshot.docs.map((doc) => doc.data()) as User['books']))
         .catch(throwError)
     }
   }
