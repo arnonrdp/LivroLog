@@ -37,11 +37,7 @@ export const usePeopleStore = defineStore('people', {
         .then((querySnapshot) => (this._person = { uid: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() } as User))
         .catch(throwError)
 
-      this.fetchBooks(this._person.uid)
-    },
-
-    async fetchBooks(personUid: User['uid']) {
-      await getDocs(collection(db, 'users', personUid, 'books'))
+      await getDocs(collection(db, 'users', this._person.uid, 'books'))
         .then((querySnapshot) => (this._person.books = querySnapshot.docs.map((doc) => doc.data()) as User['books']))
         .catch(throwError)
     }
