@@ -1,15 +1,21 @@
 <template>
   <q-page padding class="non-selectable">
-    <TheShelf :shelfName="displayName" :books="books" @emitRemoveID="removeBook" />
+    <div class="flex items-center">
+      <h1 class="text-h5 text-primary text-left q-my-none">{{ $t('book.bookcase', [displayName]) }}</h1>
+      <q-space />
+      <ShelfDialog @sort="sort" v-model="filter" />
+    </div>
+    <TheShelf :books="filteredBooks" @emitRemoveID="removeBook" />
   </q-page>
 </template>
 
 <script setup lang="ts">
+import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
 import type { Book } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
-import { useMeta, useQuasar } from 'quasar'
-import { ref, watch } from 'vue'
+import { useQuasar } from 'quasar'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const userStore = useUserStore()
@@ -17,23 +23,42 @@ const bookStore = useBookStore()
 const $q = useQuasar()
 const { t } = useI18n()
 
+const ascDesc = ref('asc')
+const books = ref([] as Book[])
 const displayName = userStore.getUser.displayName
-const books = ref(bookStore.getBooks)
+const filter = ref('')
+const sortKey = ref<string | number>('')
 
 bookStore.fetchBooks()
 
-useMeta({
-  title: `LivroLog | ${t('menu.home')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('menu.home')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('menu.home')}` }
-  }
+bookStore.$subscribe((_mutation, state) => {
+  books.value = state._books
 })
 
-watch(
-  () => bookStore.getBooks,
-  () => (books.value = bookStore.getBooks)
-)
+const filteredBooks = computed(() => {
+  return books.value.filter(
+    (book) =>
+      book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.[0].toLowerCase().includes(filter.value.toLowerCase())
+  )
+})
+
+function sort(label: string | number) {
+  sortKey.value = label
+  ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
+
+  const multiplier = ascDesc.value === 'asc' ? 1 : -1
+
+  if (!books.value) {
+    return
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return books.value.sort((a: any, b: any) => {
+    if (a[label] > b[label]) return 1 * multiplier
+    if (a[label] < b[label]) return -1 * multiplier
+    return 0
+  })
+}
 
 function removeBook(id: Book['id']) {
   bookStore
