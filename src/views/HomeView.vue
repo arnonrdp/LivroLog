@@ -15,13 +15,14 @@ import TheShelf from '@/components/home/TheShelf.vue'
 import type { Book } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import { useQuasar } from 'quasar'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+const $q = useQuasar()
+const { t } = useI18n()
 
 const userStore = useUserStore()
 const bookStore = useBookStore()
-const $q = useQuasar()
-const { t } = useI18n()
 
 const ascDesc = ref('asc')
 const books = ref([] as Book[])
@@ -29,7 +30,9 @@ const displayName = userStore.getUser.displayName
 const filter = ref('')
 const sortKey = ref<string | number>('')
 
-bookStore.fetchBooks()
+onMounted(() => {
+  bookStore.fetchBooks()
+})
 
 bookStore.$subscribe((_mutation, state) => {
   books.value = state._books

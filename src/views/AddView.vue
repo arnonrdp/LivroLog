@@ -30,26 +30,21 @@ import TheLoading from '@/components/add/TheLoading.vue'
 import type { Book, GoogleBook } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
 import axios from 'axios'
-import { useMeta, useQuasar } from 'quasar'
+import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const userStore = useUserStore()
-const bookStore = useBookStore()
 const $q = useQuasar()
 const { t } = useI18n()
+
+const userStore = useUserStore()
+const bookStore = useBookStore()
 
 const books = ref<Book[]>([])
 const isLoading = ref(false)
 const seek = ref('')
 
-useMeta({
-  title: `LivroLog | ${t('menu.add')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('menu.add')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('menu.add')}` }
-  }
-})
+document.title = `LivroLog | ${t('menu.add')}`
 
 function search() {
   isLoading.value = true

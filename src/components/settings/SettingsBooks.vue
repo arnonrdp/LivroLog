@@ -37,8 +37,8 @@
 <script setup lang="ts">
 import type { Book } from '@/models'
 import { useBookStore } from '@/store'
-import { useMeta, useQuasar } from 'quasar'
-import { ref, onMounted } from 'vue'
+import { useQuasar } from 'quasar'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const bookStore = useBookStore()
@@ -48,13 +48,7 @@ const { t } = useI18n()
 const books = ref([] as Book[])
 const saving = ref(false)
 
-useMeta({
-  title: `LivroLog | ${t('settings.books')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.books')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.books')}` }
-  }
-})
+document.title = `LivroLog | ${t('settings.books')}`
 
 onMounted(() => {
   books.value = bookStore.getBooks.reverse()

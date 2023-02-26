@@ -14,7 +14,6 @@
 <script setup lang="ts">
 import { localeOptions } from '@/i18n'
 import { useUserStore } from '@/store'
-import { useMeta } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -22,13 +21,7 @@ const { locale, t } = useI18n({ useScope: 'global' })
 const userStore = useUserStore()
 const updating = ref(false)
 
-useMeta({
-  title: `LivroLog | ${t('settings.language')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.language')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.language')}` }
-  }
-})
+document.title = `LivroLog | ${t('settings.language')}`
 
 function saveLocale() {
   userStore.updateLocale(locale.value).then(() => {

@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@/store'
-import { useMeta, useQuasar } from 'quasar'
+import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -37,13 +37,7 @@ const newPass = ref('')
 const confPass = ref('')
 const updating = ref(false)
 
-useMeta({
-  title: `LivroLog | ${t('sign.password')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('sign.password')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('sign.password')}` }
-  }
-})
+document.title = `LivroLog | ${t('sign.password')}`
 
 function isPasswordValid(password: string) {
   return password.length >= 6

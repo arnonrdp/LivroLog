@@ -23,26 +23,21 @@
 
 <script setup lang="ts">
 import { useAuthStore, useUserStore } from '@/store'
-import { useMeta, useQuasar } from 'quasar'
+import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const authStore = useAuthStore()
-const userStore = useUserStore()
 const $q = useQuasar()
 const { t } = useI18n()
+
+const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const email = ref(userStore.getUser.email)
 const password = ref('')
 const updating = ref(false)
 
-useMeta({
-  title: `LivroLog | ${t('settings.account')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.account')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.account')}` }
-  }
-})
+document.title = `LivroLog | ${t('settings.account')}`
 
 function logout() {
   authStore.logout()

@@ -39,30 +39,25 @@
 import type { User } from '@/models'
 import { usePeopleStore } from '@/store'
 import type { QTableColumn } from 'quasar'
-import { useMeta } from 'quasar'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const peopleStore = usePeopleStore()
 const { t } = useI18n()
 
-const filter = ref('')
-
-peopleStore.fetchPeople()
+const peopleStore = usePeopleStore()
 
 const columns: QTableColumn<User>[] = [
   { name: 'uid', label: 'UID', field: 'uid' },
   { name: 'displayName', label: 'Display Name', field: 'displayName', align: 'left' },
   { name: 'username', label: 'Username', field: 'username' }
 ]
+const filter = ref('')
 
-useMeta({
-  title: `LivroLog | ${t('menu.people')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('menu.people')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('menu.people')}` }
-  }
+onMounted(() => {
+  peopleStore.fetchPeople()
 })
+
+document.title = `LivroLog | ${t('menu.people')}`
 </script>
 
 <style scoped>

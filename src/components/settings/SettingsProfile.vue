@@ -20,7 +20,7 @@
 import type { User } from '@/models'
 import router from '@/router'
 import { useUserStore } from '@/store'
-import { useMeta, useQuasar } from 'quasar'
+import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -33,13 +33,7 @@ const username = ref(userStore.getUser.username)
 const hostname = window.location.hostname + '/'
 const updating = ref(false)
 
-useMeta({
-  title: `LivroLog | ${t('settings.profile')}`,
-  meta: {
-    ogTitle: { name: 'og:title', content: `LivroLog | ${t('settings.profile')}` },
-    twitterTitle: { name: 'twitter:title', content: `LivroLog | ${t('settings.profile')}` }
-  }
-})
+document.title = `LivroLog | ${t('settings.profile')}`
 
 function usernameValidator(username: User['username']) {
   const routes = router.options.routes
