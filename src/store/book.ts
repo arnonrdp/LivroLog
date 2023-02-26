@@ -1,6 +1,7 @@
 import { db } from '@/firebase'
-import type { Book, User } from '@/models'
+import type { Book, GoogleBook, User } from '@/models'
 import { useUserStore } from '@/store'
+import axios from 'axios'
 import { collection, deleteDoc, doc, getDocs, runTransaction, setDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { LocalStorage } from 'quasar'
@@ -21,7 +22,9 @@ function sortBooksByReadDate(books: Book[]) {
 
 export const useBookStore = defineStore('book', {
   state: () => ({
-    _books: (LocalStorage.getItem('books') || []) as Book[]
+    _books: (LocalStorage.getItem('books') || []) as Book[],
+    _isLoading: false,
+    _searchResults: [] as Book[]
   }),
 
   getters: {
@@ -30,7 +33,9 @@ export const useBookStore = defineStore('book', {
     getUserUid() {
       const userStore = useUserStore()
       return userStore.getUser?.uid
-    }
+    },
+    getSearchResults: (state) => state._searchResults,
+    isLoading: (state) => state._isLoading
   },
 
   actions: {
@@ -47,6 +52,28 @@ export const useBookStore = defineStore('book', {
       if (this.getBooks) {
         LocalStorage.set('books', this._books)
       }
+    },
+
+    async searchBookOnGoogle(search: string) {
+      const books = [] as Book[]
+
+      this._isLoading = true
+      await axios
+        .get(`https://www.googleapis.com/books/v1/volumes?q=${search}&maxResults=40&printType=books`)
+        .then((response) => {
+          response.data.items.map((item: GoogleBook) =>
+            books.push({
+              id: item.id,
+              title: item.volumeInfo.title || '',
+              authors: item.volumeInfo.authors || [],
+              ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier || item.id,
+              thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null
+            })
+          )
+          this.$patch({ _searchResults: books })
+        })
+        .catch(throwError)
+        .finally(() => (this._isLoading = false))
     },
 
     async addBook(book: Book, userUid: User['uid']) {

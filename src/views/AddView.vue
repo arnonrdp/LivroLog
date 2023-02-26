@@ -5,7 +5,7 @@
         <q-icon name="search" />
       </template>
     </q-input>
-    <TheLoading v-show="isLoading" />
+    <TheLoading v-show="bookStore.isLoading" />
     <div id="results">
       <figure v-for="(book, index) in books" :key="index">
         <q-btn round color="primary" icon="add" @click.once="addBook(book)" />
@@ -19,6 +19,7 @@
             <span class="text-body2 text-weight-bold">{{ author }}</span>
             <span v-if="book.authors && i + 1 < book.authors.length">,</span>
           </span>
+          <span v-if="!book.authors?.length" class="text-body2 text-weight-bold">{{ $t('book.unknown-author') }}</span>
         </figcaption>
       </figure>
     </div>
@@ -27,9 +28,8 @@
 
 <script setup lang="ts">
 import TheLoading from '@/components/add/TheLoading.vue'
-import type { Book, GoogleBook } from '@/models'
+import type { Book } from '@/models'
 import { useBookStore, useUserStore } from '@/store'
-import axios from 'axios'
 import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -41,29 +41,15 @@ const userStore = useUserStore()
 const bookStore = useBookStore()
 
 const books = ref<Book[]>([])
-const isLoading = ref(false)
 const seek = ref('')
 
 document.title = `LivroLog | ${t('menu.add')}`
 
-function search() {
-  isLoading.value = true
+async function search() {
   books.value = []
-  axios
-    .get(`https://www.googleapis.com/books/v1/volumes?q=${seek.value}&maxResults=40&printType=books`)
-    .then((response) => {
-      response.data.items.map((item: GoogleBook) =>
-        books.value.push({
-          id: item.id,
-          title: item.volumeInfo.title || '',
-          authors: item.volumeInfo.authors || [t('book.unknown-author')],
-          ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier || item.id,
-          thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null
-        })
-      )
-    })
-    .catch(() => $q.notify({ icon: 'error', message: t('book.no-book-found') }))
-    .finally(() => (isLoading.value = false))
+  await bookStore.searchBookOnGoogle(seek.value)
+  books.value = bookStore.getSearchResults
+  console.log(books.value)
 }
 
 function addBook(book: Book) {
