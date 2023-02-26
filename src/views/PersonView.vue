@@ -32,9 +32,8 @@ peopleStore.fetchPersonAndBooks()
 
 peopleStore.$subscribe((_mutation, state) => {
   person.value = state._person
+  document.title = person.value.displayName ? `LivroLog | ${person.value.displayName}` : 'LivroLog'
 })
-
-document.title = person.value.displayName ? `LivroLog | ${person.value.displayName}` : 'LivroLog'
 
 const filteredBooks = computed(() => {
   return person.value.books?.filter(
