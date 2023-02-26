@@ -4,6 +4,20 @@
   <q-dialog v-model="shelfMenu" position="right">
     <q-card>
       <q-card-section>
+        <q-input
+          dense
+          debounce="300"
+          outlined
+          :placeholder="$t('book.search')"
+          :model-value="modelValue"
+          @update:model-value="$emit('update:model-value', $event)"
+        >
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </q-card-section>
+      <q-card-section>
         {{ $t('book.sort') }}:
         <q-list bordered class="non-selectable">
           <q-item clickable v-for="(label, value) in bookLabels" :key="label" @click="$emit('sort', value)">
@@ -22,7 +36,10 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-defineEmits(['sort'])
+defineEmits(['sort', 'update:model-value'])
+defineProps<{
+  modelValue: string
+}>()
 
 const { t } = useI18n()
 
