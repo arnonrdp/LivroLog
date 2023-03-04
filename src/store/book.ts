@@ -19,18 +19,19 @@ export const useBookStore = defineStore('book', {
   }),
 
   getters: {
-    getBooks: (state) => state._books,
     getBook: (state) => (id: string) => state._books.find((book) => book.id === id),
+    getBooks: (state) => state._books,
+    getSearchResults: (state) => state._searchResults,
     getUserUid() {
       const userStore = useUserStore()
       return userStore.getUser?.uid
     },
-    getSearchResults: (state) => state._searchResults,
     isLoading: (state) => state._isLoading
   },
 
   actions: {
     async fetchBooks() {
+      this._isLoading = true
       await getDocs(collection(db, 'users', this.getUserUid, 'books'))
         .then((querySnapshot) => {
           const books = querySnapshot.docs.map((docBook) => docBook.data())
@@ -47,6 +48,7 @@ export const useBookStore = defineStore('book', {
           return books
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
       if (this.getBooks) {
         LocalStorage.set('books', this._books)
       }
@@ -79,15 +81,18 @@ export const useBookStore = defineStore('book', {
         throwError({ code: 'book_already_exists' })
       }
 
+      this._isLoading = true
       await setDoc(doc(db, 'users', userUid, 'books', book.id), book)
         .then(() => {
           this.$patch({ _books: [...this.getBooks, book] })
           LocalStorage.set('books', this._books)
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
     },
 
     async updateReadDates(books: Pick<Book, 'id' | 'readIn'>[]) {
+      this._isLoading = true
       await runTransaction(db, async (transaction) => {
         for (const book of books) {
           transaction.update(doc(db, 'users', this.getUserUid, 'books', book.id), { readIn: book.readIn })
@@ -101,9 +106,11 @@ export const useBookStore = defineStore('book', {
           LocalStorage.set('books', this._books)
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
     },
 
     async removeBook(id: Book['id']) {
+      this._isLoading = true
       await deleteDoc(doc(db, 'users', this.getUserUid, 'books', id))
         .then(() => {
           const index = this._books.findIndex((book) => book.id === id)
@@ -111,6 +118,7 @@ export const useBookStore = defineStore('book', {
           LocalStorage.set('books', this._books)
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
     }
   }
 })

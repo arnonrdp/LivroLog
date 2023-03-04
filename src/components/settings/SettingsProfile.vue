@@ -11,7 +11,7 @@
       </template>
     </q-input>
     <div class="text-center">
-      <q-btn :label="$t('settings.update-profile')" type="submit" color="primary" icon="save" :loading="updating" />
+      <q-btn :label="$t('settings.update-profile')" type="submit" color="primary" icon="save" :loading="userStore.isLoading" />
     </div>
   </q-form>
 </template>
@@ -24,14 +24,14 @@ import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const userStore = useUserStore()
 const $q = useQuasar()
 const { t } = useI18n()
+
+const userStore = useUserStore()
 
 const displayName = ref(userStore.getUser.displayName)
 const username = ref(userStore.getUser.username)
 const hostname = window.location.hostname + '/'
-const updating = ref(false)
 
 document.title = `LivroLog | ${t('settings.profile')}`
 
@@ -44,11 +44,9 @@ function usernameValidator(username: User['username']) {
 }
 
 function updateProfile() {
-  updating.value = true
   userStore
     .updateProfile({ displayName: displayName.value, username: username.value.trim().toLowerCase() })
     .then(() => $q.notify({ icon: 'check_circle', message: t('settings.profile-updated') }))
     .catch(() => $q.notify({ icon: 'error', message: t('settings.profile-updated-error') }))
-    .finally(() => (updating.value = false))
 }
 </script>

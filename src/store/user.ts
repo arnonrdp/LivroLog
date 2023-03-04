@@ -12,16 +12,19 @@ function throwError(error: { code: string }) {
 
 export const useUserStore = defineStore('user', {
   state: () => ({
+    _isLoading: false,
     _user: (LocalStorage.getItem('user') || {}) as User
   }),
 
   getters: {
     getUser: (state) => state._user,
-    isAuthenticated: (state) => !!state._user?.uid
+    isAuthenticated: (state) => !!state._user?.uid,
+    isLoading: (state) => state._isLoading
   },
 
   actions: {
     async fetchUserProfile(user: UserInfo) {
+      this._isLoading = true
       await getDoc(doc(db, 'users', user.uid))
         .then((document) =>
           this.$patch({
@@ -29,6 +32,7 @@ export const useUserStore = defineStore('user', {
           })
         )
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
 
       if (this.getUser) {
         LocalStorage.set('user', this._user)
@@ -37,7 +41,8 @@ export const useUserStore = defineStore('user', {
     },
 
     async checkEmail(email: User['email']) {
-      const users = await getDocs(collection(db, 'users'))
+      this._isLoading = true
+      const users = await getDocs(collection(db, 'users')).finally(() => (this._isLoading = false))
 
       const emails = users.docs.map((document) => document.data().email)
 
@@ -45,7 +50,8 @@ export const useUserStore = defineStore('user', {
     },
 
     async checkUsername(username: User['username']) {
-      const users = await getDocs(collection(db, 'users'))
+      this._isLoading
+      const users = await getDocs(collection(db, 'users')).finally(() => (this._isLoading = false))
 
       const usernames = users.docs.map((document) => document.data().username.toLowerCase())
 
@@ -58,6 +64,7 @@ export const useUserStore = defineStore('user', {
 
       if (!user) return
 
+      this._isLoading = true
       await reauthenticateWithCredential(user, credential)
         .then(async () => {
           await updateDoc(doc(db, 'users', this.getUser.uid), { email: credentials.email })
@@ -70,9 +77,11 @@ export const useUserStore = defineStore('user', {
           updatePassword(user, credentials.newPass)
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
     },
 
     async updateProfile(user: Pick<User, 'displayName' | 'username'>) {
+      this._isLoading = true
       await runTransaction(db, async (transaction) => {
         transaction.update(doc(db, 'users', this.getUser.uid), { ...user })
       })
@@ -81,9 +90,11 @@ export const useUserStore = defineStore('user', {
           this._user.username = user.username
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
     },
 
     async updateLocale(locale: User['locale']) {
+      this._isLoading = true
       await runTransaction(db, async (transaction) => {
         transaction.update(doc(db, 'users', this.getUser.uid), { locale })
       })
@@ -92,6 +103,7 @@ export const useUserStore = defineStore('user', {
           LocalStorage.set('user', this._user)
         })
         .catch(throwError)
+        .finally(() => (this._isLoading = false))
     }
   }
 })

@@ -16,7 +16,7 @@
       </template>
     </q-input>
     <div class="text-center">
-      <q-btn :label="$t('settings.update-account')" type="submit" color="primary" icon="save" :loading="updating" />
+      <q-btn :label="$t('settings.update-account')" type="submit" color="primary" icon="save" :loading="userStore.isLoading" />
     </div>
   </q-form>
 </template>
@@ -35,7 +35,6 @@ const userStore = useUserStore()
 
 const email = ref(userStore.getUser.email)
 const password = ref('')
-const updating = ref(false)
 
 document.title = `LivroLog | ${t('settings.account')}`
 
@@ -44,13 +43,11 @@ function logout() {
 }
 
 function updateAccount() {
-  updating.value = true
   const credential = { email: email.value, password: password.value }
 
   userStore
     .updateAccount(credential)
     .then(() => $q.notify({ icon: 'check_circle', message: t('settings.account-updated') }))
     .catch(() => $q.notify({ icon: 'error', message: t('settings.account-updated-error') }))
-    .finally(() => (updating.value = false))
 }
 </script>

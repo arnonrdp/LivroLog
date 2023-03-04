@@ -30,7 +30,7 @@
   </table>
   <br />
   <div class="text-center">
-    <q-btn color="primary" icon="save" :loading="saving" :label="$t('settings.save')" @click="updateReadDates(books)" />
+    <q-btn color="primary" icon="save" :loading="bookStore.isLoading" :label="$t('settings.save')" @click="updateReadDates(books)" />
   </div>
 </template>
 
@@ -41,12 +41,12 @@ import { useQuasar } from 'quasar'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const bookStore = useBookStore()
 const $q = useQuasar()
 const { t } = useI18n()
 
+const bookStore = useBookStore()
+
 const books = ref([] as Book[])
-const saving = ref(false)
 
 document.title = `LivroLog | ${t('settings.books')}`
 
@@ -55,7 +55,6 @@ onMounted(() => {
 })
 
 async function updateReadDates(updatedBooks: Book[]) {
-  saving.value = true
   const updatedFields: Pick<Book, 'id' | 'readIn'>[] = []
   for (const book of updatedBooks) {
     updatedFields.push({ id: book.id, readIn: book.readIn })
@@ -64,7 +63,6 @@ async function updateReadDates(updatedBooks: Book[]) {
     .updateReadDates(updatedFields)
     .then(() => $q.notify({ icon: 'check_circle', message: t('settings.read-dates-updated') }))
     .catch(() => $q.notify({ icon: 'error', message: t('settings.read-dates-updated-error') }))
-    .finally(() => (saving.value = false))
 }
 </script>
 
