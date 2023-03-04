@@ -49,7 +49,6 @@ async function search() {
   books.value = []
   await bookStore.searchBookOnGoogle(seek.value)
   books.value = bookStore.getSearchResults
-  console.log(books.value)
 }
 
 function addBook(book: Book) {
@@ -67,7 +66,6 @@ function clearSearch() {
 
 const errorMessages: { [key: string]: string } = {
   book_already_exists: t('book.already-exists')
-  // TODO: Tratar possíveis erros que a Amazon pode retornar
 }
 </script>
 

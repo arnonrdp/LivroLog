@@ -81,14 +81,12 @@ export const useBookStore = defineStore('book', {
         throwError({ code: 'book_already_exists' })
       }
 
-      this._isLoading = true
       await setDoc(doc(db, 'users', userUid, 'books', book.id), book)
         .then(() => {
           this.$patch({ _books: [...this.getBooks, book] })
           LocalStorage.set('books', this._books)
         })
         .catch(throwError)
-        .finally(() => (this._isLoading = false))
     },
 
     async updateReadDates(books: Pick<Book, 'id' | 'readIn'>[]) {
