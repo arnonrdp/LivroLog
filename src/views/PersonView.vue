@@ -1,7 +1,7 @@
 <template>
   <q-page padding class="non-selectable">
     <div class="flex items-center">
-      <h1 class="text-h5 text-primary text-left q-my-none">{{ $t('book.bookcase', [person.shelfName || person.displayName]) }}</h1>
+      <h1 class="text-h5 text-primary text-left q-my-none">{{ person.shelfName || person.displayName }}</h1>
       <q-space />
       <ShelfDialog @sort="sort" v-model="filter" />
     </div>
