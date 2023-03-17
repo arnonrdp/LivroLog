@@ -30,9 +30,8 @@ export const useAuthStore = defineStore('auth', {
         .then(async (result) => {
           const isNewUser = getAdditionalUserInfo(result)?.isNewUser
           const { email, displayName, photoURL, uid } = result.user
-          if (isNewUser) {
-            // TODO: improve this
-            const username = email?.split('@')[0]
+          if (isNewUser && email) {
+            const username = email.split('@')[1] === 'gmail.com' ? email.split('@')[0] : email.split('@')[0] + new Date().getTime()
             await setDoc(doc(db, 'users', uid), { email, displayName, photoURL, username })
           }
           this.fetchProfile(result.user)

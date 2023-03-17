@@ -18,8 +18,7 @@ export const useRegisterStore = defineStore('register', {
     async signup(name: string, email: string, password: string) {
       await createUserWithEmailAndPassword(auth, email, password)
         .then(async (userCredential) => {
-          // TODO: improve this
-          const username = email.split('@')[0]
+          const username = email.split('@')[1] === 'gmail.com' ? email.split('@')[0] : email.split('@')[0] + new Date().getTime()
           await setDoc(doc(db, 'users', userCredential.user.uid), { name, username, email, password })
             .then(() => this.fetchProfile(userCredential.user))
             .catch(throwError)
