@@ -15,7 +15,7 @@
             {{ $t('sign.subtitle2') }}
           </p>
         </div>
-        <img class="col-md-5 col-sm-12 rounded-borders" src="@/assets/full_shelf.jpg" />
+        <img :alt="$t('sign.bookcase-model')" class="col-md-5 col-sm-12 rounded-borders" src="@/assets/full_shelf.jpg" />
       </div>
     </section>
 

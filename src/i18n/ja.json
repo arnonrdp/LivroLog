@@ -16,8 +16,8 @@
     "removed-success": "本が棚から削除されました",
     "search": "検索",
     "shelfname": "棚名",
-    "unknown-author": "不明な作者",
-    "sort": "書籍の並べ替え"
+    "sort": "書籍の並べ替え",
+    "unknown-author": "不明な作者"
   },
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
@@ -74,6 +74,7 @@
     "auth-user-not-found": "ユーザーが見つかりません",
     "auth-weak-password": "パスワードが弱すぎる",
     "auth-wrong-password": "パスワードが正しくありません",
+    "bookcase-model": "本棚モデル",
     "description-bottom": "そして、あなたの友達が読んだものを見つけてください",
     "description-top": "あなたが読んだすべてを整理するための場所",
     "logout": "ログアウト",

@@ -16,8 +16,8 @@
     "removed-success": "Book removed from shelf",
     "search": "Search",
     "shelfname": "Shelf Name",
-    "unknown-author": "Unknown Author",
-    "sort": "Sort books by"
+    "sort": "Sort books by",
+    "unknown-author": "Unknown Author"
   },
   "friends": {
     "feature-under-dev": "This feature is under development.",
@@ -74,6 +74,7 @@
     "auth-user-not-found": "User not found",
     "auth-weak-password": "Password is too weak",
     "auth-wrong-password": "Incorrect password",
+    "bookcase-model": "Bookcase model",
     "description-bottom": "And find out what your friends have read",
     "description-top": "A place for you to organize everything you've read",
     "logout": "Logout",

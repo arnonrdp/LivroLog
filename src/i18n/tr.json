@@ -16,8 +16,8 @@
     "removed-success": "Kitap raftan kaldirildi",
     "search": "Aramak",
     "shelfname": "Raf Adi",
-    "unknown-author": "Bilinmeyen Yazar",
-    "sort": "Kitapları şuna göre sırala:"
+    "sort": "Kitapları şuna göre sırala:",
+    "unknown-author": "Bilinmeyen Yazar"
   },
   "friends": {
     "feature-under-dev": "Bu özellik geliştirme aşamasindadir.",
@@ -74,6 +74,7 @@
     "auth-user-not-found": "Kullanici bulunamadi",
     "auth-weak-password": "Şifre çok zayif",
     "auth-wrong-password": "yanliş parola",
+    "bookcase-model": "kitaplık modeli",
     "description-bottom": "Ve arkadaşlarınızın ne okuduğunu öğrenin",
     "description-top": "Okuduğunuz her şeyi organize edebileceğiniz bir yer",
     "logout": "Çikiş Yap",
