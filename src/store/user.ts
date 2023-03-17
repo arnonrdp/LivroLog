@@ -16,9 +16,12 @@ export const useUserStore = defineStore('user', {
     _user: (LocalStorage.getItem('user') || {}) as User
   }),
 
+  persist: true,
+
   getters: {
     getUser: (state) => state._user,
-    isAuthenticated: (state) => !!state._user?.uid,
+    getUserRef: (state) => doc(db, 'users', state._user.uid),
+    isAuthenticated: (state) => Boolean(state._user.uid),
     isLoading: (state) => state._isLoading
   },
 

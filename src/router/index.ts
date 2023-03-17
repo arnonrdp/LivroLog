@@ -46,7 +46,7 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
 
-  if (to.meta.requiresAuth && !userStore.getUser.uid) next({ path: '/login' })
+  if (to.meta.requiresAuth && !userStore.isAuthenticated) next({ path: '/login' })
   else next()
 })
 
