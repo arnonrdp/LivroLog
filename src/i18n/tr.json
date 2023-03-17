@@ -22,6 +22,7 @@
   "friends": {
     "feature-under-dev": "Bu özellik geliştirme aşamasindadir.",
     "follow": "Takip et",
+    "follower": "{count} Takipçi",
     "following": "Takip etme",
     "no-one-found": "Peki bu üzücü... Hiç kimse bulunamadi!",
     "search-for-people": "Kişi ara"

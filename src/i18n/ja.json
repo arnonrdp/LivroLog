@@ -22,6 +22,7 @@
   "friends": {
     "feature-under-dev": "この機能は開発中です。",
     "follow": "従う",
+    "follower": "{count} フォロワー",
     "following": "続く",
     "no-one-found": "さて、これは悲しいです...誰も見つかりませんでした!",
     "search-for-people": "人を探す"

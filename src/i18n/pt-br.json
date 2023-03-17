@@ -22,6 +22,7 @@
   "friends": {
     "feature-under-dev": "Este recurso está em desenvolvimento.",
     "follow": "Seguir",
+    "follower": "0 Seguidores | 1 Seguidor | {count} Seguidores",
     "following": "Seguindo",
     "no-one-found": "Bem, isso é triste... Ninguém foi encontrado!",
     "search-for-people": "Procurar pessoas"
