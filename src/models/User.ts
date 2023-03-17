@@ -11,4 +11,6 @@ export interface User {
   shelfName?: string
   username: string
   books?: Book[]
+  followers?: User[]
+  following?: User[]
 }
