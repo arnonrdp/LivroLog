@@ -11,7 +11,7 @@
       :columns="columns"
       row-key="id"
       :filter="filter"
-      :rows-per-page-options="[20]"
+      :rows-per-page-options="[60]"
       card-container-class="justify-center"
       :no-results-label="$t('friends.no-one-found')"
       class="q-mt-md bg-transparent"
