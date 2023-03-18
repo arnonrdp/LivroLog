@@ -25,7 +25,8 @@
     "follower": "{count} Takipçi",
     "following": "Takip etme",
     "no-one-found": "Peki bu üzücü... Hiç kimse bulunamadi!",
-    "search-for-people": "Kişi ara"
+    "search-for-people": "Kişi ara",
+    "unfollow": "takibi bırak"
   },
   "menu": {
     "add": "Eklemek",

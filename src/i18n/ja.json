@@ -25,7 +25,8 @@
     "follower": "{count} フォロワー",
     "following": "続く",
     "no-one-found": "さて、これは悲しいです...誰も見つかりませんでした!",
-    "search-for-people": "人を探す"
+    "search-for-people": "人を探す",
+    "unfollow": "フォローをやめる"
   },
   "menu": {
     "add": "追加",

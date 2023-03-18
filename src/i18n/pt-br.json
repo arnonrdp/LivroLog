@@ -25,7 +25,8 @@
     "follower": "0 Seguidores | 1 Seguidor | {count} Seguidores",
     "following": "Seguindo",
     "no-one-found": "Bem, isso é triste... Ninguém foi encontrado!",
-    "search-for-people": "Procurar pessoas"
+    "search-for-people": "Procurar pessoas",
+    "unfollow": "Deixar de seguir"
   },
   "menu": {
     "add": "Adicionar",
