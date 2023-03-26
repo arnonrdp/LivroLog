@@ -5,19 +5,16 @@
     <q-card>
       <q-card-section class="column q-gutter-y-sm q-pb-none text-center">
         <b class="text-lower">{{ `${$t('friends.following')} ${peopleStore.getPerson.following?.length || 0}` }}</b>
-        <b v-if="router.currentRoute.value.path === '/'">
-          {{ $t('friends.follower', { count: userStore.getUser.followers?.length || 0 }) }}
-        </b>
         <q-btn
-          v-else-if="userStore.isAuthenticated"
+          v-if="isAbleToFollow"
           class="q-ml-sm text-bold"
           flat
-          :icon-right="isFollowing ? 'person_remove' : 'person_add'"
+          :icon-right="userStore.isFollowing ? 'person_remove' : 'person_add'"
           :label="$t('friends.follower', { count: peopleStore.getPerson.followers?.length || 0 })"
           no-caps
           @click="followOrUnfollow"
         >
-          <q-tooltip>{{ isFollowing ? $t('friends.unfollow') : $t('friends.follow') }}</q-tooltip>
+          <q-tooltip>{{ userStore.isFollowing ? $t('friends.unfollow') : $t('friends.follow') }}</q-tooltip>
         </q-btn>
         <b v-else>{{ $t('friends.follower', { count: peopleStore.getPerson.followers?.length || 0 }) }}</b>
       </q-card-section>
@@ -52,7 +49,7 @@
 
 <script setup lang="ts">
 import { usePeopleStore, useUserStore } from '@/store'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -72,17 +69,16 @@ const bookLabels = ref({
   readIn: t('book.order-by-read'),
   title: t('book.order-by-title')
 })
-const isFollowing = ref(false)
 const router = useRouter()
 const shelfMenu = ref(false)
 const sortKey = ref<string | number>('')
 
-userStore.$subscribe((_mutation, state) => {
-  isFollowing.value = state._user.following?.some((obj) => obj.id === peopleStore.getPerson.uid) || false
+const isAbleToFollow = computed(() => {
+  return router.currentRoute.value.path !== '/' && userStore.isAuthenticated && peopleStore.getPerson.uid !== userStore.getUser.uid
 })
 
 function followOrUnfollow() {
-  if (isFollowing.value) {
+  if (userStore.isFollowing) {
     peopleStore.removeFollower(peopleStore.getPerson.uid)
   } else {
     peopleStore.addFollower(peopleStore.getPerson.uid)
