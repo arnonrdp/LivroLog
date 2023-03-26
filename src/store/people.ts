@@ -54,23 +54,17 @@ export const usePeopleStore = defineStore('people', {
       this._isLoading = true
       await updateDoc(personRef, { followers: arrayUnion(userStore.getUserRef) })
         .then(() => {
-          console.log('userStore.getUserRef', userStore.getUserRef)
-
           this._person.followers ??= []
-          if (!this._person.followers.some((obj) => obj.id === userStore.getUserRef.id)) {
-            this._person.followers.push(userStore.getUserRef)
-          }
+          if (this._person.followers.find((obj) => obj.id === userStore.getUserRef.id)) return
+          this._person.followers.push(userStore.getUserRef)
         })
         .catch(throwError)
 
       await updateDoc(userStore.getUserRef, { following: arrayUnion(personRef) })
         .then(() => {
-          console.log('personRef', personRef)
-
           userStore._user.following ??= []
-          if (!userStore._user.following.some((obj) => obj.id === personRef.id)) {
-            userStore._user.following.push(personRef)
-          }
+          if (userStore._user.following.find((obj) => obj.id === personRef.id)) return
+          userStore._user.following.push(personRef)
         })
         .catch(throwError)
       this._isLoading = false
