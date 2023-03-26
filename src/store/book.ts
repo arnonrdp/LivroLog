@@ -4,7 +4,6 @@ import { useUserStore } from '@/store'
 import axios from 'axios'
 import { collection, deleteDoc, doc, getDocs, runTransaction, setDoc } from 'firebase/firestore'
 import { defineStore } from 'pinia'
-import { LocalStorage } from 'quasar'
 
 function throwError(error: { code: string }) {
   console.error(error)
@@ -13,10 +12,12 @@ function throwError(error: { code: string }) {
 
 export const useBookStore = defineStore('book', {
   state: () => ({
-    _books: (LocalStorage.getItem('books') || []) as Book[],
+    _books: [] as Book[],
     _isLoading: false,
     _searchResults: [] as Book[]
   }),
+
+  persist: true,
 
   getters: {
     getBook: (state) => (id: string) => state._books.find((book) => book.id === id),
@@ -43,15 +44,10 @@ export const useBookStore = defineStore('book', {
             return 0
           })
 
-          this._books = []
           this.$patch({ _books: books })
-          return books
         })
         .catch(throwError)
         .finally(() => (this._isLoading = false))
-      if (this.getBooks) {
-        LocalStorage.set('books', this._books)
-      }
     },
 
     async searchBookOnGoogle(search: string) {
@@ -82,10 +78,7 @@ export const useBookStore = defineStore('book', {
       }
 
       await setDoc(doc(db, 'users', userUid, 'books', book.id), book)
-        .then(() => {
-          this.$patch({ _books: [...this.getBooks, book] })
-          LocalStorage.set('books', this._books)
-        })
+        .then(() => this.$patch({ _books: [...this.getBooks, book] }))
         .catch(throwError)
     },
 
@@ -101,7 +94,6 @@ export const useBookStore = defineStore('book', {
             const index = this._books.findIndex((userBook) => userBook.id === book.id)
             this._books[index].readIn = book.readIn
           }
-          LocalStorage.set('books', this._books)
         })
         .catch(throwError)
         .finally(() => (this._isLoading = false))
@@ -113,7 +105,6 @@ export const useBookStore = defineStore('book', {
         .then(() => {
           const index = this._books.findIndex((book) => book.id === id)
           this._books.splice(index, 1)
-          LocalStorage.set('books', this._books)
         })
         .catch(throwError)
         .finally(() => (this._isLoading = false))
