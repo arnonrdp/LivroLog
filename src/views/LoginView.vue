@@ -1,13 +1,13 @@
 <template>
   <div class="container"></div>
-  <q-page class="q-mx-auto" style="width: 1100px; max-width: 75vw">
+  <q-page class="q-mx-auto text-center" style="width: 1100px; max-width: 85vw">
     <section class="q-pt-lg q-pb-xl relative-position window-height">
-      <div class="row">
+      <div class="head">
         <TheLogo color="white" width="300px" />
-        <div class="col-grow"></div>
+        <br />
         <q-btn class="text-bold" color="white" flat :label="$t('sign.signup-signin')" @click="login = true" />
       </div>
-      <div class="justify-between row" style="margin-top: 12rem">
+      <div class="description justify-between row">
         <div class="col-md-6 col-sm-12 text-white">
           <h5 class="q-mb-md text-bold">{{ $t('sign.subtitle1') }}</h5>
           <br />
@@ -15,7 +15,7 @@
             {{ $t('sign.subtitle2') }}
           </p>
         </div>
-        <img :alt="$t('sign.bookcase-model')" class="col-md-5 col-sm-12 rounded-borders" src="@/assets/full_shelf.jpg" />
+        <q-img :alt="$t('sign.bookcase-model')" class="col-md-5 col-sm-12 rounded-borders" src="src/assets/full_shelf.jpg" />
       </div>
     </section>
 
@@ -43,7 +43,6 @@ const login = ref(false)
 <style scoped>
 .q-page {
   font-family: 'SF Pro', sans-serif;
-  text-align: center;
 }
 
 .container {
@@ -60,5 +59,25 @@ const login = ref(false)
   top: 0;
   width: 100%;
   z-index: -1;
+}
+
+.head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.description {
+  margin-top: 12rem;
+}
+
+@media screen and (max-width: 1024px) {
+  .head {
+    flex-direction: column;
+  }
+
+  .description {
+    margin-top: 5rem;
+  }
 }
 </style>

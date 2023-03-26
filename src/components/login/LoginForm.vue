@@ -1,8 +1,5 @@
 <template>
-  <q-card class="text-center q-pa-sm" style="width: 400px; max-width: 70vw">
-    <q-card-section class="q-pa-lg">
-      <q-img alt="logotipo" src="/logo.svg" width="260px" />
-    </q-card-section>
+  <q-card class="text-center q-pa-md" style="width: 400px; max-width: 85vw">
     <q-card-section>
       <q-tabs active-color="white" active-bg-color="teal" class="text-teal" indicator-color="transparent" v-model="tab">
         <q-tab name="signup" :label="$t('sign.signup')" />
@@ -33,8 +30,8 @@
           lazy-rules
           required
           :rules="[(val, rules) => rules.email(val)]"
-          v-model="email"
           type="email"
+          v-model="email"
         >
           <template v-slot:prepend>
             <q-icon name="email" />
@@ -69,7 +66,7 @@
           </template>
         </q-input>
       </q-card-section>
-      <q-card-actions class="column q-pb-lg">
+      <q-card-actions class="column">
         <div class="q-gutter-x-md">
           <q-btn color="primary" :label="$t('sign.' + tab)" type="submit" />
           <q-btn flat color="primary" :label="$t('sign.reset')" type="reset" />
