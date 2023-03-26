@@ -5,6 +5,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, updateEmail, updatePas
 import { collection, doc, getDoc, getDocs, runTransaction, updateDoc } from '@firebase/firestore'
 import { defineStore } from 'pinia'
 import { LocalStorage } from 'quasar'
+import { usePeopleStore } from './people'
 
 function throwError(error: { code: string }) {
   throw error.code
@@ -22,6 +23,10 @@ export const useUserStore = defineStore('user', {
     getUser: (state) => state._user,
     getUserRef: (state) => doc(db, 'users', state._user.uid),
     isAuthenticated: (state) => Boolean(state._user.uid),
+    isFollowing: (state) => {
+      const peopleStore = usePeopleStore()
+      return state._user.following?.some((obj) => obj.id === peopleStore.getPerson.uid)
+    },
     isLoading: (state) => state._isLoading
   },
 
@@ -29,16 +34,16 @@ export const useUserStore = defineStore('user', {
     async fetchUserProfile(user: UserInfo) {
       this._isLoading = true
       await getDoc(doc(db, 'users', user.uid))
-        .then((document) =>
-          this.$patch({
-            _user: { uid: document.id, ...document.data() }
-          })
-        )
+        .then((document) => {
+          const user = { uid: document.id, ...document.data() } as User
+          user.following = user.following?.map((obj) => ({ id: obj.id }))
+          user.followers = user.followers?.map((obj) => ({ id: obj.id }))
+          this.$patch({ _user: user })
+        })
         .catch(throwError)
         .finally(() => (this._isLoading = false))
 
-      if (this.getUser) {
-        LocalStorage.set('user', this._user)
+      if (this.isAuthenticated) {
         router.push('/')
       }
     },
