@@ -4,7 +4,6 @@ import router from '@/router'
 import { EmailAuthProvider, reauthenticateWithCredential, updateEmail, updatePassword, type UserInfo } from '@firebase/auth'
 import { collection, doc, getDoc, getDocs, runTransaction, updateDoc } from '@firebase/firestore'
 import { defineStore } from 'pinia'
-import { LocalStorage } from 'quasar'
 import { usePeopleStore } from './people'
 
 function throwError(error: { code: string }) {
@@ -14,7 +13,7 @@ function throwError(error: { code: string }) {
 export const useUserStore = defineStore('user', {
   state: () => ({
     _isLoading: false,
-    _user: (LocalStorage.getItem('user') || {}) as User
+    _user: {} as User
   }),
 
   persist: true,
@@ -78,8 +77,8 @@ export const useUserStore = defineStore('user', {
           await updateDoc(doc(db, 'users', this.getUser.uid), { email: credentials.email })
           updateEmail(user, credentials.email)
             .then(() => {
-              this.$patch({ _user: { email: credentials.email } })
-              LocalStorage.set('user', this._user)
+              this.$patch({ _user: this._user })
+              this._user.email = credentials.email
             })
             .catch(throwError)
           updatePassword(user, credentials.newPass)
@@ -106,10 +105,7 @@ export const useUserStore = defineStore('user', {
       await runTransaction(db, async (transaction) => {
         transaction.update(doc(db, 'users', this.getUser.uid), { locale })
       })
-        .then(() => {
-          this._user.locale = locale
-          LocalStorage.set('user', this._user)
-        })
+        .then(() => (this._user.locale = locale))
         .catch(throwError)
         .finally(() => (this._isLoading = false))
     }
