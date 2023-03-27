@@ -19,7 +19,7 @@
     "firebase": "^9.18.0",
     "pinia": "^2.0.33",
     "pinia-plugin-persistedstate": "^3.1.0",
-    "quasar": "^2.11.8",
+    "quasar": "^2.11.9",
     "vue": "^3.2.47",
     "vue-i18n": "^9.2.2",
     "vue-router": "^4.1.6"
