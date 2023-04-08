@@ -7,7 +7,7 @@
         <br />
         <q-btn class="text-bold" color="white" flat :label="$t('sign.signup-signin')" @click="login = true" />
       </div>
-      <div class="description justify-between row">
+      <div class="description justify-center q-gutter-lg row">
         <div class="col-md-6 col-sm-12 text-white">
           <h5 class="q-mb-md text-bold">{{ $t('sign.subtitle1') }}</h5>
           <br />
@@ -15,7 +15,13 @@
             {{ $t('sign.subtitle2') }}
           </p>
         </div>
-        <q-img :alt="$t('sign.bookcase-model')" class="col-md-5 col-sm-12 rounded-borders" src="src/assets/full_shelf.jpg" />
+        <q-img
+          :alt="$t('sign.bookcase-model')"
+          class="rounded-borders"
+          :ratio="810 / 876"
+          src="src/assets/full_shelf.jpg"
+          style="width: 25rem; max-width: 90vw"
+        />
       </div>
     </section>
 
