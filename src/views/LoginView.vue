@@ -15,13 +15,7 @@
             {{ $t('sign.subtitle2') }}
           </p>
         </div>
-        <q-img
-          :alt="$t('sign.bookcase-model')"
-          class="rounded-borders"
-          :ratio="810 / 876"
-          src="src/assets/full_shelf.jpg"
-          style="width: 25rem; max-width: 90vw"
-        />
+        <img :alt="$t('sign.bookcase-model')" class="rounded-borders" src="@/assets/full_shelf.jpg" style="width: 25rem; max-width: 90vw" />
       </div>
     </section>
 
