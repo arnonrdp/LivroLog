@@ -80,6 +80,10 @@ export const useBookStore = defineStore('book', {
       await setDoc(doc(db, 'users', userUid, 'books', book.id), book)
         .then(() => this.$patch({ _books: [...this.getBooks, book] }))
         .catch(throwError)
+
+      const docId = book.ISBN || book.id
+
+      await setDoc(doc(db, 'books', docId), book)
     },
 
     async updateReadDates(books: Pick<Book, 'id' | 'readIn'>[]) {
