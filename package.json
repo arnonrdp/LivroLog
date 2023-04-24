@@ -36,7 +36,7 @@
     "prettier": "^2.8.8",
     "typescript": "~5.0.4",
     "vite": "^4.2.2",
-    "vue-tsc": "^1.2.0"
+    "vue-tsc": "^1.4.4"
   },
   "eslintConfig": {
     "root": true,
