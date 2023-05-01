@@ -16,7 +16,7 @@
     "@intlify/unplugin-vue-i18n": "^0.8.2",
     "@quasar/extras": "^1.16.3",
     "axios": "^1.4.0",
-    "firebase": "^9.20.0",
+    "firebase": "^9.21.0",
     "pinia": "^2.0.35",
     "pinia-plugin-persistedstate": "^3.1.0",
     "quasar": "^2.11.10",
