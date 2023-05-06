@@ -13,6 +13,7 @@ function throwError(error: { code: string }) {
 export const useBookStore = defineStore('book', {
   state: () => ({
     _books: [] as Book[],
+    _booksCollection: [] as Book[],
     _isLoading: false,
     _searchResults: [] as Book[]
   }),
@@ -22,6 +23,7 @@ export const useBookStore = defineStore('book', {
   getters: {
     getBook: (state) => (id: string) => state._books.find((book) => book.id === id),
     getBooks: (state) => state._books,
+    getBooksCollection: (state) => state._booksCollection,
     getSearchResults: (state) => state._searchResults,
     getUserUid() {
       const userStore = useUserStore()
@@ -45,6 +47,17 @@ export const useBookStore = defineStore('book', {
           })
 
           this.$patch({ _books: books })
+        })
+        .catch(throwError)
+        .finally(() => (this._isLoading = false))
+    },
+
+    async fetchBooksCollection() {
+      this._isLoading = true
+      await getDocs(collection(db, 'books'))
+        .then((querySnapshot) => {
+          const books = querySnapshot.docs.map((docBook) => docBook.data())
+          this.$patch({ _booksCollection: books })
         })
         .catch(throwError)
         .finally(() => (this._isLoading = false))
