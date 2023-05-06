@@ -31,7 +31,7 @@ export const useBookStore = defineStore('book', {
   },
 
   actions: {
-    async fetchBooks() {
+    async fetchBooksFromUser() {
       this._isLoading = true
       await getDocs(collection(db, 'users', this.getUserUid, 'books'))
         .then((querySnapshot) => {

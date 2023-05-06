@@ -31,7 +31,7 @@ const filter = ref('')
 const sortKey = ref<string | number>('')
 
 onMounted(() => {
-  bookStore.fetchBooks()
+  bookStore.fetchBooksFromUser()
 })
 
 bookStore.$subscribe((_mutation, state) => {
