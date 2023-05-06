@@ -81,9 +81,7 @@ export const useBookStore = defineStore('book', {
         .then(() => this.$patch({ _books: [...this.getBooks, book] }))
         .catch(throwError)
 
-      const docId = book.ISBN || book.id
-
-      await setDoc(doc(db, 'books', docId), book)
+      await setDoc(doc(db, 'books', book.id), book)
     },
 
     async updateReadDates(books: Pick<Book, 'id' | 'readIn'>[]) {
@@ -112,6 +110,8 @@ export const useBookStore = defineStore('book', {
         })
         .catch(throwError)
         .finally(() => (this._isLoading = false))
+
+      await deleteDoc(doc(db, 'books', id))
     }
   }
 })
