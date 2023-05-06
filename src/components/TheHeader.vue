@@ -9,6 +9,7 @@
       <q-route-tab icon="img:/books.svg" to="/" />
       <q-route-tab icon="search" to="/add" exact />
       <q-route-tab icon="people" to="/people" exact />
+      <q-route-tab icon="leaderboard" to="/stats" exact />
       <q-route-tab icon="settings" to="/settings" exact />
     </q-tabs>
   </header>
