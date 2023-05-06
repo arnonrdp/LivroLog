@@ -4,19 +4,19 @@
   <q-dialog v-model="shelfMenu" position="right">
     <q-card>
       <q-card-section class="column q-gutter-y-sm q-pb-none text-center">
-        <b class="text-lower">{{ `${$t('friends.following')} ${peopleStore.getPerson.following?.length || 0}` }}</b>
+        <b class="text-lower">{{ `${$t('friends.following')} ${followingCount}` }}</b>
         <q-btn
           v-if="isAbleToFollow"
           class="q-ml-sm text-bold"
           flat
           :icon-right="userStore.isFollowing ? 'person_remove' : 'person_add'"
-          :label="$t('friends.follower', { count: peopleStore.getPerson.followers?.length || 0 })"
+          :label="$t('friends.follower', { count: followersCount })"
           no-caps
           @click="followOrUnfollow"
         >
           <q-tooltip>{{ userStore.isFollowing ? $t('friends.unfollow') : $t('friends.follow') }}</q-tooltip>
         </q-btn>
-        <b v-else>{{ $t('friends.follower', { count: peopleStore.getPerson.followers?.length || 0 }) }}</b>
+        <b v-else>{{ $t('friends.follower', { count: followersCount }) }}</b>
       </q-card-section>
       <q-card-section>
         <q-input
@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { usePeopleStore, useUserStore } from '@/store'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -69,9 +69,17 @@ const bookLabels = ref({
   readIn: t('book.order-by-read'),
   title: t('book.order-by-title')
 })
+const followersCount = ref(0)
+const followingCount = ref(0)
 const router = useRouter()
 const shelfMenu = ref(false)
 const sortKey = ref<string | number>('')
+
+onMounted(() => {
+  const user = router.currentRoute.value.path === '/' ? userStore.getUser : peopleStore.getPerson
+  followersCount.value = user.followers?.length || 0
+  followingCount.value = user.following?.length || 0
+})
 
 const isAbleToFollow = computed(() => {
   return router.currentRoute.value.path !== '/' && userStore.isAuthenticated && peopleStore.getPerson.uid !== userStore.getUser.uid
