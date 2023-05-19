@@ -9,10 +9,10 @@
       :rows-per-page-options="[]"
       style="width: 30rem; max-width: 90vw"
       title="Autores mais lidos"
-      v-model:pagination="pagination"
+      v-model:pagination="authorsPagination"
     >
       <template v-slot:bottom>
-        <q-pagination class="q-mx-auto" color="grey-8" :max="authorPagesNumber" size="sm" v-model="pagination.page" />
+        <q-pagination class="q-mx-auto" color="grey-8" :max="authorsPagesNumber" size="sm" v-model="authorsPagination.page" />
       </template>
     </q-table>
 
@@ -25,10 +25,10 @@
       :rows-per-page-options="[]"
       style="width: 30rem; max-width: 90vw"
       title="Livros mais lidos"
-      v-model:pagination="pagination"
+      v-model:pagination="booksPagination"
     >
       <template v-slot:bottom>
-        <q-pagination class="q-mx-auto" color="grey-8" :max="bookPagesNumber" size="sm" v-model="pagination.page" />
+        <q-pagination class="q-mx-auto" color="grey-8" :max="booksPagesNumber" size="sm" v-model="booksPagination.page" />
       </template>
     </q-table>
   </q-page>
@@ -46,14 +46,16 @@ const authorsColumns: QTableColumn<Record<string, number>>[] = [
   { name: 'author', label: 'Autor', field: (row) => row.author, align: 'left', sortable: true },
   { name: 'count', label: 'Quantidade', field: (row) => row.count, sortable: true }
 ]
-const authorPagesNumber = computed(() => Math.ceil(authorsAndQuantities.value.length / pagination.value.rowsPerPage))
+const authorsPagesNumber = computed(() => Math.ceil(authorsAndQuantities.value.length / booksPagination.value.rowsPerPage))
+const authorsPagination = ref({ descending: true, page: 1, rowsPerPage: 5, sortBy: 'count' })
+
 const booksAndQuantities = ref<{ book: string; count: number }[]>([])
 const booksColumns: QTableColumn<Record<string, number>>[] = [
   { name: 'book', label: 'Book', field: (row) => row.book, align: 'left', sortable: true },
   { name: 'count', label: 'Quantidade', field: (row) => row.count, sortable: true }
 ]
-const bookPagesNumber = computed(() => Math.ceil(booksAndQuantities.value.length / pagination.value.rowsPerPage))
-const pagination = ref({ descending: true, page: 1, rowsPerPage: 5, sortBy: 'count' })
+const booksPagesNumber = computed(() => Math.ceil(booksAndQuantities.value.length / booksPagination.value.rowsPerPage))
+const booksPagination = ref({ descending: true, page: 1, rowsPerPage: 5, sortBy: 'count' })
 
 const countOccurrences = (items: string[]) => {
   return items.reduce((count, item) => {
