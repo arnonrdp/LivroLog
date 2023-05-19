@@ -2,17 +2,33 @@
   <q-page padding>
     <q-table
       class="q-mx-auto"
-      :columns="columns"
+      :columns="authorsColumns"
       flat
       :loading="bookStore.isLoading"
-      :rows="authorAndQuantities"
+      :rows="authorsAndQuantities"
       :rows-per-page-options="[]"
       style="width: 30rem; max-width: 90vw"
       title="Autores mais lidos"
       v-model:pagination="pagination"
     >
       <template v-slot:bottom>
-        <q-pagination class="q-mx-auto" color="grey-8" :max="pagesNumber" size="sm" v-model="pagination.page" />
+        <q-pagination class="q-mx-auto" color="grey-8" :max="authorPagesNumber" size="sm" v-model="pagination.page" />
+      </template>
+    </q-table>
+
+    <q-table
+      class="q-mt-lg q-mx-auto"
+      :columns="booksColumns"
+      flat
+      :loading="bookStore.isLoading"
+      :rows="booksAndQuantities"
+      :rows-per-page-options="[]"
+      style="width: 30rem; max-width: 90vw"
+      title="Livros mais lidos"
+      v-model:pagination="pagination"
+    >
+      <template v-slot:bottom>
+        <q-pagination class="q-mx-auto" color="grey-8" :max="bookPagesNumber" size="sm" v-model="pagination.page" />
       </template>
     </q-table>
   </q-page>
@@ -25,26 +41,34 @@ import { onMounted, ref, computed } from 'vue'
 
 const bookStore = useBookStore()
 
-const authorAndQuantities = ref<{ author: string; count: number }[]>([])
-const columns: QTableColumn<Record<string, number>>[] = [
+const authorsAndQuantities = ref<{ author: string; count: number }[]>([])
+const authorsColumns: QTableColumn<Record<string, number>>[] = [
   { name: 'author', label: 'Autor', field: (row) => row.author, align: 'left', sortable: true },
   { name: 'count', label: 'Quantidade', field: (row) => row.count, sortable: true }
 ]
-const pagesNumber = computed(() => Math.ceil(authorAndQuantities.value.length / pagination.value.rowsPerPage))
+const authorPagesNumber = computed(() => Math.ceil(authorsAndQuantities.value.length / pagination.value.rowsPerPage))
+const booksAndQuantities = ref<{ book: string; count: number }[]>([])
+const booksColumns: QTableColumn<Record<string, number>>[] = [
+  { name: 'book', label: 'Book', field: (row) => row.book, align: 'left', sortable: true },
+  { name: 'count', label: 'Quantidade', field: (row) => row.count, sortable: true }
+]
+const bookPagesNumber = computed(() => Math.ceil(booksAndQuantities.value.length / pagination.value.rowsPerPage))
 const pagination = ref({ descending: true, page: 1, rowsPerPage: 5, sortBy: 'count' })
+
+const countOccurrences = (items: string[]) => {
+  return items.reduce((count, item) => {
+    count[item] = (count[item] || 0) + 1
+    return count
+  }, {} as Record<string, number>)
+}
 
 onMounted(async () => {
   await bookStore.fetchBooksCollection()
 
-  const authorCount = bookStore.getBooksCollection.reduce((count, book) => {
-    if (book.authors) {
-      for (const author of book.authors) {
-        count[author] = (count[author] || 0) + 1
-      }
-    }
-    return count
-  }, {} as Record<string, number>)
+  const authorCount = countOccurrences(bookStore.getBooksCollection.flatMap((book) => book.authors || []))
+  const bookCount = countOccurrences(bookStore.getBooksCollection.map((book) => book.title || ''))
 
-  authorAndQuantities.value = Object.entries(authorCount).map(([author, count]) => ({ author, count }))
+  authorsAndQuantities.value = Object.entries(authorCount).map(([author, count]) => ({ author, count }))
+  booksAndQuantities.value = Object.entries(bookCount).map(([book, count]) => ({ book, count }))
 })
 </script>
