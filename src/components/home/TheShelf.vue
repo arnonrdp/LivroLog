@@ -3,14 +3,23 @@
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
       <q-btn
         v-if="selfUser"
+        color="info"
+        icon="calendar_month"
         round
+        size="sm"
+        style="left: -1rem; top: 1rem"
+        @click.once="$emit('emitReadDate', book.id)"
+      />
+      <q-btn
+        v-if="selfUser"
         color="negative"
         icon="close"
+        round
         size="sm"
-        :title="$t('book.remove')"
+        style="right: -1rem; top: 1rem"
         @click.once="$emit('emitRemoveID', book.id)"
       />
-      <q-btn v-else round color="primary" icon="add" size="sm" :title="$t('book.add')" @click.once="$emit('emitAddID', book)" />
+      <q-btn v-else color="primary" icon="add" round size="sm" style="right: -1rem; top: 1rem" @click.once="$emit('emitAddID', book)" />
       <img v-if="book.thumbnail" :src="book.thumbnail" :alt="$t('book.cover-image-alt', [book.title])" />
       <img v-else src="@/assets/no_cover.jpg" alt="{{ $t('book.cover-image-alt', [book.title]) }}" />
       <q-tooltip anchor="bottom middle" self="center middle" class="bg-black">{{ book.title }}</q-tooltip>
@@ -28,7 +37,7 @@ defineProps<{
   books: User['books']
 }>()
 
-defineEmits(['emitRemoveID', 'emitAddID'])
+defineEmits(['emitAddID', 'emitReadDate', 'emitRemoveID'])
 
 const userStore = useUserStore()
 const route = useRoute()
@@ -42,14 +51,6 @@ function onFilter(title: Book['title']) {
 </script>
 
 <style scoped>
-h1 {
-  letter-spacing: 1px;
-}
-
-label {
-  width: 100px;
-}
-
 section {
   background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
   background-repeat: repeat-y, repeat-y, repeat;
@@ -71,8 +72,6 @@ section figure {
 figure button {
   opacity: 0;
   position: absolute;
-  right: -1rem;
-  top: 1rem;
   visibility: hidden;
   z-index: 1;
 }
