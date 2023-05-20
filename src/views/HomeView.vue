@@ -70,3 +70,9 @@ function removeBook(id: Book['id']) {
     .catch(() => $q.notify({ icon: 'error', message: t('book.removed-error') }))
 }
 </script>
+
+<style scoped>
+h1 {
+  letter-spacing: 1px;
+}
+</style>
