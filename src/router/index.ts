@@ -33,7 +33,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/stats',
-    component: () => import('@/views/StatsView.vue'),
+    component: () => import('@/views/AuthorsView.vue'),
     meta: { requiresAuth: true }
   },
   {

@@ -36,9 +36,11 @@
 
 <script setup lang="ts">
 import { useBookStore } from '@/store'
+import { useAuthorStore } from '@/store/author'
 import type { QTableColumn } from 'quasar'
 import { onMounted, ref, computed } from 'vue'
 
+const authorStore = useAuthorStore()
 const bookStore = useBookStore()
 
 const authorsAndQuantities = ref<{ author: string; count: number }[]>([])
@@ -57,20 +59,11 @@ const booksColumns: QTableColumn<Record<string, number>>[] = [
 const booksPagesNumber = computed(() => Math.ceil(booksAndQuantities.value.length / booksPagination.value.rowsPerPage))
 const booksPagination = ref({ descending: true, page: 1, rowsPerPage: 5, sortBy: 'count' })
 
-const countOccurrences = (items: string[]) => {
-  return items.reduce((count, item) => {
-    count[item] = (count[item] || 0) + 1
-    return count
-  }, {} as Record<string, number>)
-}
-
 onMounted(async () => {
-  await bookStore.fetchBooksCollection()
+  await authorStore.fetchBooksCollection()
 
-  const authorCount = countOccurrences(bookStore.getBooksCollection.flatMap((book) => book.authors || []))
-  const bookCount = countOccurrences(bookStore.getBooksCollection.map((book) => book.title || ''))
+  authorsAndQuantities.value = authorStore.authorsAndQuantities()
 
-  authorsAndQuantities.value = Object.entries(authorCount).map(([author, count]) => ({ author, count }))
-  booksAndQuantities.value = Object.entries(bookCount).map(([book, count]) => ({ book, count }))
+  booksAndQuantities.value = authorStore.booksAndQuantities()
 })
 </script>
