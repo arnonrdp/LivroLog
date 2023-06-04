@@ -2,7 +2,7 @@
   <header>
     <q-toolbar-title class="non-selectable">
       <q-badge align="top" class="absolute rotate-315" color="red" style="top: 5px; left: -5px">Beta</q-badge>
-      <router-link to="/"><img src="/logo.svg" alt="Logotipo" /></router-link>
+      <router-link to="/"><img alt="Logotipo" src="/logo.svg" /></router-link>
     </q-toolbar-title>
 
     <q-tabs active-color="primary">
