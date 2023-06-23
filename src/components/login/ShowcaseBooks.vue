@@ -18,11 +18,7 @@ const showcase = useShowcaseStore()
 
 onMounted(async () => {
   await showcase.fetchShowcase()
-
-  for (let i = showcase.getShowcase.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[showcase.getShowcase[i], showcase.getShowcase[j]] = [showcase.getShowcase[j], showcase.getShowcase[i]]
-  }
+  showcase.getShowcase.sort(() => Math.random() - 0.5)
 })
 
 function goTo(link: Book['link']) {
