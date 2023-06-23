@@ -52,21 +52,20 @@ function onFilter(title: Book['title']) {
 
 <style scoped>
 section {
-  /* background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
+  background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
   background-repeat: repeat-y, repeat-y, repeat;
-  background-position: top left, top right, 240px 0; */
-  background-color: white;
+  background-position: top left, top right, 240px 0;
   border-radius: 6px;
   min-height: 302px;
-  /* padding: 0 3rem 1rem; */
+  padding: 0 3rem 1rem;
 }
 
 section figure {
   align-items: flex-end;
   display: flex;
-  height: 193.5px;
+  height: 143.5px;
   margin: 0 1.5rem;
-  max-width: 120px;
+  max-width: 80px;
   position: relative;
 }
 
@@ -85,6 +84,6 @@ figure:hover button {
 }
 
 img {
-  height: 145px;
+  height: 115px;
 }
 </style>
