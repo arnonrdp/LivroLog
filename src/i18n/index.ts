@@ -19,7 +19,7 @@ const i18n = createI18n({
 const localeOptions = [
   { value: 'en', label: 'English' },
   { value: 'ja', label: '日本語' },
-  { value: 'pt' && 'pt-BR', label: 'Português' },
+  { value: 'pt', label: 'Português' },
   { value: 'tr', label: 'Türkçe' }
 ]
 
