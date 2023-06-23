@@ -1,6 +1,7 @@
 <template>
   <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
+      <!-- TODO: Desenvolver funcionalidade -->
       <!-- <q-btn
         v-if="selfUser"
         color="info"
