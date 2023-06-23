@@ -57,7 +57,7 @@ export const useUserStore = defineStore('user', {
     },
 
     async checkUsername(username: User['username']) {
-      this._isLoading
+      this._isLoading = true
       const users = await getDocs(collection(db, 'users')).finally(() => (this._isLoading = false))
 
       const usernames = users.docs.map((document) => document.data().username.toLowerCase())
