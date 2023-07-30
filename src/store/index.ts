@@ -1,5 +1,4 @@
 export * from './auth'
-export * from './author'
 export * from './book'
 export * from './people'
 export * from './register'

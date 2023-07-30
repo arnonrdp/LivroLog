@@ -9,7 +9,6 @@
       <q-route-tab icon="img:/books.svg" to="/" />
       <q-route-tab icon="search" to="/add" exact />
       <q-route-tab icon="people" to="/people" exact />
-      <q-route-tab icon="leaderboard" to="/stats" exact />
       <q-route-tab icon="settings" to="/settings" exact />
     </q-tabs>
   </header>
@@ -18,7 +17,9 @@
 <style scoped>
 header {
   align-items: baseline;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 0.5rem 1rem rgba(0, 0, 0, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   display: flex;
   text-align: left;
 }
