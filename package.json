@@ -13,7 +13,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@intlify/unplugin-vue-i18n": "^0.8.2",
+    "@intlify/unplugin-vue-i18n": "^0.12.2",
     "@quasar/extras": "^1.16.5",
     "axios": "^1.4.0",
     "firebase": "^10.1.0",
@@ -45,12 +45,10 @@
       "node": true
     },
     "extends": [
-      "@vue/eslint-config-prettier",
-      "@vue/eslint-config-typescript/recommended",
-      "@vue/typescript/recommended",
+      "plugin:vue/vue3-essential",
       "eslint:recommended",
-      "plugin:prettier/recommended",
-      "plugin:vue/vue3-essential"
+      "@vue/eslint-config-typescript",
+      "@vue/eslint-config-prettier/skip-formatting"
     ],
     "parserOptions": {
       "ecmaVersion": 2020
