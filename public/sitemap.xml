@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://livrolog.com</loc>
+    </url>
+    <url>
+         <loc>https://livrolog.com/login</loc>
+    </url>
+    <url>
+         <loc>https://livrolog.com/home</loc>
+    </url>
+    <url>
+         <loc>https://livrolog.com/add</loc>
+    </url>
+    <url>
+         <loc>https://livrolog.com/people</loc>
+    </url>
+    <url>
+         <loc>https://livrolog.com/:username</loc>
+    </url>
+    <url>
+         <loc>https://livrolog.com/settings</loc>
+    </url>
+</urlset>
