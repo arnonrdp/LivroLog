@@ -1,14 +1,12 @@
 import { createI18n } from 'vue-i18n'
-import en from './en.json'
-import ja from './ja.json'
-import pt from './pt-br.json'
-import tr from './tr.json'
-
-const messages = { en, pt, ja, tr }
+import en from './locales/en.json'
+import ja from './locales/ja.json'
+import pt from './locales/pt-br.json'
+import tr from './locales/tr.json'
 
 const i18n = createI18n({
   locale: navigator.language || 'en',
-  messages,
+  messages: { en, pt, ja, tr },
   allowComposition: true,
   legacy: false,
   fallbackLocale: ['en', 'pt', 'ja', 'tr'],
