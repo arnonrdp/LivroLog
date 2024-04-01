@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@intlify/unplugin-vue-i18n": "^4.0.0",
-    "@quasar/extras": "^1.16.10",
+    "@quasar/extras": "^1.16.11",
     "axios": "^1.6.8",
     "firebase": "^10.10.0",
     "pinia": "^2.1.7",
