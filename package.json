@@ -25,7 +25,7 @@
     "vue-router": "^4.3.2"
   },
   "devDependencies": {
-    "@babel/types": "^7.24.5",
+    "@babel/types": "^7.24.6",
     "@quasar/vite-plugin": "^1.7.0",
     "@tsconfig/node18": "^18.2.4",
     "@types/node": "^20.12.12",
