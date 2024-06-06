@@ -6,11 +6,12 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check build-only",
-    "preview": "vite preview --port 4173",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --noEmit",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+    "type-check": "vue-tsc --build --force",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "dependencies": {
     "@firebase/app": "^0.7.0",
@@ -26,7 +27,7 @@
     "vue-router": "^4.3.2"
   },
   "devDependencies": {
-    "@babel/types": "^7.24.5",
+    "@rushstack/eslint-patch": "^1.8.0",
     "@quasar/vite-plugin": "^1.7.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.12.12",
@@ -46,35 +47,6 @@
   "engines": {
     "node": ">=20.8.0",
     "npm": ">=10.1.0"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/vue3-essential",
-      "eslint:recommended",
-      "@vue/eslint-config-typescript",
-      "@vue/eslint-config-prettier/skip-formatting"
-    ],
-    "parserOptions": {
-      "ecmaVersion": 2020
-    },
-    "rules": {
-      "prettier/prettier": "error"
-    }
-  },
-  "prettier": {
-    "arrowParens": "always",
-    "bracketSpacing": true,
-    "htmlWhitespaceSensitivity": "ignore",
-    "printWidth": 140,
-    "quoteProps": "consistent",
-    "semi": false,
-    "singleQuote": true,
-    "trailingComma": "none",
-    "useTabs": false
   },
   "browserslist": [
     "> 1%",
