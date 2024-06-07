@@ -55,7 +55,10 @@ function onFilter(title: Book['title']) {
 section {
   background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
   background-repeat: repeat-y, repeat-y, repeat;
-  background-position: top left, top right, 240px 0;
+  background-position:
+    top left,
+    top right,
+    240px 0;
   border-radius: 6px;
   min-height: 302px;
   padding: 0 3rem 1rem;
