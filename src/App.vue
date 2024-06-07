@@ -16,8 +16,11 @@ import { useUserStore } from './store'
 const userStore = useUserStore()
 const { locale, t } = useI18n({ useScope: 'global' })
 
-locale.value = userStore.getUser.locale || navigator.language
-
+if (typeof userStore.getUser.locale === 'string') {
+  locale.value = userStore.getUser.locale
+} else {
+  locale.value = navigator.language
+}
 useMeta(() => ({
   title: 'LivroLog',
   meta: {
@@ -30,7 +33,7 @@ useMeta(() => ({
     ogType: { name: 'og:type', content: 'website' },
     ogTitle: { name: 'og:title', content: 'LivroLog' },
     ogDescription: { name: 'og:description', content: t('meta.description') },
-    ogImage: { name: 'og:image', content: 'https://livrolog.com/main.jpg' },
+    ogImage: { name: 'og:image', content: 'https://livrolog.com/main.jpg' as string },
     ogUrl: { name: 'og:url', content: 'https://livrolog.com/' },
     ogProperty: { name: 'og:image:alt', content: t('meta.image-alt') },
 
