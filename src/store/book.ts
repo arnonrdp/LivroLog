@@ -35,7 +35,10 @@ export const useBookStore = defineStore('book', {
       this._isLoading = true
       await getDocs(collection(db, 'users', this.getUserUid, 'books'))
         .then((querySnapshot) => {
+          console.log(querySnapshot)
           const books = querySnapshot.docs.map((docBook) => docBook.data())
+          console.log(books)
+          
 
           books.sort((a, b) => {
             if (!a.readIn || !b.readIn) return 0
@@ -63,7 +66,8 @@ export const useBookStore = defineStore('book', {
               title: item.volumeInfo.title || '',
               authors: item.volumeInfo.authors || [],
               ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier || item.id,
-              thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null
+              thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null,
+              description: item.volumeInfo.description || ''
             })
           )
           this.$patch({ _searchResults: books })
