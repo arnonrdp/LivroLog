@@ -10,8 +10,20 @@
       <figure v-for="(book, index) in books" :key="index">
         <q-btn round color="primary" icon="add" @click.once="addBook(book)" />
         <a>
-          <img v-if="book.thumbnail" :src="book.thumbnail" alt="" />
-          <img v-else src="@/assets/no_cover.jpg" alt="" />
+          <img
+            v-if="book.thumbnail"
+            :src="book.thumbnail"
+            alt=""
+            :class="{ 'cursor-pointer': book.description }"
+            @click="book.description && showBookSummary(book)"
+          />
+          <img
+            v-else
+            src="@/assets/no_cover.jpg"
+            alt=""
+            :class="{ clickable: book.description }"
+            @click="book.description && showBookSummary(book)"
+          />
         </a>
         <figcaption>{{ book.title }}</figcaption>
         <figcaption id="authors">
@@ -23,6 +35,21 @@
         </figcaption>
       </figure>
     </div>
+
+    <q-dialog v-model="isDialogOpen" class="book-summary-dialog">
+      <q-card bordered>
+        <q-card-section>
+          <div class="text-h6">{{ selectedBook.title }}</div>
+          <q-separator />
+          <div class="q-mt-md q-pa-md">
+            <div class="book-summary">{{ selectedBook.description }}</div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Close" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -42,6 +69,8 @@ const bookStore = useBookStore()
 
 const books = ref<Book[]>([])
 const seek = ref('')
+const isDialogOpen = ref(false)
+const selectedBook = ref<Book | null>(null)
 
 document.title = `LivroLog | ${t('menu.add')}`
 
@@ -62,6 +91,11 @@ function addBook(book: Book) {
 function clearSearch() {
   seek.value = ''
   books.value = []
+}
+
+function showBookSummary(book: Book) {
+  selectedBook.value = book
+  isDialogOpen.value = !!selectedBook.value?.description
 }
 
 const errorMessages: { [key: string]: string } = {

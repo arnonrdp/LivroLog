@@ -1,6 +1,7 @@
 export interface Book {
   addedIn?: Date | string | number
   authors?: string[] | string
+  description?: string
   id: string
   ISBN?: string
   link?: string
