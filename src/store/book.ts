@@ -36,7 +36,7 @@ export const useBookStore = defineStore('book', {
       await getDocs(collection(db, 'users', this.getUserUid, 'books'))
         .then((querySnapshot) => {
           const books = querySnapshot.docs.map((docBook) => docBook.data())
-          
+
           books.sort((a, b) => {
             if (!a.readIn || !b.readIn) return 0
             if (a.readIn < b.readIn) return 1
