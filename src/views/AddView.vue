@@ -39,10 +39,10 @@
     <q-dialog v-model="isDialogOpen" class="book-summary-dialog">
       <q-card bordered>
         <q-card-section>
-          <div class="text-h6">{{ selectedBook.title }}</div>
+          <div class="text-h6">{{ selectedBook?.title }}</div>
           <q-separator />
           <div class="q-mt-md q-pa-md">
-            <div class="book-summary">{{ selectedBook.description }}</div>
+            <div class="book-summary">{{ selectedBook?.description }}</div>
           </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -143,5 +143,9 @@ figure button:hover {
 
 figcaption {
   max-width: 8rem;
+}
+
+img.clickable {
+  cursor: pointer;
 }
 </style>
