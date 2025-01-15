@@ -21,7 +21,7 @@
             v-else
             src="@/assets/no_cover.jpg"
             alt=""
-            :class="{ clickable: book.description }"
+            :class="{ 'cursor-pointer': book.description }"
             @click="book.description && showBookSummary(book)"
           />
         </a>
