@@ -63,7 +63,8 @@ export const useBookStore = defineStore('book', {
               title: item.volumeInfo.title || '',
               authors: item.volumeInfo.authors || [],
               ISBN: item.volumeInfo.industryIdentifiers?.[0].identifier || item.id,
-              thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null
+              thumbnail: item.volumeInfo.imageLinks?.thumbnail.replace('http', 'https') || null,
+              description: item.volumeInfo.description || ''
             })
           )
           this.$patch({ _searchResults: books })
