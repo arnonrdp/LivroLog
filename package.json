@@ -14,7 +14,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@intlify/unplugin-vue-i18n": "^4.0.0",
+    "@intlify/unplugin-vue-i18n": "^6.0.8",
     "@quasar/extras": "^1.16.11",
     "axios": "^1.7.2",
     "firebase": "^10.12.1",
