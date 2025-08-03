@@ -3,12 +3,18 @@
 namespace App\Console\Commands;
 
 use App\Models\Showcase;
+use App\Exceptions\ImportException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 class ImportFirestoreShowcase extends Command
 {
+    // Constants for display formatting
+    private const PREVIEW_TITLE_MAX_LENGTH = 30;
+    private const PREVIEW_AUTHORS_MAX_LENGTH = 20;
+    private const HTTP_REQUEST_TIMEOUT = 30;
+
     /**
      * The name and signature of the console command.
      *
@@ -122,14 +128,14 @@ class ImportFirestoreShowcase extends Command
         $this->info("📁 Reading data from file: {$filePath}");
 
         if (!file_exists($filePath)) {
-            throw new \Exception("File not found: {$filePath}");
+            throw ImportException::fileNotFound($filePath);
         }
 
         $content = file_get_contents($filePath);
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Invalid JSON in file: " . json_last_error_msg());
+            throw ImportException::invalidJson(json_last_error_msg());
         }
 
         return $data;
@@ -144,18 +150,18 @@ class ImportFirestoreShowcase extends Command
 
         // Validate URL format and scheme
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \Exception("Invalid URL format: {$url}");
+            throw ImportException::invalidUrl($url);
         }
 
         $parsedUrl = parse_url($url);
         if (!in_array($parsedUrl['scheme'] ?? '', ['http', 'https'])) {
-            throw new \Exception("Only HTTP and HTTPS URLs are allowed: {$url}");
+            throw ImportException::unsupportedScheme($url);
         }
 
         // Use stream context for better control
         $context = stream_context_create([
             'http' => [
-                'timeout' => 30,
+                'timeout' => self::HTTP_REQUEST_TIMEOUT,
                 'user_agent' => 'LivroLog/1.0',
                 'follow_location' => false,
             ]
@@ -164,13 +170,13 @@ class ImportFirestoreShowcase extends Command
         $content = file_get_contents($url, false, $context);
 
         if ($content === false) {
-            throw new \Exception("Failed to fetch data from URL: {$url}");
+            throw ImportException::fetchFailed($url);
         }
 
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Invalid JSON from URL: " . json_last_error_msg());
+            throw ImportException::invalidJson(json_last_error_msg());
         }
 
         return $data;
@@ -193,7 +199,7 @@ class ImportFirestoreShowcase extends Command
         $data = json_decode($input, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Invalid JSON: " . json_last_error_msg());
+            throw ImportException::invalidJson(json_last_error_msg());
         }
 
         return $data;
@@ -312,8 +318,8 @@ class ImportFirestoreShowcase extends Command
         $this->table(
             ['Title', 'Authors', 'ISBN', 'Language', 'Active'],
             collect($data)->take(10)->map(fn($item) => [
-                substr($item['title'], 0, 30) . (strlen($item['title']) > 30 ? '...' : ''),
-                substr($item['authors'] ?? 'N/A', 0, 20) . (strlen($item['authors'] ?? '') > 20 ? '...' : ''),
+                $this->truncateText($item['title'], self::PREVIEW_TITLE_MAX_LENGTH),
+                $this->truncateText($item['authors'] ?? 'N/A', self::PREVIEW_AUTHORS_MAX_LENGTH),
                 $item['isbn'] ?? 'N/A',
                 $item['language'],
                 $item['is_active'] ? 'Yes' : 'No'
@@ -351,36 +357,48 @@ class ImportFirestoreShowcase extends Command
         $imported = 0;
         $errors = 0;
 
-        foreach ($data as $item) {
-            try {
-                // Check for duplicates by ISBN or by (title and author) combination
-                $existing = Showcase::where('isbn', $item['isbn'])
-                    ->orWhere(function ($query) use ($item) {
-                        $query->where('title', $item['title'])
-                              ->where('authors', $item['authors']);
-                    })
-                    ->first();
+        DB::transaction(function () use ($data, $bar, &$imported, &$errors) {
+            foreach ($data as $item) {
+                try {
+                    // Check for duplicates by ISBN or by (title and author) combination
+                    $existing = Showcase::where('isbn', $item['isbn'])
+                        ->orWhere(function ($query) use ($item) {
+                            $query->where('title', $item['title'])
+                                  ->where('authors', $item['authors']);
+                        })
+                        ->first();
 
-                if ($existing) {
-                    if ($this->confirm("📚 Book '{$item['title']}' already exists. Update?", true)) {
-                        $existing->update($item);
+                    if ($existing) {
+                        if ($this->confirm("📚 Book '{$item['title']}' already exists. Update?", true)) {
+                            $existing->update($item);
+                            $imported++;
+                        }
+                    } else {
+                        Showcase::create($item);
                         $imported++;
                     }
-                } else {
-                    Showcase::create($item);
-                    $imported++;
-                }
 
-                $bar->advance();
-            } catch (\Exception $e) {
-                $errors++;
-                $this->error("\n❌ Error importing '{$item['title']}': {$e->getMessage()}");
-                $bar->advance();
+                    $bar->advance();
+                } catch (\Exception $e) {
+                    $errors++;
+                    $this->error("\n❌ Error importing '{$item['title']}': {$e->getMessage()}");
+                    $bar->advance();
+                }
             }
-        }
+        });
 
         $bar->finish();
         $this->line('');
         $this->info("✅ Import completed: {$imported} imported, {$errors} errors");
+    }
+
+    /**
+     * Truncate text to specified length with ellipsis if needed
+     */
+    private function truncateText(string $text, int $maxLength): string
+    {
+        return strlen($text) > $maxLength
+            ? substr($text, 0, $maxLength) . '...'
+            : $text;
     }
 }

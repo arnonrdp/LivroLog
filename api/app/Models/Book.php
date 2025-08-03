@@ -75,9 +75,6 @@ class Book extends Model
         'edition',
     ];
 
-    public $incrementing = false;
-    protected $keyType = 'string';
-
     protected $casts = [
         'categories' => 'array',
         'industry_identifiers' => 'array',
@@ -133,18 +130,20 @@ class Book extends Model
             return null;
         }
 
+        $date = $this->published_date;
+
         // If date is January 1st, likely we only have year precision
-        if ($this->published_date->format('m-d') === '01-01') {
-            return $this->published_date->format('Y');
+        if ($date->format('m-d') === '01-01') {
+            return $date->format('Y');
         }
 
         // If day is 1st, likely we only have year-month precision
-        if ($this->published_date->format('d') === '01') {
-            return $this->published_date->format('Y-m');
+        if ($date->format('d') === '01') {
+            return $date->format('Y-m');
         }
 
-        // Otherwise, show full date
-        return $this->published_date->format('Y-m-d');
+        // Full date precision
+        return $date->format('Y-m-d');
     }
 
     /**

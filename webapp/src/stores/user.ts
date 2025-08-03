@@ -14,11 +14,11 @@ export const useUserStore = defineStore('user', {
 
   getters: {
     isLoading: (state) => state._isLoading,
-    // TODO: Implementar funcionalidade de seguir usuários quando necessário
-    // isFollowing: (state) => (personId: number) => {
-    //   const authStore = useAuthStore()
-    //   return authStore.user.following?.some(f => f.id === personId) ?? false
-    // },
+    // TODO: Implementar corretamente quando a lógica de "following" estiver disponível.
+    // Atualmente é um placeholder/stub e sempre retorna false.
+    isFollowing: (_state) => (_personId: number) => {
+      return false
+    },
     meta: (state) => state._meta,
     people: (state) => state._people
   },

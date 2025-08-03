@@ -16,7 +16,7 @@
         <a>
           <img
             v-if="book.thumbnail"
-            alt=""
+            :alt="`Cover of ${book.title}`"
             :class="{ 'cursor-pointer': book.description }"
             :src="book.thumbnail"
             style="width: 8rem"
@@ -24,7 +24,7 @@
           />
           <img
             v-else
-            alt=""
+            :alt="`No cover available for ${book.title}`"
             :class="{ 'cursor-pointer': book.description }"
             src="@/assets/no_cover.jpg"
             style="width: 8rem"

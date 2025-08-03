@@ -1,32 +1,23 @@
 import type { Book } from '@/models'
 
+type Accessor = (b: Book) => string
+
+const sortAccessors: Record<string, Accessor> = {
+  authors: (b) => b.authors || '',
+  addedIn: (b) => (b as any).addedIn || (b as any).added_at || (b as any).created_at || '',
+  added_at: (b) => (b as any).addedIn || (b as any).added_at || (b as any).created_at || '',
+  created_at: (b) => (b as any).addedIn || (b as any).added_at || (b as any).created_at || '',
+  readIn: (b) => (b as any).readIn || (b as any).read_at || (b as any).pivot?.read_at || '',
+  read_at: (b) => (b as any).readIn || (b as any).read_at || (b as any).pivot?.read_at || '',
+  title: (b) => b.title || ''
+}
+
 export function sortBooks(books: Book[], sortKey: string | number, ascDesc: string): Book[] {
-  return books.slice().sort((a: any, b: any) => {
-    let aValue = ''
-    let bValue = ''
-    switch (sortKey) {
-      case 'authors':
-        aValue = a.authors || ''
-        bValue = b.authors || ''
-        break
-      case 'addedIn':
-      case 'added_at':
-      case 'created_at':
-        aValue = a.addedIn || a.added_at || a.created_at || ''
-        bValue = b.addedIn || b.added_at || b.created_at || ''
-        break
-      case 'readIn':
-      case 'read_at':
-        aValue = a.readIn || a.read_at || (a.pivot && a.pivot.read_at) || ''
-        bValue = b.readIn || b.read_at || (b.pivot && b.pivot.read_at) || ''
-        break
-      case 'title':
-      default:
-        aValue = a.title || ''
-        bValue = b.title || ''
-    }
-    if (aValue > bValue) return ascDesc === 'asc' ? 1 : -1
-    if (aValue < bValue) return ascDesc === 'asc' ? -1 : 1
-    return 0
+  const getValue = sortAccessors[sortKey as string] ?? sortAccessors.title
+  return books.slice().sort((a, b) => {
+    const aVal = getValue(a)
+    const bVal = getValue(b)
+    if (aVal === bVal) return 0
+    return aVal > bVal === (ascDesc === 'asc') ? 1 : -1
   })
 }

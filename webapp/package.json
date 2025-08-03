@@ -20,6 +20,7 @@
     "@quasar/extras": "^1.17.0",
     "axios": "^1.11.0",
     "google-auth-library": "^10.2.0",
+    "jwt-decode": "^4.0.0",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.4.1",
     "quasar": "^2.18.2",

@@ -6,12 +6,18 @@ use App\Models\Book;
 use App\Models\Author;
 use App\Models\User;
 use App\Models\Showcase;
+use App\Exceptions\ImportException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class ImportFirebaseData extends Command
 {
+    // Constants for display formatting
+    private const TITLE_DISPLAY_MAX_LENGTH = 30;
+    private const AUTHOR_DISPLAY_MAX_LENGTH = 20;
+    private const DEFAULT_BATCH_SIZE = 100;
+
     /**
      * The name and signature of the console command.
      *
@@ -23,7 +29,7 @@ class ImportFirebaseData extends Command
                             {--type=all : Data type to import (users,books,showcase,all)}
                             {--clear : Clear existing data before import}
                             {--dry-run : Preview the import without making changes}
-                            {--batch-size=100 : Number of records to process at once}';
+                            {--batch-size=' . self::DEFAULT_BATCH_SIZE . ' : Number of records to process at once}';
 
     /**
      * The console command description.
@@ -94,14 +100,14 @@ class ImportFirebaseData extends Command
         $this->info("📁 Reading data from file: {$filePath}");
 
         if (!file_exists($filePath)) {
-            throw new \Exception("File not found: {$filePath}");
+            throw ImportException::fileNotFound($filePath);
         }
 
         $content = file_get_contents($filePath);
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Invalid JSON in file: " . json_last_error_msg());
+            throw ImportException::invalidJson(json_last_error_msg());
         }
 
         return $data;
@@ -117,13 +123,13 @@ class ImportFirebaseData extends Command
         $content = file_get_contents($url);
 
         if ($content === false) {
-            throw new \Exception("Failed to fetch data from URL: {$url}");
+            throw ImportException::fetchFailed($url);
         }
 
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception("Invalid JSON from URL: " . json_last_error_msg());
+            throw ImportException::invalidJson(json_last_error_msg());
         }
 
         return $data;
@@ -281,14 +287,7 @@ class ImportFirebaseData extends Command
 
         foreach ($users as $userData) {
             try {
-                $user = [
-                    'display_name' => isset($userData['display_name']) ? $userData['display_name'] : (isset($userData['displayName']) ? $userData['displayName'] : 'Unknown User'),
-                    'email' => isset($userData['email']) ? $userData['email'] : 'user' . time() . '@example.com',
-                    'username' => isset($userData['username']) ? $userData['username'] : (isset($userData['email']) ? $userData['email'] : 'user' . time()),
-                    'password' => Hash::make(isset($userData['password']) ? $userData['password'] : 'password123'),
-                    'shelf_name' => isset($userData['shelf_name']) ? $userData['shelf_name'] : (isset($userData['shelfName']) ? $userData['shelfName'] : null),
-                    'email_verified_at' => (isset($userData['emailVerified']) && $userData['emailVerified']) ? now() : null,
-                ];
+                $user = $this->extractUserData($userData);
 
                 User::updateOrCreate(
                     ['email' => $user['email']],
@@ -331,14 +330,7 @@ class ImportFirebaseData extends Command
 
         foreach ($books as $bookData) {
             try {
-                $bookArr = [
-                    'title' => isset($bookData['title']) ? $bookData['title'] : 'Unknown Title',
-                    'isbn' => isset($bookData['isbn']) ? $bookData['isbn'] : (isset($bookData['ISBN']) ? $bookData['ISBN'] : null),
-                    'thumbnail' => isset($bookData['thumbnail']) ? $bookData['thumbnail'] : (isset($bookData['image']) ? $bookData['image'] : null),
-                    'language' => isset($bookData['language']) ? $bookData['language'] : (isset($bookData['lang']) ? $bookData['lang'] : 'pt-BR'),
-                    'publisher' => isset($bookData['publisher']) ? $bookData['publisher'] : null,
-                    'edition' => isset($bookData['edition']) ? $bookData['edition'] : null,
-                ];
+                $bookArr = $this->extractBookData($bookData);
 
                 // Check for duplicates
                 $existing = Book::where('isbn', $bookArr['isbn'])
@@ -476,8 +468,8 @@ class ImportFirebaseData extends Command
         $this->table(
             ['Title', 'Authors', 'ISBN'],
             collect($books)->take(5)->map(fn($book) => [
-                substr(isset($book['title']) ? $book['title'] : 'Unknown', 0, 30),
-                substr(is_array($book['authors']) ? implode(', ', $book['authors']) : (isset($book['authors']) ? $book['authors'] : 'Unknown'), 0, 20),
+                substr(isset($book['title']) ? $book['title'] : 'Unknown', 0, self::TITLE_DISPLAY_MAX_LENGTH),
+                substr(is_array($book['authors']) ? implode(', ', $book['authors']) : (isset($book['authors']) ? $book['authors'] : 'Unknown'), 0, self::AUTHOR_DISPLAY_MAX_LENGTH),
                 isset($book['isbn']) ? $book['isbn'] : (isset($book['ISBN']) ? $book['ISBN'] : 'No ISBN')
             ])->toArray()
         );
@@ -501,8 +493,8 @@ class ImportFirebaseData extends Command
                 }
                 $active = (isset($item['active']) ? $item['active'] : (isset($item['is_active']) ? $item['is_active'] : true)) ? 'Yes' : 'No';
                 return [
-                    substr($title, 0, 30),
-                    substr($authors, 0, 20),
+                    substr($title, 0, self::TITLE_DISPLAY_MAX_LENGTH),
+                    substr($authors, 0, self::AUTHOR_DISPLAY_MAX_LENGTH),
                     $active
                 ];
             })->toArray()
@@ -586,7 +578,7 @@ class ImportFirebaseData extends Command
                 $this->importShowcase($showcase);
                 break;
             default:
-                throw new \Exception("Unknown data type: {$type}");
+                throw ImportException::invalidJson("Unknown data type: {$type}");
         }
     }
 
@@ -623,6 +615,36 @@ class ImportFirebaseData extends Command
                     'active' => true
                 ]
             ]
+        ];
+    }
+
+    /**
+     * Extract and normalize user data from import
+     */
+    private function extractUserData(array $userData): array
+    {
+        return [
+            'display_name' => $userData['display_name'] ?? $userData['displayName'] ?? 'Unknown User',
+            'email' => $userData['email'] ?? 'user' . time() . '@example.com',
+            'username' => $userData['username'] ?? $userData['email'] ?? 'user' . time(),
+            'password' => Hash::make($userData['password'] ?? 'password123'),
+            'shelf_name' => $userData['shelf_name'] ?? $userData['shelfName'] ?? null,
+            'email_verified_at' => (isset($userData['emailVerified']) && $userData['emailVerified']) ? now() : null,
+        ];
+    }
+
+    /**
+     * Extract and normalize book data from import
+     */
+    private function extractBookData(array $bookData): array
+    {
+        return [
+            'title' => $bookData['title'] ?? 'Unknown Title',
+            'isbn' => $bookData['isbn'] ?? $bookData['ISBN'] ?? null,
+            'thumbnail' => $bookData['thumbnail'] ?? $bookData['image'] ?? null,
+            'language' => $bookData['language'] ?? $bookData['lang'] ?? 'pt-BR',
+            'publisher' => $bookData['publisher'] ?? null,
+            'edition' => $bookData['edition'] ?? null,
         ];
     }
 }

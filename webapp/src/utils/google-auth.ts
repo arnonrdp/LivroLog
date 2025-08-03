@@ -1,4 +1,5 @@
 // Google Identity Services utilities
+import { jwtDecode } from 'jwt-decode'
 import { loadScript } from './loadScript'
 
 export interface GoogleAuthCredential {
@@ -12,6 +13,14 @@ export interface GoogleUserInfo {
   name: string
   picture?: string
   email_verified: boolean
+}
+
+interface JwtPayload {
+  sub: string
+  email: string
+  name: string
+  picture?: string
+  email_verified?: boolean
 }
 
 declare global {
@@ -97,18 +106,9 @@ export class GoogleAuth {
 
   static decodeIdToken(idToken: string): GoogleUserInfo {
     try {
-      // Decode JWT payload (base64url)
-      const payload = idToken.split('.')[1]
-      const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-      const userInfo = JSON.parse(decodedPayload)
+      const { sub: id, email, name, picture, email_verified = false } = jwtDecode<JwtPayload>(idToken)
 
-      return {
-        id: userInfo.sub,
-        email: userInfo.email,
-        name: userInfo.name,
-        picture: userInfo.picture,
-        email_verified: userInfo.email_verified || false
-      }
+      return { id, email, name, picture, email_verified }
     } catch (error) {
       throw new Error('Failed to decode Google ID token')
     }

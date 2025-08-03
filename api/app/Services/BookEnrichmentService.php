@@ -240,7 +240,7 @@ class BookEnrichmentService
         $data['enriched_at'] = now();
 
         return array_filter($data, function($value) {
-            return $value !== null && $value !== '';
+            return !is_null($value) && !(is_string($value) && $value === '');
         });
     }
 
@@ -250,19 +250,20 @@ class BookEnrichmentService
     private function parsePublishedDate(string $dateString): ?Carbon
     {
         try {
-            // If we only have a year, only convert to Carbon if we need a date object
-            // For display purposes, we might want to keep just the year
+            $result = null;
+
             if (preg_match('/^\d{4}$/', $dateString)) {
-                // Year only - only set January 1st if we need a precise date
-                // For now, we'll use start of year but mark it as year-only precision
-                return Carbon::createFromFormat('Y', $dateString)->startOfYear();
+                // Year only - start of year but mark as year-only precision
+                $result = Carbon::createFromFormat('Y', $dateString)->startOfYear();
             } elseif (preg_match('/^\d{4}-\d{2}$/', $dateString)) {
                 // Year and month - start of month
-                return Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
+                $result = Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
             } else {
                 // Full date or other format
-                return Carbon::parse($dateString);
+                $result = Carbon::parse($dateString);
             }
+
+            return $result;
         } catch (\Exception $e) {
             Log::warning('Error parsing publication date', [
                 'date_string' => $dateString,

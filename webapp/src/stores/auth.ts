@@ -20,122 +20,116 @@ export const useAuthStore = defineStore('auth', {
     user: (state) => state._user
   },
   actions: {
+    // Helper method to handle loading states and error notifications
+    async _withLoading<T>(work: () => Promise<T>, loadingKey: '_isLoading' | '_isGoogleLoading' = '_isLoading', notifyOnError = true): Promise<T> {
+      try {
+        this[loadingKey] = true
+        return await work()
+      } catch (error: any) {
+        if (notifyOnError) {
+          Notify.create({ message: error.response?.data?.message || error.message, color: 'negative' })
+        }
+        throw error
+      } finally {
+        this[loadingKey] = false
+      }
+    },
+
     setUser(user: User) {
       this.$patch({ _user: user })
     },
 
     async getAuthMe() {
-      this._isLoading = true
-      return await api
-        .get('/auth/me')
-        .then((response) => {
-          this.$patch({ _user: response.data })
+      return this._withLoading(async () => {
+        const response = await api.get('/auth/me')
+        this.$patch({ _user: response.data })
 
-          if (this.isAuthenticated) {
-            router.push('/')
-          }
-          return response.data
-        })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
-        .finally(() => (this._isLoading = false))
-    },
-
-    async postAuthLogin(email: string, password: string) {
-      this._isLoading = true
-      return await api
-        .post('/auth/login', { email, password })
-        .then((response) => {
-          const authData: AuthResponse = response.data
-
-          localStorage.setItem('auth_token', authData.access_token)
-          LocalStorage.set('user', authData.user)
-
-          this.$patch({ _user: authData.user })
-
+        if (this.isAuthenticated) {
           router.push('/')
-
-          return authData
-        })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
-        .finally(() => (this._isLoading = false))
-    },
-
-    async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
-      this._isLoading = true
-      return await api
-        .post('/auth/register', data)
-        .then((response) => {
-          const authData: AuthResponse = response.data
-
-          localStorage.setItem('auth_token', authData.access_token)
-          LocalStorage.set('user', authData.user)
-
-          this.$patch({ _user: authData.user })
-
-          router.push('/')
-
-          return authData
-        })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
-        .finally(() => (this._isLoading = false))
-    },
-
-    async postAuthLogout() {
-      this._isLoading = true
-      return await api.post('/auth/logout').finally(() => {
-        this._isLoading = false
-        this.$reset()
-        LocalStorage.clear()
-        router.push('/login')
+        }
+        return response.data
       })
     },
 
+    async postAuthLogin(email: string, password: string) {
+      return this._withLoading(async () => {
+        const response = await api.post('/auth/login', { email, password })
+        const authData: AuthResponse = response.data
+
+        localStorage.setItem('auth_token', authData.access_token)
+        LocalStorage.set('user', authData.user)
+        this.$patch({ _user: authData.user })
+        router.push('/')
+
+        return authData
+      })
+    },
+
+    async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
+      return this._withLoading(async () => {
+        const response = await api.post('/auth/register', data)
+        const authData: AuthResponse = response.data
+
+        localStorage.setItem('auth_token', authData.access_token)
+        LocalStorage.set('user', authData.user)
+        this.$patch({ _user: authData.user })
+        router.push('/')
+
+        return authData
+      })
+    },
+
+    async postAuthLogout() {
+      return this._withLoading(
+        async () => {
+          await api.post('/auth/logout')
+          this.$reset()
+          LocalStorage.clear()
+          router.push('/login')
+        },
+        '_isLoading',
+        false // Don't notify on logout errors
+      )
+    },
+
     async putPassword(data: { current_password: string; password: string; password_confirmation: string }) {
-      this._isLoading = true
-      return await api
-        .put('/password', data)
-        .then((response) => response.data)
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
-        .finally(() => (this._isLoading = false))
+      return this._withLoading(async () => {
+        const response = await api.put('/password', data)
+        return response.data
+      })
     },
 
     async postForgotPassword(email: string) {
-      return await api
-        .post('/auth/forgot-password', { email })
-        .then((response) => response.data)
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+      return this._withLoading(
+        async () => {
+          const response = await api.post('/auth/forgot-password', { email })
+          return response.data
+        },
+        '_isLoading',
+        false // Handle errors manually for forgot password
+      )
     },
 
     async postResetPassword(data: { token: string; email: string; password: string; password_confirmation: string }) {
-      this._isLoading = true
-      return await api
-        .post('/auth/reset-password', data)
-        .then((response) => response.data)
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
-        .finally(() => (this._isLoading = false))
+      return this._withLoading(async () => {
+        const response = await api.post('/auth/reset-password', data)
+        return response.data
+      })
     },
 
     async postGoogleSignIn(idToken: string) {
-      this._isGoogleLoading = true
-      return await api
-        .post('/auth/google', { id_token: idToken })
-        .then((response) => {
-          const authData: AuthResponse = response.data
+      return this._withLoading(async () => {
+        const response = await api.post('/auth/google', { id_token: idToken })
+        const authData: AuthResponse = response.data
 
-          localStorage.setItem('auth_token', authData.access_token)
-          LocalStorage.set('user', authData.user)
+        localStorage.setItem('auth_token', authData.access_token)
+        LocalStorage.set('user', authData.user)
+        this.$patch({ _user: authData.user })
+        Notify.create({ message: 'Login with Google successful!', type: 'positive' })
+        router.push('/')
 
-          this.$patch({ _user: authData.user })
-          Notify.create({ message: 'Login with Google successful!', type: 'positive' })
-          router.push('/')
-
-          return authData
-        })
-        .catch((error) => {
-          Notify.create({ message: error.response.data.message || 'Google Sign In failed', type: 'negative' })
-          throw error
-        })
-        .finally(() => (this._isGoogleLoading = false))
+        return authData
+      }, '_isGoogleLoading')
     },
 
     isAuthenticatedCheck(): boolean {

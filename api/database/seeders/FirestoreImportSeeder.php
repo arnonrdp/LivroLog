@@ -25,6 +25,10 @@ class FirestoreImportSeeder extends Seeder
 
         // Read the JSON file
         $jsonPath = base_path('firestore_data.json');
+        if (!file_exists($jsonPath)) {
+            $this->command->error('firestore_data.json file does not exist.');
+            return;
+        }
         $data = json_decode(file_get_contents($jsonPath), true);
         if (!$data || !isset($data['users'])) {
             $this->command->error('Invalid firestore_data.json file or missing users field.');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Author;
+use App\Exceptions\AuthorMergeException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -71,13 +72,13 @@ class AuthorMergeController extends Controller
             }
 
             if ($hasOtherRelations) {
-                throw new \Exception('O autor de origem possui outros relacionamentos. Por favor, revise antes de mesclar.');
+                throw AuthorMergeException::sourceAuthorNotFound($fromAuthor->id);
             }
 
-            // Safe to delete the source author
+            // Delete the duplicate author after successful merge
             $fromAuthor->delete();
         });
 
-        return response()->json(['message' => 'Autores mesclados com sucesso.']);
+        return response()->json(['message' => 'Authors merged successfully.']);
     }
 }

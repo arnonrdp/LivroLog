@@ -398,11 +398,10 @@ class BookController extends Controller
                         'google_id' => $item['id'],
                         'title' => $volumeInfo['title'] ?? '',
                         'subtitle' => $volumeInfo['subtitle'] ?? null,
-                        'authors' => isset($volumeInfo['authors']) ? implode(', ', $volumeInfo['authors']) : '',
+                        'authors' => $volumeInfo['authors'] ? implode(', ', $volumeInfo['authors']) : '',
                         'isbn' => $isbn ?: $item['id'],
-                        'thumbnail' => isset($volumeInfo['imageLinks']['thumbnail'])
-                            ? str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail'])
-                            : null,
+                        'thumbnail' => ($volumeInfo['imageLinks']['thumbnail'] ?? null) ?
+                            str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail']) : null,
                         'description' => $volumeInfo['description'] ?? '',
                         'publisher' => $volumeInfo['publisher'] ?? '',
                         'published_date' => $volumeInfo['publishedDate'] ?? null,
@@ -461,7 +460,7 @@ class BookController extends Controller
     {
         $request->validate([
             'books' => 'required|array|min:1',
-            'books.*.id' => 'required|integer|exists:books,id',
+            'books.*.id' => 'required|string|exists:books,id',
             'books.*.readIn' => 'required|date'
         ]);
 

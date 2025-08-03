@@ -8,6 +8,10 @@ use Illuminate\Console\Command;
 
 class EnrichBooksCommand extends Command
 {
+    // Constants for timing and limits
+    private const BATCH_PAUSE_MICROSECONDS = 500000; // 500ms
+    private const TITLE_DISPLAY_MAX_LENGTH = 40;
+
     /**
      * The name and signature of the console command.
      *
@@ -77,7 +81,7 @@ class EnrichBooksCommand extends Command
                 $books->map(function($book) {
                     return [
                         $book->id,
-                        substr($book->title, 0, 40) . (strlen($book->title) > 40 ? '...' : ''),
+                        substr($book->title, 0, self::TITLE_DISPLAY_MAX_LENGTH) . (strlen($book->title) > self::TITLE_DISPLAY_MAX_LENGTH ? '...' : ''),
                         $book->info_quality ?? 'basic',
                         $book->enriched_at ? $book->enriched_at->format('d/m/Y H:i') : 'Never'
                     ];
@@ -109,7 +113,7 @@ class EnrichBooksCommand extends Command
                     if ($result['success']) {
                         $successful++;
                         $this->line("\n✅ {$book->title}: " . $result['message']);
-                        if (isset($result['added_fields']) && count($result['added_fields']) > 0) {
+                        if (isset($result['added_fields']) && !empty($result['added_fields'])) {
                             $this->line("   📝 Added fields: " . implode(', ', $result['added_fields']));
                         }
                     } else {
@@ -131,7 +135,7 @@ class EnrichBooksCommand extends Command
             // Brief pause between batches for system stability
             if ($books->count() > $batchSize) {
                 $this->line("\n⏸️  Brief pause between batches...");
-                usleep(500000); // 500ms - reduced from 2 seconds
+                usleep(self::BATCH_PAUSE_MICROSECONDS);
             }
         }
 
@@ -183,7 +187,9 @@ class EnrichBooksCommand extends Command
      */
     private function percentage(int $part, int $total): string
     {
-        if ($total === 0) return '0%';
+        if ($total === 0) {
+            return '0%';
+        }
         return round(($part / $total) * 100, 1) . '%';
     }
 }
