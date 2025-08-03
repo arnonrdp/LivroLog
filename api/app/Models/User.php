@@ -41,7 +41,6 @@ class User extends Authenticatable
      */
 
     protected $fillable = [
-        'id',
         'google_id',
         'display_name',
         'email',
@@ -87,7 +86,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'modified_at' => 'datetime',
         ];
     }
 

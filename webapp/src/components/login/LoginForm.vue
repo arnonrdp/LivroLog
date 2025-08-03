@@ -112,10 +112,10 @@ const googleButtonRef = ref<HTMLElement>()
 let googleButtonElement: HTMLElement | null = null
 
 onMounted(async () => {
-  GoogleAuth.initialize().then(() => {
+  try {
     // Render the hidden Google button once after initialization
     if (googleButtonRef.value) {
-      GoogleAuth.renderSignInButton(googleButtonRef.value, handleGoogleCredential, {
+      await GoogleAuth.renderSignInButton(googleButtonRef.value, handleGoogleCredential, {
         theme: 'outline',
         size: 'large',
         text: 'continue_with',
@@ -127,7 +127,9 @@ onMounted(async () => {
         googleButtonElement = googleButtonRef.value?.querySelector('[role="button"]') as HTMLElement
       }, 100)
     }
-  })
+  } catch (error) {
+    console.error('Failed to initialize Google Auth:', error)
+  }
 })
 
 onUnmounted(() => {

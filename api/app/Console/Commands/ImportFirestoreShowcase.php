@@ -123,7 +123,26 @@ class ImportFirestoreShowcase extends Command
     {
         $this->info("🌐 Fetching data from URL: {$url}");
 
-        $content = file_get_contents($url);
+        // Validate URL format and scheme
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \Exception("Invalid URL format: {$url}");
+        }
+
+        $parsedUrl = parse_url($url);
+        if (!in_array($parsedUrl['scheme'] ?? '', ['http', 'https'])) {
+            throw new \Exception("Only HTTP and HTTPS URLs are allowed: {$url}");
+        }
+
+        // Use stream context for better control
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 30,
+                'user_agent' => 'LivroLog/1.0',
+                'follow_location' => false,
+            ]
+        ]);
+
+        $content = file_get_contents($url, false, $context);
 
         if ($content === false) {
             throw new \Exception("Failed to fetch data from URL: {$url}");
@@ -227,7 +246,11 @@ class ImportFirestoreShowcase extends Command
                 'edition' => $item['edition'] ?? null,
                 'order_index' => $item['order'] ?? $item['order_index'] ?? $index,
                 'is_active' => $item['active'] ?? $item['is_active'] ?? true,
-                'notes' => ($item['notes'] ?? '') . ' - Imported from Firestore',
+                'notes' => (function () use ($item) {
+                    $notes = $item['notes'] ?? '';
+                    $importNote = ' - Imported from Firestore';
+                    return (strpos($notes, $importNote) === false) ? ($notes . $importNote) : $notes;
+                })(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -311,9 +334,12 @@ class ImportFirestoreShowcase extends Command
 
         foreach ($data as $item) {
             try {
-                // Check for duplicates by ISBN or title
+                // Check for duplicates by ISBN or by (title and author) combination
                 $existing = Showcase::where('isbn', $item['isbn'])
-                    ->orWhere('title', $item['title'])
+                    ->orWhere(function ($query) use ($item) {
+                        $query->where('title', $item['title'])
+                              ->where('authors', $item['authors']);
+                    })
                     ->first();
 
                 if ($existing) {

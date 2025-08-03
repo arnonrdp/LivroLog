@@ -14,11 +14,11 @@ export const useUserStore = defineStore('user', {
 
   getters: {
     isLoading: (state) => state._isLoading,
-    isFollowing: (state) => (personId: number) => {
-      // Para evitar dependência circular, vamos implementar de forma simples
-      // A store auth pode definir o following do usuário
-      return false // Implementar quando necessário
-    },
+    // TODO: Implementar funcionalidade de seguir usuários quando necessário
+    // isFollowing: (state) => (personId: number) => {
+    //   const authStore = useAuthStore()
+    //   return authStore.user.following?.some(f => f.id === personId) ?? false
+    // },
     meta: (state) => state._meta,
     people: (state) => state._people
   },

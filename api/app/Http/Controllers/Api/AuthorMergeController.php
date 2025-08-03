@@ -56,7 +56,25 @@ class AuthorMergeController extends Controller
                 $toAuthor->books()->syncWithoutDetaching($bookIds);
             }
 
-            // Remove the source author from the pivot table
+            // Check for other relationships before deleting the source author
+            $hasOtherRelations = false;
+
+            // Check if the Author model has additional relationships
+            // This can be extended as new relationships are added to the Author model
+            $relationshipMethods = ['articles', 'awards', 'reviews', 'interviews'];
+
+            foreach ($relationshipMethods as $method) {
+                if (method_exists($fromAuthor, $method) && $fromAuthor->$method()->exists()) {
+                    $hasOtherRelations = true;
+                    break;
+                }
+            }
+
+            if ($hasOtherRelations) {
+                throw new \Exception('O autor de origem possui outros relacionamentos. Por favor, revise antes de mesclar.');
+            }
+
+            // Safe to delete the source author
             $fromAuthor->delete();
         });
 

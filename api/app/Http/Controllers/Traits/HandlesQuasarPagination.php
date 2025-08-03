@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Traits;
 
 use Illuminate\Http\Request;
 
-trait HandlesPagination
+trait HandlesQuasarPagination
 {
     /**
      * Applies pagination parameters to a query from request.

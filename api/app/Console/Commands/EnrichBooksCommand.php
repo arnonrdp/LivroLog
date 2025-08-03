@@ -41,18 +41,20 @@ class EnrichBooksCommand extends Command
             $bookIds = $this->option('book-id');
             $query->whereIn('id', $bookIds);
             $this->info("📚 Processing specific books: " . implode(', ', $bookIds));
+        } elseif ($this->option('only-basic')) {
+            $query->where('info_quality', 'basic');
+            $this->info("📊 Processing only books with basic info quality...");
         } else {
-            if ($this->option('only-basic')) {
-                $query->where('info_quality', 'basic');
-            } else {
-                $query->whereIn('info_quality', ['basic', 'enhanced'])
-                      ->orWhereNull('enriched_at');
-            }
+            $query->where(function($q) {
+                $q->whereIn('info_quality', ['basic', 'enhanced'])
+                  ->orWhereNull('enriched_at');
+            });
+            $this->info("📊 Processing books with basic/enhanced quality or never enriched...");
+        }
 
+        if (!$this->option('book-id')) {
             $query->orderBy('created_at', 'desc')
                   ->limit($this->option('max-books'));
-
-            $this->info("📊 Searching for books to enrich...");
         }
 
         $books = $query->get();
@@ -123,14 +125,13 @@ class EnrichBooksCommand extends Command
                 $processed++;
                 $progressBar->advance();
 
-                // Small pause to avoid overloading the API
-                usleep(300000); // 300ms
+                // Rate limiting is handled by the service
             }
 
-            // Pause between batches
+            // Brief pause between batches for system stability
             if ($books->count() > $batchSize) {
-                $this->line("\n⏸️  Pause between batches...");
-                sleep(2);
+                $this->line("\n⏸️  Brief pause between batches...");
+                usleep(500000); // 500ms - reduced from 2 seconds
             }
         }
 

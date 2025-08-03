@@ -28,7 +28,7 @@ class BookEnrichmentService
                 ];
             }
 
-            $enrichedData = $this->extractEnrichedData($googleBookData);
+            $enrichedData = $this->extractEnrichedData($googleBookData, $book);
             $book->update($enrichedData);
 
             return [
@@ -70,8 +70,8 @@ class BookEnrichmentService
         foreach ($books as $book) {
             $results[] = $this->enrichBook($book);
 
-            // Small pause to avoid overloading the API
-            usleep(200000); // 200ms
+            // Rate limiting to respect API limits (5 requests per second max)
+            $this->enforceRateLimit();
         }
 
         return [
@@ -113,7 +113,7 @@ class BookEnrichmentService
     /**
      * Extracts enriched data from Google Books API response
      */
-    private function extractEnrichedData(array $googleBookData): array
+    private function extractEnrichedData(array $googleBookData, ?Book $book = null): array
     {
         $volumeInfo = $googleBookData['volumeInfo'] ?? [];
         $data = [];
@@ -135,7 +135,7 @@ class BookEnrichmentService
         // Publication date - be smart about overwriting existing dates
         if (isset($volumeInfo['publishedDate'])) {
             $googleDate = $volumeInfo['publishedDate'];
-            $currentDate = $book->published_date;
+            $currentDate = $book ? $book->published_date : null;
 
             // Only update if we have better precision or no existing date
             $shouldUpdateDate = false;
@@ -179,8 +179,8 @@ class BookEnrichmentService
             $data['print_type'] = $volumeInfo['printType'];
         }
 
-        // Determine format based on available information
-        $data['format'] = $this->determineFormat($volumeInfo);
+                // Determine format based on available information
+        $data['format'] = $this->determineFormat($googleBookData);
 
         // Dimensions
         if (isset($volumeInfo['dimensions'])) {
@@ -201,9 +201,13 @@ class BookEnrichmentService
             $data['maturity_rating'] = $volumeInfo['maturityRating'];
         }
 
-        // Categories
+        // Categories - normalize to always be an array
         if (isset($volumeInfo['categories'])) {
-            $data['categories'] = $volumeInfo['categories'];
+            if (is_array($volumeInfo['categories'])) {
+                $data['categories'] = $volumeInfo['categories'];
+            } else {
+                $data['categories'] = [$volumeInfo['categories']];
+            }
         }
 
         // Google ID
@@ -227,7 +231,12 @@ class BookEnrichmentService
         }
 
         // Information quality
-        $data['info_quality'] = $this->determineInfoQuality($data);
+        $data['info_quality'] = $this->determineInfoQuality(
+            $data,
+            $data['height'] ?? null,
+            $data['width'] ?? null,
+            $data['thickness'] ?? null
+        );
         $data['enriched_at'] = now();
 
         return array_filter($data, function($value) {
@@ -266,16 +275,20 @@ class BookEnrichmentService
     /**
      * Determines book format based on available information
      */
-    private function determineFormat(array $volumeInfo): ?string
+    private function determineFormat(array $googleBookData): ?string
     {
+        $volumeInfo = $googleBookData['volumeInfo'] ?? [];
+        $saleInfo = $googleBookData['saleInfo'] ?? [];
+        $accessInfo = $googleBookData['accessInfo'] ?? [];
+
         // If there's sale information, checks if it's an ebook
-        if (isset($volumeInfo['saleInfo']['isEbook']) && $volumeInfo['saleInfo']['isEbook']) {
+        if (isset($saleInfo['isEbook']) && $saleInfo['isEbook']) {
             return 'ebook';
         }
 
         // If there's epub/pdf information
-        if (isset($volumeInfo['accessInfo']['epub']['isAvailable']) &&
-            $volumeInfo['accessInfo']['epub']['isAvailable']) {
+        if (isset($accessInfo['epub']['isAvailable']) &&
+            $accessInfo['epub']['isAvailable']) {
             return 'ebook';
         }
 
@@ -316,11 +329,11 @@ class BookEnrichmentService
     /**
      * Determines information quality based on filled fields
      */
-    private function determineInfoQuality(array $data): string
+    private function determineInfoQuality(array $data, $height = null, $width = null, $thickness = null): string
     {
         $basicFields = ['title', 'authors'];
         $enhancedFields = ['description', 'published_date', 'page_count', 'publisher'];
-        $completeFields = ['format', 'dimensions', 'categories', 'google_id'];
+        $completeFields = ['format', 'categories', 'google_id'];
 
         $enhancedCount = 0;
         $completeCount = 0;
@@ -335,6 +348,11 @@ class BookEnrichmentService
             if (isset($data[$field]) && $data[$field] !== null) {
                 $completeCount++;
             }
+        }
+
+        // Check for dimensions separately
+        if (!empty($height) && !empty($width) && !empty($thickness)) {
+            $completeCount++;
         }
 
         if ($completeCount >= 3) {
@@ -362,7 +380,7 @@ class BookEnrichmentService
             }
 
             $volumeInfo = $googleBookData['volumeInfo'] ?? [];
-            $enrichedData = $this->extractEnrichedData($googleBookData);
+            $enrichedData = $this->extractEnrichedData($googleBookData, null);
 
             // Adds mandatory basic fields
             $bookData = array_merge([
@@ -399,5 +417,24 @@ class BookEnrichmentService
                 'message' => 'Internal error: ' . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Enforce rate limiting to respect Google Books API limits
+     */
+    private function enforceRateLimit(): void
+    {
+        static $lastRequestTime = 0;
+        $minInterval = 200000; // 200ms in microseconds (5 requests per second)
+
+        $currentTime = microtime(true) * 1000000; // Convert to microseconds
+        $timeSinceLastRequest = $currentTime - $lastRequestTime;
+
+        if ($timeSinceLastRequest < $minInterval) {
+            $sleepTime = $minInterval - $timeSinceLastRequest;
+            usleep((int) $sleepTime);
+        }
+
+        $lastRequestTime = microtime(true) * 1000000;
     }
 }

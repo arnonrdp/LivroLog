@@ -1,4 +1,6 @@
 // Google Identity Services utilities
+import { loadScript } from './loadScript'
+
 export interface GoogleAuthCredential {
   credential: string
   select_by: string
@@ -46,52 +48,23 @@ export class GoogleAuth {
   private static readonly CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
   private static initialized = false
 
-  static async initialize(): Promise<void> {
+  private static async ensureInitialized(): Promise<void> {
     if (this.initialized) return
+    if (!this.CLIENT_ID) throw new Error('Google Client ID not configured')
+    await loadScript('https://accounts.google.com/gsi/client')
+    this.initialized = true
+  }
 
-    return new Promise((resolve, reject) => {
-      if (!this.CLIENT_ID) {
-        reject(new Error('Google Client ID not configured'))
-        return
-      }
-
-      // Load Google Identity Services script
-      if (!document.querySelector('script[src*="accounts.google.com"]')) {
-        const script = document.createElement('script')
-        script.src = 'https://accounts.google.com/gsi/client'
-        script.async = true
-        script.defer = true
-
-        script.onload = () => {
-          this.initializeGoogleAuth()
-          this.initialized = true
-          resolve()
-        }
-
-        script.onerror = () => {
-          reject(new Error('Failed to load Google Identity Services'))
-        }
-
-        document.head.appendChild(script)
-      } else {
-        this.initializeGoogleAuth()
-        this.initialized = true
-        resolve()
-      }
+  private static initRequest(callback: (r: GoogleAuthCredential) => void): void {
+    window.google.accounts.id.initialize({
+      client_id: this.CLIENT_ID,
+      callback,
+      auto_select: false,
+      cancel_on_tap_outside: false
     })
   }
 
-  private static initializeGoogleAuth(): void {
-    if (!window.google?.accounts?.id) {
-      throw new Error('Google Identity Services not loaded')
-    }
-
-    if (!this.CLIENT_ID) {
-      throw new Error('Google Client ID not configured')
-    }
-  }
-
-  static renderSignInButton(
+  static async renderSignInButton(
     element: HTMLElement,
     callback: (idToken: string) => void,
     options: {
@@ -101,19 +74,9 @@ export class GoogleAuth {
       shape?: 'rectangular' | 'pill' | 'circle' | 'square'
       width?: string
     } = {}
-  ): void {
-    if (!this.initialized) {
-      throw new Error('GoogleAuth not initialized. Call initialize() first.')
-    }
-
-    window.google.accounts.id.initialize({
-      client_id: this.CLIENT_ID,
-      callback: (response: GoogleAuthCredential) => {
-        callback(response.credential)
-      },
-      auto_select: false,
-      cancel_on_tap_outside: false
-    })
+  ): Promise<void> {
+    await this.ensureInitialized()
+    this.initRequest((r) => callback(r.credential))
 
     window.google.accounts.id.renderButton(element, {
       theme: options.theme || 'outline',
@@ -125,22 +88,9 @@ export class GoogleAuth {
   }
 
   static async signIn(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (!this.initialized) {
-        reject(new Error('GoogleAuth not initialized. Call initialize() first.'))
-        return
-      }
-
-      window.google.accounts.id.initialize({
-        client_id: this.CLIENT_ID,
-        callback: (response: GoogleAuthCredential) => {
-          resolve(response.credential)
-        },
-        auto_select: false,
-        cancel_on_tap_outside: false
-      })
-
-      // Trigger the sign-in prompt
+    await this.ensureInitialized()
+    return new Promise((resolve) => {
+      this.initRequest((r) => resolve(r.credential))
       window.google.accounts.id.prompt()
     })
   }
