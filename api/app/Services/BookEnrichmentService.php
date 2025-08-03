@@ -331,7 +331,6 @@ class BookEnrichmentService
      */
     private function determineInfoQuality(array $data, $height = null, $width = null, $thickness = null): string
     {
-        $basicFields = ['title', 'authors'];
         $enhancedFields = ['description', 'published_date', 'page_count', 'publisher'];
         $completeFields = ['format', 'categories', 'google_id'];
 

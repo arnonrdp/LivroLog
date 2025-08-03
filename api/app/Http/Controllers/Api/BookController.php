@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Http;
 
 class BookController extends Controller
 {
+    // Validation constants to avoid duplication
+    private const VALIDATION_NULLABLE_STRING = 'nullable|string';
+
     /**
      *     @OA\Get(
      *     path="/api/books",
@@ -130,22 +133,28 @@ class BookController extends Controller
     public function store(Request $request, BookEnrichmentService $enrichmentService)
     {
         $request->validate([
-            'google_id' => 'nullable|string',
+            'google_id' => self::VALIDATION_NULLABLE_STRING,
             'title' => 'required|string|max:255',
-            'isbn' => 'nullable|string|max:20',
-            'authors' => 'nullable|string',
+            'isbn' => self::VALIDATION_NULLABLE_STRING . '|max:20',
+            'authors' => self::VALIDATION_NULLABLE_STRING,
             'thumbnail' => 'nullable|url|max:512',
-            'description' => 'nullable|string',
-            'language' => 'nullable|string|max:10',
-            'publisher' => 'nullable|string|max:255',
+            'description' => self::VALIDATION_NULLABLE_STRING,
+            'language' => self::VALIDATION_NULLABLE_STRING . '|max:10',
+            'publisher' => self::VALIDATION_NULLABLE_STRING . '|max:255',
             'published_date' => ['nullable', function ($attribute, $value, $fail) {
-                if ($value === null) return;
+                if ($value === null) {
+                    return;
+                }
 
                 // Accept year only (4 digits)
-                if (preg_match('/^\d{4}$/', $value)) return;
+                if (preg_match('/^\d{4}$/', $value)) {
+                    return;
+                }
 
                 // Accept year-month (YYYY-MM)
-                if (preg_match('/^\d{4}-\d{2}$/', $value)) return;
+                if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+                    return;
+                }
 
                 // Accept full date formats
                 try {

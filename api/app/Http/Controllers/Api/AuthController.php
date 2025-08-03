@@ -61,6 +61,11 @@ use Laravel\Socialite\Facades\Socialite;
  */
 class AuthController extends Controller
 {
+    // Validation constants to avoid duplication
+    private const VALIDATION_REQUIRED_STRING = 'required|string';
+    private const VALIDATION_REQUIRED_EMAIL = 'required|email';
+    private const LIBRARY_SUFFIX = "'s Library";
+
     /**
      * @OA\Post(
      *     path="/api/auth/register",
@@ -102,8 +107,8 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'display_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'display_name' => self::VALIDATION_REQUIRED_STRING . '|max:255',
+            'email' => self::VALIDATION_REQUIRED_EMAIL . '|max:255|unique:users',
             'username' => [
                 'required',
                 'string',
@@ -113,7 +118,7 @@ class AuthController extends Controller
                 'regex:/^[a-zA-Z0-9_]+$/', // Only letters, numbers, and underscores
                 'not_regex:/^(admin|api|www|root|support|help|about|contact|terms|privacy|settings|profile|user|users|book|books)$/i' // Reserved usernames
             ],
-            'password' => 'required|string|min:8',
+            'password' => self::VALIDATION_REQUIRED_STRING . '|min:8',
         ]);
 
         $user = User::create([
@@ -121,7 +126,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'shelf_name' => $request->shelf_name ?? $request->display_name . "'s Library",
+            'shelf_name' => $request->shelf_name ?? $request->display_name . self::LIBRARY_SUFFIX,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -171,7 +176,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => self::VALIDATION_REQUIRED_EMAIL,
             'password' => 'required',
         ]);
 

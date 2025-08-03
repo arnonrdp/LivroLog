@@ -43,6 +43,11 @@ class Book extends Model
 {
     use HasFactory;
 
+    // Constants to avoid duplication
+    private const DECIMAL_PRECISION = 'decimal:2';
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'id',
@@ -78,9 +83,9 @@ class Book extends Model
         'industry_identifiers' => 'array',
         'published_date' => 'date',
         'enriched_at' => 'datetime',
-        'height' => 'decimal:2',
-        'width' => 'decimal:2',
-        'thickness' => 'decimal:2',
+        'height' => self::DECIMAL_PRECISION,
+        'width' => self::DECIMAL_PRECISION,
+        'thickness' => self::DECIMAL_PRECISION,
     ];
 
     protected static function boot()

@@ -30,50 +30,69 @@ class ImportFirestoreShowcase extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $this->info('🚀 Starting Firestore Showcase Migration...');
 
         try {
-            // Get input data
-            $data = $this->getInputData();
+            $result = $this->executeImport();
 
-            if (empty($data)) {
-                $this->error('❌ No data found to import.');
-                return 1;
-            }
-
-            // Validate data structure
-            $validatedData = $this->validateAndTransformData($data);
-
-            if (empty($validatedData)) {
-                $this->error('❌ No valid data found after validation.');
-                return 1;
-            }
-
-            $this->info("📊 Found {" . count($validatedData) . "} records to import.");
-
-            // Preview mode
-            if ($this->option('dry-run')) {
-                $this->previewImport($validatedData);
+            if ($result['success']) {
+                $this->info('✅ Migration completed successfully!');
                 return 0;
+            } else {
+                $this->error($result['message']);
+                return 1;
             }
-
-            // Clear existing data if requested
-            if ($this->option('clear')) {
-                $this->clearExistingData();
-            }
-
-            // Import data
-            $this->importData($validatedData);
-
-            $this->info('✅ Migration completed successfully!');
-            return 0;
 
         } catch (\Exception $e) {
             $this->error("❌ Migration failed: {$e->getMessage()}");
             return 1;
         }
+    }
+
+    /**
+     * Execute the import process
+     */
+    private function executeImport(): array
+    {
+        // Get input data
+        $data = $this->getInputData();
+
+        if (empty($data)) {
+            return [
+                'success' => false,
+                'message' => '❌ No data found to import.'
+            ];
+        }
+
+        // Validate data structure
+        $validatedData = $this->validateAndTransformData($data);
+
+        if (empty($validatedData)) {
+            return [
+                'success' => false,
+                'message' => '❌ No valid data found after validation.'
+            ];
+        }
+
+        $this->info("📊 Found {" . count($validatedData) . "} records to import.");
+
+        // Preview mode
+        if ($this->option('dry-run')) {
+            $this->previewImport($validatedData);
+            return ['success' => true, 'message' => 'Preview completed'];
+        }
+
+        // Clear existing data if requested
+        if ($this->option('clear')) {
+            $this->clearExistingData();
+        }
+
+        // Import data
+        $this->importData($validatedData);
+
+        return ['success' => true, 'message' => 'Migration completed successfully'];
     }
 
     /**
