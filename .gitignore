@@ -1,13 +1,33 @@
-.DS_Store
-node_modules
-/dist
-
-# local env files
+# Environment files
 .env
 .env.local
 .env.*.local
 
+# Dependencies
+.DS_Store
+node_modules
+vendor/
+/webapp/dist/
+
+# Build outputs
+/api/public/build/
+/api/public/hot
+
+# Laravel specific
+/api/bootstrap/compiled.php
+/api/storage/*.key
+/api/storage/logs/
+/api/storage/app/
+/api/storage/framework/cache/
+/api/storage/framework/sessions/
+/api/storage/framework/views/
+/api/bootstrap/cache/
+
+# Docker
+/api/docker/data/
+
 # Log files
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -20,3 +40,18 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+*~
+
+# Testing
+/api/coverage/
+/webapp/coverage/
+
+# Temporary files
+*.tmp
+*.temp
+PROJETO MODELO
+
+# Project model (temporary)
+/PROJETO-MODELO/

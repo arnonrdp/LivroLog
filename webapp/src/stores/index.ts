@@ -1,0 +1,5 @@
+export { useAuthStore } from './auth'
+export { useBookStore } from './book'
+export { usePeopleStore } from './people'
+export { useShowcaseStore } from './showcase'
+export { useUserStore } from './user'

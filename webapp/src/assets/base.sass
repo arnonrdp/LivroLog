@@ -1,0 +1,28 @@
+*, *::before, *::after
+  box-sizing: border-box
+  margin: 0
+
+html
+  font-size: 16px
+  scroll-behavior: smooth
+  @media screen and (max-width: $breakpoint-xl-min)
+    font-size: 15px
+  @media screen and (max-width: $breakpoint-lg-min)
+    font-size: 14px
+  @media screen and (max-width: $breakpoint-md-min)
+    font-size: 13px
+  @media screen and (max-width: $breakpoint-sm-min)
+    font-size: 12px
+
+body
+  background-color: $accent
+  color: $dark
+  font-size: 1rem
+  font-weight: 400
+  line-height: 1.7
+  text-rendering: optimizeLegibility
+  transition:
+    color: 0.5s
+    background-color: 0.5s
+  -webkit-font-smoothing: antialiased
+  -moz-osx-font-smoothing: grayscale
