@@ -1,16 +1,6 @@
 <template>
   <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
-      <!-- TODO: Desenvolver funcionalidade -->
-      <!-- <q-btn
-        v-if="selfUser"
-        color="info"
-        icon="calendar_month"
-        round
-        size="sm"
-        style="left: -1rem; top: 1rem"
-        @click.once="$emit('emitReadDate', book.id)"
-      /> -->
       <q-btn
         v-if="selfUser"
         color="negative"

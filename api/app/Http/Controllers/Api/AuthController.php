@@ -302,7 +302,7 @@ class AuthController extends Controller
     public function updatePassword(Request $request)
     {
         $request->validate([
-            'current_password' => 'required|string',
+            'current_password' => self::VALIDATION_REQUIRED_STRING,
             'password' => array_merge(self::VALIDATION_PASSWORD_RULES, ['confirmed']),
         ]);
 
@@ -359,7 +359,7 @@ class AuthController extends Controller
      */
     public function forgotPassword(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate(['email' => self::VALIDATION_REQUIRED_EMAIL]);
 
         $status = Password::sendResetLink(
             $request->only('email')
@@ -409,8 +409,8 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'token' => 'required|string',
-            'email' => 'required|email',
+            'token' => self::VALIDATION_REQUIRED_STRING,
+            'email' => self::VALIDATION_REQUIRED_EMAIL,
             'password' => array_merge(self::VALIDATION_PASSWORD_RULES, ['confirmed']),
         ]);
 
@@ -572,7 +572,7 @@ class AuthController extends Controller
     public function googleSignIn(Request $request)
     {
         $request->validate([
-            'id_token' => 'required|string',
+            'id_token' => self::VALIDATION_REQUIRED_STRING,
         ]);
 
         try {

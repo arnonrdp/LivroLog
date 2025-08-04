@@ -118,7 +118,47 @@ class BookEnrichmentService
         $volumeInfo = $googleBookData['volumeInfo'] ?? [];
         $data = [];
 
-        // Basic information
+        $data = array_merge($data, $this->extractBasicInfo($volumeInfo));
+        $data = array_merge($data, $this->extractThumbnail($volumeInfo));
+        $data = array_merge($data, $this->extractPublicationDate($volumeInfo, $book));
+        $data = array_merge($data, $this->extractAuthorInfo($volumeInfo));
+        $data = array_merge($data, $this->extractPublisherInfo($volumeInfo));
+        $data = array_merge($data, $this->extractPageInfo($volumeInfo));
+        $data = array_merge($data, $this->extractCategoriesAndIdentifiers($volumeInfo));
+        $data = array_merge($data, $this->extractPhysicalDimensions($volumeInfo));
+        $data = array_merge($data, $this->extractMaturityAndRating($volumeInfo));
+
+        // Google ID
+        if (isset($googleBookData['id'])) {
+            $data['google_id'] = $googleBookData['id'];
+        }
+
+        // Determine format based on available information
+        $data['format'] = $this->determineFormat($googleBookData);
+
+        // Information quality
+        $data['info_quality'] = $this->determineInfoQuality(
+            $data,
+            $data['height'] ?? null,
+            $data['width'] ?? null,
+            $data['thickness'] ?? null
+        );
+
+        // Mark as enriched
+        $data['enriched_at'] = now();
+
+        return array_filter($data, function($value) {
+            return !is_null($value) && !(is_string($value) && $value === '');
+        });
+    }
+
+    /**
+     * Extract basic information (subtitle, description)
+     */
+    private function extractBasicInfo(array $volumeInfo): array
+    {
+        $data = [];
+
         if (isset($volumeInfo['subtitle'])) {
             $data['subtitle'] = $volumeInfo['subtitle'];
         }
@@ -127,12 +167,30 @@ class BookEnrichmentService
             $data['description'] = $volumeInfo['description'];
         }
 
-        // Thumbnail image
+        return $data;
+    }
+
+    /**
+     * Extract thumbnail image
+     */
+    private function extractThumbnail(array $volumeInfo): array
+    {
+        $data = [];
+
         if (isset($volumeInfo['imageLinks']['thumbnail'])) {
             $data['thumbnail'] = str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail']);
         }
 
-        // Publication date - be smart about overwriting existing dates
+        return $data;
+    }
+
+    /**
+     * Extract publication date with smart updating logic
+     */
+    private function extractPublicationDate(array $volumeInfo, ?Book $book): array
+    {
+        $data = [];
+
         if (isset($volumeInfo['publishedDate'])) {
             $googleDate = $volumeInfo['publishedDate'];
             $currentDate = $book ? $book->published_date : null;
@@ -169,37 +227,57 @@ class BookEnrichmentService
             }
         }
 
-        // Number of pages
+        return $data;
+    }
+
+    /**
+     * Extract author information
+     */
+    private function extractAuthorInfo(array $volumeInfo): array
+    {
+        // This service focuses on book-level data
+        // Author extraction is handled separately
+        return [];
+    }
+
+    /**
+     * Extract publisher information
+     */
+    private function extractPublisherInfo(array $volumeInfo): array
+    {
+        $data = [];
+
+        if (isset($volumeInfo['publisher'])) {
+            $data['publisher'] = $volumeInfo['publisher'];
+        }
+
+        return $data;
+    }
+
+    /**
+     * Extract page and format information
+     */
+    private function extractPageInfo(array $volumeInfo): array
+    {
+        $data = [];
+
         if (isset($volumeInfo['pageCount'])) {
             $data['page_count'] = (int) $volumeInfo['pageCount'];
         }
 
-        // Format and type
         if (isset($volumeInfo['printType'])) {
             $data['print_type'] = $volumeInfo['printType'];
         }
 
-                // Determine format based on available information
-        $data['format'] = $this->determineFormat($googleBookData);
+        return $data;
+    }
 
-        // Dimensions
-        if (isset($volumeInfo['dimensions'])) {
-            $dimensions = $volumeInfo['dimensions'];
-            if (isset($dimensions['height'])) {
-                $data['height'] = $this->convertToMillimeters($dimensions['height']);
-            }
-            if (isset($dimensions['width'])) {
-                $data['width'] = $this->convertToMillimeters($dimensions['width']);
-            }
-            if (isset($dimensions['thickness'])) {
-                $data['thickness'] = $this->convertToMillimeters($dimensions['thickness']);
-            }
-        }
-
-        // Age rating
-        if (isset($volumeInfo['maturityRating'])) {
-            $data['maturity_rating'] = $volumeInfo['maturityRating'];
-        }
+    /**
+     * Extract categories and industry identifiers
+     */
+    private function extractCategoriesAndIdentifiers(array $volumeInfo): array
+    {
+        $data = [];
 
         // Categories - normalize to always be an array
         if (isset($volumeInfo['categories'])) {
@@ -208,11 +286,6 @@ class BookEnrichmentService
             } else {
                 $data['categories'] = [$volumeInfo['categories']];
             }
-        }
-
-        // Google ID
-        if (isset($googleBookData['id'])) {
-            $data['google_id'] = $googleBookData['id'];
         }
 
         // Industry identifiers (all ISBNs)
@@ -230,18 +303,44 @@ class BookEnrichmentService
             }
         }
 
-        // Information quality
-        $data['info_quality'] = $this->determineInfoQuality(
-            $data,
-            $data['height'] ?? null,
-            $data['width'] ?? null,
-            $data['thickness'] ?? null
-        );
-        $data['enriched_at'] = now();
+        return $data;
+    }
 
-        return array_filter($data, function($value) {
-            return !is_null($value) && !(is_string($value) && $value === '');
-        });
+    /**
+     * Extract physical dimensions
+     */
+    private function extractPhysicalDimensions(array $volumeInfo): array
+    {
+        $data = [];
+
+        if (isset($volumeInfo['dimensions'])) {
+            $dimensions = $volumeInfo['dimensions'];
+            if (isset($dimensions['height'])) {
+                $data['height'] = $this->convertToMillimeters($dimensions['height']);
+            }
+            if (isset($dimensions['width'])) {
+                $data['width'] = $this->convertToMillimeters($dimensions['width']);
+            }
+            if (isset($dimensions['thickness'])) {
+                $data['thickness'] = $this->convertToMillimeters($dimensions['thickness']);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Extract maturity rating and other metadata
+     */
+    private function extractMaturityAndRating(array $volumeInfo): array
+    {
+        $data = [];
+
+        if (isset($volumeInfo['maturityRating'])) {
+            $data['maturity_rating'] = $volumeInfo['maturityRating'];
+        }
+
+        return $data;
     }
 
     /**

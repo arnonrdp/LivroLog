@@ -34,15 +34,15 @@ export const usePeopleStore = defineStore('people', {
         .finally(() => (this._isLoading = false))
     },
 
-    // TODO: Implement follow/unfollow functionality when API endpoints are available
-    follow() {
-      // Placeholder method - API call to follow user will be implemented
-      console.warn('Follow functionality not yet implemented')
+    // TODO: Follow/Unfollow functionality - Future feature
+    follow(userId: string) {
+      // Implementation will be added when social features are developed
+      throw new Error('Follow functionality is not yet available')
     },
 
-    unfollow() {
-      // Placeholder method - API call to unfollow user will be implemented
-      console.warn('Unfollow functionality not yet implemented')
+    unfollow(userId: string) {
+      // Implementation will be added when social features are developed
+      throw new Error('Unfollow functionality is not yet available')
     }
   }
 })

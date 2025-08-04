@@ -19,6 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Add security headers to all requests
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (): void {
         //
     })->create();

@@ -631,13 +631,61 @@ class ImportFirebaseData extends Command
     private function extractUserData(array $userData): array
     {
         return [
-            'display_name' => $userData['display_name'] ?? $userData['displayName'] ?? 'Unknown User',
+            'display_name' => $this->getUserDisplayName($userData),
             'email' => $userData['email'] ?? 'user' . time() . '@example.com',
-            'username' => $userData['username'] ?? $userData['email'] ?? 'user' . time(),
+            'username' => $this->getUserUsername($userData),
             'password' => Hash::make($userData['password'] ?? 'password123'),
-            'shelf_name' => $userData['shelf_name'] ?? $userData['shelfName'] ?? null,
+            'shelf_name' => $this->getUserShelfName($userData),
             'email_verified_at' => (isset($userData['emailVerified']) && $userData['emailVerified']) ? now() : null,
         ];
+    }
+
+    /**
+     * Get user display name with fallbacks
+     */
+    private function getUserDisplayName(array $userData): string
+    {
+        if (isset($userData['display_name'])) {
+            return $userData['display_name'];
+        }
+
+        if (isset($userData['displayName'])) {
+            return $userData['displayName'];
+        }
+
+        return 'Unknown User';
+    }
+
+    /**
+     * Get username with fallbacks
+     */
+    private function getUserUsername(array $userData): string
+    {
+        if (isset($userData['username'])) {
+            return $userData['username'];
+        }
+
+        if (isset($userData['email'])) {
+            return $userData['email'];
+        }
+
+        return 'user' . time();
+    }
+
+    /**
+     * Get user shelf name with fallbacks
+     */
+    private function getUserShelfName(array $userData): ?string
+    {
+        if (isset($userData['shelf_name'])) {
+            return $userData['shelf_name'];
+        }
+
+        if (isset($userData['shelfName'])) {
+            return $userData['shelfName'];
+        }
+
+        return null;
     }
 
     /**
@@ -647,12 +695,60 @@ class ImportFirebaseData extends Command
     {
         return [
             'title' => $bookData['title'] ?? 'Unknown Title',
-            'isbn' => $bookData['isbn'] ?? $bookData['ISBN'] ?? null,
-            'thumbnail' => $bookData['thumbnail'] ?? $bookData['image'] ?? null,
-            'language' => $bookData['language'] ?? $bookData['lang'] ?? 'pt-BR',
+            'isbn' => $this->getBookIsbn($bookData),
+            'thumbnail' => $this->getBookThumbnail($bookData),
+            'language' => $this->getBookLanguage($bookData),
             'publisher' => $bookData['publisher'] ?? null,
             'edition' => $bookData['edition'] ?? null,
         ];
+    }
+
+    /**
+     * Get book ISBN with fallbacks
+     */
+    private function getBookIsbn(array $bookData): ?string
+    {
+        if (isset($bookData['isbn'])) {
+            return $bookData['isbn'];
+        }
+
+        if (isset($bookData['ISBN'])) {
+            return $bookData['ISBN'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get book thumbnail with fallbacks
+     */
+    private function getBookThumbnail(array $bookData): ?string
+    {
+        if (isset($bookData['thumbnail'])) {
+            return $bookData['thumbnail'];
+        }
+
+        if (isset($bookData['image'])) {
+            return $bookData['image'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get book language with fallbacks
+     */
+    private function getBookLanguage(array $bookData): string
+    {
+        if (isset($bookData['language'])) {
+            return $bookData['language'];
+        }
+
+        if (isset($bookData['lang'])) {
+            return $bookData['lang'];
+        }
+
+        return 'pt-BR';
     }
 
     /**

@@ -2,8 +2,8 @@ FROM php:8.4-fpm
 
 # Install system dependencies, PHP extensions, Redis, and Xdebug
 RUN apt-get update && apt-get install -y \
-    git \
     curl \
+    git \
     libicu-dev \
     libonig-dev \
     libpng-dev \
@@ -18,8 +18,7 @@ RUN apt-get update && apt-get install -y \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.log=/var/log/xdebug.log" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

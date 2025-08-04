@@ -110,7 +110,8 @@ export class GoogleAuth {
 
       return { id, email, name, picture, email_verified }
     } catch (error) {
-      throw new Error('Failed to decode Google ID token')
+      console.error('Failed to decode Google ID token:', error)
+      throw new Error(`Failed to decode Google ID token: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

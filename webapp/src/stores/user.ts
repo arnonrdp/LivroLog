@@ -14,8 +14,7 @@ export const useUserStore = defineStore('user', {
 
   getters: {
     isLoading: (state) => state._isLoading,
-    // TODO: Implementar corretamente quando a lógica de "following" estiver disponível.
-    // Atualmente é um placeholder/stub e sempre retorna false.
+    // Following functionality placeholder - will be implemented with social features
     isFollowing: (_state) => (_personId: number) => {
       return false
     },

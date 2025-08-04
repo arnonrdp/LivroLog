@@ -191,7 +191,9 @@ class BookController extends Controller
     {
         if ($isbn) {
             $book = Book::where('isbn', $isbn)->first();
-            if ($book) return $book;
+            if ($book) {
+                return $book;
+            }
         }
 
         if ($googleId) {
@@ -387,57 +389,101 @@ class BookController extends Controller
             'q' => 'required|string|min:3'
         ]);
 
-        $response = Http::get('https://www.googleapis.com/books/v1/volumes', [
-            'q' => $request->q,
-            'maxResults' => 40,
-            'printType' => 'books'
-        ]);
+        $response = $this->fetchGoogleBooksData($request->q);
 
         if ($response->successful()) {
             $data = $response->json();
-            $books = [];
+            $books = $this->processGoogleBooksResults($data);
 
-            if (isset($data['items'])) {
-                foreach ($data['items'] as $item) {
-                    $volumeInfo = $item['volumeInfo'] ?? [];
-
-                    // Extract ISBNs
-                    $isbn = '';
-                    if (isset($volumeInfo['industryIdentifiers'])) {
-                        foreach ($volumeInfo['industryIdentifiers'] as $identifier) {
-                            if (in_array($identifier['type'], ['ISBN_13', 'ISBN_10'])) {
-                                $isbn = $identifier['identifier'];
-                                break;
-                            }
-                        }
-                    }
-
-                    $books[] = [
-                        'google_id' => $item['id'],
-                        'title' => $volumeInfo['title'] ?? '',
-                        'subtitle' => $volumeInfo['subtitle'] ?? null,
-                        'authors' => $volumeInfo['authors'] ? implode(', ', $volumeInfo['authors']) : '',
-                        'isbn' => $isbn ?: $item['id'],
-                        'thumbnail' => ($volumeInfo['imageLinks']['thumbnail'] ?? null) ?
-                            str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail']) : null,
-                        'description' => $volumeInfo['description'] ?? '',
-                        'publisher' => $volumeInfo['publisher'] ?? '',
-                        'published_date' => $volumeInfo['publishedDate'] ?? null,
-                        'page_count' => $volumeInfo['pageCount'] ?? null,
-                        'language' => $volumeInfo['language'] ?? 'pt-BR',
-                        'categories' => $volumeInfo['categories'] ?? null,
-                        'maturity_rating' => $volumeInfo['maturityRating'] ?? null,
-                        'print_type' => $volumeInfo['printType'] ?? null,
-                        // Indicates that this data already comes "enriched" from search
-                        'info_quality' => 'enhanced'
-                    ];
-                }
-            }
-
-            return response()->json($books);
+            return response()->json(['books' => $books]);
         }
 
         return response()->json(['error' => 'Failed to search books'], 500);
+    }
+
+    /**
+     * Fetch data from Google Books API
+     */
+    private function fetchGoogleBooksData(string $query)
+    {
+        return Http::get('https://www.googleapis.com/books/v1/volumes', [
+            'q' => $query,
+            'maxResults' => 40,
+            'printType' => 'books'
+        ]);
+    }
+
+    /**
+     * Process Google Books API response data
+     */
+    private function processGoogleBooksResults(array $data): array
+    {
+        $books = [];
+
+        if (isset($data['items'])) {
+            foreach ($data['items'] as $item) {
+                $books[] = $this->transformGoogleBookItem($item);
+            }
+        }
+
+        return $books;
+    }
+
+    /**
+     * Transform a single Google Book item to our format
+     */
+    private function transformGoogleBookItem(array $item): array
+    {
+        $volumeInfo = $item['volumeInfo'] ?? [];
+        $isbn = $this->extractIsbnFromItem($volumeInfo);
+
+        return [
+            'google_id' => $item['id'],
+            'title' => $volumeInfo['title'] ?? '',
+            'subtitle' => $volumeInfo['subtitle'] ?? null,
+            'authors' => $volumeInfo['authors'] ? implode(', ', $volumeInfo['authors']) : '',
+            'isbn' => $isbn ?: $item['id'],
+            'thumbnail' => $this->getSecureThumbnailUrl($volumeInfo),
+            'description' => $volumeInfo['description'] ?? '',
+            'publisher' => $volumeInfo['publisher'] ?? '',
+            'published_date' => $volumeInfo['publishedDate'] ?? null,
+            'page_count' => $volumeInfo['pageCount'] ?? null,
+            'language' => $volumeInfo['language'] ?? 'pt-BR',
+            'categories' => $volumeInfo['categories'] ?? null,
+        ];
+    }
+
+    /**
+     * Extract ISBN from Google Book volume info
+     */
+    private function extractIsbnFromItem(array $volumeInfo): string
+    {
+        $isbn = '';
+
+        if (isset($volumeInfo['industryIdentifiers'])) {
+            foreach ($volumeInfo['industryIdentifiers'] as $identifier) {
+                if (in_array($identifier['type'], ['ISBN_13', 'ISBN_10'])) {
+                    $isbn = $identifier['identifier'];
+                    break;
+                }
+            }
+        }
+
+        return $isbn;
+    }
+
+    /**
+     * Get secure thumbnail URL
+     */
+    private function getSecureThumbnailUrl(array $volumeInfo): ?string
+    {
+        $thumbnail = $volumeInfo['imageLinks']['thumbnail'] ?? null;
+
+        if ($thumbnail) {
+            return str_replace('http:', 'https:', $thumbnail);
+        }
+
+        return null;
     }
 
     /**
