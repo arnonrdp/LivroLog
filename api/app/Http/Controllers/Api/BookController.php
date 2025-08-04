@@ -7,6 +7,7 @@ use App\Models\Book;
 use App\Http\Resources\PaginatedResource;
 use App\Models\Showcase;
 use App\Services\BookEnrichmentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -173,73 +174,90 @@ class BookController extends Controller
         $user = $request->user();
         $isbn = $request->input('isbn');
         $googleId = $request->input('google_id');
-        $book = null;
 
-        // Try to find existing book by ISBN or Google ID
-        if ($isbn) {
-            $book = Book::where('isbn', $isbn)->first();
-        }
-        if (!$book && $googleId) {
-            $book = Book::where('google_id', $googleId)->first();
-        }
+        $book = $this->findExistingBook($isbn, $googleId);
 
         if ($book) {
-            // Book already exists
-            $needsEnrichment = $this->shouldEnrichBook($book);
+            return $this->handleExistingBook($book, $user, $enrichmentService, $googleId);
+        }
 
-            if ($needsEnrichment) {
-                // Enrich existing book if it needs more information
-                $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-                if ($enrichmentResult['success']) {
-                    $book->refresh(); // Reload the book with updated data
-                }
+        return $this->handleNewBook($request, $user, $enrichmentService, $googleId);
+    }
+
+    /**
+     * Find existing book by ISBN or Google ID
+     */
+    private function findExistingBook(?string $isbn, ?string $googleId): ?Book
+    {
+        if ($isbn) {
+            $book = Book::where('isbn', $isbn)->first();
+            if ($book) return $book;
+        }
+
+        if ($googleId) {
+            return Book::where('google_id', $googleId)->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * Handle existing book processing
+     */
+    private function handleExistingBook(Book $book, $user, BookEnrichmentService $enrichmentService, ?string $googleId): JsonResponse
+    {
+        $needsEnrichment = $this->shouldEnrichBook($book);
+
+        if ($needsEnrichment) {
+            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
+            if ($enrichmentResult['success']) {
+                $book->refresh();
             }
+        }
 
-            // Associate with user if not already associated
-            if (!$user->books()->where('books.id', $book->id)->exists()) {
-                $user->books()->attach($book->id, [
-                    'added_at' => now(),
-                ]);
-            }
-
-            return response()->json([
-                'book' => $book,
-                'enriched' => $needsEnrichment,
-                'message' => $needsEnrichment ? 'Book found and enriched' : 'Book found in database'
-            ], 200);
-
-        } else {
-            // Book doesn't exist, create new one
-            $bookData = $request->all();
-
-            // Process published_date to avoid casting issues
-            if (!empty($bookData['published_date'])) {
-                $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
-            }
-
-            // Create the book first
-            $book = Book::create($bookData);
-
-            // Try to enrich it if we have a google_id
-            $enrichmentResult = null;
-            if ($googleId) {
-                $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-                if ($enrichmentResult['success']) {
-                    $book->refresh(); // Reload with enriched data
-                }
-            }
-
-            // Associate with user
+        if (!$user->books()->where('books.id', $book->id)->exists()) {
             $user->books()->attach($book->id, [
                 'added_at' => now(),
             ]);
-
-            return response()->json([
-                'book' => $book,
-                'enriched' => $enrichmentResult ? $enrichmentResult['success'] : false,
-                'message' => 'Book created successfully'
-            ], 201);
         }
+
+        return response()->json([
+            'book' => $book,
+            'enriched' => $needsEnrichment,
+            'message' => $needsEnrichment ? 'Book found and enriched' : 'Book found in database'
+        ], 200);
+    }
+
+    /**
+     * Handle new book creation
+     */
+    private function handleNewBook(Request $request, $user, BookEnrichmentService $enrichmentService, ?string $googleId): JsonResponse
+    {
+        $bookData = $request->all();
+
+        if (!empty($bookData['published_date'])) {
+            $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
+        }
+
+        $book = Book::create($bookData);
+
+        $enrichmentResult = null;
+        if ($googleId) {
+            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
+            if ($enrichmentResult['success']) {
+                $book->refresh();
+            }
+        }
+
+        $user->books()->attach($book->id, [
+            'added_at' => now(),
+        ]);
+
+        return response()->json([
+            'book' => $book,
+            'enriched' => $enrichmentResult ? $enrichmentResult['success'] : false,
+            'message' => 'Book created successfully'
+        ], 201);
     }
 
     /**

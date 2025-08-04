@@ -38,7 +38,34 @@ class EnrichBooksCommand extends Command
     {
         $this->info('🔍 Starting book enrichment...');
 
-        // Determines which books to process
+        $books = $this->getBooksToProcess();
+        $totalBooks = $books->count();
+
+        if ($totalBooks === 0) {
+            $this->info('✅ No books found for enrichment.');
+            return Command::SUCCESS;
+        }
+
+        $this->info("📖 Found {$totalBooks} books to process");
+        $this->showCurrentStats();
+
+        if ($this->option('dry-run')) {
+            return $this->handleDryRun($books);
+        }
+
+        if (!$this->confirmProcessing($totalBooks)) {
+            $this->info('❌ Operation cancelled.');
+            return Command::SUCCESS;
+        }
+
+        return $this->processBooks($books, $enrichmentService);
+    }
+
+    /**
+     * Get books to process based on options
+     */
+    private function getBooksToProcess()
+    {
         $query = Book::query();
 
         if ($this->option('book-id')) {
@@ -61,78 +88,59 @@ class EnrichBooksCommand extends Command
                   ->limit($this->option('max-books'));
         }
 
-        $books = $query->get();
-        $totalBooks = $books->count();
+        return $query->get();
+    }
 
-        if ($totalBooks === 0) {
-            $this->info('✅ No books found for enrichment.');
-            return Command::SUCCESS;
-        }
+    /**
+     * Handle dry run mode
+     */
+    private function handleDryRun($books): int
+    {
+        $this->warn('🔍 DRY-RUN MODE - No changes will be made');
+        $this->table(
+            ['ID', 'Title', 'Current Quality', 'Last Update'],
+            $books->map(function($book) {
+                return [
+                    $book->id,
+                    substr($book->title, 0, self::TITLE_DISPLAY_MAX_LENGTH) . (strlen($book->title) > self::TITLE_DISPLAY_MAX_LENGTH ? '...' : ''),
+                    $book->info_quality ?? 'basic',
+                    $book->enriched_at ? $book->enriched_at->format('d/m/Y H:i') : 'Never'
+                ];
+            })->toArray()
+        );
+        return Command::SUCCESS;
+    }
 
-        $this->info("📖 Found {$totalBooks} books to process");
+    /**
+     * Confirm processing with user
+     */
+    private function confirmProcessing(int $totalBooks): bool
+    {
+        return $this->confirm("Do you want to enrich {$totalBooks} books?", true);
+    }
 
-        // Shows current statistics
-        $this->showCurrentStats();
-
-        if ($this->option('dry-run')) {
-            $this->warn('🔍 DRY-RUN MODE - No changes will be made');
-            $this->table(
-                ['ID', 'Title', 'Current Quality', 'Last Update'],
-                $books->map(function($book) {
-                    return [
-                        $book->id,
-                        substr($book->title, 0, self::TITLE_DISPLAY_MAX_LENGTH) . (strlen($book->title) > self::TITLE_DISPLAY_MAX_LENGTH ? '...' : ''),
-                        $book->info_quality ?? 'basic',
-                        $book->enriched_at ? $book->enriched_at->format('d/m/Y H:i') : 'Never'
-                    ];
-                })->toArray()
-            );
-            return Command::SUCCESS;
-        }
-
-        // Confirms if should proceed
-        if (!$this->confirm("Do you want to enrich {$totalBooks} books?", true)) {
-            $this->info('❌ Operation cancelled.');
-            return Command::SUCCESS;
-        }
-
+    /**
+     * Process books in batches
+     */
+    private function processBooks($books, BookEnrichmentService $enrichmentService): int
+    {
         $batchSize = (int) $this->option('batch-size');
         $processed = 0;
         $successful = 0;
         $errors = 0;
+        $totalBooks = $books->count();
 
         $progressBar = $this->output->createProgressBar($totalBooks);
         $progressBar->start();
 
-        // Processes in batches
         foreach ($books->chunk($batchSize) as $batch) {
-            foreach ($batch as $book) {
-                try {
-                    $result = $enrichmentService->enrichBook($book);
+            $results = $this->processBatch($batch, $enrichmentService);
+            $processed += $results['processed'];
+            $successful += $results['successful'];
+            $errors += $results['errors'];
 
-                    if ($result['success']) {
-                        $successful++;
-                        $this->line("\n✅ {$book->title}: " . $result['message']);
-                        if (isset($result['added_fields']) && !empty($result['added_fields'])) {
-                            $this->line("   📝 Added fields: " . implode(', ', $result['added_fields']));
-                        }
-                    } else {
-                        $errors++;
-                        $this->line("\n❌ {$book->title}: " . $result['message']);
-                    }
+            $progressBar->advance($results['processed']);
 
-                } catch (\Exception $e) {
-                    $errors++;
-                    $this->line("\n💥 Error processing {$book->title}: " . $e->getMessage());
-                }
-
-                $processed++;
-                $progressBar->advance();
-
-                // Rate limiting is handled by the service
-            }
-
-            // Brief pause between batches for system stability
             if ($books->count() > $batchSize) {
                 $this->line("\n⏸️  Brief pause between batches...");
                 usleep(self::BATCH_PAUSE_MICROSECONDS);
@@ -140,8 +148,50 @@ class EnrichBooksCommand extends Command
         }
 
         $progressBar->finish();
+        $this->showResults($processed, $successful, $errors);
 
-        // Shows final results
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Process a single batch of books
+     */
+    private function processBatch($batch, BookEnrichmentService $enrichmentService): array
+    {
+        $processed = 0;
+        $successful = 0;
+        $errors = 0;
+
+        foreach ($batch as $book) {
+            try {
+                $result = $enrichmentService->enrichBook($book);
+
+                if ($result['success']) {
+                    $successful++;
+                    $this->line("\n✅ {$book->title}: " . $result['message']);
+                    if (isset($result['added_fields']) && !empty($result['added_fields'])) {
+                        $this->line("   📝 Added fields: " . implode(', ', $result['added_fields']));
+                    }
+                } else {
+                    $errors++;
+                    $this->line("\n❌ {$book->title}: " . $result['message']);
+                }
+            } catch (\Exception $e) {
+                $errors++;
+                $this->line("\n💥 Error processing {$book->title}: " . $e->getMessage());
+            }
+
+            $processed++;
+        }
+
+        return compact('processed', 'successful', 'errors');
+    }
+
+    /**
+     * Show final results
+     */
+    private function showResults(int $processed, int $successful, int $errors): void
+    {
         $this->newLine(2);
         $this->info('🎉 Enrichment completed!');
         $this->info("📊 Processed: {$processed}");
@@ -152,8 +202,7 @@ class EnrichBooksCommand extends Command
         $this->newLine();
         $this->info('📈 Updated statistics:');
         $this->showCurrentStats();
-
-        return Command::SUCCESS;
+    }
     }
 
     /**

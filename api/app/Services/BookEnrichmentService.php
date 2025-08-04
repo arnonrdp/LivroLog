@@ -278,7 +278,6 @@ class BookEnrichmentService
      */
     private function determineFormat(array $googleBookData): ?string
     {
-        $volumeInfo = $googleBookData['volumeInfo'] ?? [];
         $saleInfo = $googleBookData['saleInfo'] ?? [];
         $accessInfo = $googleBookData['accessInfo'] ?? [];
 

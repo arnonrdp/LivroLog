@@ -17,6 +17,7 @@ class ImportFirebaseData extends Command
     private const TITLE_DISPLAY_MAX_LENGTH = 30;
     private const AUTHOR_DISPLAY_MAX_LENGTH = 20;
     private const DEFAULT_BATCH_SIZE = 100;
+    private const UNKNOWN_AUTHOR = 'Unknown Author';
 
     /**
      * The name and signature of the console command.
@@ -253,8 +254,12 @@ class ImportFirebaseData extends Command
                 $extracted[$key] = $value['timestampValue'];
             } elseif (isset($value['arrayValue']['values'])) {
                 $extracted[$key] = array_map(function($item) {
-                    if (isset($item['stringValue'])) return $item['stringValue'];
-                    if (isset($item['integerValue'])) return $item['integerValue'];
+                    if (isset($item['stringValue'])) {
+                        return $item['stringValue'];
+                    }
+                    if (isset($item['integerValue'])) {
+                        return $item['integerValue'];
+                    }
                     return $item;
                 }, $value['arrayValue']['values']);
             } elseif (isset($value['mapValue']['fields'])) {
@@ -354,12 +359,14 @@ class ImportFirebaseData extends Command
                         $authors = array_map('trim', explode(',', $bookData['authors']));
                     }
                 } else {
-                    $authors = ['Unknown Author'];
+                    $authors = [self::UNKNOWN_AUTHOR];
                 }
 
                 $authorIds = [];
                 foreach ($authors as $authorName) {
-                    if (!$authorName) continue;
+                    if (!$authorName) {
+                        continue;
+                    }
                     $author = Author::firstOrCreate(['name' => $authorName]);
                     $authorIds[] = $author->id;
                 }
@@ -403,7 +410,7 @@ class ImportFirebaseData extends Command
         foreach ($showcase as $index => $itemData) {
             try {
                 // Corrigir campo authors ausente ou nulo
-                $authors = 'Unknown Author';
+                $authors = self::UNKNOWN_AUTHOR;
                 if (isset($itemData['authors'])) {
                     if (is_array($itemData['authors'])) {
                         $authors = implode(', ', $itemData['authors']);
@@ -416,14 +423,14 @@ class ImportFirebaseData extends Command
                     'title' => isset($itemData['title']) ? $itemData['title'] : 'Unknown Title',
                     'authors' => $authors,
                     'isbn' => isset($itemData['isbn']) ? $itemData['isbn'] : null,
-                    'description' => isset($itemData['description']) ? $itemData['description'] : (isset($itemData['desc']) ? $itemData['desc'] : null),
-                    'thumbnail' => isset($itemData['thumbnail']) ? $itemData['thumbnail'] : (isset($itemData['image']) ? $itemData['image'] : null),
-                    'link' => isset($itemData['link']) ? $itemData['link'] : (isset($itemData['url']) ? $itemData['url'] : null),
+                    'description' => $this->getFieldValue($itemData, ['description', 'desc']),
+                    'thumbnail' => $this->getFieldValue($itemData, ['thumbnail', 'image']),
+                    'link' => $this->getFieldValue($itemData, ['link', 'url']),
                     'publisher' => isset($itemData['publisher']) ? $itemData['publisher'] : null,
-                    'language' => isset($itemData['language']) ? $itemData['language'] : (isset($itemData['lang']) ? $itemData['lang'] : 'pt-BR'),
+                    'language' => $this->getFieldValue($itemData, ['language', 'lang'], 'pt-BR'),
                     'edition' => isset($itemData['edition']) ? $itemData['edition'] : null,
-                    'order_index' => isset($itemData['order']) ? $itemData['order'] : (isset($itemData['order_index']) ? $itemData['order_index'] : $index),
-                    'is_active' => isset($itemData['active']) ? $itemData['active'] : (isset($itemData['is_active']) ? $itemData['is_active'] : true),
+                    'order_index' => $this->getFieldValue($itemData, ['order', 'order_index'], $index),
+                    'is_active' => $this->getFieldValue($itemData, ['active', 'is_active'], true),
                     'notes' => (isset($itemData['notes']) ? $itemData['notes'] : '') . ' - Imported from Firebase',
                 ];
 
@@ -455,7 +462,7 @@ class ImportFirebaseData extends Command
         $this->table(
             ['Display Name', 'Email', 'Username'],
             collect($users)->take(5)->map(fn($user) => [
-                isset($user['display_name']) ? $user['display_name'] : (isset($user['displayName']) ? $user['displayName'] : 'Unknown'),
+                $this->getFieldValue($user, ['display_name', 'displayName'], 'Unknown'),
                 isset($user['email']) ? $user['email'] : 'No email',
                 isset($user['username']) ? $user['username'] : 'No username'
             ])->toArray()
@@ -469,8 +476,8 @@ class ImportFirebaseData extends Command
             ['Title', 'Authors', 'ISBN'],
             collect($books)->take(5)->map(fn($book) => [
                 substr(isset($book['title']) ? $book['title'] : 'Unknown', 0, self::TITLE_DISPLAY_MAX_LENGTH),
-                substr(is_array($book['authors']) ? implode(', ', $book['authors']) : (isset($book['authors']) ? $book['authors'] : 'Unknown'), 0, self::AUTHOR_DISPLAY_MAX_LENGTH),
-                isset($book['isbn']) ? $book['isbn'] : (isset($book['ISBN']) ? $book['ISBN'] : 'No ISBN')
+                substr($this->getAuthorsString($book), 0, self::AUTHOR_DISPLAY_MAX_LENGTH),
+                $this->getFieldValue($book, ['isbn', 'ISBN'], 'No ISBN')
             ])->toArray()
         );
     }
@@ -483,7 +490,7 @@ class ImportFirebaseData extends Command
             collect($showcase)->take(5)->map(function($item) {
                 $title = isset($item['title']) ? $item['title'] : 'Unknown';
                 // Corrigir campo authors ausente ou nulo
-                $authors = 'Unknown Author';
+                $authors = self::UNKNOWN_AUTHOR;
                 if (isset($item['authors'])) {
                     if (is_array($item['authors'])) {
                         $authors = implode(', ', $item['authors']);
@@ -491,7 +498,7 @@ class ImportFirebaseData extends Command
                         $authors = $item['authors'];
                     }
                 }
-                $active = (isset($item['active']) ? $item['active'] : (isset($item['is_active']) ? $item['is_active'] : true)) ? 'Yes' : 'No';
+                $active = $this->getFieldValue($item, ['active', 'is_active'], true) ? 'Yes' : 'No';
                 return [
                     substr($title, 0, self::TITLE_DISPLAY_MAX_LENGTH),
                     substr($authors, 0, self::AUTHOR_DISPLAY_MAX_LENGTH),
@@ -646,5 +653,34 @@ class ImportFirebaseData extends Command
             'publisher' => $bookData['publisher'] ?? null,
             'edition' => $bookData['edition'] ?? null,
         ];
+    }
+
+    /**
+     * Get field value trying multiple possible keys
+     */
+    private function getFieldValue(array $data, array $keys, $default = null)
+    {
+        foreach ($keys as $key) {
+            if (isset($data[$key])) {
+                return $data[$key];
+            }
+        }
+        return $default;
+    }
+
+    /**
+     * Get authors string from various possible formats
+     */
+    private function getAuthorsString(array $book): string
+    {
+        if (is_array($book['authors'] ?? null)) {
+            return implode(', ', $book['authors']);
+        }
+
+        if (isset($book['authors'])) {
+            return (string) $book['authors'];
+        }
+
+        return 'Unknown';
     }
 }

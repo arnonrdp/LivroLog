@@ -2,8 +2,8 @@
   <section class="flex justify-around">
     <figure v-for="book of shuffledShowcase" :key="book.id">
       <div class="cursor-pointer" @click="goTo(book.link)">
-        <img v-if="book.thumbnail" :alt="book.title" :src="book.thumbnail" />
-        <img v-else :alt="book.title" src="@/assets/no_cover.jpg" />
+        <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
+        <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
       </div>
     </figure>
   </section>

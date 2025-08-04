@@ -21,8 +21,8 @@
         @click.once="$emit('emitRemoveID', book.id)"
       />
       <q-btn v-else color="primary" icon="add" round size="sm" style="right: -1rem; top: 1rem" @click.once="$emit('emitAddID', book)" />
-      <img v-if="book.thumbnail" :alt="book.title" :src="book.thumbnail" />
-      <img v-else :alt="book.title" src="@/assets/no_cover.jpg" />
+      <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
+      <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">{{ book.title }}</q-tooltip>
     </figure>
   </section>

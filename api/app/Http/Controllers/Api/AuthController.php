@@ -66,6 +66,14 @@ class AuthController extends Controller
     private const VALIDATION_REQUIRED_EMAIL = 'required|email';
     private const LIBRARY_SUFFIX = "'s Library";
 
+    // Password validation rules
+    private const VALIDATION_PASSWORD_RULES = [
+        'required',
+        'string',
+        'min:8',
+        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/'
+    ];
+
     /**
      * @OA\Post(
      *     path="/api/auth/register",
@@ -118,7 +126,7 @@ class AuthController extends Controller
                 'regex:/^[a-zA-Z0-9_]+$/', // Only letters, numbers, and underscores
                 'not_regex:/^(admin|api|www|root|support|help|about|contact|terms|privacy|settings|profile|user|users|book|books)$/i' // Reserved usernames
             ],
-            'password' => self::VALIDATION_REQUIRED_STRING . '|min:8',
+            'password' => self::VALIDATION_PASSWORD_RULES,
         ]);
 
         $user = User::create([
@@ -295,7 +303,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'current_password' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => array_merge(self::VALIDATION_PASSWORD_RULES, ['confirmed']),
         ]);
 
         $user = $request->user();
@@ -403,7 +411,7 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required|string',
             'email' => 'required|email',
-            'password' => 'required|string|confirmed|min:8',
+            'password' => array_merge(self::VALIDATION_PASSWORD_RULES, ['confirmed']),
         ]);
 
         $status = Password::reset(
