@@ -1,0 +1,3897 @@
+{
+
+  "user_books": [
+    {
+      "thumbnail": "https://books.google.com/books/content?id=FP-rXfdk7EoC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "FP-rXfdk7EoC",
+      "authors": [
+        "Rick Riordan"
+      ],
+      "addedIn": 1673059170831,
+      "title": "O Ladrão de raios",
+      "readIn": "",
+      "ISBN": "9788580570151",
+      "_id": "FP-rXfdk7EoC",
+      "_user_id": "316tIKFCP9aKPeWpPD0aUMZCju52"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=mORT0kN1uBwC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "mORT0kN1uBwC",
+      "authors": [
+        "Rick Riordan"
+      ],
+      "addedIn": 1641773952620,
+      "title": "O mar de monstros",
+      "readIn": "",
+      "ISBN": "9788580570229",
+      "_id": "mORT0kN1uBwC",
+      "_user_id": "316tIKFCP9aKPeWpPD0aUMZCju52"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=tw-dmiS-UtsC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "tw-dmiS-UtsC",
+      "authors": [
+        "Rick Riordan"
+      ],
+      "addedIn": 1641773963835,
+      "title": "A pirâmide vermelha",
+      "readIn": "",
+      "ISBN": "9788580570175",
+      "_id": "tw-dmiS-UtsC",
+      "_user_id": "316tIKFCP9aKPeWpPD0aUMZCju52"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=AinXDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "AinXDwAAQBAJ",
+      "authors": [
+        "Luís Pimentel"
+      ],
+      "addedIn": 1647545691323,
+      "title": "Flamengo desde menino, 2a. edição, atualizada",
+      "readIn": "",
+      "ISBN": "9788530400484",
+      "_id": "AinXDwAAQBAJ",
+      "_user_id": "3r7tyVtAtmMAK11pDTtVqfeGU4v1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Ta0QBAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Ta0QBAAAQBAJ",
+      "authors": [
+        "Mario Filho"
+      ],
+      "addedIn": 1647545688025,
+      "title": "Histórias do Flamengo",
+      "readIn": "",
+      "ISBN": "9788574786322",
+      "_id": "Ta0QBAAAQBAJ",
+      "_user_id": "3r7tyVtAtmMAK11pDTtVqfeGU4v1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=-bF2CwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "-bF2CwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1736793594183,
+      "title": "Harry Potter: A Coleção Completa (1-7)",
+      "readIn": "",
+      "ISBN": "9781781106587",
+      "_id": "-bF2CwAAQBAJ",
+      "_user_id": "4RZEh7G4abTr2bjqIq56rMF5PCm1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2NBJDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2NBJDwAAQBAJ",
+      "authors": [
+        "Caio Carneiro"
+      ],
+      "addedIn": 1736798992624,
+      "title": "Seja foda!",
+      "readIn": "",
+      "ISBN": "9788593156441",
+      "_id": "2NBJDwAAQBAJ",
+      "_user_id": "4RZEh7G4abTr2bjqIq56rMF5PCm1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=LbuZEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "LbuZEAAAQBAJ",
+      "authors": [
+        "Walter Isaacson"
+      ],
+      "addedIn": 1736798981222,
+      "title": "Steve Jobs",
+      "readIn": "",
+      "ISBN": "9786555603330",
+      "_id": "LbuZEAAAQBAJ",
+      "_user_id": "4RZEh7G4abTr2bjqIq56rMF5PCm1"
+    },
+    {
+      "thumbnail": null,
+      "id": "bHj8zwEACAAJ",
+      "authors": [
+        "Napoleon Hill"
+      ],
+      "addedIn": 1736791499512,
+      "title": "Quem pensa enriquece - LIVRO DE BOLSO",
+      "readIn": "",
+      "ISBN": "658788508X",
+      "_id": "bHj8zwEACAAJ",
+      "_user_id": "4RZEh7G4abTr2bjqIq56rMF5PCm1"
+    },
+    {
+      "description": "O sucesso da série Sherlock, da BBC, apresentou o lendário detetive de Arthur Conan Doyle a uma nova geração de fãs. Esta edição da clássica coletânea de histórias de Sherlock Holmes, com introdução escrita pelo roteirista da série, Steve Thompson, permite que os fãs conheçam toda a força e o fascínio das aventuras originais. Nesta coletânea de onze contos de Sherlock Holmes, o detetive cuida de casos que vão de um cavalo de corridas desaparecido a tratados navais roubados; mas nada pode prepará-lo para o desafio de \"O Problema Final\", em que o Dr. Watson pega sua caneta \"com o coração pesado\" para contar a história do mais dramático encontro de Holmes com seu arqui-inimigo, o gênio do crime Professor Moriarty.",
+      "thumbnail": "https://books.google.com/books/content?id=djcdDAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "djcdDAAAQBAJ",
+      "authors": [
+        "Sir Arthur Conan Doyle"
+      ],
+      "addedIn": 1736795845270,
+      "title": "As memórias de Sherlock Holmes",
+      "readIn": "",
+      "ISBN": "9788504018967",
+      "_id": "djcdDAAAQBAJ",
+      "_user_id": "4RZEh7G4abTr2bjqIq56rMF5PCm1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=BBrY8J5zzKsC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "BBrY8J5zzKsC",
+      "authors": [
+        "Cibele Saliba Rizek",
+        "Francisco de Oliveira",
+        "Ruy Braga"
+      ],
+      "addedIn": 1662282368536,
+      "title": "Hegemonia às avessas",
+      "readIn": "",
+      "ISBN": "9788575592403",
+      "_id": "BBrY8J5zzKsC",
+      "_user_id": "50spbIi0U8V8WB1InFAhue1CsqZ2"
+    },
+    {
+      "readIn": "",
+      "title": "Educação e crise do trabalho",
+      "id": "_2Y1cAAACAAJ",
+      "authors": [
+        "Gaudêncio Frigotto"
+      ],
+      "addedIn": 1656624139846,
+      "ISBN": "8532620272",
+      "_id": "_2Y1cAAACAAJ",
+      "_user_id": "50spbIi0U8V8WB1InFAhue1CsqZ2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2Lm4t09OWi0C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2Lm4t09OWi0C",
+      "authors": [
+        "Humphrey Carpenter",
+        "Christopher Tolkien"
+      ],
+      "addedIn": 1642190763434,
+      "title": "The Letters of J. R. R. Tolkien",
+      "readIn": "",
+      "ISBN": "9780007381234",
+      "_id": "2Lm4t09OWi0C",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=36o_DwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "36o_DwAAQBAJ",
+      "authors": [
+        "James Redfield"
+      ],
+      "addedIn": 1642190855407,
+      "title": "A Profecia Celestina - Um Guia Experimental",
+      "readIn": "",
+      "ISBN": "9789897415548",
+      "_id": "36o_DwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=3Lz3DAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "3Lz3DAAAQBAJ",
+      "authors": [
+        "Mons João Scognamiglio Cla Dias EP"
+      ],
+      "addedIn": 1655403094114,
+      "title": "Fatima - O meu Imaculado Coração triunfará",
+      "readIn": "",
+      "ISBN": "3Lz3DAAAQBAJ",
+      "_id": "3Lz3DAAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=81nF3iyA640C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "81nF3iyA640C",
+      "authors": [
+        "Cardinal Tarcisio Bertone"
+      ],
+      "addedIn": 1642190606182,
+      "title": "The Last Secret of Fatima",
+      "readIn": "",
+      "ISBN": "9780385526951",
+      "_id": "81nF3iyA640C",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=9ePywAEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "9ePywAEACAAJ",
+      "authors": [
+        "James Redfield"
+      ],
+      "addedIn": 1642190860203,
+      "title": "A décima revelação: retendo a visão: mais aventuras de a Profecia Celestina",
+      "readIn": "",
+      "ISBN": "9724606627",
+      "_id": "9ePywAEACAAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=EScsDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "EScsDwAAQBAJ",
+      "authors": [
+        "Pe. Cido Pereira"
+      ],
+      "addedIn": 1642190935205,
+      "title": "Nossa Senhora, rogai por nós!",
+      "readIn": "",
+      "ISBN": "9788527616188",
+      "_id": "EScsDwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=GFNFS_4FjO4C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "GFNFS_4FjO4C",
+      "authors": [
+        "James Redfield"
+      ],
+      "addedIn": 1726706670083,
+      "title": "A profecia celestina",
+      "readIn": "",
+      "ISBN": "9788539002122",
+      "_id": "GFNFS_4FjO4C",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=HuKNDAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "HuKNDAAAQBAJ",
+      "authors": [
+        "Rev. Msgr. Joseph A. Cirrincione"
+      ],
+      "addedIn": 1642190615933,
+      "title": "Fatima's Message for Our Times",
+      "readIn": "",
+      "ISBN": "9781505108293",
+      "_id": "HuKNDAAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=IfiuAQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "IfiuAQAAQBAJ",
+      "authors": [
+        "Editora Alto Astral"
+      ],
+      "addedIn": 1642190945683,
+      "title": "Nossa Senhora dos Aflitos",
+      "readIn": "",
+      "ISBN": "9788582460597",
+      "_id": "IfiuAQAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=N1ddSQAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "N1ddSQAACAAJ",
+      "authors": [
+        "James Redfield"
+      ],
+      "addedIn": 1642190857851,
+      "title": "A profecia celestina: uma odisseia para o nosso tempo",
+      "readIn": "",
+      "ISBN": "9724608158",
+      "_id": "N1ddSQAACAAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=OfrTMh0NXX8C&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "OfrTMh0NXX8C",
+      "authors": [
+        "Wayne G. Hammond",
+        "Christina Scull"
+      ],
+      "addedIn": 1642190788529,
+      "title": "J.R.R. Tolkien",
+      "readIn": "",
+      "ISBN": "0618083618",
+      "_id": "OfrTMh0NXX8C",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=U7GFDgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "U7GFDgAAQBAJ",
+      "authors": [
+        "Robert Gellately"
+      ],
+      "addedIn": 1642190572016,
+      "title": "A maldição de Stalin",
+      "readIn": "",
+      "ISBN": "9788501110244",
+      "_id": "U7GFDgAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=V-U1DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "V-U1DwAAQBAJ",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642190994752,
+      "title": "O homem mais feliz da história",
+      "readIn": "",
+      "ISBN": "9788543105284",
+      "_id": "V-U1DwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=VSThDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "VSThDwAAQBAJ",
+      "authors": [
+        "Anjuli Tostes",
+        "Hugo Melo Filho"
+      ],
+      "addedIn": 1642190574606,
+      "title": "Quarentena",
+      "readIn": "",
+      "ISBN": "9786586030150",
+      "_id": "VSThDwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "readIn": "",
+      "title": "O livro negro do comunismo",
+      "id": "VjB4PgAACAAJ",
+      "authors": [
+        "Stéphane Courtois",
+        "NICOLAS WERTH",
+        "JEAN-LOUIS PANNE",
+        "ANDRZEJ PACZKOWSKI",
+        "KAREL BARTOSEK",
+        "JEAN-LOUIS MARGOLIN"
+      ],
+      "addedIn": 1642190587346,
+      "ISBN": "8570112696",
+      "_id": "VjB4PgAACAAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=akcuRowkrcUC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "akcuRowkrcUC",
+      "authors": [
+        "James Redfield"
+      ],
+      "addedIn": 1642190863937,
+      "title": "A décima profecia",
+      "readIn": "",
+      "ISBN": "9788539001996",
+      "_id": "akcuRowkrcUC",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=cvmeCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "cvmeCgAAQBAJ",
+      "authors": [
+        "David Day"
+      ],
+      "addedIn": 1642190758289,
+      "title": "An Atlas of Tolkien",
+      "readIn": "",
+      "ISBN": "9780753730737",
+      "_id": "cvmeCgAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=iOdxDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "iOdxDwAAQBAJ",
+      "authors": [
+        "Lucas Sousa"
+      ],
+      "addedIn": 1642190775189,
+      "title": "A Idade Média Na Obra De J. R. R. Tolkien",
+      "readIn": "",
+      "ISBN": "PKEY:CLDEAU23166",
+      "_id": "iOdxDwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=jMAYCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "jMAYCwAAQBAJ",
+      "authors": [
+        "Michael White"
+      ],
+      "addedIn": 1642190740390,
+      "title": "J.R.R. Tolkien, o senhor da fantasia",
+      "readIn": "",
+      "ISBN": "9788566636642",
+      "_id": "jMAYCwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=klsqDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "klsqDwAAQBAJ",
+      "authors": [
+        "Paulo Cristelli"
+      ],
+      "addedIn": 1642190770593,
+      "title": "J. R. R. Tolkien e a Crítica à Modernidade",
+      "readIn": "",
+      "ISBN": "9788562157158",
+      "_id": "klsqDwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=p0YLDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "p0YLDQAAQBAJ",
+      "authors": [
+        "Comunidade Canção Nova"
+      ],
+      "addedIn": 1642190928894,
+      "title": "Devocionário A Nossa Senhora Aparecida",
+      "readIn": "",
+      "ISBN": "9788576777991",
+      "_id": "p0YLDQAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pKn5DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pKn5DwAAQBAJ",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642190975692,
+      "title": "O Mestre do Amor",
+      "readIn": "",
+      "ISBN": "9786555640557",
+      "_id": "pKn5DwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pSh6FNWW1VwC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pSh6FNWW1VwC",
+      "authors": [
+        "Autor desconhecido"
+      ],
+      "addedIn": 1642190942266,
+      "title": "Nossa Senhora Aparecida - A padroeira do Brasil",
+      "readIn": "",
+      "ISBN": "9788515033195",
+      "_id": "pSh6FNWW1VwC",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=qkcLDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qkcLDQAAQBAJ",
+      "authors": [
+        "Comunidade Canção Nova"
+      ],
+      "addedIn": 1642190565100,
+      "title": "Ofício da Imaculada Conceição",
+      "readIn": "",
+      "ISBN": "9788576778004",
+      "_id": "qkcLDQAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=qx5yDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qx5yDwAAQBAJ",
+      "authors": [
+        "Edmilson Aparecido"
+      ],
+      "addedIn": 1642190944095,
+      "title": "Nossa Senhora Do Perpétuo Socorro",
+      "readIn": "",
+      "ISBN": "PKEY:CLDEAU30698",
+      "_id": "qx5yDwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=roS2x71wX1sC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "roS2x71wX1sC",
+      "authors": [
+        "Ediçoes Loyola"
+      ],
+      "addedIn": 1642190930316,
+      "title": "Devocionário e novena a Nossa Senhora da Defesa",
+      "readIn": "",
+      "ISBN": "8515026678",
+      "_id": "roS2x71wX1sC",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=y4QDDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "y4QDDQAAQBAJ",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642190962202,
+      "title": "O homem mais inteligente da história",
+      "readIn": "",
+      "ISBN": "9788543106298",
+      "_id": "y4QDDQAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=yDHxCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "yDHxCwAAQBAJ",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642190976545,
+      "title": "O médico da humanidade e a cura da corrupção",
+      "readIn": "",
+      "ISBN": "9788542207286",
+      "_id": "yDHxCwAAQBAJ",
+      "_user_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "description": "\"Con una manciata di ingredienti Ammaniti construisce un racconto di fulminea precisione sul piú semplice e imperscrutabile dei misteri: come diventare grandi.\"--P. [4] of cover.",
+      "thumbnail": "https://books.google.com/books/content?id=1RMPIiSkqXAC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "1RMPIiSkqXAC",
+      "authors": [
+        "Niccolò Ammaniti"
+      ],
+      "addedIn": 1749120682824,
+      "title": "Io e te",
+      "readIn": "",
+      "ISBN": "UCSD:31822039202759",
+      "_id": "1RMPIiSkqXAC",
+      "_user_id": "CMOCbLTPDOhqjUx1DsPOODMiJKv2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=0BFbMQAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "0BFbMQAACAAJ",
+      "authors": [
+        "Margaret B. W. Graham"
+      ],
+      "addedIn": 1683071521659,
+      "title": "The Business of Research",
+      "readIn": "",
+      "ISBN": "0521322820",
+      "_id": "0BFbMQAACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2IIlOf_n43UC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2IIlOf_n43UC",
+      "authors": [
+        "Duncan J. Watts"
+      ],
+      "addedIn": 1665843295883,
+      "title": "Six Degrees: The Science of a Connected Age",
+      "readIn": "",
+      "ISBN": "9780393325423",
+      "_id": "2IIlOf_n43UC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2n0VImAHVv0C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2n0VImAHVv0C",
+      "authors": [
+        "Howard Marks"
+      ],
+      "addedIn": 1683071478400,
+      "title": "The Most Important Thing",
+      "readIn": "",
+      "ISBN": "9780231527095",
+      "_id": "2n0VImAHVv0C",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=4OeNEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "4OeNEAAAQBAJ",
+      "authors": [
+        "John Doerr"
+      ],
+      "addedIn": 1673109278816,
+      "title": "Measure What Matters",
+      "readIn": "",
+      "ISBN": "9780525536222",
+      "_id": "4OeNEAAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=F7jFkQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "F7jFkQEACAAJ",
+      "authors": [
+        "David Graeber"
+      ],
+      "addedIn": 1665843132207,
+      "title": "Debt",
+      "readIn": "",
+      "ISBN": "1612191290",
+      "_id": "F7jFkQEACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ImD3vWnW76oC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ImD3vWnW76oC",
+      "authors": [
+        "Anonymous Hedge Fund Manager",
+        "n+1",
+        "Keith Gessen"
+      ],
+      "addedIn": 1683071453355,
+      "title": "Diary of a Very Bad Year",
+      "readIn": "",
+      "ISBN": "9780061992407",
+      "_id": "ImD3vWnW76oC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=J3SYDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "J3SYDwAAQBAJ",
+      "authors": [
+        "Jonathan Haskel",
+        "Stian Westlake"
+      ],
+      "addedIn": 1683071490466,
+      "title": "Capitalism without Capital",
+      "readIn": "",
+      "ISBN": "9780691183299",
+      "_id": "J3SYDwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": null,
+      "id": "LrhzngEACAAJ",
+      "authors": [
+        "Bryce Cyril Tingle"
+      ],
+      "addedIn": 1665843350477,
+      "title": "Start-up and Growth Companies in Canada",
+      "readIn": "",
+      "ISBN": "043346223X",
+      "_id": "LrhzngEACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=NQ5xDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "NQ5xDwAAQBAJ",
+      "authors": [
+        "John F. Carter"
+      ],
+      "addedIn": 1683071465481,
+      "title": "Mastering the Trade, Third Edition: Proven Techniques for Profiting from Intraday and Swing Trading Setups",
+      "readIn": "",
+      "ISBN": "9781260121605",
+      "_id": "NQ5xDwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=OkaMBAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "OkaMBAAAQBAJ",
+      "authors": [
+        "William Foote Whyte",
+        "Kathleen King Whyte"
+      ],
+      "addedIn": 1665843263595,
+      "title": "Making Mondragón",
+      "readIn": "",
+      "ISBN": "9780801471728",
+      "_id": "OkaMBAAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Pj-IDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Pj-IDwAAQBAJ",
+      "authors": [
+        "Matthew Skelton",
+        "Manuel Pais"
+      ],
+      "addedIn": 1683071551182,
+      "title": "Team Topologies",
+      "readIn": "",
+      "ISBN": "9781942788829",
+      "_id": "Pj-IDwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=RMqMDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "RMqMDQAAQBAJ",
+      "authors": [
+        "Viktor E. Frankl"
+      ],
+      "addedIn": 1683071534245,
+      "title": "Man's Search for Meaning, Gift Edition",
+      "readIn": "",
+      "ISBN": "9780807060100",
+      "_id": "RMqMDQAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=T8C-DAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "T8C-DAAAQBAJ",
+      "authors": [
+        "Michael Lopp"
+      ],
+      "addedIn": 1672364876163,
+      "title": "Managing Humans",
+      "readIn": "",
+      "ISBN": "9781484221587",
+      "_id": "T8C-DAAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=TVQUAAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "TVQUAAAAQBAJ",
+      "authors": [
+        "Tom DeMarco",
+        "Tim Lister"
+      ],
+      "addedIn": 1672364887421,
+      "title": "Peopleware",
+      "readIn": "",
+      "ISBN": "9780133440737",
+      "_id": "TVQUAAAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=VTdtDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "VTdtDwAAQBAJ",
+      "authors": [
+        "Martin Fowler"
+      ],
+      "addedIn": 1665843150161,
+      "title": "UML Distilled",
+      "readIn": "",
+      "ISBN": "9780134865126",
+      "_id": "VTdtDwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=X19fswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "X19fswEACAAJ",
+      "authors": [
+        "Andrew Blum"
+      ],
+      "addedIn": 1665842968030,
+      "title": "Tubes",
+      "readIn": "",
+      "ISBN": "0061994952",
+      "_id": "X19fswEACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Y41zAwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Y41zAwAAQBAJ",
+      "authors": [
+        "Yuval Noah Harari"
+      ],
+      "addedIn": 1665842936633,
+      "title": "Sapiens",
+      "readIn": "",
+      "ISBN": "9780771038525",
+      "_id": "Y41zAwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Yq35BY5Fk3gC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Yq35BY5Fk3gC",
+      "authors": [
+        "Frederick P. Brooks Jr."
+      ],
+      "addedIn": 1672364920646,
+      "title": "The Mythical Man-Month",
+      "readIn": "",
+      "ISBN": "9780132119160",
+      "_id": "Yq35BY5Fk3gC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ZH4oAwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ZH4oAwAAQBAJ",
+      "authors": [
+        "Peter Thiel",
+        "Blake Masters"
+      ],
+      "addedIn": 1666037792814,
+      "title": "Zero to One",
+      "readIn": "",
+      "ISBN": "9780804139304",
+      "_id": "ZH4oAwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ZQeZAAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ZQeZAAAAQBAJ",
+      "authors": [
+        "Steven H. Strogatz"
+      ],
+      "addedIn": 1665842991905,
+      "title": "Sync",
+      "readIn": "",
+      "ISBN": "9781401304461",
+      "_id": "ZQeZAAAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Z_UjswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "Z_UjswEACAAJ",
+      "authors": [
+        "G. Sugihara"
+      ],
+      "addedIn": 1683071441044,
+      "title": "Niche Hierarchy",
+      "readIn": "",
+      "ISBN": "1604271280",
+      "_id": "Z_UjswEACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=aoRTAQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "aoRTAQAAQBAJ",
+      "authors": [
+        "Robert Macintosh",
+        "Donald Maclean",
+        "Ralph Stacey",
+        "Douglas Griffin"
+      ],
+      "addedIn": 1665843408177,
+      "title": "Complexity and Organization",
+      "readIn": "",
+      "ISBN": "9781134527267",
+      "_id": "aoRTAQAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=buJ1DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "buJ1DwAAQBAJ",
+      "authors": [
+        "Melissa Perri"
+      ],
+      "addedIn": 1683071499822,
+      "title": "Escaping the Build Trap",
+      "readIn": "",
+      "ISBN": "9781491973769",
+      "_id": "buJ1DwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=cZsdAQAAMAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "cZsdAQAAMAAJ",
+      "authors": [
+        "Adam Smith"
+      ],
+      "addedIn": 1665843097606,
+      "title": "The Wealth of Nations",
+      "readIn": "",
+      "ISBN": "IND:30000103146290",
+      "_id": "cZsdAQAAMAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=dcjWsgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "dcjWsgEACAAJ",
+      "authors": [
+        "Clayton M. Christensen"
+      ],
+      "addedIn": 1665843281433,
+      "title": "The Innovator's Dilemma: When New Technologies Cause Great Firms to Fail",
+      "readIn": "",
+      "ISBN": "1633691780",
+      "_id": "dcjWsgEACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=hENIewAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "hENIewAACAAJ",
+      "authors": [
+        "Stephen R. Covey"
+      ],
+      "addedIn": 1665843249697,
+      "title": "The Seven Habits of Highly Effective People",
+      "readIn": "",
+      "ISBN": "0783881150",
+      "_id": "hENIewAACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=j-PQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "j-PQCwAAQBAJ",
+      "authors": [
+        "Melanie Mitchell"
+      ],
+      "addedIn": 1665843202376,
+      "title": "Complexity",
+      "readIn": "",
+      "ISBN": "9780199724574",
+      "_id": "j-PQCwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ktm885vGIXEC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ktm885vGIXEC",
+      "authors": [
+        "Jessica Livingston"
+      ],
+      "addedIn": 1665842944015,
+      "title": "Founders at Work",
+      "readIn": "",
+      "ISBN": "9781430210771",
+      "_id": "ktm885vGIXEC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=oL4bHPIt7XIC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "oL4bHPIt7XIC",
+      "authors": [
+        "Leo Janos",
+        "Ben R. Rich"
+      ],
+      "addedIn": 1673109270755,
+      "title": "Skunk Works",
+      "readIn": "",
+      "ISBN": "9780316246934",
+      "_id": "oL4bHPIt7XIC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=r9x-OXdzpPcC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "r9x-OXdzpPcC",
+      "authors": [
+        "Eric Ries"
+      ],
+      "addedIn": 1665842927392,
+      "title": "The Lean Startup",
+      "readIn": "",
+      "ISBN": "9780307887894",
+      "_id": "r9x-OXdzpPcC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=tZ9MEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "tZ9MEAAAQBAJ",
+      "authors": [
+        "Matthew Skelton"
+      ],
+      "addedIn": 1683071547250,
+      "title": "Remote Team Interactions Workbook",
+      "readIn": "",
+      "ISBN": "9781950508624",
+      "_id": "tZ9MEAAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=u2NDDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "u2NDDwAAQBAJ",
+      "authors": [
+        "John Doerr"
+      ],
+      "addedIn": 1683071563321,
+      "title": "Measure What Matters",
+      "readIn": "",
+      "ISBN": "9780525536239",
+      "_id": "u2NDDwAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=vXkszQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "vXkszQEACAAJ",
+      "authors": [
+        "Peter Seibel"
+      ],
+      "addedIn": 1665842950242,
+      "title": "Coders at Work",
+      "readIn": "",
+      "ISBN": "1430219483",
+      "_id": "vXkszQEACAAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=wUEHAQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "wUEHAQAAQBAJ",
+      "authors": [
+        "Geoffrey A. Moore"
+      ],
+      "addedIn": 1665843230227,
+      "title": "Crossing the Chasm, 3rd Edition",
+      "readIn": "",
+      "ISBN": "9780062293008",
+      "_id": "wUEHAQAAQBAJ",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=zzm8lLrTq6sC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "zzm8lLrTq6sC",
+      "authors": [
+        "Ricardo Semler"
+      ],
+      "addedIn": 1673111763749,
+      "title": "Maverick!",
+      "readIn": "",
+      "ISBN": "9780712678865",
+      "_id": "zzm8lLrTq6sC",
+      "_user_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "thumbnail": null,
+      "id": "zPQ3AAAACAAJ",
+      "authors": [
+        "Chinua Achebe"
+      ],
+      "addedIn": 1679756359331,
+      "title": "Le monde s'effondre",
+      "readIn": "",
+      "ISBN": "2708701916",
+      "_id": "zPQ3AAAACAAJ",
+      "_user_id": "EjiFSHOvqsQaVqxvPxVGAQTZMYk1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=JS2iEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "JS2iEAAAQBAJ",
+      "authors": [
+        "Fernando Aramburu"
+      ],
+      "addedIn": 1698602799668,
+      "title": "Quando os pássaros voltarem",
+      "readIn": "2023-08-31",
+      "ISBN": "9786555604672",
+      "_id": "JS2iEAAAQBAJ",
+      "_user_id": "FodVNscLH9SZ7jlUeJ9Kv0n5zRb2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2LeZDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2LeZDwAAQBAJ",
+      "authors": [
+        "J.R.R. Tolkien"
+      ],
+      "addedIn": 1673102363110,
+      "title": "O Hobbit",
+      "readIn": "",
+      "ISBN": "9788595085800",
+      "_id": "2LeZDwAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=7rRboSZLjWgC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "7rRboSZLjWgC",
+      "authors": [
+        "Allan Percy"
+      ],
+      "addedIn": 1673051349296,
+      "title": "Nietzsche para estressados",
+      "readIn": "",
+      "ISBN": "9788575427392",
+      "_id": "7rRboSZLjWgC",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=9Sf8rQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "9Sf8rQEACAAJ",
+      "authors": [
+        "Paul Stenning"
+      ],
+      "addedIn": 1673051202712,
+      "title": "Metallica",
+      "readIn": "",
+      "ISBN": "0859655385",
+      "_id": "9Sf8rQEACAAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=B3uFDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "B3uFDwAAQBAJ",
+      "authors": [
+        "J.R.R. Tolkien"
+      ],
+      "addedIn": 1673102364493,
+      "title": "O Silmarillion",
+      "readIn": "",
+      "ISBN": "9788595085152",
+      "_id": "B3uFDwAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=IjJKDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "IjJKDwAAQBAJ",
+      "authors": [
+        "Carlos Wizard Martins"
+      ],
+      "addedIn": 1673051305680,
+      "title": "Desperte o milionário que há em você",
+      "readIn": "",
+      "ISBN": "9788593156427",
+      "_id": "IjJKDwAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Pw-5t-RLpVsC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Pw-5t-RLpVsC",
+      "authors": [
+        "Harlan Coben"
+      ],
+      "addedIn": 1673051264695,
+      "title": "Não conte a ninguém",
+      "readIn": "",
+      "ISBN": "9788580410082",
+      "_id": "Pw-5t-RLpVsC",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=R7KuDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "R7KuDwAAQBAJ",
+      "authors": [
+        "J.R.R. Tolkien"
+      ],
+      "addedIn": 1673102344021,
+      "title": "O Senhor dos Anéis: A Sociedade do Anel",
+      "readIn": "",
+      "ISBN": "9788595086333",
+      "_id": "R7KuDwAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=SbKuDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "SbKuDwAAQBAJ",
+      "authors": [
+        "J.R.R. Tolkien"
+      ],
+      "addedIn": 1673102385021,
+      "title": "O Senhor dos Anéis: O retorno do rei",
+      "readIn": "",
+      "ISBN": "9788595086371",
+      "_id": "SbKuDwAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=UbKuDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "UbKuDwAAQBAJ",
+      "authors": [
+        "J.R.R. Tolkien"
+      ],
+      "addedIn": 1673102346445,
+      "title": "O Senhor dos Anéis: As duas torres",
+      "readIn": "",
+      "ISBN": "9788595086326",
+      "_id": "UbKuDwAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ZQMyEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ZQMyEAAAQBAJ",
+      "authors": [
+        "Jody Houser",
+        "Jim Zub"
+      ],
+      "addedIn": 1673102405286,
+      "title": "Stranger Things and Dungeons & Dragons (Graphic Novel)",
+      "readIn": "",
+      "ISBN": "9781506721071",
+      "_id": "ZQMyEAAAQBAJ",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=jzRIR2q1amsC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "jzRIR2q1amsC",
+      "authors": [
+        "Ruth Andreas-Friedrich"
+      ],
+      "addedIn": 1673051232271,
+      "title": "Diário de Berlim ocupada – 1945-1948",
+      "readIn": "",
+      "ISBN": "9788525052858",
+      "_id": "jzRIR2q1amsC",
+      "_user_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=YNRKswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "YNRKswEACAAJ",
+      "authors": [
+        "Callum Macrae"
+      ],
+      "addedIn": 1650273444162,
+      "title": "Vue. Js - Up and Running",
+      "readIn": "",
+      "ISBN": "1491997249",
+      "_id": "YNRKswEACAAJ",
+      "_user_id": "GoJ4oqSGd1cDRnq3dmFszQmXHik1"
+    },
+    {
+      "thumbnail": null,
+      "id": "xyuyoAEACAAJ",
+      "authors": [
+        "Rodrigo Constantino"
+      ],
+      "addedIn": 1669575255015,
+      "title": "Esquerda caviar",
+      "readIn": "",
+      "ISBN": "8501404705",
+      "_id": "xyuyoAEACAAJ",
+      "_user_id": "IroxkBvsHgevaP5aMSO9RdNx4zZ2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=QIO5zQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "QIO5zQEACAAJ",
+      "authors": [
+        "HEITOR. RIBEIRO"
+      ],
+      "addedIn": 1664439864442,
+      "title": "VUE.JS 3 COOKBOOK",
+      "readIn": "",
+      "ISBN": "183882622X",
+      "_id": "QIO5zQEACAAJ",
+      "_user_id": "KSTvyacMhzPhayY7gW4kIRbp2a12"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=0dyRDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "0dyRDwAAQBAJ",
+      "authors": [
+        "C. J. Tudor"
+      ],
+      "addedIn": 1642450789062,
+      "title": "O Que Aconteceu Com Annie",
+      "readIn": "",
+      "ISBN": "9788551004760",
+      "_id": "0dyRDwAAQBAJ",
+      "_user_id": "OnrEIYkajyUsApD4uSKvKz63Fd12"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=d6-tzgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "d6-tzgEACAAJ",
+      "authors": [
+        "Sun Tzu"
+      ],
+      "addedIn": 1642450770349,
+      "title": "A Arte Da Guerra ( Portugues - Ingles - Espanhol )",
+      "readIn": "",
+      "ISBN": "8561403926",
+      "_id": "d6-tzgEACAAJ",
+      "_user_id": "OnrEIYkajyUsApD4uSKvKz63Fd12"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pGJNDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pGJNDwAAQBAJ",
+      "authors": [
+        "C. J. Tudor"
+      ],
+      "addedIn": 1642450792864,
+      "title": "O homem de giz",
+      "readIn": "",
+      "ISBN": "9788551002957",
+      "_id": "pGJNDwAAQBAJ",
+      "_user_id": "OnrEIYkajyUsApD4uSKvKz63Fd12"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=w2_3DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "w2_3DwAAQBAJ",
+      "authors": [
+        "Antoine de Saint-Exupéry"
+      ],
+      "addedIn": 1642450819541,
+      "title": "O Pequeno Príncipe",
+      "readIn": "",
+      "ISBN": "9781526026002",
+      "_id": "w2_3DwAAQBAJ",
+      "_user_id": "OnrEIYkajyUsApD4uSKvKz63Fd12"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=5ZAiAQAAMAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "5ZAiAQAAMAAJ",
+      "authors": [
+        "Peter Ferdinand Drucker",
+        "德鲁克"
+      ],
+      "addedIn": 1714036235972,
+      "title": "创新与企业家精神",
+      "readIn": "",
+      "ISBN": "NWU:35556037313228",
+      "_id": "5ZAiAQAAMAAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=FTP11dnlcsYC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "FTP11dnlcsYC",
+      "authors": [
+        "Chell, Elizabeth·谢尔",
+        "切尔"
+      ],
+      "addedIn": 1714036234772,
+      "title": "企业家精神:全球化、创新与发展",
+      "readIn": "",
+      "ISBN": "7508600479",
+      "_id": "FTP11dnlcsYC",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=QM9HAAAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "QM9HAAAAIAAJ",
+      "authors": [
+        "Hargreaves Parkinson"
+      ],
+      "addedIn": 1714036208488,
+      "title": "The A B C of Stocks and Shares",
+      "readIn": "",
+      "ISBN": "UCAL:$B280236",
+      "_id": "QM9HAAAAIAAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=WUPUDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "WUPUDQAAQBAJ",
+      "authors": [
+        "후쿠시마 하지메"
+      ],
+      "addedIn": 1714036201089,
+      "title": "전자기학의 ABC",
+      "readIn": "",
+      "ISBN": "9788970447261",
+      "_id": "WUPUDQAAQBAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=_GP7MQAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "_GP7MQAACAAJ",
+      "authors": [
+        "JACK J.KANSKI"
+      ],
+      "addedIn": 1714036202627,
+      "title": "임상안과학",
+      "readIn": "",
+      "ISBN": "8980852932",
+      "_id": "_GP7MQAACAAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=f51NDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "f51NDwAAQBAJ",
+      "authors": [
+        "Emily L. Newman",
+        "Emily Witsell"
+      ],
+      "addedIn": 1714036205132,
+      "title": "ABC Family to Freeform TV",
+      "readIn": "",
+      "ISBN": "9781476667355",
+      "_id": "f51NDwAAQBAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=l1m9DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "l1m9DwAAQBAJ",
+      "authors": [
+        "나카무라 히로시"
+      ],
+      "addedIn": 1714036206366,
+      "title": "자석의 ABC : 자침에서부터 초전도자석까지",
+      "readIn": "",
+      "ISBN": "9788970449104",
+      "_id": "l1m9DwAAQBAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=mbczAAAAMAAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "mbczAAAAMAAJ",
+      "authors": [
+        "William Stanley Jevons"
+      ],
+      "addedIn": 1714036203512,
+      "title": "Studies in Deductive Logic",
+      "readIn": "",
+      "ISBN": "UOM:39015019070021",
+      "_id": "mbczAAAAMAAJ",
+      "_user_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Fy_wwAEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "Fy_wwAEACAAJ",
+      "authors": [
+        "Jorge Amado",
+        "Pedro Costa"
+      ],
+      "addedIn": 1667646704927,
+      "title": "Capitães da areia",
+      "readIn": "",
+      "ISBN": "9896530076",
+      "_id": "Fy_wwAEACAAJ",
+      "_user_id": "Syw1fl89LROyYWa0zVnZIBd0L2J3"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=-_MMbijUmTEC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "-_MMbijUmTEC",
+      "authors": [
+        "Markus Zusak"
+      ],
+      "addedIn": 1736777503035,
+      "title": "A menina que roubava livros",
+      "readIn": "",
+      "ISBN": "9788580570182",
+      "_id": "-_MMbijUmTEC",
+      "_user_id": "UwZHSQlMl8PIt1zglfe4ck0qpSf1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2NBJDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2NBJDwAAQBAJ",
+      "authors": [
+        "Caio Carneiro"
+      ],
+      "addedIn": 1736777522642,
+      "title": "Seja foda!",
+      "readIn": "",
+      "ISBN": "9788593156441",
+      "_id": "2NBJDwAAQBAJ",
+      "_user_id": "UwZHSQlMl8PIt1zglfe4ck0qpSf1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=bamOOd5uOowC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "bamOOd5uOowC",
+      "authors": [
+        "Bernardinho"
+      ],
+      "addedIn": 1736777395938,
+      "title": "Transformando suor em ouro",
+      "readIn": "",
+      "ISBN": "9788575425732",
+      "_id": "bamOOd5uOowC",
+      "_user_id": "UwZHSQlMl8PIt1zglfe4ck0qpSf1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=7jZyDAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "7jZyDAAAQBAJ",
+      "authors": [
+        "Machado de Assis"
+      ],
+      "addedIn": 1673059226979,
+      "title": "Memórias póstumas de Brás Cubas",
+      "readIn": "",
+      "ISBN": "9788555780219",
+      "_id": "7jZyDAAAQBAJ",
+      "_user_id": "VzdqJSKdoOPyK1sfExfpHH1OHYH2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ox9BiuVKM1cC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ox9BiuVKM1cC",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1654766918864,
+      "title": "Harry Potter et la Coupe de Feu",
+      "readIn": "2013-06-16",
+      "ISBN": "9781781101063",
+      "_id": "ox9BiuVKM1cC",
+      "_user_id": "e9dlJHEvIlayxVxlY8OKsw3AYKT2"
+    },
+    {
+      "description": "Aduescamus a nobis remouere pompam, et usus rerum, non ornamenta, metiri. Acostumamo-nos a afastar de nós a pompa, e a apreciar as coisas por sua utilidade e não por seu ornamento. De tranquillitate animi IX 2 Solemus dicere summum bonum esse secundum naturam uiuero. Costumamos dizer que o maior bem é viver segundo a natureza. De otio IV 2",
+      "thumbnail": "https://books.google.com/books/content?id=y-QJEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "y-QJEAAAQBAJ",
+      "authors": [
+        "Sêneca"
+      ],
+      "addedIn": 1737840434754,
+      "title": "Sobre a tranquilidade da alma",
+      "readIn": "",
+      "ISBN": "9786586189162",
+      "_id": "y-QJEAAAQBAJ",
+      "_user_id": "ecKzgTgWtDYhs08EZw0C5ZS5Wra2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=IJZA809sS1gC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "IJZA809sS1gC",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690850937,
+      "title": "O continente - vol. 1",
+      "readIn": "",
+      "ISBN": "9788580860351",
+      "_id": "IJZA809sS1gC",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=dZovFV0ZZtAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "dZovFV0ZZtAC",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690757647,
+      "title": "O retrato - vol. 1",
+      "readIn": "",
+      "ISBN": "9788580860252",
+      "_id": "dZovFV0ZZtAC",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pKeWI2two7EC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pKeWI2two7EC",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690758946,
+      "title": "O retrato - vol. 2",
+      "readIn": "",
+      "ISBN": "9788580860269",
+      "_id": "pKeWI2two7EC",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=qxrauWEO1p4C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qxrauWEO1p4C",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690846314,
+      "title": "O arquipélago - vol. 2",
+      "readIn": "",
+      "ISBN": "9788580860153",
+      "_id": "qxrauWEO1p4C",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=r5M8wckEeY4C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "r5M8wckEeY4C",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690843970,
+      "title": "O arquipélago - vol. 3",
+      "readIn": "",
+      "ISBN": "9788580860207",
+      "_id": "r5M8wckEeY4C",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=w_anBAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "w_anBAAAQBAJ",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690763667,
+      "title": "O arquipélago - vol. 1",
+      "readIn": "",
+      "ISBN": "9788580860146",
+      "_id": "w_anBAAAQBAJ",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=yO5dNAaCS24C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "yO5dNAaCS24C",
+      "authors": [
+        "Erico Verissimo"
+      ],
+      "addedIn": 1689690790236,
+      "title": "O continente - vol. 2",
+      "readIn": "",
+      "ISBN": "9788580860368",
+      "_id": "yO5dNAaCS24C",
+      "_user_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2o0pEQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2o0pEQAAQBAJ",
+      "authors": [
+        "Raphael Montes"
+      ],
+      "addedIn": 1736857671988,
+      "title": "Jantar Secreto",
+      "readIn": "",
+      "ISBN": "9789895770441",
+      "_id": "2o0pEQAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=5mSljgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "5mSljgEACAAJ",
+      "authors": [
+        "ONE"
+      ],
+      "addedIn": 1642768832584,
+      "title": "One-Punch Man",
+      "readIn": "",
+      "ISBN": "1421586568",
+      "_id": "5mSljgEACAAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Gzk5DwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "Gzk5DwAAQBAJ",
+      "authors": [
+        "Masashi Kishimoto"
+      ],
+      "addedIn": 1642768812318,
+      "title": "Naruto 1",
+      "readIn": "",
+      "ISBN": "9783551762511",
+      "_id": "Gzk5DwAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ILhmDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ILhmDwAAQBAJ",
+      "authors": [
+        "Tsugumi Ohba",
+        "Takeshi Obata"
+      ],
+      "addedIn": 1642768856642,
+      "title": "Platinum End vol. 02",
+      "readIn": "",
+      "ISBN": "9788545707684",
+      "_id": "ILhmDwAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=PtzbDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "PtzbDwAAQBAJ",
+      "authors": [
+        "Zeiset"
+      ],
+      "addedIn": 1642768942316,
+      "title": "A Bíblia Sagrada",
+      "readIn": "",
+      "ISBN": "9781622456734",
+      "_id": "PtzbDwAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=SHsEEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "SHsEEAAAQBAJ",
+      "authors": [
+        "Masashi Kishimoto",
+        "Luciane Yasawa"
+      ],
+      "addedIn": 1642768815404,
+      "title": "Naruto - vol. 3",
+      "readIn": "",
+      "ISBN": "9788542621518",
+      "_id": "SHsEEAAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=WnmOtAEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "WnmOtAEACAAJ",
+      "authors": [
+        "ONE"
+      ],
+      "addedIn": 1642768831438,
+      "title": "One-Punch Man",
+      "readIn": "",
+      "ISBN": "1421564610",
+      "_id": "WnmOtAEACAAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "readIn": "",
+      "title": "O escaravelho do diabo",
+      "id": "ZS2ptQEACAAJ",
+      "authors": [
+        "Lúcia Machado de Almeida"
+      ],
+      "addedIn": 1642768916259,
+      "ISBN": "8508173539",
+      "_id": "ZS2ptQEACAAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=b2JAZo2olaMC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "b2JAZo2olaMC",
+      "authors": [
+        "Bruna Surfistinha",
+        "Raquel Pacheco"
+      ],
+      "addedIn": 1642768801367,
+      "title": "O doce veneno do escorpião",
+      "readIn": "",
+      "ISBN": "9788578881221",
+      "_id": "b2JAZo2olaMC",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=o7eWDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "o7eWDwAAQBAJ",
+      "authors": [
+        "Lynn Okamoto"
+      ],
+      "addedIn": 1642768868215,
+      "title": "Elfen Lied Omnibus Volume 1",
+      "readIn": "",
+      "ISBN": "9781506711737",
+      "_id": "o7eWDwAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=q0ucAgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "q0ucAgAAQBAJ",
+      "authors": [
+        "Machado de Assis"
+      ],
+      "addedIn": 1642768894934,
+      "title": "Dom Casmurro",
+      "readIn": "",
+      "ISBN": "q0ucAgAAQBAJ",
+      "_id": "q0ucAgAAQBAJ",
+      "_user_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=HEiMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "HEiMEAAAQBAJ",
+      "authors": [
+        "Brittainy Cherry"
+      ],
+      "addedIn": 1668917172905,
+      "title": "Ondas do oeste (Vol. 3 Série Bússola)",
+      "readIn": "",
+      "ISBN": "9786555876314",
+      "_id": "HEiMEAAAQBAJ",
+      "_user_id": "lYRQsSiz2ngr9I29gmEn0z2YaDh2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=RXuUEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "RXuUEAAAQBAJ",
+      "authors": [
+        "Jennifer Lynn Barnes"
+      ],
+      "addedIn": 1668917147914,
+      "title": "A aposta final",
+      "readIn": "",
+      "ISBN": "9786588131725",
+      "_id": "RXuUEAAAQBAJ",
+      "_user_id": "lYRQsSiz2ngr9I29gmEn0z2YaDh2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=-DgQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "-DgQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641757119601,
+      "title": "Harry Potter e as Relíquias da Morte",
+      "readIn": "2002-02-01",
+      "ISBN": "9781781104064",
+      "_id": "-DgQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=02d7EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "02d7EAAAQBAJ",
+      "authors": [
+        "Epiteto"
+      ],
+      "addedIn": 1697562897235,
+      "title": "A Arte de Viver",
+      "readIn": "2023-10-25",
+      "ISBN": "02d7EAAAQBAJ",
+      "_id": "02d7EAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=03iFCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "03iFCgAAQBAJ",
+      "authors": [
+        "Ashlee Vance"
+      ],
+      "addedIn": 1641758501926,
+      "title": "Elon Musk",
+      "readIn": "2020-10-15",
+      "ISBN": "9788580578300",
+      "_id": "03iFCgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "A obra As Aventuras de Pinóquio (em italiano Le avventure di Pinocchio. Storia di un burattino) foi escrita pelo italiano Carlo Collodi em Florença no ano de 1881 e publicado dois anos depois com ilustrações de Enrico Mazzanti. Trata-se de um clássico da literatura infanto-juvenil. A história de Pinóquio, e das suas aventuras e desventuras, é riquíssima e permite inúmeras leituras por públicos de diferentes idades. É, por si, uma grande aventura entregar-se a este Pinóquio que erra, sofre e se redime para tornar-se gente. Traduzida para dezenas de países, Pinóquio faz parte da infância de todos nós pois a história ultrapassou as fronteiras da Itália e se tornou um patrimônio universal",
+      "thumbnail": "https://books.google.com/books/content?id=1VclEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "1VclEAAAQBAJ",
+      "authors": [
+        "Carlo Collodi"
+      ],
+      "addedIn": 1743610180686,
+      "title": "PINÓQUIO",
+      "readIn": "2025-03-30",
+      "ISBN": "9786558941224",
+      "_id": "1VclEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=1dJtDgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "1dJtDgAAQBAJ",
+      "authors": [
+        "Eduardo Ferraz"
+      ],
+      "addedIn": 1641758434087,
+      "title": "Gente Que Convence",
+      "readIn": "2020-05-14",
+      "ISBN": "9788542210156",
+      "_id": "1dJtDgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "COM INTRODUÇÃO INÉDITA DO AUTOR E PREFÁCIO DE NEIL GAIMAN OS CINCO LIVROS DA CULTUADA SÉRIE O MOCHILEIRO DAS GALÁXIAS REUNIDOS EM UM ÚNICO E DEFINITIVO VOLUME Com mais de 15 milhões de exemplares vendidos, a saga de Arthur Dent pela Galáxia conquistou fãs pelo mundo inteiro. O humor ácido e as tramas surreais de Douglas Adams se tornaram ícones de uma geração e seguem fascinando leitores de todas as idades. Reunindo todos os livros da série em uma edição de luxo, O Guia Definitivo do Mochileiro das Galáxias vai levar você por aventuras improváveis. Pegue sua toalha, divirta-se e não entre em pânico! O Guia do Mochileiro das Galáxias – Segundos antes de a Terra ser destruída, Arthur Dent é salvo por Ford Prefect, um E.T. que fazia pesquisa para a nova edição de O Guia do Mochileiro das Galáxias. Pegando carona numa nave alienígena, os dois dão início a uma alucinante viagem pelo tempo e pelo espaço. O Restaurante no Fim do Universo – Arthur Dent e seus companheiros viajam pela Galáxia em uma busca desesperada por algum lugar para comer. Depois de fazer a refeição mais estranha de suas vidas, eles seguem pelo espaço e acabam descobrindo a questão fundamental sobre a Vida, o Universo e Tudo Mais. A Vida, o Universo e Tudo Mais – Após passar os últimos cinco anos abandonado e sozinho na Terra pré-histórica, Arthur Dent é arrastado para uma nova missão: salvar o Universo dos temíveis e infelizes robôs xenófobos do planeta Krikkit. Até Mais, e Obrigado pelos Peixes! – Depois de viajar pelo Universo, ver o aniquilamento da Terra, participar de guerras interestelares e conhecer criaturas extraordinárias, Arthur Dent está de volta ao seu planeta. E tudo parece estranhamente normal – exceto pelo desaparecimento dos golfinhos. Praticamente Inofensiva – Arthur Dent, Ford Prefect e Tricia McMillan se reencontram após muitos anos vivendo separados. Mas o que deveria ser uma festejada reunião de velhos amigos se transforma numa terrível confusão que põe em risco – mais uma vez – a vida de todos.",
+      "thumbnail": "https://books.google.com/books/content?id=1yYuB7N0HPIC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "1yYuB7N0HPIC",
+      "authors": [
+        "Douglas Adams"
+      ],
+      "addedIn": 1742170443527,
+      "title": "O guia definitivo do mochileiro das galáxias",
+      "readIn": "2025-03-16",
+      "ISBN": "9788580411737",
+      "_id": "1yYuB7N0HPIC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2NBJDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2NBJDwAAQBAJ",
+      "authors": [
+        "Caio Carneiro"
+      ],
+      "addedIn": 1736798884385,
+      "title": "Seja foda!",
+      "readIn": "2020-02-01",
+      "ISBN": "9788593156441",
+      "_id": "2NBJDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=43eovQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "43eovQEACAAJ",
+      "authors": [
+        "Mary Shelley"
+      ],
+      "addedIn": 1682084626203,
+      "title": "Frankenstein",
+      "readIn": "2023-04-20",
+      "ISBN": "1728827698",
+      "_id": "43eovQEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=4LZwDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "4LZwDwAAQBAJ",
+      "authors": [
+        "Thiago Nigro"
+      ],
+      "addedIn": 1642345142023,
+      "title": "Do mil ao milhão",
+      "readIn": "2019-07-01",
+      "ISBN": "9788595084421",
+      "_id": "4LZwDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=54pnDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "54pnDwAAQBAJ",
+      "authors": [
+        "Ana Beatriz Barbosa Silva"
+      ],
+      "addedIn": 1655464393056,
+      "title": "Mentes que amam demais",
+      "readIn": "2022-06-12",
+      "ISBN": "9788525067074",
+      "_id": "54pnDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=5z6reUq-5s4C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "5z6reUq-5s4C",
+      "authors": [
+        "Gustavo Nagib"
+      ],
+      "addedIn": 1641757368158,
+      "title": "Guia do pão-duro",
+      "readIn": "2005-03-01",
+      "ISBN": "9788587431363",
+      "_id": "5z6reUq-5s4C",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=78GXzgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "78GXzgEACAAJ",
+      "authors": [
+        "Gary Chapman"
+      ],
+      "addedIn": 1641759474798,
+      "title": "As 5 linguagens do amor das crianças",
+      "readIn": "2020-11-01",
+      "ISBN": "8543302536",
+      "_id": "78GXzgEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=7fsGEQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "7fsGEQAAQBAJ",
+      "authors": [
+        "Júlio Verne"
+      ],
+      "addedIn": 1725965750040,
+      "title": "Viagem ao centro da Terra",
+      "readIn": "2024-10-07",
+      "ISBN": "9786526113783",
+      "_id": "7fsGEQAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "Coleção Pitch Deck. Plataforma para jovens negócios. Verdadeiro manifesto ilustrado de como ser criativo na era digital, Roube como um artista, do designer e escritor Austin Kleon, ganhou a lista dos mais vendidos do The New York Times e figurou no ranking de 2012 da rede Amazon ao mostrar – com bom humor, ousadia e simplicidade – que não é preciso ser um gênio para ser criativo, basta ser autêntico. Baseado numa palestra feita pelo autor na Universidade do Estado de Nova York que em pouco tempo se viralizou na internet, Roube como um artista coloca os leitores em contato direto com seu lado criativo e artístico e é um verdadeiro manual para o sucesso no século XXI. Nesta obra, Austin mostra através de mensagens positivas um olhar gráfico diferenciado, ilustrações, exercícios e exemplos de como o leitor pode \"ativar\" seu lado criativo. Austin Kleon, corajosamente, desfila novas verdades sobre criatividade: nada é original, então abrace as influências, colete ideias, misture e reimagine para achar seu próprio caminho. Se gosta de um artista, copie-o, e copie as referências deste artista, descubra de quem ele gosta, quem ele copia, quem é a sua influência, e tome tudo isto para si. Seja este artista, até a hora que vai sentir que não está mais copiando e sim criando sua própria versão. Mas para chegar neste ponto é preciso que fique esperto, tenha uma rotina, um emprego fixo que lhe dê dinheiro e que lhe traga suporte para ser \"selvagem\" e ousado dentro de sua imaginação. O mais importante para os leitores é que Roube como um artista é focado na praticidade. Kleon quer transformar, mudar, fazer o leitor descobrir e ativar sua própria criatividade, e espera conseguir isto com todas as dicas e macetes que cita no livro. Roube como um artista é uma obra curta e intensa, um tiro certeiro para despertar aquele lado criativo que dorme dentro de todos os leitores.",
+      "thumbnail": "https://books.google.com/books/content?id=9SFnAAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "9SFnAAAAQBAJ",
+      "authors": [
+        "Austin Kleon"
+      ],
+      "addedIn": 1751372259263,
+      "title": "Roube como um artista",
+      "readIn": "2025-07-03",
+      "ISBN": "9788581222592",
+      "_id": "9SFnAAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=9TcQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "9TcQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641757091975,
+      "title": "Harry Potter e a Ordem da Fênix",
+      "readIn": "2001-08-01",
+      "ISBN": "9781781104040",
+      "_id": "9TcQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=C2Y3JSWF1gAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "C2Y3JSWF1gAC",
+      "authors": [
+        "GUSTAVO NAGIB"
+      ],
+      "addedIn": 1641757372536,
+      "title": "Guia do pão-duro 2 – porque a crise continua",
+      "readIn": "2006-03-01",
+      "ISBN": "9788587431677",
+      "_id": "C2Y3JSWF1gAC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "readIn": "2019-04-01",
+      "title": "Criando Bebes",
+      "id": "CNviOAAACAAJ",
+      "authors": [
+        "HOWARD CHILTON"
+      ],
+      "addedIn": 1641757792281,
+      "ISBN": "858835019X",
+      "_id": "CNviOAAACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=CeanDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "CeanDwAAQBAJ",
+      "authors": [
+        "Alexandre Versignassi"
+      ],
+      "addedIn": 1676336906762,
+      "title": "Crash",
+      "readIn": "2023-02-13",
+      "ISBN": "9788595086241",
+      "_id": "CeanDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=CqqGEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "CqqGEAAAQBAJ",
+      "authors": [
+        "David Yonggi Cho"
+      ],
+      "addedIn": 1672182967979,
+      "title": "A Quarta dimensão",
+      "readIn": "2022-12-26",
+      "ISBN": "9786555840230",
+      "_id": "CqqGEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "readIn": "2019-05-01",
+      "title": "CRIANDO MENINOS",
+      "id": "DCURvgAACAAJ",
+      "authors": [
+        "STEVE BIDDULPH",
+        "NEUZA MARIA SIMOES CAPELO"
+      ],
+      "addedIn": 1641758227032,
+      "ISBN": "8539509024",
+      "_id": "DCURvgAACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "A Divina Comédia é um poema clássico da literatura italiana e mundial com características épica e teológica, escrito por Dante Alighieri no século XIV período renascentista e dividido em três partes: o Inferno, o Purgatório e o Paraíso. São cem cantos protagonizados pelo próprio Dante em companhia do poeta romano Virgílio , que percorreu uma jornada espiritual pelos três reinos além-túmulo. O Purgatório é descrito em 33 cantos. Dante descreve nele o encontro com as almas que aguardam para serem avaliadas. O purgatório é formado por sete círculos, que representam os sete pecados capitais: Orgulho, Inveja, Ira, Preguiça, Avareza, Gula e Luxúria.",
+      "thumbnail": "https://books.google.com/books/content?id=DGbjDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "DGbjDwAAQBAJ",
+      "authors": [
+        "Dante Alighieri",
+        "José Pedro Xavier Pinheiro"
+      ],
+      "addedIn": 1748776308277,
+      "title": "A Divina Comédia - Purgatório",
+      "readIn": "2025-05-15",
+      "ISBN": "9786555520071",
+      "_id": "DGbjDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Dazuk1KO6S0C&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "Dazuk1KO6S0C",
+      "authors": [
+        "E. L. James"
+      ],
+      "addedIn": 1641757580208,
+      "title": "Cinquenta tons de liberdade",
+      "readIn": "2013-07-01",
+      "ISBN": "9788580572179",
+      "_id": "Dazuk1KO6S0C",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=DcmjzgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "DcmjzgEACAAJ",
+      "authors": [
+        "Napoleon Hill"
+      ],
+      "addedIn": 1641757617812,
+      "title": "O Manuscrito Original",
+      "readIn": "2019-03-01",
+      "ISBN": "8568014267",
+      "_id": "DcmjzgEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "A Divina Comédia é um poema clássico da literatura italiana e mundial com características épica e teológica, escrito por Dante Alighieri no século XIV período renascentista e dividido em três partes: o Inferno, o Purgatório e o Paraíso. São cem cantos protagonizados pelo próprio Dante em companhia do poeta romano Virgílio , que percorreu uma jornada espiritual pelos três reinos além-túmulo. O Inferno é descrito em 34 cantos com cerca de 140 versos cada um. Virgílio, o grande poeta romano, autor de Eneida, surge para guiar Dante pelo inferno e o purgatório em direção ao paraíso. Antes de encontrar Virgílio, ele estava numa selva escura.",
+      "thumbnail": "https://books.google.com/books/content?id=DmbjDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "DmbjDwAAQBAJ",
+      "authors": [
+        "Dante Alighieri",
+        "José Pedro Xavier Pinheiro"
+      ],
+      "addedIn": 1748776305657,
+      "title": "A Divina Comédia - Inferno",
+      "readIn": "2025-04-30",
+      "ISBN": "9786555520095",
+      "_id": "DmbjDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": null,
+      "id": "ErJCQwAACAAJ",
+      "authors": [
+        "Henry Miller"
+      ],
+      "addedIn": 1682607010974,
+      "title": "O mundo do sexo",
+      "readIn": "2023-04-26",
+      "ISBN": "9727470319",
+      "_id": "ErJCQwAACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ErMyz6FTfisC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "ErMyz6FTfisC",
+      "authors": [
+        "E. L. James"
+      ],
+      "addedIn": 1641757577163,
+      "title": "Cinquenta tons de cinza",
+      "readIn": "2013-03-01",
+      "ISBN": "9788580572193",
+      "_id": "ErMyz6FTfisC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=FeQixp6F26MC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "FeQixp6F26MC",
+      "authors": [
+        "T. Harv Eker"
+      ],
+      "addedIn": 1641758380658,
+      "title": "Os segredos da mente milionária",
+      "readIn": "2020-01-25",
+      "ISBN": "9788575425763",
+      "_id": "FeQixp6F26MC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=FgaHBAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "FgaHBAAAQBAJ",
+      "authors": [
+        "Gustavo Cerbasi"
+      ],
+      "addedIn": 1641758279882,
+      "title": "Casais inteligentes enriquecem juntos",
+      "readIn": "2019-08-01",
+      "ISBN": "9788543101446",
+      "_id": "FgaHBAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=FrcPBgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "FrcPBgAAQBAJ",
+      "authors": [
+        "Stephen Hawking"
+      ],
+      "addedIn": 1641758450104,
+      "title": "Uma breve história do tempo",
+      "readIn": "2020-06-01",
+      "ISBN": "9788580576474",
+      "_id": "FrcPBgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=GXWkDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "GXWkDwAAQBAJ",
+      "authors": [
+        "Robert C. Martin"
+      ],
+      "addedIn": 1655044146152,
+      "title": "Código Limpo",
+      "readIn": "2022-03-15",
+      "ISBN": "9788550811482",
+      "_id": "GXWkDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "O \"Auto da Compadecida\" consegue o equilíbrio perfeito entre a tradição popular e a elaboração literária ao recriar para o teatro episódios registrados na tradição popular do cordel. É uma peça teatral em forma de Auto em 3 atos, escrita em 1955 pelo autor paraibano Ariano Suassuna. Sendo um drama do Nordeste brasileiro, mescla elementos como a tradição da literatura de cordel, a comédia, traços do barroco católico brasileiro e, ainda, cultura popular e tradições religiosas. Apresenta na escrita traços de linguagem oral [demonstrando, na fala do personagem, sua classe social] e apresenta também regionalismos relativos ao Nordeste. Esta peça projetou Suassuna em todo o país e foi considerada, em 1962, por Sábato Magaldi \"o texto mais popular do moderno teatro brasileiro\".",
+      "thumbnail": "https://books.google.com/books/content?id=I0pWDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "I0pWDwAAQBAJ",
+      "authors": [
+        "Ariano Suassuna"
+      ],
+      "addedIn": 1743610193510,
+      "title": "Auto da compadecida",
+      "readIn": "2006-04-01",
+      "ISBN": "9788520942833",
+      "_id": "I0pWDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=JimPDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "JimPDwAAQBAJ",
+      "authors": [
+        "Willie e Elaine Oliver"
+      ],
+      "addedIn": 1689322090753,
+      "title": "Esperança para a Família",
+      "readIn": "2023-07-13",
+      "ISBN": "9788534527118",
+      "_id": "JimPDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=JkeZAgAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "JkeZAgAAQBAJ",
+      "authors": [
+        "Walter Isaacson"
+      ],
+      "addedIn": 1641757436828,
+      "title": "Steve Jobs",
+      "readIn": "2012-03-01",
+      "ISBN": "9789896722180",
+      "_id": "JkeZAgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Jv8HCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Jv8HCwAAQBAJ",
+      "authors": [
+        "Napoleon Hill"
+      ],
+      "addedIn": 1641758252466,
+      "title": "Mais Esperto que o Diabo",
+      "readIn": "2019-06-01",
+      "ISBN": "9788568014103",
+      "_id": "Jv8HCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=L0BXDgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "L0BXDgAAQBAJ",
+      "authors": [
+        "Bazin,Decio"
+      ],
+      "addedIn": 1642976766112,
+      "title": "Faça Fortuna com Ações",
+      "readIn": "2022-01-23",
+      "ISBN": "9788585454166",
+      "_id": "L0BXDgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "Um clássico da literatura mundial. Ao visitar a catedral de Norte Dame em Paris, Victor Hugo encontrou gravada em uma das paredes escurecidas a palavra grega ’ANÁΓKH – que significa fatalidade. Essa é uma história que condiz ao significado desse entalho sombrio. Hoje não se pode mais olhar para essas letras nas paredes de Notre Dame, mas o destino de seu escritor estará para sempre marcado nas palavras de Victor Hugo. “O Corcunda de Notre Dame” mescla fantasia, humor e uma pitada de história medieval na Paris do século XV. Neste comovente romance que circunda em torno da bela cigana Esmeralda e três pretendentes dispostos a conquistá-la: Phoebus, o garboso capitão de cavalaria; Claude Frollo, o padre sem fé, e Quasímodo, o corcunda dono de um grande coração, Victor Hugo narra as ambições humanas e as paixões impossíveis, tendo como principal cenário a mais famosa catedral gótica da Europa.",
+      "thumbnail": null,
+      "id": "L7v0zwEACAAJ",
+      "authors": [
+        "Victor Hugo"
+      ],
+      "addedIn": 1753397433863,
+      "title": "O Corcunda de Notre Dame",
+      "readIn": "2025-07-24",
+      "ISBN": "8580444500",
+      "_id": "L7v0zwEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=LAIWEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "LAIWEAAAQBAJ",
+      "authors": [
+        "Júlio Verne"
+      ],
+      "addedIn": 1725965629807,
+      "title": "Cinco semanas em um balão",
+      "readIn": "2024-09-09",
+      "ISBN": "9786555522976",
+      "_id": "LAIWEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=MGAlDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "MGAlDQAAQBAJ",
+      "authors": [
+        "Yuval Noah Harari"
+      ],
+      "addedIn": 1641758891591,
+      "title": "Homo Deus",
+      "readIn": "2021-11-29",
+      "ISBN": "9788543807829",
+      "_id": "MGAlDQAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=MI1xDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "MI1xDwAAQBAJ",
+      "authors": [
+        "Júlio Verne"
+      ],
+      "addedIn": 1733535142223,
+      "title": "A volta ao mundo em 80 dias",
+      "readIn": "2024-12-06",
+      "ISBN": "9788592797591",
+      "_id": "MI1xDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=MqyFSuRcusYC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "MqyFSuRcusYC",
+      "authors": [
+        "Paulo Coelho"
+      ],
+      "addedIn": 1683366030584,
+      "title": "El Alquimista",
+      "readIn": "2023-05-05",
+      "ISBN": "0062511408",
+      "_id": "MqyFSuRcusYC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=NYarDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "NYarDwAAQBAJ",
+      "authors": [
+        "Benjamin Graham"
+      ],
+      "addedIn": 1641758396355,
+      "title": "O investidor inteligente",
+      "readIn": "2020-03-08",
+      "ISBN": "9788520925775",
+      "_id": "NYarDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=PDcQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "PDcQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641756915001,
+      "title": "Harry Potter e a Pedra Filosofal",
+      "readIn": "2000-03-01",
+      "ISBN": "9781781103074",
+      "_id": "PDcQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=SWDuDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "SWDuDwAAQBAJ",
+      "authors": [
+        "Yuval Noah Harari"
+      ],
+      "addedIn": 1641758358211,
+      "title": "Sapiens",
+      "readIn": "2020-01-15",
+      "ISBN": "9789895641291",
+      "_id": "SWDuDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=T-EeEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "T-EeEAAAQBAJ",
+      "authors": [
+        "Júlio Verne"
+      ],
+      "addedIn": 1733535332471,
+      "title": "A ilha misteriosa",
+      "readIn": "2025-01-07",
+      "ISBN": "9786555523546",
+      "_id": "T-EeEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=VgO3SItezOkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "VgO3SItezOkC",
+      "authors": [
+        "Pamela Druckerman"
+      ],
+      "addedIn": 1641758884441,
+      "title": "Crianças francesas não fazem manha",
+      "readIn": "2021-01-04",
+      "ISBN": "9788539004355",
+      "_id": "VgO3SItezOkC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=XUqTmS--ZYgC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "XUqTmS--ZYgC",
+      "authors": [
+        "Cristiane Correa"
+      ],
+      "addedIn": 1641758469936,
+      "title": "Sonho grande",
+      "readIn": "2020-07-16",
+      "ISBN": "9788575429112",
+      "_id": "XUqTmS--ZYgC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Y6_J4FZGy1wC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Y6_J4FZGy1wC",
+      "authors": [
+        "Autor desconhecido"
+      ],
+      "addedIn": 1642889468229,
+      "title": "Nos tempos de Madame Satã",
+      "readIn": "2016-03-01",
+      "ISBN": "8527904179",
+      "_id": "Y6_J4FZGy1wC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Y_ifDgAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "Y_ifDgAAQBAJ",
+      "authors": [
+        "Stélio Inácio"
+      ],
+      "addedIn": 1642274288174,
+      "title": "O Bom Comedor",
+      "readIn": "2014-03-01",
+      "ISBN": "Y_ifDgAAQBAJ",
+      "_id": "Y_ifDgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=YntzEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "YntzEAAAQBAJ",
+      "authors": [
+        "Stephen R. Covey",
+        "Sean Covey"
+      ],
+      "addedIn": 1722030099496,
+      "title": "Os 7 hábitos das pessoas altamente eficazes: Diário",
+      "readIn": "2024-08-12",
+      "ISBN": "9786557122068",
+      "_id": "YntzEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ZCU3DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ZCU3DwAAQBAJ",
+      "authors": [
+        "José Galló"
+      ],
+      "addedIn": 1641758290909,
+      "title": "O poder do encantamento",
+      "readIn": "2019-09-01",
+      "ISBN": "9788542211481",
+      "_id": "ZCU3DwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ZmNhCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ZmNhCgAAQBAJ",
+      "authors": [
+        "Antoine de Saint-Exupéry"
+      ],
+      "addedIn": 1656449955987,
+      "title": "O Pequeno Príncipe",
+      "readIn": "2022-06-27",
+      "ISBN": "9788579309199",
+      "_id": "ZmNhCgAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=_YSJEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "_YSJEAAAQBAJ",
+      "authors": [
+        "Thalita Rebouças"
+      ],
+      "addedIn": 1677342724630,
+      "title": "Fala sério, mãe!",
+      "readIn": "2002-06-01",
+      "ISBN": "9786555951431",
+      "_id": "_YSJEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=adAiEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "adAiEAAAQBAJ",
+      "authors": [
+        "Maurice Leblac"
+      ],
+      "addedIn": 1670182633341,
+      "title": "Arsène Lupin",
+      "readIn": "2022-12-04",
+      "ISBN": "9786555790764",
+      "_id": "adAiEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=axHUDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "axHUDwAAQBAJ",
+      "authors": [
+        "Pierre Grimal"
+      ],
+      "addedIn": 1700008646956,
+      "title": "Marco Aurélio",
+      "readIn": "2023-11-14",
+      "ISBN": "9788537817568",
+      "_id": "axHUDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=b2JAZo2olaMC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "b2JAZo2olaMC",
+      "authors": [
+        "Bruna Surfistinha",
+        "Raquel Pacheco"
+      ],
+      "addedIn": 1642770158890,
+      "title": "O doce veneno do escorpião",
+      "readIn": "2011-03-01",
+      "ISBN": "9788578881221",
+      "_id": "b2JAZo2olaMC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=b34_EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "b34_EAAAQBAJ",
+      "authors": [
+        "Spencer Johnson"
+      ],
+      "addedIn": 1641757335303,
+      "title": "Quem mexeu no meu queijo?",
+      "readIn": "2004-03-01",
+      "ISBN": "9786555873528",
+      "_id": "b34_EAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=cKebDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "cKebDwAAQBAJ",
+      "authors": [
+        "Nicolau Maquiavel"
+      ],
+      "addedIn": 1684521783281,
+      "title": "O príncipe",
+      "readIn": "2023-05-10",
+      "ISBN": "9788552100560",
+      "_id": "cKebDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=e0wWDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "e0wWDQAAQBAJ",
+      "authors": [
+        "Sun Tzu"
+      ],
+      "addedIn": 1641757401087,
+      "title": "A Arte da guerra",
+      "readIn": "2010-03-01",
+      "ISBN": "9788581301389",
+      "_id": "e0wWDQAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=eTldtwAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "eTldtwAACAAJ",
+      "authors": [
+        "George S. Clason"
+      ],
+      "addedIn": 1641758332207,
+      "title": "O Homem Mais Rico da Babilonia (Em Portuguese do Brasil)",
+      "readIn": "2019-10-01",
+      "ISBN": "9563101340",
+      "_id": "eTldtwAACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=g-nXzQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "g-nXzQEACAAJ",
+      "authors": [
+        "Abba"
+      ],
+      "addedIn": 1718365464070,
+      "title": "Bíblia King James Atualizada Slim",
+      "readIn": "2024-06-01",
+      "ISBN": "6557150014",
+      "_id": "g-nXzQEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=gevsAQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "gevsAQAAQBAJ",
+      "authors": [
+        "Verne, Jules"
+      ],
+      "addedIn": 1728389977368,
+      "title": "Da terra à lua",
+      "readIn": "2024-10-25",
+      "ISBN": "9785000641286",
+      "_id": "gevsAQAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=glxUAgAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "glxUAgAACAAJ",
+      "authors": [
+        "Subir Chowdhury"
+      ],
+      "addedIn": 1673009055584,
+      "title": "El poder de Seis Sigma",
+      "readIn": "2023-01-05",
+      "ISBN": "8420543314",
+      "_id": "glxUAgAACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=gzYQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "gzYQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641756978552,
+      "title": "Harry Potter e o Cálice de Fogo",
+      "readIn": "2001-04-01",
+      "ISBN": "9781781103104",
+      "_id": "gzYQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=hjcQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "hjcQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641756940666,
+      "title": "Harry Potter e a Câmara Secreta",
+      "readIn": "2000-07-01",
+      "ISBN": "9781781103692",
+      "_id": "hjcQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=hs06DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "hs06DwAAQBAJ",
+      "authors": [
+        "Alexandre Dumas"
+      ],
+      "addedIn": 1689585863863,
+      "title": "O Conde de Monte Cristo",
+      "readIn": "2023-10-02",
+      "ISBN": "9788583861744",
+      "_id": "hs06DwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "Best-seller internacional e livro notável do New York Times Um dos 10 Melhores Livros de Ciência, segundo a Amazon.com Não estamos preparados para lidar com o aleatório e, por isso, não percebemos o quanto o acaso interfere em nossas vidas. Num tom irreverente, citando exemplos e pesquisas presentes em todos os âmbitos da vida, do mercado financeiro aos esportes, de Hollywood à medicina, Leonard Mlodinow apresenta de forma divertida e curiosa as ferramentas necessárias para identificar os indícios do acaso. Como resultado, nos ajuda a fazer escolhas mais acertadas e a conviver melhor com fatores que não podemos controlar. Prepare-se para colocar em xeque algumas certezas sobre o funcionamento do mundo e para perceber que muitas coisas são tão previsíveis quanto o próximo passo de um bêbado depois de uma noitada... \"Um guia maravilhoso e acessível sobre como o aleatório afeta nossas vidas\" Stephen Hawking \"Mlodinow escreve num estilo leve, intercalando desafios probabilísticos com perfis de cientistas... O resultado é um curso intensivo, de leitura agradável, sobre aleatoriedade e estatística.\" George Johnson, New York Times",
+      "thumbnail": "https://books.google.com/books/content?id=ixLUDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "ixLUDwAAQBAJ",
+      "authors": [
+        "Leonard Mlodinow"
+      ],
+      "addedIn": 1750165443058,
+      "title": "O andar do bêbado",
+      "readIn": "2025-06-16",
+      "ISBN": "9788537801819",
+      "_id": "ixLUDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=jYUTzwEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "jYUTzwEACAAJ",
+      "authors": [
+        "Dan Schawbel"
+      ],
+      "addedIn": 1730389260882,
+      "title": "De Volta às Conexões Humanas",
+      "readIn": "2024-10-31",
+      "ISBN": "6587191371",
+      "_id": "jYUTzwEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=kthuEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "kthuEAAAQBAJ",
+      "authors": [
+        "Marco Aurélio",
+        "Sêneca",
+        "Epiteto"
+      ],
+      "addedIn": 1700008661006,
+      "title": "365 Reflexões Estoicas",
+      "readIn": "2023-11-25",
+      "ISBN": "kthuEAAAQBAJ",
+      "_id": "kthuEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=mCNnEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "mCNnEAAAQBAJ",
+      "authors": [
+        "Bram Stoker"
+      ],
+      "addedIn": 1677949064151,
+      "title": "Drácula: + sessão \"arquivos do Drácula",
+      "readIn": "2023-03-16",
+      "ISBN": "9786555791631",
+      "_id": "mCNnEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://images-na.ssl-images-amazon.com/images/I/41Yf4lhAR3L._SX346_BO1,204,203,200_.jpg",
+      "id": "maxWygEACAAJ",
+      "authors": [
+        "Dale Carnegie",
+        "Fernando Tude De Souza"
+      ],
+      "addedIn": 1686408883781,
+      "title": "Como Fazer Amigos E Influenciar Pessoas",
+      "readIn": "2020-02-01",
+      "ISBN": "8504018024",
+      "_id": "maxWygEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "A Divina Comédia é um poema clássico da literatura italiana e mundial com características épica e teológica, escrito por Dante Alighieri no século XIV período renascentista e dividido em três partes: o Inferno, o Purgatório e o Paraíso. São cem cantos protagonizados pelo próprio Dante em companhia do poeta romano Virgílio , que percorreu uma jornada espiritual pelos três reinos além-túmulo. O Paraíso é descrito em 33 cantos. Ao fim da trajetória, Virgílio, seu guia e mentor, não pode entrar pois era pagão. Assim, o local do poeta romano é o inferno. No paraíso, Dante reencontra seu grande amor, Beatriz.",
+      "thumbnail": "https://books.google.com/books/content?id=p2rjDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "p2rjDwAAQBAJ",
+      "authors": [
+        "Dante Alighieri"
+      ],
+      "addedIn": 1748776310625,
+      "title": "A Divina Comédia - Paraíso",
+      "readIn": "2025-05-30",
+      "ISBN": "9786555520064",
+      "_id": "p2rjDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=p97eDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "p97eDwAAQBAJ",
+      "authors": [
+        "Martin Fowler"
+      ],
+      "addedIn": 1668127808192,
+      "title": "Refatoração",
+      "readIn": "2022-11-08",
+      "ISBN": "9788575227251",
+      "_id": "p97eDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pNLHDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pNLHDwAAQBAJ",
+      "authors": [
+        "Tiago Brunet"
+      ],
+      "addedIn": 1641758460394,
+      "title": "Especialista em pessoas",
+      "readIn": "2020-07-01",
+      "ISBN": "9788542218763",
+      "_id": "pNLHDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pPO0DQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pPO0DQAAQBAJ",
+      "authors": [
+        "E L James"
+      ],
+      "addedIn": 1641757578522,
+      "title": "Cinquenta tons mais escuros - Capa Filme (Com Conteúdo Extra)",
+      "readIn": "2013-05-01",
+      "ISBN": "9788551001318",
+      "_id": "pPO0DQAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=qDYQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qDYQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641756956650,
+      "title": "Harry Potter e o prisioneiro de Azkaban",
+      "readIn": "2001-02-01",
+      "ISBN": "9781781103708",
+      "_id": "qDYQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "BEST-SELLER DO NEW YORK TIMES Pequenas Mudanças, Resultados Impressionantes. Não importa quais sejam seus objetivos, Hábitos Atômicos oferece um método eficaz para você se aprimorar — todos os dias. James Clear, um dos mais expoentes especialistas na criação de hábitos, revela as estratégicas práticas que o ensinarão, exatamente, como criar bons hábitos, abandonar os maus e fazer pequenas mudanças de comportamento que levam a resultados impressionantes. Se enfrenta dificuldades para mudar seus hábitos, o problema não é você, é o sistema escolhido. Os maus hábitos se repetem sem parar porque você está usando o sistema errado, e não porque não queira mudar. Assim, suas limitações não são a complexidade de seu objetivo, mas a inadequação de seus sistemas. Neste livro, você aprenderá um método comprovado capaz de levá-lo a novos patamares. Clear é conhecido por sua habilidade em transformar tópicos complexos em comportamentos simples que podem ser facilmente aplicados à vida cotidiana e profissional. Seu método, desenvolvido a partir de conceitos comprovados da biologia, psicologia e neurociência, é um guia descomplicado para tornar os bons hábitos inevitáveis e os maus, impossíveis. Ao longo desta jornada, os leitores serão inspirados e entretidos por histórias de medalhistas de ouro em Olimpíadas, artistas premiados, líderes de negócios, médicos que salvam vidas e astros da comédia que usaram a ciência dos pequenos hábitos para dominar seu ofício e se lançar ao topo de suas áreas de atuação. Hábitos Atômicos remodela sua forma de pensar em avanço e sucesso e traz as ferramentas e estratégias de que precisa para transformar seus hábitos — seja você técnico de um time almejando a conquista de um título, uma organização com pretensões de reinventar seu setor ou simplesmente um indivíduo que deseja parar de fumar, perder peso, reduzir o estresse ou atingir qualquer outra meta. Descubra o Segredo dos Resultados Permanentes Repleto de estratégias testadas e aprovadas de autoaprimoramento, Hábitos Atômicos ensinará você a construir hábitos que funcionem para — e não contra — você.",
+      "thumbnail": "https://books.google.com/books/content?id=qI6iDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qI6iDwAAQBAJ",
+      "authors": [
+        "James Clear"
+      ],
+      "addedIn": 1751372200620,
+      "title": "Hábitos Atômicos",
+      "readIn": "2025-06-30",
+      "ISBN": "9788550807577",
+      "_id": "qI6iDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=qdfkDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qdfkDwAAQBAJ",
+      "authors": [
+        "Júlio Verne"
+      ],
+      "addedIn": 1732722691760,
+      "title": "Vinte mil léguas submarinas",
+      "readIn": "2024-11-27",
+      "ISBN": "9788520945599",
+      "_id": "qdfkDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=qwTjDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "qwTjDQAAQBAJ",
+      "authors": [
+        "Lambert Oaks"
+      ],
+      "addedIn": 1641757599542,
+      "title": "A sabedoria de Tyrion Lannister",
+      "readIn": "2019-02-01",
+      "ISBN": "9788550301129",
+      "_id": "qwTjDQAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=rBdiDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "rBdiDwAAQBAJ",
+      "authors": [
+        "Robert T. Kiyosaki"
+      ],
+      "addedIn": 1641757140521,
+      "title": "Pai Rico, Pai Pobre - Edição de 20 anos atualizada e ampliada",
+      "readIn": "2003-06-01",
+      "ISBN": "9788550801483",
+      "_id": "rBdiDwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=t1cL1A8ZPegC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "t1cL1A8ZPegC",
+      "authors": [
+        "Nicholas Boothman "
+      ],
+      "addedIn": 1641758486919,
+      "title": "Como convencer alguém em 90 segundos",
+      "readIn": "2020-08-16",
+      "ISBN": "9788579304507",
+      "_id": "t1cL1A8ZPegC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=tlvGzwEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "tlvGzwEACAAJ",
+      "authors": [
+        "Sêneca"
+      ],
+      "addedIn": 1697562812152,
+      "title": "Sobre A Brevidade Da Vida",
+      "readIn": "2023-10-10",
+      "ISBN": "6587817661",
+      "_id": "tlvGzwEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "\"What she wrote was funny and wise and charming, so I would have been proud had the words been mine.\"--Kurt Vonnegut, New York Times Wear Sunscreen, now a hit video on YouTube.com, has been seen by millions of viewers. It all began with a column titled \"Advice, Like Youth, Probably Just Wasted on the Young,\" written by Mary Schmich and published in the Chicago Tribune on June 1, 1997. Posted on the Web, Schmich's column quickly became an international sensation. Friends e-mailed it to friends, the media picked up on it, and a star was born. There was only one problem: Everyone thought the column was an actual commencement address given by author Kurt Vonnegut. Eventually, Mary Schmich was correctly identified as the author. AMP published her advice as a gift book in 1998. The following year, \"Wear Sunscreen\" became a hit song.",
+      "thumbnail": "https://books.google.com/books/content?id=udpsY79H-wkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "udpsY79H-wkC",
+      "authors": [
+        "Mary Schmich"
+      ],
+      "addedIn": 1748776236334,
+      "title": "Wear Sunscreen",
+      "readIn": "2025-05-31",
+      "ISBN": "9781449426897",
+      "_id": "udpsY79H-wkC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=vJUazgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "vJUazgEACAAJ",
+      "authors": [
+        "Herman Melville"
+      ],
+      "addedIn": 1722029991265,
+      "title": "Moby Dick",
+      "readIn": "2024-07-01",
+      "ISBN": "9798575802075",
+      "_id": "vJUazgEACAAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=vLiUj1h5fhkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "vLiUj1h5fhkC",
+      "authors": [
+        "Eric Ries"
+      ],
+      "addedIn": 1682084587712,
+      "title": "A startup enxuta",
+      "readIn": "2023-04-04",
+      "ISBN": "9788581780139",
+      "_id": "vLiUj1h5fhkC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=vtWhueS9gQEC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "vtWhueS9gQEC",
+      "authors": [
+        "Anne Frank"
+      ],
+      "addedIn": 1736777393994,
+      "title": "O diário de Anne Frank",
+      "readIn": "2023-01-10",
+      "ISBN": "8501044458",
+      "_id": "vtWhueS9gQEC",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=yjUQCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "yjUQCwAAQBAJ",
+      "authors": [
+        "J.K. Rowling"
+      ],
+      "addedIn": 1641756990700,
+      "title": "Harry Potter e o enigma do Príncipe",
+      "readIn": "2001-06-01",
+      "ISBN": "9781781104057",
+      "_id": "yjUQCwAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=yoCFEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "yoCFEAAAQBAJ",
+      "authors": [
+        "Baltasar Gracián"
+      ],
+      "addedIn": 1689343424936,
+      "title": "A Arte da Prudência",
+      "readIn": "2023-08-22",
+      "ISBN": "9781619653450",
+      "_id": "yoCFEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "description": "Obra clássica do premiado autor, Herman Hesse, Sidarta é uma reflexão sobre a busca da sabedoria que encanta gerações. Sidarta é, assim como outras criações de Hermann Hesse, uma obra inesquecível. Fruto de uma viagem à Índia em 1911, foi publicado onze anos depois, em 1922. Sidarta é um espírito rebelde que seguiu os ensinamentos de Buda, mantendo-se fiel à sua própria alma. Mas, como outros heróis desse ganhador do Prêmio Nobel de Literatura, não trata apenas de devoção. Destila altas doses de angústia ocidental no confronto do individualismo com os ideias de iluminação. Na busca da verdadeira felicidade, o filho de brâmanes, favorecido na aparência, na inteligência e no carisma, torna-se um asceta. Para isso, segue um caminho tortuoso que o leva, através de um sensual caso amoroso com uma cortesã, das tentações à autocompreensão. A sensibilidade harmonizada de Hesse com temas universais o fez referência da contracultura e precursor de questionamentos imperecíveis. Visionário, o autor foi um desbravador do misticismo oriental muito antes da corrida aos gurus orientais do século XX. Este romance lírico, baseado na juventude de Buda, retém a magia do escritor alemão – consagrado e cultuado não por oferecer respostas para dilemas ou formulações fáceis para aflições, mas por tecer envolventes universos e tramas repletas de empatia, sempre apontado a capacidade de sublimação do ser humano na busca de sua essência.",
+      "thumbnail": "https://books.google.com/books/content?id=zdJGEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "zdJGEAAAQBAJ",
+      "authors": [
+        "Hermann Hesse"
+      ],
+      "addedIn": 1738935222366,
+      "title": "Sidarta",
+      "readIn": "2025-02-06",
+      "ISBN": "9786555873764",
+      "_id": "zdJGEAAAQBAJ",
+      "_user_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=0Ce7HDOnNFMC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "0Ce7HDOnNFMC",
+      "authors": [
+        "John Green"
+      ],
+      "addedIn": 1642378369198,
+      "title": "A Culpa é das Estrelas",
+      "readIn": "",
+      "ISBN": "9789892320953",
+      "_id": "0Ce7HDOnNFMC",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=2LQYEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "2LQYEAAAQBAJ",
+      "authors": [
+        "Anne Frank"
+      ],
+      "addedIn": 1690937866482,
+      "title": "O Diário de Anne Frank (Het Achterhuis)",
+      "readIn": "",
+      "ISBN": "2LQYEAAAQBAJ",
+      "_id": "2LQYEAAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=8ufGU81hac4C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "8ufGU81hac4C",
+      "authors": [
+        "Allan Pease",
+        "Barbara Pease"
+      ],
+      "addedIn": 1642378093317,
+      "title": "Por que os homens fazem sexo e as mulheres fazem amor?",
+      "readIn": "",
+      "ISBN": "9788575426487",
+      "_id": "8ufGU81hac4C",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=IObJNPV-rwEC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "IObJNPV-rwEC",
+      "authors": [
+        "Sun-tzu"
+      ],
+      "addedIn": 1642378168946,
+      "title": "A Arte da Guerra",
+      "readIn": "",
+      "ISBN": "9788560018000",
+      "_id": "IObJNPV-rwEC",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=JimPDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "JimPDwAAQBAJ",
+      "authors": [
+        "Willie e Elaine Oliver"
+      ],
+      "addedIn": 1690852722816,
+      "title": "Esperança para a Família",
+      "readIn": "",
+      "ISBN": "9788534527118",
+      "_id": "JimPDwAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=PtzbDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "PtzbDwAAQBAJ",
+      "authors": [
+        "Zeiset"
+      ],
+      "addedIn": 1642377820457,
+      "title": "A Bíblia Sagrada",
+      "readIn": "",
+      "ISBN": "9781622456734",
+      "_id": "PtzbDwAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=Qb1VDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "Qb1VDwAAQBAJ",
+      "authors": [
+        "Napoleon Hill"
+      ],
+      "addedIn": 1642378197624,
+      "title": "O manuscrito original",
+      "readIn": "",
+      "ISBN": "9788568014585",
+      "_id": "Qb1VDwAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=UhHpDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "UhHpDQAAQBAJ",
+      "authors": [
+        "William P. Young"
+      ],
+      "addedIn": 1642378322478,
+      "title": "A Cabana",
+      "readIn": "",
+      "ISBN": "9788580416916",
+      "_id": "UhHpDQAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=VRBVBQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "VRBVBQAAQBAJ",
+      "authors": [
+        "Benny Hinn"
+      ],
+      "addedIn": 1642377982470,
+      "title": "Bom dia, Espírito Santo",
+      "readIn": "",
+      "ISBN": "9788578606503",
+      "_id": "VRBVBQAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=VgO3SItezOkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "VgO3SItezOkC",
+      "authors": [
+        "Pamela Druckerman"
+      ],
+      "addedIn": 1642378112106,
+      "title": "Crianças francesas não fazem manha",
+      "readIn": "",
+      "ISBN": "9788539004355",
+      "_id": "VgO3SItezOkC",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=_F7ikTQ2_VUC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "_F7ikTQ2_VUC",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642378009325,
+      "title": "Nunca desista de seus sonhos",
+      "readIn": "",
+      "ISBN": "9788575426043",
+      "_id": "_F7ikTQ2_VUC",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=b34_EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "b34_EAAAQBAJ",
+      "authors": [
+        "Spencer Johnson"
+      ],
+      "addedIn": 1642378269008,
+      "title": "Quem mexeu no meu queijo?",
+      "readIn": "",
+      "ISBN": "9786555873528",
+      "_id": "b34_EAAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=c7U1DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "c7U1DwAAQBAJ",
+      "authors": [
+        "Gary Chapman",
+        "Ross Campbell"
+      ],
+      "addedIn": 1642377885756,
+      "title": "As 5 linguagens do amor das crianças - nova edição",
+      "readIn": "",
+      "ISBN": "9788543302584",
+      "_id": "c7U1DwAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=pNLHDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "pNLHDwAAQBAJ",
+      "authors": [
+        "Tiago Brunet"
+      ],
+      "addedIn": 1642377919594,
+      "title": "Especialista em pessoas",
+      "readIn": "",
+      "ISBN": "9788542218763",
+      "_id": "pNLHDwAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=vHhTDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "vHhTDwAAQBAJ",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642378020649,
+      "title": "Você é insubstituível",
+      "readIn": "",
+      "ISBN": "9788543106359",
+      "_id": "vHhTDwAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=y4QDDQAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "y4QDDQAAQBAJ",
+      "authors": [
+        "Augusto Cury"
+      ],
+      "addedIn": 1642378004443,
+      "title": "O homem mais inteligente da história",
+      "readIn": "",
+      "ISBN": "9788543106298",
+      "_id": "y4QDDQAAQBAJ",
+      "_user_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "readIn": "",
+      "title": "Quem É você Alasca?",
+      "id": "50cTDQEACAAJ",
+      "authors": [
+        "John Green"
+      ],
+      "addedIn": 1653443224929,
+      "ISBN": "8580576830",
+      "_id": "50cTDQEACAAJ",
+      "_user_id": "qewQdtdNd2Z5Ots6Kn8XRwiuNZo1"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=U1_9Sls18e8C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "U1_9Sls18e8C",
+      "authors": [
+        "Aristófanes"
+      ],
+      "addedIn": 1653443362051,
+      "title": "Lisístrata",
+      "readIn": "",
+      "ISBN": "9788525423115",
+      "_id": "U1_9Sls18e8C",
+      "_user_id": "qewQdtdNd2Z5Ots6Kn8XRwiuNZo1"
+    },
+    {
+      "thumbnail": null,
+      "id": "5PqrngEACAAJ",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1679762658597,
+      "title": "The Tragedy of Macbeth",
+      "readIn": "",
+      "ISBN": "OCLC:475426394",
+      "_id": "5PqrngEACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=83gyzgEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "83gyzgEACAAJ",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1679762049894,
+      "title": "Hamlet",
+      "readIn": "",
+      "ISBN": "9798707148064",
+      "_id": "83gyzgEACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=8dcLAQAAMAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "8dcLAQAAMAAJ",
+      "authors": [
+        "Chimamanda Ngozi Adichie"
+      ],
+      "addedIn": 1679762136456,
+      "title": "The Thing Around Your Neck",
+      "readIn": "",
+      "ISBN": "UOM:39015078807636",
+      "_id": "8dcLAQAAMAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=FIoDCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "FIoDCwAAQBAJ",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1679762573249,
+      "title": "The Tempest",
+      "readIn": "",
+      "ISBN": "9781501130014",
+      "_id": "FIoDCwAAQBAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=M_uMERq5bfIC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "M_uMERq5bfIC",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1679762101047,
+      "title": "Othello",
+      "readIn": "",
+      "ISBN": "9781439116913",
+      "_id": "M_uMERq5bfIC",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": null,
+      "id": "NIlUQgAACAAJ",
+      "authors": [
+        "Ayi Kwei Armah"
+      ],
+      "addedIn": 1679762258083,
+      "title": "The Beautyful Ones are Not Yet Born",
+      "readIn": "",
+      "ISBN": "0435905414",
+      "_id": "NIlUQgAACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=RGCPEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "RGCPEAAAQBAJ",
+      "authors": [
+        "Chimamanda Ngozi Adichie"
+      ],
+      "addedIn": 1679762138476,
+      "title": "We Should All Be Feminists",
+      "readIn": "",
+      "ISBN": "9781101911761",
+      "_id": "RGCPEAAAQBAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": null,
+      "id": "WKBcjgEACAAJ",
+      "authors": [],
+      "addedIn": 1679762663575,
+      "title": "As You Like it",
+      "readIn": "",
+      "ISBN": "OCLC:844094614",
+      "_id": "WKBcjgEACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=anJrbWGCdmAC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "anJrbWGCdmAC",
+      "authors": [
+        "Ernest Hemingway"
+      ],
+      "addedIn": 1679762329844,
+      "title": "The Old Man And The Sea",
+      "readIn": "",
+      "ISBN": "9781443414555",
+      "_id": "anJrbWGCdmAC",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": null,
+      "id": "fMjYzAEACAAJ",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1679762655621,
+      "title": "Romeo and Juliet",
+      "readIn": "",
+      "ISBN": "OCLC:1062244687",
+      "_id": "fMjYzAEACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=fQ9kDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "fQ9kDwAAQBAJ",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1679762627086,
+      "title": "HAMLET",
+      "readIn": "",
+      "ISBN": "9788027237142",
+      "_id": "fQ9kDwAAQBAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=icXZ3--EFOsC&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "icXZ3--EFOsC",
+      "authors": [
+        "Chimamanda Ngozi Adichie"
+      ],
+      "addedIn": 1679762133188,
+      "title": "Purple Hibiscus",
+      "readIn": "",
+      "ISBN": "9780345808110",
+      "_id": "icXZ3--EFOsC",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=lHo6zQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "lHo6zQEACAAJ",
+      "authors": [
+        "George Orwell"
+      ],
+      "addedIn": 1679762479003,
+      "title": "Animal Farm",
+      "readIn": "",
+      "ISBN": "0241391857",
+      "_id": "lHo6zQEACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ldcIAQAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "ldcIAQAAIAAJ",
+      "authors": [
+        "Wole Soyinka"
+      ],
+      "addedIn": 1679762232953,
+      "title": "The Lion and the Jewel",
+      "readIn": "",
+      "ISBN": "STANFORD:36105037040420",
+      "_id": "ldcIAQAAIAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=sDnNIdRTWlcC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "sDnNIdRTWlcC",
+      "authors": [
+        "Lola Shoneyin"
+      ],
+      "addedIn": 1679762159679,
+      "title": "The Secret Lives of Baba Segi's Wives",
+      "readIn": "",
+      "ISBN": "9781847652355",
+      "_id": "sDnNIdRTWlcC",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=uiggAQAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "uiggAQAAIAAJ",
+      "authors": [
+        "Amma Darko"
+      ],
+      "addedIn": 1679762307216,
+      "title": "Faceless",
+      "readIn": "",
+      "ISBN": "STANFORD:36105121537661",
+      "_id": "uiggAQAAIAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=yGSXuAEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "yGSXuAEACAAJ",
+      "authors": [
+        "George Bernard Shaw"
+      ],
+      "addedIn": 1679762352284,
+      "title": "Arms and the Man",
+      "readIn": "",
+      "ISBN": "1721037950",
+      "_id": "yGSXuAEACAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=ytM8AAAAIAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "ytM8AAAAIAAJ",
+      "authors": [
+        "Zaynab Alkali"
+      ],
+      "addedIn": 1679762207120,
+      "title": "The Virtuous Woman",
+      "readIn": "",
+      "ISBN": "UCAL:B3477061",
+      "_id": "ytM8AAAAIAAJ",
+      "_user_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=CJVoAAAAMAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+      "id": "CJVoAAAAMAAJ",
+      "authors": [
+        "Biblioteca Nacional (Brazil)"
+      ],
+      "addedIn": 1643889801384,
+      "title": "Documentos historicos",
+      "readIn": "",
+      "ISBN": "UTEXAS:059173023662213",
+      "_id": "CJVoAAAAMAAJ",
+      "_user_id": "w6WAEabSu0VJ65oYJUNhFoPqsN12"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=D2bTotcEb88C&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "D2bTotcEb88C",
+      "authors": [
+        "William Shakespeare"
+      ],
+      "addedIn": 1643538669158,
+      "title": "Coriolanus",
+      "readIn": "",
+      "ISBN": "9780230284135",
+      "_id": "D2bTotcEb88C",
+      "_user_id": "xVEcv1wFfqS3aevR4uBZeqUTyth2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=_xDLffMpwPsC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "_xDLffMpwPsC",
+      "authors": [
+        "David Gress"
+      ],
+      "addedIn": 1673809756600,
+      "title": "From Plato to NATO",
+      "readIn": "",
+      "ISBN": "9781439119013",
+      "_id": "_xDLffMpwPsC",
+      "_user_id": "xVEcv1wFfqS3aevR4uBZeqUTyth2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=kW8oAAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "kW8oAAAAQBAJ",
+      "authors": [
+        "John Milton"
+      ],
+      "addedIn": 1643538604415,
+      "title": "Milton's Paradise Lost",
+      "readIn": "",
+      "ISBN": "9781107620063",
+      "_id": "kW8oAAAAQBAJ",
+      "_user_id": "xVEcv1wFfqS3aevR4uBZeqUTyth2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=g4xcDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "g4xcDwAAQBAJ",
+      "authors": [
+        "Wander Garcia",
+        "Ana Paula Garcia"
+      ],
+      "addedIn": 1666414461421,
+      "title": "Como passar em concursos CESPE: direito civil",
+      "readIn": "",
+      "ISBN": "9788582422700",
+      "_id": "g4xcDwAAQBAJ",
+      "_user_id": "y2tQcD6lAEY4jvNylt2LJJdijPE3"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=if5QDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "if5QDwAAQBAJ",
+      "authors": [
+        "Yuval Noah Harari"
+      ],
+      "addedIn": 1642171419775,
+      "title": "21 lições para o século 21",
+      "readIn": "2022-06-05",
+      "ISBN": "9788554511326",
+      "_id": "if5QDwAAQBAJ",
+      "_user_id": "z94w2QSttqcWbQzDMpRjAACIPXb2"
+    },
+    {
+      "thumbnail": "https://books.google.com/books/content?id=rBdiDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+      "id": "rBdiDwAAQBAJ",
+      "authors": [
+        "Robert T. Kiyosaki"
+      ],
+      "addedIn": 1642171077526,
+      "title": "Pai Rico, Pai Pobre - Edição de 20 anos atualizada e ampliada",
+      "readIn": "2019-06-05",
+      "ISBN": "9788550801483",
+      "_id": "rBdiDwAAQBAJ",
+      "_user_id": "z94w2QSttqcWbQzDMpRjAACIPXb2"
+    }
+  ],
+  "users": [
+    {
+      "shelfName": "Ariel",
+      "email": "arielrdp@gmail.com",
+      "displayName": "Ariel Rodrigues",
+      "modifiedAt": 1641773964092,
+      "username": "arielrdp",
+      "name": "Ariel Rodrigues",
+      "_id": "316tIKFCP9aKPeWpPD0aUMZCju52"
+    },
+    {
+      "displayName": "Michael Clayton da Costa Garcia",
+      "photoURL": "https://lh3.googleusercontent.com/a/AATXAJwtDRQK5P4Kjo0BDqqzuoMMvA-MKwgrIVT77FFJ=s96-c",
+      "modifiedAt": 1647545691564,
+      "username": "michael.garcia",
+      "email": "michael.garcia@owse.com.br",
+      "_id": "3r7tyVtAtmMAK11pDTtVqfeGU4v1"
+    },
+    {
+      "password": "Lipe2411",
+      "email": "filipegama2411@gmail.com",
+      "username": "filipegama2411",
+      "name": "Filipe",
+      "_id": "4RZEh7G4abTr2bjqIq56rMF5PCm1"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GjZElVxt2pI9dKhFEDbWGjc3pBYM7w4R1UJRT0t8TI=s96-c",
+      "displayName": "Micaela Balsamo",
+      "email": "mikabalsamo@gmail.com",
+      "username": "mikabalsamo",
+      "_id": "50spbIi0U8V8WB1InFAhue1CsqZ2"
+    },
+    {
+      "followers": [],
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GgvmVG4opGxciSVCH1NQpW-_MCtc7I8UpF__TSLTg=s96-c",
+      "displayName": "Araguaci Carlos de Andrade",
+      "shelfName": "Araguaci Carlos de Andrade",
+      "email": "araguaci@gmail.com",
+      "modifiedAt": 1642190994994,
+      "username": "araguaci",
+      "name": "Araguaci Carlos de Andrade",
+      "_id": "72npDQaammMjBwqT87uGjXOFBRN2"
+    },
+    {
+      "email": "riccardo.palumbo1992@gmail.com",
+      "displayName": "Riccardo Palumbo",
+      "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocL8zUUUKhVYGa0o6L6hUjRcZjbfjTAHe0-COZ6iYP7xNUllP_E=s96-c",
+      "username": "riccardo.palumbo1992",
+      "_id": "CMOCbLTPDOhqjUx1DsPOODMiJKv2"
+    },
+    {
+      "password": "v-1#M^x%*u=b@P_=",
+      "followers": [
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf3b85970>"
+      ],
+      "email": "s.site18@gmail.com",
+      "displayName": "Ravi's Shelf",
+      "username": "s.site18",
+      "name": "sateliteSite18",
+      "_id": "D5ZbDSQ2ydMIEPS5SkiS2Vabxy62"
+    },
+    {
+      "password": "pozpu9-vypnoj-toTnox",
+      "email": "felipe_sleiman@hotmail.com",
+      "username": "felipe_sleiman1689343321989",
+      "name": "Felipe",
+      "_id": "DHhFoATEVXZSfsIYs7rZhUo6ONa2"
+    },
+    {
+      "password": "zamorano11",
+      "email": "cechet@yahoo.com",
+      "username": "cechet1689617259755",
+      "name": "Rafael",
+      "_id": "EBwvXkK97BYqBmum8wgRVv030412"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AGNmyxYFckuXiXro2Ei_4tp8EPoTJ2vYR1MitHEi1FEeEw4=s96-c",
+      "displayName": "hermann “HR le boss PImenté”",
+      "email": "hermannleboss@gmail.com",
+      "username": "hermannleboss",
+      "_id": "EjiFSHOvqsQaVqxvPxVGAQTZMYk1"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GjKN0mG2S23liYpZJomw_3az9WnfEH_EHPYdMS7Mm4=s96-c",
+      "displayName": "Ana Paula Dutra Santos",
+      "email": "paula.dutra90@gmail.com",
+      "username": "paula.dutra90",
+      "_id": "EyVaBTbUVMaQ62OV5hRHYRXnntL2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocLN3q9l5Os6011mdMFbkBi4PNmil-kieI_Lc1t9hLnebw=s96-c",
+      "displayName": "Geraldo Piemontez",
+      "email": "www.gerapiemontez@gmail.com",
+      "username": "www.gerapiemontez",
+      "_id": "FodVNscLH9SZ7jlUeJ9Kv0n5zRb2"
+    },
+    {
+      "password": "171163",
+      "locale": "pt-BR",
+      "email": "felipeshonorato@gmail.com",
+      "displayName": "Felipe Honorato",
+      "username": "felipeshonorato",
+      "name": "Felipe",
+      "_id": "G6C697g2gDVYdYsKw2IZ0LAKPf22"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AATXAJxDuppNwYyxFOuS2WaxxEJgKan76dUKgQdytHDb=s96-c",
+      "displayName": "Mustafa Afanddi",
+      "modifiedAt": 1650273446566,
+      "username": "mustafa.afanddi",
+      "email": "mustafa.afanddi@gmail.com",
+      "_id": "GoJ4oqSGd1cDRnq3dmFszQmXHik1"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu2Nr2L_tWM-TxNpaFqHP06i28W4QSo34ivtDWeYYQ=s96-c",
+      "displayName": "Dokjin YOON",
+      "email": "dokjin@gmail.com",
+      "username": "dokjin",
+      "_id": "I8fC5mfvzbghhnBBCAzt6xnbfOB2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu1K3wOjXjlzPGvLQkAbVuKlyP4NcuQuZLQS9zLCQQ=s96-c",
+      "displayName": "Laynara Oliveira",
+      "email": "senai.laynara@gmail.com",
+      "username": "senai.laynara",
+      "_id": "IroxkBvsHgevaP5aMSO9RdNx4zZ2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu330PqLYNzc2KHLY9WIJ7Tj84S6yMv8iwbrkWPm=s96-c",
+      "displayName": "Dev Makengo",
+      "email": "devmakengo2021@gmail.com",
+      "username": "devmakengo2021",
+      "_id": "KSTvyacMhzPhayY7gW4kIRbp2a12"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu2bjApoZ8vpb8sLdANS8JRe6e4Glu0uCcm6duq2=s96-c",
+      "displayName": "Ravil Yakupov",
+      "email": "jacktorrence74@gmail.com",
+      "username": "jacktorrence74",
+      "_id": "MfOKs8P2RChuyQHAvx4piHmgu6I3"
+    },
+    {
+      "shelfName": "@ElmoJuh",
+      "email": "elmo.junior@owse.com.br",
+      "displayName": "Elmo Junior",
+      "username": "elmoJuh",
+      "name": "Elmo Junior",
+      "_id": "N9iBnQxWpfPMbyNWGnqEwYUYgCi2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu1jyIbjv9AO6Gtue82P-l0KzIMSckedDPtd3y_7AQ=s96-c",
+      "displayName": "Paulo",
+      "email": "javabipe@gmail.com",
+      "username": "javabipe",
+      "_id": "NpE7Ric6XDY5Yd3y07pIOCDpVui1"
+    },
+    {
+      "shelfName": "Maria Clara Ramos Higino",
+      "email": "clararamos3611@gmail.com",
+      "displayName": "Maria Clara Ramos Higino",
+      "modifiedAt": 1642450819785,
+      "username": "clararamos3611",
+      "name": "Maria Clara Ramos Higino",
+      "_id": "OnrEIYkajyUsApD4uSKvKz63Fd12"
+    },
+    {
+      "displayName": "Lingfeng Huo",
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GhEuf16gl5dEdEONLjwIPJ0iIlOs1UvUs6hdcPU=s96-c",
+      "email": "lingfenghuoau@gmail.com",
+      "username": "lingfenghuoau",
+      "_id": "PPGKQ1hSNkhH1rqRgeEcdiUFN5r1"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AAcHTtemD-i7OJzD2Q3ktzQHIDRc1oI17wIjSybhOBEdVfot7L8=s96-c",
+      "displayName": "Wesley Reis",
+      "email": "wesley.ar03@gmail.com",
+      "username": "wesley.ar03",
+      "_id": "Q7JXkop6ljUnkH7LBjBTDTnUbQ12"
+    },
+    {
+      "password": "zC@ad.com",
+      "email": "zC@ad.com",
+      "username": "zC1714036180764",
+      "name": "zC@ad.com",
+      "_id": "R4yYKIFCA4ZjSpssj2Hrfh1TMp73"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GgHed_0K1nFu5IHZrkVYkV8TtyDyq4TRVd-y0cW8w=s96-c",
+      "displayName": "Vitor Indio Do Brasil Ambrosio",
+      "email": "vitorindio@edu.unirio.br",
+      "username": "vitorindio",
+      "_id": "ROAvVcH9dQXxsSMF0NjCvxoNudz2"
+    },
+    {
+      "displayName": "Carlos Henrique",
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14Gjh36s9JQ6_KJwyErbRSzTbM1kq_g6lhuCc9MGr5w=s96-c",
+      "modifiedAt": 1647545559634,
+      "username": "carloshenrique3250",
+      "email": "carloshenrique3250@gmail.com",
+      "_id": "RoOHAPdUBEOWdFrsfmKUO36thVT2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJTsUmnP0mzXufE5oieocvnwEChK4J25EqbQ7m-fnNMO7oAgQ=s96-c",
+      "displayName": "Filipe Gama",
+      "email": "filipe.cordeiro@somagrupo.com.br",
+      "username": "filipe.cordeiro1725654165653",
+      "_id": "SFVwpZWpXcbXQaviAtMUPaXr6QX2"
+    },
+    {
+      "password": "102030zyzz",
+      "email": "aymeekhrytynne@gmail.com",
+      "username": "aymeekhrytynne",
+      "name": "Aymee",
+      "_id": "Syw1fl89LROyYWa0zVnZIBd0L2J3"
+    },
+    {
+      "following": [
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf2bdd430>"
+      ],
+      "photoURL": "https://lh3.googleusercontent.com/a/AAcHTtccrZs7Oe148HBPdrqbNcAPPqoI7WvkadprzHvtzNho=s96-c",
+      "displayName": "leonardo gama",
+      "email": "gama05596@gmail.com",
+      "username": "gama05596",
+      "_id": "UwZHSQlMl8PIt1zglfe4ck0qpSf1"
+    },
+    {
+      "password": "jirani1154@prolug.com",
+      "email": "jirani1154@prolug.com",
+      "username": "jirani1154",
+      "name": "jirani",
+      "_id": "VzdqJSKdoOPyK1sfExfpHH1OHYH2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu2owttGwhs34lUBGRkoybmxFatfQU1ziIsIKasILx8=s96-c",
+      "displayName": "Eliéverson Guerchi Gonzales",
+      "email": "elieversongg@gmail.com",
+      "username": "elieversongg",
+      "_id": "W2wj0s0KCGhzRfnqj1p6NYJRuz63"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AGNmyxaILz9wejIWS7U3U89BPUL9uGidB8b3BIGGhapFng=s96-c",
+      "displayName": "Javokhir Nematov",
+      "email": "nematovjavohir58@gmail.com",
+      "username": "nematovjavohir58",
+      "_id": "XULMzaDBUcYoD2yUzH2QOTar5A23"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/AFdZucp8v5Je7mo8HA6WhEX5grAE4Z0iYc0HBjLgzHFYsQ=s96-c",
+      "displayName": "Thamires Luiza Santoro",
+      "email": "thamiluizasantoro@gmail.com",
+      "username": "thamiluizasantoro",
+      "_id": "a8tcFm1zDodfOIwMOLgZbuomp0r1"
+    },
+    {
+      "password": "owse@123",
+      "email": "leonardo.ruma@gmail.com",
+      "username": "leonardo.ruma",
+      "name": "Leonardo Ruma",
+      "_id": "c9YFEganM1RezZlDIh5WiA9pOs23"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AAcHTtfxZhcI2wk3IqOTsqXQ8pzAeEkhVM1HKvAzk4wJOugB=s96-c",
+      "displayName": "Thiago euzebio martins pinheiro",
+      "email": "thyagoeuzebiopinheiro1@gmail.com",
+      "username": "thyagoeuzebiopinheiro1",
+      "_id": "cTrrktdecMPpGeNJU5pSYs4IEZN2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14Ghz8GMHlHcziOHQKUAL_tLP0RQcbvFqXZyuS9be=s96-c",
+      "displayName": "Clément Tourres",
+      "email": "clement.tourres1@gmail.com",
+      "username": "clement.tourres1",
+      "_id": "cgOTMIRPDMRRs8KhiesKbxwPpb52"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AAcHTtfh7AVc2aQQ7LEXoQRwN5R5joIib61qJ03No2BjLwoFRCc=s96-c",
+      "displayName": "Régis Berté",
+      "email": "regisbertecb@gmail.com",
+      "username": "regisbertecb",
+      "_id": "dKBEbnaCEgdA196ekFMJcYrHHq12"
+    },
+    {
+      "password": "Cst364@",
+      "email": "gabryela.castela@gmail.com",
+      "username": "gabryela.castela",
+      "name": "Gabriela ",
+      "_id": "e2p33gmtqATqWmDyUwbQaUcGWQA3"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AATXAJwvaLr2rQtwjPB8qLJV7HeONqad32iS5pp_uzGB=s96-c",
+      "displayName": "Gwenaël Gallon",
+      "modifiedAt": 1654766940070,
+      "username": "gwenael.gallon",
+      "email": "gwenael.gallon@gmail.com",
+      "_id": "e9dlJHEvIlayxVxlY8OKsw3AYKT2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AAcHTtfevEsTdq1K4P633rrzdOGMRe84R9WPQ7SIiFXVNm7IJYDi=s96-c",
+      "displayName": "Garbson Souza 2 C",
+      "email": "garbsonsouza2602@gmail.com",
+      "username": "garbsonsouza2602",
+      "_id": "ecKzgTgWtDYhs08EZw0C5ZS5Wra2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/ACNPEu9Jy0Kl0Dz2kiMmxOyIH_sflgcWfYYytzXlQ-UdMQ=s96-c",
+      "displayName": "Nathaly Alves",
+      "email": "mangalolis@hotmail.com",
+      "username": "mangalolis",
+      "_id": "gPJN2K41apU17FAeZqEK3PdhFGu2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AAcHTtdl1XtTQr5oKXgeJNNxQfV53no6zLXlKP3NRXGOHR3Q=s96-c",
+      "displayName": "Renato K",
+      "email": "rkbarbosa76@gmail.com",
+      "username": "rkbarbosa76",
+      "_id": "i74PAwHlokbWxYPKowSHCsE1b6T2"
+    },
+    {
+      "displayName": "Wanderson Oliveira",
+      "photoURL": "https://lh3.googleusercontent.com/a/AATXAJzuijM_XY3JRk31dqpnsRRxbHdX0-XoF78TRQ0b=s96-c",
+      "modifiedAt": 1642768956413,
+      "username": "wandersonnc.o",
+      "email": "wandersonnc.o@gmail.com",
+      "_id": "ieX7NWHIV9frGuwH5It7X27yZwj2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu0xkuyJA8LGVjUL3mn9gxmzmTCaRGhTeQDzl9Z7=s96-c",
+      "displayName": "Isabela Almeida de Abreu",
+      "email": "almeidabela6878@gmail.com",
+      "username": "almeidabela6878",
+      "_id": "lYRQsSiz2ngr9I29gmEn0z2YaDh2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GgaSHVfAeczLtb1xvvR85yjO7vcZ3HFuhe6zZEu4Q=s96-c",
+      "displayName": "Valdecir Cunha",
+      "email": "biolocutor@gmail.com",
+      "username": "biolocutor",
+      "_id": "nkwwCLO1WPgI1pISXU0T4pKWQfD3"
+    },
+    {
+      "followers": [
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf2ad87d0>",
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf295bec0>",
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf297c620>"
+      ],
+      "following": [
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf297c470>"
+      ],
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GgVzuz46O1fPxMKx1zFL__mkxwcg2K5zcmQGyY-QA=s96-c",
+      "displayName": "Arnon Rodrigues",
+      "locale": "pt",
+      "email": "arnonrdp@gmail.com",
+      "modifiedAt": 1647852298338,
+      "username": "arnon",
+      "_id": "ohTiSZJ89IQotGPaklBuQtI76cA2"
+    },
+    {
+      "followers": [],
+      "following": [
+        "<google.cloud.firestore_v1.document.DocumentReference object at 0x79cdf295bb00>"
+      ],
+      "displayName": "Dariane",
+      "shelfName": "Dariane",
+      "email": "darianeoliveira.adm@gmail.com",
+      "modifiedAt": 1642378571139,
+      "username": "dari",
+      "name": "Dariane",
+      "_id": "p8PvdBOfcZaqI3Dnb1jipCdWJiW2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AItbvmlBZSmtQJdXtn33BesA6zHJYyFn6MDk6DeK1xB9=s96-c",
+      "displayName": "章鹏",
+      "email": "caesar1shi@gmail.com",
+      "username": "caesar1shi",
+      "_id": "pp58dztfvfMB2w8IwR4kbRHEjUI2"
+    },
+    {
+      "displayName": "Emin Gench",
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GhtVDk-e65Pdejwv4GcYQUVQbi13xAlluTftAz1=s96-c",
+      "email": "emingench@gmail.com",
+      "username": "emingench",
+      "_id": "ps7euy8H2ThxxwZDckRqgqmW0eh2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/ALm5wu2KQ0VS73rD0TfKcRblQKA-Mnvm4omgtYEo6b6Dgg=s96-c",
+      "displayName": "Ash Downing",
+      "email": "ashdowning@gmail.com",
+      "username": "ashdowning",
+      "_id": "pyS0Yg8l9MM60mfQKrgaZuifHQB3"
+    },
+    {
+      "followers": [],
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GimfJkYc8PwUVeacCoX6yRX6iE_U9rwEUHUPIDi=s96-c",
+      "displayName": "Débora Santos da Silva",
+      "modifiedAt": 1653443362339,
+      "username": "deborasantosdasilva07",
+      "email": "deborasantosdasilva07@gmail.com",
+      "_id": "qewQdtdNd2Z5Ots6Kn8XRwiuNZo1"
+    },
+    {
+      "password": "75751105Db",
+      "email": "Preciousoby6@gmail.com",
+      "username": "Preciousoby6",
+      "name": "Obiorah Precious",
+      "_id": "qq9EnysJ8yR9VnfiZVuM8YzoVX93"
+    },
+    {
+      "displayName": "Alex - Gonew",
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GgPmq9jRFBK_CbSPKvTyxewdchdUr4jcRaRF_fS=s96-c",
+      "modifiedAt": 1643889802094,
+      "username": "alex.faustino",
+      "email": "alex.faustino@gonew.co",
+      "_id": "w6WAEabSu0VJ65oYJUNhFoPqsN12"
+    },
+    {
+      "displayName": "Doğukan Ejder",
+      "photoURL": "https://lh3.googleusercontent.com/a-/AOh14GiEEnsgbtkoduY2-P-zo-XSATXKsrGxhmoRnw6_htk=s96-c",
+      "modifiedAt": 1643538669953,
+      "username": "dogukanejderr",
+      "email": "dogukanejderr@gmail.com",
+      "_id": "xVEcv1wFfqS3aevR4uBZeqUTyth2"
+    },
+    {
+      "photoURL": "https://lh3.googleusercontent.com/a/AItbvmnm-42Hiz7dY8YeU0cnHKDLY1_Qcbi8R4vHCOcEbA=s96-c",
+      "displayName": "Thainan Tanaka",
+      "email": "thainan.tanaka@gmail.com",
+      "username": "thainan.tanaka",
+      "_id": "y2tQcD6lAEY4jvNylt2LJJdijPE3"
+    },
+    {
+      "shelfName": "João Victor",
+      "email": "jv-oliveira07@hotmail.com",
+      "displayName": "João Victor",
+      "modifiedAt": 1642452621946,
+      "username": "jv-oliveira07",
+      "name": "João Victor",
+      "_id": "z94w2QSttqcWbQzDMpRjAACIPXb2"
+    }
+  ]
+}

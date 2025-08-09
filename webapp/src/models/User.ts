@@ -1,0 +1,30 @@
+import type { Book } from '@/models'
+
+export interface User {
+  avatar?: string | null
+  books?: Book[]
+  created_at?: string
+  display_name: string
+  email_verified_at?: string | null
+  email_verified?: boolean
+  email: string
+  followers?: User[]
+  followers_count?: number
+  following?: User[]
+  following_count?: number
+  google_id?: string | null
+  id: string
+  is_private?: boolean
+  locale?: object | string
+  modified_at?: string
+  role?: 'admin' | 'user'
+  shelf_name?: string
+  updated_at?: string
+  username: string
+}
+
+export interface AuthResponse {
+  access_token: string
+  token_type: string
+  user: User
+}

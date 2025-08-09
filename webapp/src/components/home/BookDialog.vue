@@ -1,0 +1,368 @@
+<template>
+  <q-dialog v-model="showDialog" persistent>
+    <q-card class="q-dialog-plugin" style="max-width: 100%; max-height: 90vh; width: 800px">
+      <!-- Header -->
+      <q-card-section class="row items-center q-pb-sm">
+        <div class="text-h6">{{ book.title }}</div>
+        <q-space />
+        <q-btn v-close-popup dense flat icon="close" round />
+      </q-card-section>
+
+      <q-separator />
+
+      <!-- Book Info -->
+      <q-card-section class="row q-col-gutter-md q-py-md">
+        <div class="col-3">
+          <img
+            v-if="book.thumbnail"
+            :alt="`Cover of ${book.title}`"
+            class="full-width"
+            :src="book.thumbnail"
+            style="max-height: 150px; object-fit: contain; border-radius: 4px"
+          />
+          <div v-else class="bg-grey-3 full-width text-center q-pa-md" style="height: 150px; border-radius: 4px">
+            <q-icon color="grey-5" name="book" size="3em" />
+          </div>
+        </div>
+        <div class="col-9">
+          <div class="text-subtitle1 text-grey-8 q-mb-xs">{{ book.authors }}</div>
+          <div v-if="book.description" class="text-body2 text-grey-7">
+            {{ book.description?.substring(0, 200) }}{{ book.description?.length > 200 ? '...' : '' }}
+          </div>
+        </div>
+      </q-card-section>
+
+      <q-separator />
+
+      <!-- Scrollable Content -->
+      <q-scroll-area style="height: 400px">
+        <!-- Read Date Section -->
+        <q-card-section>
+          <div class="text-subtitle1 q-mb-md row items-center">
+            <q-icon class="q-mr-sm" name="event" />
+            {{ $t('read-date') }}
+          </div>
+          <q-input v-model="readDate" class="q-mb-md" dense :label="$t('read-date')" outlined type="date" />
+        </q-card-section>
+
+        <q-separator />
+
+        <!-- Existing Reviews -->
+        <q-card-section>
+          <div class="text-subtitle1 q-mb-md row items-center">
+            <q-icon class="q-mr-sm" name="rate_review" />
+            {{ $t('existing-reviews') }}
+            <span v-if="!loading && bookReviews.length > 0">&nbsp;({{ bookReviews.length }})</span>
+            <q-spinner v-if="loading" class="q-ml-sm" size="16px" />
+          </div>
+
+          <!-- Loading state -->
+          <div v-if="loading" class="text-center q-py-md">
+            <q-spinner size="24px" />
+            <div class="text-caption q-mt-sm">{{ $t('loading') }}...</div>
+          </div>
+
+          <!-- No reviews state -->
+          <div v-else-if="bookReviews.length === 0" class="text-center q-py-md text-grey-6">
+            <q-icon class="q-mb-sm" name="rate_review" size="2em" />
+            <div class="text-body2">{{ $t('no-reviews-yet') }}</div>
+          </div>
+
+          <!-- Reviews list -->
+          <div v-for="review in bookReviews" v-else :key="review.id" class="q-mb-md">
+            <q-card bordered flat>
+              <q-card-section class="q-py-sm">
+                <div class="row items-center q-mb-xs">
+                  <q-avatar class="q-mr-sm" size="24px">
+                    <img v-if="review.user?.avatar" :src="review.user.avatar" />
+                    <q-icon v-else name="person" />
+                  </q-avatar>
+                  <div class="col">
+                    <div class="text-caption">{{ review.user?.display_name }}</div>
+                  </div>
+                  <q-rating color="amber" :model-value="review.rating" readonly size="xs" />
+                </div>
+
+                <div v-if="review.title" class="text-body2 text-weight-medium q-mb-xs">
+                  {{ review.title }}
+                </div>
+
+                <div class="text-body2 text-grey-8">
+                  <div v-if="review.is_spoiler && !showSpoiler[review.id] && review.user_id !== currentUserId">
+                    <q-icon class="q-mr-xs" name="warning" size="xs" />
+                    <em>{{ $t('spoiler-warning') }}</em>
+                    <q-btn class="q-ml-xs" dense flat :label="$t('show')" size="xs" @click="showSpoiler[review.id] = true" />
+                  </div>
+                  <div v-else>{{ review.content.substring(0, 150) }}{{ review.content.length > 150 ? '...' : '' }}</div>
+                </div>
+
+                <div class="row items-center justify-between q-mt-xs">
+                  <div class="text-caption text-grey-6">
+                    {{ formatDate(review.created_at) }}
+                  </div>
+                  <div v-if="review.user_id === currentUserId" class="row q-gutter-xs">
+                    <q-btn
+                      :color="getVisibility(review.visibility_level).color"
+                      dense
+                      flat
+                      :icon="getVisibility(review.visibility_level).icon"
+                      size="sm"
+                      @click="toggleVisibility(review)"
+                    >
+                      <q-tooltip>{{ getVisibility(review.visibility_level).tooltip }}</q-tooltip>
+                    </q-btn>
+                    <q-btn class="text-red-6" dense flat icon="delete" size="sm" @click="deleteReview(review.id)">
+                      <q-tooltip>{{ $t('delete') }}</q-tooltip>
+                    </q-btn>
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <!-- Add Review Section -->
+        <q-card-section v-if="canAddReview">
+          <div class="text-subtitle1 q-mb-md row items-center">
+            <q-icon class="q-mr-sm" name="add_comment" />
+            {{ $t('add-review') }}
+          </div>
+
+          <!-- Rating -->
+          <div class="q-mb-md">
+            <div class="text-body2 q-mb-sm">{{ $t('rating') }}</div>
+            <q-rating v-model="reviewForm.rating" color="amber" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+          </div>
+
+          <!-- Title -->
+          <q-input v-model="reviewForm.title" class="q-mb-md" dense :label="$t('title') + ' (' + $t('optional') + ')'" :maxlength="200" outlined />
+
+          <!-- Content -->
+          <q-input
+            v-model="reviewForm.content"
+            class="q-mb-md"
+            :label="$t('content')"
+            :maxlength="2000"
+            outlined
+            rows="3"
+            :rules="[(val) => !!val || $t('content-required')]"
+            type="textarea"
+          />
+
+          <!-- Options Row -->
+          <div class="row q-col-gutter-md q-mb-md">
+            <!-- Visibility -->
+            <div class="col-6">
+              <div class="text-body2 q-mb-sm">{{ $t('visibility') }}</div>
+              <q-select v-model="reviewForm.visibility_level" dense emit-value map-options :options="visibilityOptions" outlined />
+            </div>
+
+            <!-- Spoiler -->
+            <div class="col-6 flex items-end">
+              <q-checkbox v-model="reviewForm.is_spoiler" :label="$t('contains-spoilers')" />
+            </div>
+          </div>
+        </q-card-section>
+      </q-scroll-area>
+
+      <!-- Footer Actions -->
+      <q-separator />
+      <q-card-actions align="right" class="q-pa-md">
+        <q-btn v-close-popup flat :label="$t('close')" />
+        <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <!-- Delete Confirmation Dialog -->
+  <q-dialog v-model="showDeleteDialog" persistent>
+    <q-card style="min-width: 350px">
+      <q-card-section>
+        <div class="text-h6">{{ $t('confirmDelete') }}</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        {{ $t('confirmDeleteMessage') }}
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn v-close-popup color="grey-6" flat :label="$t('cancel')" />
+        <q-btn color="negative" flat :label="$t('delete')" :loading="loading" @click="confirmDelete" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+</template>
+
+<script setup lang="ts">
+import type { Book, CreateReviewRequest, Review } from '@/models'
+import { useAuthStore, useBookStore, useReviewStore } from '@/stores'
+import { useQuasar } from 'quasar'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const props = defineProps<{
+  book: Book
+  modelValue: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+  readDateUpdated: []
+}>()
+
+const { t } = useI18n()
+const $q = useQuasar()
+const authStore = useAuthStore()
+const reviewStore = useReviewStore()
+const bookStore = useBookStore()
+
+const loading = ref(false)
+const readDate = ref('')
+const showSpoiler = ref<Record<string, boolean>>({})
+const editingReview = ref<Review | null>(null)
+const showDeleteDialog = ref(false)
+const reviewToDelete = ref<string | null>(null)
+const reviewForm = ref<CreateReviewRequest>({
+  book_id: props.book.id,
+  title: '',
+  content: '',
+  rating: 5,
+  visibility_level: 'public',
+  is_spoiler: false
+})
+
+const showDialog = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+const bookReviews = computed(() => reviewStore.reviews)
+const currentUserId = computed(() => authStore.user?.id)
+const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
+const canAddReview = computed(() => !userReview.value)
+
+const visibilityOptions = computed(() => [
+  { label: t('private'), value: 'private' },
+  { label: t('friends'), value: 'friends' },
+  { label: t('public'), value: 'public' }
+])
+
+watch(
+  () => props.modelValue,
+  async (newValue) => {
+    if (newValue) {
+      resetReviewForm()
+      reviewStore.clearReviews()
+      loading.value = true
+
+      readDate.value = props.book.pivot?.read_at ? new Date(props.book.pivot.read_at).toISOString().split('T')[0] : ''
+
+      await loadBookReviews()
+      loading.value = false
+    } else {
+      reviewStore.clearReviews()
+      resetReviewForm()
+      showDeleteDialog.value = false
+      reviewToDelete.value = null
+    }
+  },
+  { immediate: true }
+)
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString()
+}
+
+function resetReviewForm() {
+  reviewForm.value = {
+    book_id: props.book.id,
+    title: '',
+    content: '',
+    rating: 5,
+    visibility_level: 'public',
+    is_spoiler: false
+  }
+  editingReview.value = null
+}
+
+function getVisibility(visibilityLevel: string) {
+  const configs = {
+    private: { icon: 'lock', color: 'red', tooltip: t('private') },
+    friends: { icon: 'group', color: 'orange', tooltip: t('friends') },
+    public: { icon: 'public', color: 'green', tooltip: t('public') }
+  }
+
+  return configs[visibilityLevel as keyof typeof configs] || configs.public
+}
+
+function deleteReview(reviewId: string) {
+  reviewToDelete.value = reviewId
+  showDeleteDialog.value = true
+}
+
+async function loadBookReviews() {
+  await reviewStore.getReviewsByBook(props.book.id)
+}
+
+async function confirmDelete() {
+  if (!reviewToDelete.value) return
+
+  loading.value = true
+  showDeleteDialog.value = false
+
+  await reviewStore
+    .deleteReview(reviewToDelete.value)
+    .then(() => resetReviewForm())
+    .finally(() => {
+      loading.value = false
+      reviewToDelete.value = null
+    })
+}
+
+async function toggleVisibility(review: Review) {
+  await reviewStore.toggleReviewVisibility(review)
+}
+
+async function handleSave() {
+  loading.value = true
+
+  const promises = []
+
+  // Save review if content is provided
+  if (reviewForm.value.content.trim()) {
+    const reviewData = {
+      book_id: props.book.id,
+      title: reviewForm.value.title || undefined,
+      content: reviewForm.value.content,
+      rating: reviewForm.value.rating,
+      visibility_level: reviewForm.value.visibility_level,
+      is_spoiler: reviewForm.value.is_spoiler
+    }
+
+    const existingReview = userReview.value
+
+    if (existingReview) {
+      promises.push(reviewStore.putReview(existingReview.id, reviewData))
+    } else {
+      promises.push(reviewStore.postReview(reviewData))
+    }
+  }
+
+  // Save read date separately using the user books endpoint
+  if (readDate.value) {
+    promises.push(bookStore.updateBookReadDate(props.book.id, readDate.value))
+  }
+
+  Promise.all(promises)
+    .then(async () => {
+      if (reviewForm.value.content.trim()) {
+        await loadBookReviews()
+      }
+      resetReviewForm()
+      emit('readDateUpdated')
+    })
+    .catch(() => $q.notify({ message: t('error-occurred'), type: 'negative' }))
+    .finally(() => (loading.value = false))
+}
+</script>
