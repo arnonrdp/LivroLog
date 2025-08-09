@@ -1,5 +1,3 @@
-import './assets/main.sass'
-
 import { createPinia } from 'pinia'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { LocalStorage, Meta, Notify, Quasar } from 'quasar'
@@ -7,8 +5,14 @@ import SecureLS from 'secure-ls'
 import { createApp } from 'vue'
 import { i18n } from './locales'
 
-import '@quasar/extras/material-icons/material-icons.css'
+// Import Quasar CSS first
 import 'quasar/src/css/index.sass'
+
+// Import icon libraries
+import '@quasar/extras/material-icons/material-icons.css'
+
+// Import custom styles after Quasar to override defaults
+import './assets/main.sass'
 
 import App from './App.vue'
 import router from './router'

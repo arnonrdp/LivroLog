@@ -203,7 +203,6 @@ class EnrichBooksCommand extends Command
         $this->info('📈 Updated statistics:');
         $this->showCurrentStats();
     }
-    }
 
     /**
      * Shows current book statistics

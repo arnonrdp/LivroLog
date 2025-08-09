@@ -22,6 +22,9 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="avatar", type="string", example="https://lh3.googleusercontent.com/...", nullable=true),
  *     @OA\Property(property="shelf_name", type="string", example="John's Library"),
  *     @OA\Property(property="role", type="string", enum={"admin", "user"}, example="user"),
+ *     @OA\Property(property="followers_count", type="integer", example=15),
+ *     @OA\Property(property="following_count", type="integer", example=8),
+ *     @OA\Property(property="is_private", type="boolean", example=false),
  *     @OA\Property(property="email_verified", type="boolean", example=false),
  *     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
@@ -50,6 +53,9 @@ class User extends Authenticatable
         'role',
         'avatar',
         'email_verified',
+        'followers_count',
+        'following_count',
+        'is_private',
     ];
 
     public $incrementing = false;
@@ -85,6 +91,10 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'email_verified' => 'boolean',
+            'is_private' => 'boolean',
+            'followers_count' => 'integer',
+            'following_count' => 'integer',
         ];
     }
 
@@ -99,10 +109,68 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the reviews written by the user.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
      * Check if the user is an admin.
      */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Get the users that this user is following.
+     */
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'followed_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the users that are following this user.
+     */
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the follow relationships where this user is the follower.
+     */
+    public function followingRelationships()
+    {
+        return $this->hasMany(Follow::class, 'follower_id');
+    }
+
+    /**
+     * Get the follow relationships where this user is being followed.
+     */
+    public function followerRelationships()
+    {
+        return $this->hasMany(Follow::class, 'followed_id');
+    }
+
+    /**
+     * Check if this user is following another user.
+     */
+    public function isFollowing(User $user): bool
+    {
+        return $this->following()->where('followed_id', $user->id)->exists();
+    }
+
+    /**
+     * Check if this user is followed by another user.
+     */
+    public function isFollowedBy(User $user): bool
+    {
+        return $this->followers()->where('follower_id', $user->id)->exists();
     }
 }

@@ -554,12 +554,16 @@ class ImportFirebaseData extends Command
             $this->importBooks($data['books']);
         }
 
+        if (isset($data['user_books'])) {
+            $this->importUserBooks($data['user_books']);
+        }
+
         if (isset($data['showcase'])) {
             $this->importShowcase($data['showcase']);
         }
 
         // If it's just an array, assume it's showcase data
-        if (is_array($data) && isset($data[0]) && !isset($data['users']) && !isset($data['books'])) {
+        if (is_array($data) && isset($data[0]) && !isset($data['users']) && !isset($data['books']) && !isset($data['user_books'])) {
             $this->importShowcase($data);
         }
     }
@@ -631,11 +635,13 @@ class ImportFirebaseData extends Command
     private function extractUserData(array $userData): array
     {
         return [
+            'google_id' => $userData['_id'] ?? null,
             'display_name' => $this->getUserDisplayName($userData),
             'email' => $userData['email'] ?? 'user' . time() . '@example.com',
             'username' => $this->getUserUsername($userData),
             'password' => Hash::make($userData['password'] ?? 'password123'),
             'shelf_name' => $this->getUserShelfName($userData),
+            'avatar' => $userData['photoURL'] ?? null,
             'email_verified_at' => (isset($userData['emailVerified']) && $userData['emailVerified']) ? now() : null,
         ];
     }
@@ -778,5 +784,165 @@ class ImportFirebaseData extends Command
         }
 
         return 'Unknown';
+    }
+
+    /**
+     * Import user books (books + user_books pivot data)
+     */
+    private function importUserBooks(array $userBooks): void
+    {
+        if ($this->option('dry-run')) {
+            $this->previewUserBooks($userBooks);
+            return;
+        }
+
+        if ($this->option('clear')) {
+            $this->clearUserBooks();
+        }
+
+        $this->info('📚 Importing user books and relationships...');
+        $bar = $this->output->createProgressBar(count($userBooks));
+        $bar->start();
+
+        $importedBooks = 0;
+        $importedRelations = 0;
+        $errors = 0;
+
+        foreach ($userBooks as $userBook) {
+            try {
+                // Extract book data (don't set 'id' - let the model generate it)
+                $bookData = [
+                    'google_id' => $userBook['id'] ?? $userBook['_id'] ?? null,
+                    'title' => $userBook['title'] ?? 'Unknown Title',
+                    'authors' => $this->getAuthorsString($userBook),
+                    'isbn' => $userBook['ISBN'] ?? $userBook['isbn'] ?? null,
+                    'thumbnail' => $this->getBookThumbnail($userBook),
+                    'language' => $this->getBookLanguage($userBook),
+                ];
+
+                // Create or update book
+                $book = Book::updateOrCreate(
+                    ['google_id' => $bookData['google_id']],
+                    $bookData
+                );
+
+                if ($book->wasRecentlyCreated) {
+                    $importedBooks++;
+                    
+                    // Create authors
+                    if ($bookData['authors'] !== self::UNKNOWN_AUTHOR) {
+                        $this->createAuthorsFromString($bookData['authors']);
+                    }
+                }
+
+                // Create user-book relationship
+                if (isset($userBook['_user_id'])) {
+                    // Find user by firebase_id or google_id
+                    $user = User::where('google_id', $userBook['_user_id'])->first();
+                    
+                    if ($user) {
+                        // Convert timestamp to date if needed
+                        $addedAt = null;
+                        $readAt = null;
+                        
+                        if (isset($userBook['addedIn']) && $userBook['addedIn']) {
+                            $addedAt = \Carbon\Carbon::createFromTimestampMs($userBook['addedIn']);
+                        }
+                        
+                        if (isset($userBook['readIn']) && $userBook['readIn'] && $userBook['readIn'] !== '') {
+                            if (is_numeric($userBook['readIn'])) {
+                                $readAt = \Carbon\Carbon::createFromTimestampMs($userBook['readIn']);
+                            } else {
+                                $readAt = \Carbon\Carbon::parse($userBook['readIn']);
+                            }
+                        }
+
+                        // Attach book to user with pivot data
+                        $user->books()->syncWithoutDetaching([
+                            $book->id => [
+                                'added_at' => $addedAt,
+                                'read_at' => $readAt,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]
+                        ]);
+                        
+                        $importedRelations++;
+                    }
+                }
+
+                $bar->advance();
+            } catch (\Exception $e) {
+                $errors++;
+                $this->error("Error importing user book: " . $e->getMessage());
+            }
+        }
+
+        $bar->finish();
+        $this->line('');
+        $this->info("✅ User books import completed: {$importedBooks} books, {$importedRelations} user-book relations, {$errors} errors");
+    }
+
+    /**
+     * Preview user books for dry run
+     */
+    private function previewUserBooks(array $userBooks): void
+    {
+        $preview = array_slice($userBooks, 0, 5);
+        
+        $this->info('🔍 Preview Mode - User Books (first 5):');
+        $table = [];
+        
+        foreach ($preview as $userBook) {
+            $table[] = [
+                $this->truncateDisplay($userBook['title'] ?? 'Unknown', self::TITLE_DISPLAY_MAX_LENGTH),
+                $this->getAuthorsString($userBook),
+                $userBook['ISBN'] ?? $userBook['isbn'] ?? 'No ISBN',
+                $userBook['_user_id'] ?? 'No User ID',
+            ];
+        }
+        
+        $this->table(
+            ['Title', 'Authors', 'ISBN', 'User ID'],
+            $table
+        );
+    }
+
+    /**
+     * Clear user books relationships (not the books themselves)
+     */
+    private function clearUserBooks(): void
+    {
+        if ($this->confirm(' ⚠️  This will delete all user-book relationships. Continue?', false)) {
+            DB::table('users_books')->delete();
+            $this->info('🗑️  User-book relationships cleared');
+        }
+    }
+
+    /**
+     * Create authors from comma-separated string
+     */
+    private function createAuthorsFromString(string $authorsString): void
+    {
+        $authors = explode(',', $authorsString);
+        
+        foreach ($authors as $authorName) {
+            $authorName = trim($authorName);
+            if ($authorName && $authorName !== self::UNKNOWN_AUTHOR) {
+                Author::firstOrCreate(['name' => $authorName]);
+            }
+        }
+    }
+
+    /**
+     * Truncate display text for table formatting
+     */
+    private function truncateDisplay(string $text, int $maxLength): string
+    {
+        if (strlen($text) <= $maxLength) {
+            return $text;
+        }
+        
+        return substr($text, 0, $maxLength - 3) . '...';
     }
 }

@@ -1,11 +1,11 @@
 <template>
   <q-page padding>
     <q-tabs v-model="tab" align="justify" class="text-teal">
-      <q-tab icon="event" :label="$t('settings.books')" name="readDates" />
-      <q-tab icon="person" :label="$t('settings.profile')" name="profile" />
-      <q-tab icon="translate" :label="$t('settings.language')" name="language" />
-      <q-tab icon="email" :label="$t('settings.account')" name="account" />
-      <q-tab icon="lock" :label="$t('sign.password')" name="password" />
+      <q-tab icon="event" :label="$t('books')" name="readDates" />
+      <q-tab icon="person" :label="$t('profile')" name="profile" />
+      <q-tab icon="translate" :label="$t('language')" name="language" />
+      <q-tab icon="email" :label="$t('account')" name="account" />
+      <q-tab icon="lock" :label="$t('password')" name="password" />
     </q-tabs>
 
     <q-tab-panels v-model="tab" animated swipeable transition-next="jump-up" transition-prev="jump-up">

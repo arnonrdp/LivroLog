@@ -24,16 +24,17 @@ class UserController extends Controller
 
         // Global filter
         $filter = $request->input('filter');
-        if (!empty($filter)) {
+        if (! empty($filter)) {
             $query->where(function ($q) use ($filter) {
                 $q->where('id', 'like', "%{$filter}%")
-                  ->orWhere('display_name', 'like', "%{$filter}%")
-                  ->orWhere('username', 'like', "%{$filter}%")
-                  ->orWhere('email', 'like', "%{$filter}%");
+                    ->orWhere('display_name', 'like', "%{$filter}%")
+                    ->orWhere('username', 'like', "%{$filter}%")
+                    ->orWhere('email', 'like', "%{$filter}%");
             });
         }
 
         $users = $this->applyPagination($query, $request);
+
         return new PaginatedUserResource($users);
     }
 
@@ -50,22 +51,32 @@ class UserController extends Controller
         ]);
 
         $user = User::create($request->all());
+
         return new UserResource($user);
     }
 
     /**
      * Display the specified resource by ID or username.
      */
-    public function show(string $identifier)
+    public function show(Request $request, string $identifier)
     {
-        $query = User::with(['books' => function($query) {
-            $query->orderBy('pivot_added_at', 'desc');
-        }]);
+        $currentUser = $request->user();
 
         // If identifier starts with "U-", it's an ID, otherwise it's a username
         $user = str_starts_with($identifier, 'U-')
-            ? $query->findOrFail($identifier)
-            : $query->where('username', $identifier)->firstOrFail();
+            ? User::withCount(['followers', 'following'])->findOrFail($identifier)
+            : User::withCount(['followers', 'following'])->where('username', $identifier)->firstOrFail();
+
+        // Check if profile is private and user is not the owner or following
+        $isOwner = $currentUser && $currentUser->id === $user->id;
+        $isFollowing = $currentUser && $currentUser->following()->where('followed_id', $user->id)->exists();
+
+        // Load books only if profile is public, user is owner, or user is following
+        if (! $user->is_private || $isOwner || $isFollowing) {
+            $user->load(['books' => function ($query) {
+                $query->orderBy('pivot_added_at', 'desc');
+            }]);
+        }
 
         return new UserWithBooksResource($user);
     }
@@ -79,12 +90,13 @@ class UserController extends Controller
 
         $request->validate([
             'display_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'username' => 'required|string|max:100|unique:users,username,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'username' => 'required|string|max:100|unique:users,username,'.$user->id,
             'shelf_name' => 'nullable|string|max:255',
         ]);
 
         $user->update($request->all());
+
         return new UserResource($user);
     }
 
@@ -102,28 +114,32 @@ class UserController extends Controller
     /**
      * Get user's books
      */
-    public function books(User $user)
+    public function books(Request $request)
     {
+        $user = $request->user();
         $books = $user->books()->withPivot('added_at', 'read_at')->get();
+
         return response()->json($books);
     }
-
-
 
     /**
      * Remove book from user's library
      */
-    public function removeBook(User $user, Book $book)
+    public function removeBook(Request $request, Book $book)
     {
+        $user = $request->user();
         $user->books()->detach($book->id);
+
         return response()->json(['message' => 'Book removed from library']);
     }
 
     /**
      * Update read date for a book
      */
-    public function updateReadDate(Request $request, User $user, Book $book)
+    public function updateReadDate(Request $request, Book $book)
     {
+        $user = $request->user();
+
         $request->validate([
             'read_at' => 'nullable|date',
         ]);
@@ -144,17 +160,18 @@ class UserController extends Controller
 
         $request->validate([
             'display_name' => 'sometimes|string|max:255',
-            'username' => 'sometimes|string|max:100|unique:users,username,' . $user->id,
-            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+            'username' => 'sometimes|string|max:100|unique:users,username,'.$user->id,
+            'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
             'shelf_name' => 'sometimes|string|max:255',
             'locale' => 'sometimes|string|max:10',
+            'is_private' => 'sometimes|boolean',
         ]);
 
-        $user->update($request->only(['display_name', 'username', 'email', 'shelf_name', 'locale']));
+        $user->update($request->only(['display_name', 'username', 'email', 'shelf_name', 'locale', 'is_private']));
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user->fresh()
+            'user' => $user->fresh(),
         ]);
     }
 
@@ -166,7 +183,7 @@ class UserController extends Controller
         $user = $request->user();
 
         $request->validate([
-            'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
             'password' => 'sometimes|string|min:8|confirmed',
         ]);
 
@@ -184,7 +201,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Account updated successfully',
-            'user' => $user->fresh()
+            'user' => $user->fresh(),
         ]);
     }
 
@@ -202,7 +219,7 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json([
-            'message' => 'Account deleted successfully'
+            'message' => 'Account deleted successfully',
         ]);
     }
 
@@ -217,12 +234,12 @@ class UserController extends Controller
 
         $currentUserId = auth()->id();
         $exists = User::where('username', $request->username)
-                     ->where('id', '!=', $currentUserId)
-                     ->exists();
+            ->where('id', '!=', $currentUserId)
+            ->exists();
 
         return response()->json([
             'exists' => $exists,
-            'available' => !$exists
+            'available' => ! $exists,
         ]);
     }
 }

@@ -5,7 +5,7 @@
       <q-space />
       <ShelfDialog v-model="filter" :sort-key="sortKey" :asc-desc="ascDesc" @sort="onSort" />
     </div>
-    <TheShelf :books="filteredBooks" @emitRemoveID="removeBook" />
+    <TheShelf :books="filteredBooks" @emitRemoveID="removeBook" @readDateUpdated="handleReadDateUpdated" />
   </q-page>
 </template>
 
@@ -15,12 +15,7 @@ import TheShelf from '@/components/home/TheShelf.vue'
 import type { Book } from '@/models'
 import { useAuthStore, useBookStore, usePeopleStore } from '@/stores'
 import { sortBooks } from '@/utils'
-import { useQuasar } from 'quasar'
 import { computed, onMounted, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-
-const $q = useQuasar()
-const { t } = useI18n()
 
 const authStore = useAuthStore()
 const bookStore = useBookStore()
@@ -45,6 +40,14 @@ onMounted(async () => {
   }
 })
 
+async function removeBook(id: Book['id']) {
+  await bookStore.removeBookFromLibrary(id)
+  // Refresh data after deletion
+  if (authStore.user.id) {
+    await peopleStore.getUserByIdentifier(authStore.user.id)
+  }
+}
+
 function onSort(label: string | number) {
   if (sortKey.value === label) {
     ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
@@ -54,9 +57,7 @@ function onSort(label: string | number) {
   }
 }
 
-async function removeBook(id: Book['id']) {
-  await bookStore.deleteBook(id)
-  // Refresh data after deletion
+async function handleReadDateUpdated() {
   if (authStore.user.id) {
     await peopleStore.getUserByIdentifier(authStore.user.id)
   }

@@ -1,14 +1,14 @@
 <template>
-  <p>{{ $t('settings.books-description') }}</p>
+  <p>{{ $t('books-description') }}</p>
   <p v-if="books?.length == 0">
-    {{ $t('settings.bookshelf-empty') }}
-    <router-link to="/add">{{ $t('settings.bookshelf-add-few') }}</router-link>
+    {{ $t('bookshelf-empty') }}
+    <router-link to="/add">{{ $t('bookshelf-add-few') }}</router-link>
   </p>
-  <table v-else class="q-mx-auto" :summary="t('settings.book-read-dates')">
+  <table v-else class="q-mx-auto">
     <thead>
       <tr>
-        <th>{{ $t('settings.column-title') }}</th>
-        <th>{{ $t('settings.column-readIn') }}</th>
+        <th>{{ $t('column-title') }}</th>
+        <th>{{ $t('column-readIn') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -30,7 +30,7 @@
   </table>
   <br />
   <div class="text-center">
-    <q-btn color="primary" icon="save" :label="$t('settings.save')" :loading="bookStore.isLoading" @click="updateReadDates(books)" />
+    <q-btn color="primary" icon="save" :label="$t('save')" :loading="bookStore.isLoading" @click="updateReadDates(books)" />
   </div>
 </template>
 
@@ -48,28 +48,29 @@ const bookStore = useBookStore()
 
 const books = ref([] as Book[])
 
-document.title = `LivroLog | ${t('settings.books')}`
+document.title = `LivroLog | ${t('books')}`
 
 onMounted(() => {
-  books.value = bookStore.books
-    .map((book) => ({
+  // Fetch all books without pagination for settings page
+  bookStore.getBooks(true).then(() => {
+    books.value = bookStore.books.map((book) => ({
       ...book,
       readIn: book.readIn || book.pivot?.read_at || ''
     }))
-    .reverse()
+  })
 })
 
 async function updateReadDates(updatedBooks: Book[]) {
-  const updatedFields = []
+  const promises = []
   for (const book of updatedBooks) {
     if (book.readIn) {
-      updatedFields.push({ id: book.id, readIn: String(book.readIn) })
+      promises.push(bookStore.updateBookReadDate(book.id, String(book.readIn)))
     }
   }
-  await bookStore
-    .patchBooksReadDates(updatedFields)
-    .then(() => $q.notify({ icon: 'check_circle', message: t('settings.read-dates-updated') }))
-    .catch(() => $q.notify({ icon: 'error', message: t('settings.read-dates-updated-error') }))
+
+  Promise.all(promises)
+    .then(() => $q.notify({ message: t('read-dates-updated'), type: 'positive' }))
+    .catch(() => $q.notify({ message: t('error-occurred'), type: 'negative' }))
 }
 </script>
 

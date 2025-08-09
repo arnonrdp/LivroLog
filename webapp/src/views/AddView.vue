@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <q-form @submit.prevent="search">
-      <q-input v-model="seek" clearable class="q-mx-auto" dense :label="$t('book.addlabel')" @clear="clearSearch" style="max-width: 32rem">
+      <q-input v-model="seek" class="q-mx-auto" clearable dense :label="$t('addlabel')" style="max-width: 32rem" @clear="clearSearch">
         <template v-slot:prepend>
           <q-icon name="search" />
         </template>
@@ -11,7 +11,7 @@
     <TheLoading v-show="isSearching" />
 
     <section class="items-baseline justify-center row">
-      <figure v-for="(book, index) in books" class="relative-position q-mx-md q-my-lg" :key="index">
+      <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
         <q-btn color="primary" icon="add" round @click.once="addBook(book)" />
         <a>
           <img
@@ -34,7 +34,7 @@
         <figcaption style="max-width: 8rem">{{ book.title }}</figcaption>
         <figcaption id="authors" style="max-width: 8rem">
           <span class="text-body2 text-weight-bold">
-            {{ book.authors || $t('book.unknown-author') }}
+            {{ book.authors || $t('unknown-author') }}
           </span>
         </figcaption>
       </figure>
@@ -76,7 +76,7 @@ const isDialogOpen = ref(false)
 const isSearching = ref(false)
 const selectedBook = ref<Book | null>(null)
 
-document.title = `LivroLog | ${t('menu.add')}`
+document.title = `LivroLog | ${t('add')}`
 
 async function search() {
   books.value = []

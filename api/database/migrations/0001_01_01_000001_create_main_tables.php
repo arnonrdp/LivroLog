@@ -21,12 +21,30 @@ return new class extends Migration
             $table->string('shelf_name')->nullable();
             $table->string('locale', 10)->nullable();
             $table->enum('role', ['admin', 'user'])->default('user');
+            $table->integer('followers_count')->unsigned()->default(0);
+            $table->integer('following_count')->unsigned()->default(0);
+            $table->boolean('is_private')->default(false);
             $table->timestamp('modified_at')->useCurrent();
             $table->timestamp('email_verified_at')->nullable();
             $table->boolean('email_verified')->default(false);
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+        });
+
+        Schema::create('follows', function (Blueprint $table) {
+            $table->id();
+            $table->string('follower_id', 16);
+            $table->string('followed_id', 16);
+            $table->timestamps();
+            $table->foreign('follower_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('followed_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unique(['follower_id', 'followed_id']); // Unique constraint to prevent duplicate follows
+
+            // Indexes for performance
+            $table->index('follower_id');
+            $table->index('followed_id');
+            $table->index(['followed_id', 'created_at']);
         });
 
         Schema::create('books', function (Blueprint $table) {
@@ -55,7 +73,7 @@ return new class extends Migration
             $table->string('edition', 50)->nullable();
             $table->timestamps();
 
-            // Índices para busca
+            // Indexes for search
             $table->index('published_date');
             $table->index('page_count');
             $table->index('format');
@@ -109,6 +127,45 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();
         });
+
+        Schema::create('reviews', function (Blueprint $table) {
+            $table->string('id', 16)->primary();
+            $table->string('user_id', 16);
+            $table->string('book_id', 16);
+            $table->string('title', 200)->nullable();
+            $table->text('content'); // ~2000 characters limit
+            $table->tinyInteger('rating')->unsigned(); // 1-5
+            $table->enum('visibility_level', ['private', 'friends', 'public'])->default('public');
+            $table->boolean('is_spoiler')->default(false);
+            $table->integer('helpful_count')->unsigned()->default(0);
+            $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('book_id')->references('id')->on('books')->onDelete('cascade');
+            $table->unique(['user_id', 'book_id']); // Unique constraint: 1 review per user per book
+
+            // Indexes for performance
+            $table->index(['book_id', 'visibility_level', 'created_at']);
+            $table->index(['user_id', 'created_at']);
+            $table->index('rating');
+        });
+
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->index();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('cache', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->mediumText('value');
+            $table->integer('expiration');
+        });
+
+        Schema::create('cache_locks', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->string('owner');
+            $table->integer('expiration');
+        });
     }
 
     /**
@@ -116,12 +173,17 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('cache');
+        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('personal_access_tokens');
+        Schema::dropIfExists('reviews');
         Schema::dropIfExists('author_book');
         Schema::dropIfExists('authors');
         Schema::dropIfExists('related_books');
         Schema::dropIfExists('users_books');
         Schema::dropIfExists('books');
+        Schema::dropIfExists('follows');
         Schema::dropIfExists('users');
     }
 };

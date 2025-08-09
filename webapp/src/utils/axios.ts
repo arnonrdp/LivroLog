@@ -24,9 +24,26 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Clear all auth data
       localStorage.removeItem('auth_token')
       LocalStorage.remove('user')
-      window.location.href = '/login'
+
+      // Clear auth store to prevent redirect loop
+      const authStore = localStorage.getItem('auth')
+      if (authStore) {
+        try {
+          const authData = JSON.parse(authStore)
+          authData._user = {}
+          localStorage.setItem('auth', JSON.stringify(authData))
+        } catch (e) {
+          localStorage.removeItem('auth')
+        }
+      }
+
+      // Only redirect if not already on login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

@@ -19,7 +19,7 @@ export const useShowcaseStore = defineStore('showcase', {
       return await api
         .get('/showcase')
         .then((response) => this.$patch({ _showcase: response.data.data || response.data }))
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
     }
   }
 })

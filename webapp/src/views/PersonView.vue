@@ -1,11 +1,50 @@
 <template>
   <q-page class="non-selectable" padding>
-    <div class="flex items-center">
-      <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
-      <q-space />
-      <ShelfDialog v-model="filter" :sort-key="sortKey" :asc-desc="ascDesc" @sort="onSort" />
+    <div v-if="peopleStore.isLoading" class="text-center q-py-xl">
+      <q-spinner color="primary" size="3em" />
+      <div class="text-grey q-mt-md">{{ $t('loading') }}</div>
     </div>
-    <TheShelf :books="filteredBooks" @emitAddID="addBook" />
+
+    <div v-else-if="!person.id" class="text-center q-py-xl">
+      <q-icon class="q-mb-md" color="grey" name="person_off" size="6em" />
+      <div class="text-h6 text-grey">{{ $t('not-found', 'Usuário não encontrado') }}</div>
+    </div>
+
+    <div v-else>
+      <!-- Private Profile Message -->
+      <div v-if="person.is_private && !person.books" class="text-center q-py-xl">
+        <q-icon class="q-mb-md" color="grey" name="lock" size="6em" />
+        <div class="text-h5 q-mb-md">{{ $t('private-profile') }}</div>
+        <div class="text-body1 text-grey q-mb-lg">{{ $t('private-profile-message') }}</div>
+      </div>
+
+      <!-- Public Profile or Following -->
+      <div v-else>
+        <!-- Mobile Layout -->
+        <div class="lt-md">
+          <div class="flex items-center q-mb-md">
+            <h1 class="text-primary text-left q-my-none">
+              {{ person.shelf_name || person.display_name }}
+            </h1>
+            <q-space />
+            <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
+          </div>
+
+          <TheShelf :books="filteredBooks" @emitAddID="addBook" />
+        </div>
+
+        <!-- Desktop Layout -->
+        <div class="gt-sm">
+          <div class="flex items-center q-mb-md">
+            <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
+            <q-space />
+            <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
+          </div>
+
+          <TheShelf :books="filteredBooks" @emitAddID="addBook" />
+        </div>
+      </div>
+    </div>
   </q-page>
 </template>
 
@@ -13,19 +52,16 @@
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
 import type { Book, User } from '@/models'
-import { useBookStore, usePeopleStore } from '@/stores'
+import { useBookStore, useFollowStore, usePeopleStore } from '@/stores'
 import { sortBooks } from '@/utils'
-import { useQuasar } from 'quasar'
-import { computed, onMounted, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-const $q = useQuasar()
-const { t } = useI18n()
 const route = useRoute()
 
 const peopleStore = usePeopleStore()
 const bookStore = useBookStore()
+const followStore = useFollowStore()
 
 const ascDesc = ref('desc')
 const sortKey = ref<string | number>('readIn')
@@ -44,11 +80,15 @@ peopleStore.$subscribe((_mutation, state) => {
   document.title = person.value.display_name ? `LivroLog | ${person.value.display_name}` : 'LivroLog'
 })
 
-onMounted(() => {
+onMounted(async () => {
   const username = route.params.username as string
   if (username) {
-    peopleStore.getUserByIdentifier(username)
+    await peopleStore.getUserByIdentifier(username)
   }
+})
+
+onUnmounted(() => {
+  followStore.clearFollowStatus()
 })
 
 function onSort(label: string | number) {
@@ -60,11 +100,8 @@ function onSort(label: string | number) {
   }
 }
 
-function addBook(book: Book) {
+async function addBook(book: Book) {
   book = { ...book, addedIn: Date.now(), readIn: '' }
-  bookStore
-    .postBook(book)
-    .then(() => $q.notify({ icon: 'check_circle', message: t('book.added-to-shelf') }))
-    .catch(() => $q.notify({ icon: 'error', message: t('book.already-exists') }))
+  await bookStore.postBook(book)
 }
 </script>

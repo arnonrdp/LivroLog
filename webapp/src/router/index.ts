@@ -32,6 +32,18 @@ const routes: Array<RouteRecordRaw> = [
     props: true
   },
   {
+    path: '/:username/followers',
+    component: () => import('@/views/FollowersView.vue'),
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/:username/following',
+    component: () => import('@/views/FollowingView.vue'),
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/settings',
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true }
@@ -50,21 +62,30 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
-  if (!authStore.isAuthenticated) {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      try {
-        await authStore.getAuthMe()
-      } catch (error) {
-        console.error('Erro ao restaurar sessão:', error)
-        localStorage.removeItem('auth_token')
-      }
+  // Check if we have a token but no user data (page reload scenario)
+  const token = localStorage.getItem('auth_token')
+  const hasToken = Boolean(token)
+  const hasUser = Boolean(authStore.user.id)
+
+  // If we have a token but no user, try to restore session
+  if (hasToken && !hasUser) {
+    try {
+      await authStore.getAuthMe()
+    } catch (error) {
+      console.error('Failed to restore session:', error)
+      // Clear invalid token
+      localStorage.removeItem('auth_token')
+      // Clear store to ensure clean state
+      authStore.$reset()
     }
   }
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  // Re-check authentication status after potential restoration
+  const isAuthenticated = authStore.isAuthenticated && hasToken
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
     next({ path: '/login' })
-  } else if (to.path === '/login' && authStore.isAuthenticated) {
+  } else if (to.path === '/login' && isAuthenticated) {
     next({ path: '/' })
   } else {
     next()

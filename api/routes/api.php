@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\FollowController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,14 +61,27 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Books
     Route::get('/books/search', [BookController::class, 'search']);
-    Route::patch('/books/read-dates', [BookController::class, 'updateReadDates']);
     Route::post('/books/enrich-batch', [BookController::class, 'enrichBooksInBatch']);
     Route::post('/books/create-enriched', [BookController::class, 'createEnrichedBook']);
-    Route::post('/books/{id}/enrich', [BookController::class, 'enrichBook']);
+    Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
     Route::apiResource('books', BookController::class);
 
     // User's books
-    Route::get('/users/{user}/books', [UserController::class, 'books']);
-    Route::delete('/users/{user}/books/{book}', [UserController::class, 'removeBook']);
-    Route::patch('/users/{user}/books/{book}/read-date', [UserController::class, 'updateReadDate']);
+    Route::get('/user/books', [UserController::class, 'books']);
+    Route::delete('/user/books/{book}', [UserController::class, 'removeBook']);
+    Route::patch('/user/books/{book}/read-date', [UserController::class, 'updateReadDate']);
+
+    // Follow system
+    Route::post('/users/{user}/follow', [FollowController::class, 'follow']);
+    Route::delete('/users/{user}/unfollow', [FollowController::class, 'unfollow']);
+    Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
+    Route::get('/users/{user}/following', [FollowController::class, 'following']);
+    Route::get('/users/{user}/follow-status', [FollowController::class, 'followStatus']);
+
+    // Reviews (authenticated routes)
+    Route::get('/reviews', [ReviewController::class, 'index']);
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::put('/reviews/{review}', [ReviewController::class, 'update']);
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+    Route::post('/reviews/{review}/helpful', [ReviewController::class, 'markAsHelpful']);
 });

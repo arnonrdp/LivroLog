@@ -41,4 +41,20 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/api/auth/google/callback'),
     ],
 
+    'google_books' => [
+        'api_key' => env('GOOGLE_BOOKS_API_KEY'),
+    ],
+
+    'open_library' => [
+        'enabled' => env('OPEN_LIBRARY_ENABLED', true),
+    ],
+
+    // Future Amazon integration
+    'amazon' => [
+        'pa_api_key' => env('AMAZON_PA_API_KEY'),
+        'pa_secret_key' => env('AMAZON_PA_SECRET_KEY'),
+        'associate_tag' => env('AMAZON_ASSOCIATE_TAG'),
+        'enabled' => env('AMAZON_PA_API_ENABLED', false),
+    ],
+
 ];

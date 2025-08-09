@@ -1,6 +1,7 @@
 import type { User } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
+import { useFollowStore } from './follow'
 import { useUserStore } from './user'
 
 export const usePeopleStore = defineStore('people', {
@@ -34,15 +35,14 @@ export const usePeopleStore = defineStore('people', {
         .finally(() => (this._isLoading = false))
     },
 
-    // TODO: Follow/Unfollow functionality - Future feature
-    follow(userId: string) {
-      // Implementation will be added when social features are developed
-      throw new Error('Follow functionality is not yet available')
+    async follow(userId: string) {
+      const followStore = useFollowStore()
+      return await followStore.followUser(userId)
     },
 
-    unfollow(userId: string) {
-      // Implementation will be added when social features are developed
-      throw new Error('Unfollow functionality is not yet available')
+    async unfollow(userId: string) {
+      const followStore = useFollowStore()
+      return await followStore.unfollowUser(userId)
     }
   }
 })

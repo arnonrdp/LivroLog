@@ -9,17 +9,17 @@
         <div class="reset-form-container">
           <q-card class="text-center q-pa-md" style="width: 400px; max-width: 85vw">
             <q-card-section>
-              <h5 class="q-my-md">{{ $t('sign.reset-password') }}</h5>
+              <h5 class="q-my-md">{{ $t('reset-password') }}</h5>
             </q-card-section>
             <q-form greedy @submit="resetPassword">
               <q-card-section class="q-gutter-y-md">
                 <q-input
                   v-model="password"
                   dense
-                  :label="$t('sign.new-password')"
+                  :label="$t('new-password')"
                   lazy-rules
                   required
-                  :rules="[(val) => val.length >= 8 || $t('sign.password-min-length')]"
+                  :rules="[(val) => val.length >= 8 || $t('password-min-length')]"
                   type="password"
                 >
                   <template v-slot:prepend>
@@ -29,10 +29,10 @@
                 <q-input
                   v-model="passwordConfirmation"
                   dense
-                  :label="$t('sign.password-confirmation')"
+                  :label="$t('password-confirmation')"
                   lazy-rules
                   required
-                  :rules="[(val) => password === val || $t('sign.passwords-dont-match')]"
+                  :rules="[(val) => password === val || $t('passwords-dont-match')]"
                   type="password"
                 >
                   <template v-slot:prepend>
@@ -41,7 +41,7 @@
                 </q-input>
               </q-card-section>
               <q-card-actions>
-                <q-btn color="primary" :label="$t('sign.reset-password')" :loading="authStore.isLoading" type="submit" class="full-width" />
+                <q-btn class="full-width" color="primary" :label="$t('reset-password')" :loading="authStore.isLoading" type="submit" />
               </q-card-actions>
             </q-form>
           </q-card>
@@ -75,23 +75,20 @@ onMounted(() => {
   email.value = route.query.email as string
 
   if (!token.value || !email.value) {
-    $q.notify({ icon: 'error', message: t('sign.invalid-reset-link'), color: 'negative' })
+    $q.notify({ message: t('invalid-reset-link'), type: 'negative' })
     router.push('/login')
   }
 })
 
-function resetPassword() {
-  authStore
+async function resetPassword() {
+  await authStore
     .postResetPassword({
       token: token.value,
       email: email.value,
       password: password.value,
       password_confirmation: passwordConfirmation.value
     })
-    .then(() => {
-      $q.notify({ icon: 'check_circle', message: t('sign.password-reset-success') })
-      router.push('/login')
-    })
+    .then(() => router.push('/login'))
 }
 </script>
 

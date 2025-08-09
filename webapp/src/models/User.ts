@@ -9,9 +9,12 @@ export interface User {
   email_verified?: boolean
   email: string
   followers?: User[]
+  followers_count?: number
   following?: User[]
+  following_count?: number
   google_id?: string | null
   id: string
+  is_private?: boolean
   locale?: object | string
   modified_at?: string
   role?: 'admin' | 'user'

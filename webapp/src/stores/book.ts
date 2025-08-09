@@ -20,10 +20,11 @@ export const useBookStore = defineStore('book', {
   },
 
   actions: {
-    async getBooks() {
+    async getBooks(all: boolean = false) {
       this._isLoading = true
+      const url = all ? '/books?all=true' : '/books'
       return await api
-        .get('/books')
+        .get(url)
         .then((response) => {
           const books = response.data.data || response.data
 
@@ -38,7 +39,7 @@ export const useBookStore = defineStore('book', {
           this.$patch({ _books: books })
           return books
         })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
@@ -47,10 +48,11 @@ export const useBookStore = defineStore('book', {
       return await api
         .get(`/books/search?q=${encodeURIComponent(search)}`)
         .then((response) => {
-          this.$patch({ _searchResults: response.data })
-          return response.data
+          const books = response.data.books || response.data || []
+          this.$patch({ _searchResults: books })
+          return books
         })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
@@ -59,9 +61,10 @@ export const useBookStore = defineStore('book', {
       await api
         .post('/books', payload)
         .then(async () => {
-          Notify.create({ message: i18n.global.t('book.added-to-shelf'), color: 'positive' })
+          Notify.create({ message: i18n.global.t('added-to-shelf'), type: 'positive' })
           await this.getBooks()
         })
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
@@ -73,7 +76,7 @@ export const useBookStore = defineStore('book', {
           this._books = this._books.map((book) => (book.id === bookId ? { ...book, ...payload } : book))
           return response.data
         })
-        .catch((error) => Notify.create({ message: error.response?.data?.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response?.data?.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
@@ -83,24 +86,55 @@ export const useBookStore = defineStore('book', {
         .delete(`/books/${bookId}`)
         .then(() => {
           this._books = this._books.filter((book) => book.id !== bookId)
-          Notify.create({ icon: 'check_circle', message: i18n.global.t('book.removed-success') })
+          Notify.create({ message: i18n.global.t('removed-success'), type: 'positive' })
         })
-        .catch(() => Notify.create({ icon: 'error', message: i18n.global.t('book.removed-error') }))
+        .catch(() => Notify.create({ message: i18n.global.t('removed-error'), type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
-    async patchBooksReadDates(books: Partial<Book>[]) {
+    // User's library methods (authenticated user only)
+    async getUserBooks() {
+      this._isLoading = true
+      return await api
+        .get('/user/books')
+        .then((response) => {
+          const books = response.data || []
+          this.$patch({ _books: books })
+          return books
+        })
+        .catch((error) => Notify.create({ message: error.response?.data?.message, type: 'negative' }))
+        .finally(() => (this._isLoading = false))
+    },
+
+    async removeBookFromLibrary(bookId: Book['id']) {
+      this._isLoading = true
+      await api
+        .delete(`/user/books/${bookId}`)
+        .then(() => {
+          this._books = this._books.filter((book) => book.id !== bookId)
+          Notify.create({ message: i18n.global.t('removed-success'), type: 'positive' })
+        })
+        .catch(() => Notify.create({ message: i18n.global.t('removed-error'), type: 'negative' }))
+        .finally(() => (this._isLoading = false))
+    },
+
+    async updateBookReadDate(bookId: Book['id'], readDate: string) {
       this._isLoading = true
       return api
-        .patch('/books/read-dates', { books })
+        .patch(`/user/books/${bookId}/read-date`, {
+          read_at: readDate
+        })
         .then((response) => {
-          this._books = this._books.map((book) => {
-            const updated = books.find((b) => b.id === book.id)
-            return updated ? { ...book, readIn: updated.readIn } : book
-          })
+          this._books = this._books.map((book) =>
+            book.id === bookId ? { ...book, pivot: { ...book.pivot, read_at: readDate } as typeof book.pivot } : book
+          )
+          Notify.create({ message: i18n.global.t('read-date-saved'), type: 'positive' })
           return response.data
         })
-        .catch((error) => Notify.create({ message: error.response?.data?.message, color: 'negative' }))
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+          throw error
+        })
         .finally(() => (this._isLoading = false))
     }
   }

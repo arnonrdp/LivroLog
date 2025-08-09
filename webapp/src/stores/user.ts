@@ -1,3 +1,4 @@
+import { i18n } from '@/locales'
 import type { Meta, User } from '@/models'
 import router from '@/router'
 import api from '@/utils/axios'
@@ -31,7 +32,7 @@ export const useUserStore = defineStore('user', {
           this._meta = response.data.meta
           this.$patch({ _people: response.data.data || response.data })
         })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
@@ -42,9 +43,10 @@ export const useUserStore = defineStore('user', {
         .put('/account', data)
         .then((response) => {
           authStore.setUser(response.data.user)
+          Notify.create({ message: i18n.global.t('account-updated'), type: 'positive' })
           return response.data
         })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch(() => Notify.create({ message: i18n.global.t('account-updated-error'), type: 'negative' }))
         .finally(() => (authStore._isLoading = false))
     },
 
@@ -54,7 +56,7 @@ export const useUserStore = defineStore('user', {
       return await api
         .delete('/account')
         .then(() => router.push('/login'))
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (authStore._isLoading = false))
     },
 
@@ -62,16 +64,17 @@ export const useUserStore = defineStore('user', {
       return await api.get(`/check-username?username=${username}`).then((response) => response.data.exists)
     },
 
-    async putProfile(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string }) {
+    async putProfile(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
       const authStore = useAuthStore()
       authStore._isLoading = true
       return await api
         .put('/profile', data)
         .then((response) => {
           authStore.setUser(response.data.user)
+          Notify.create({ message: i18n.global.t('profile-updated'), type: 'positive' })
           return response.data
         })
-        .catch((error) => Notify.create({ message: error.response.data.message, color: 'negative' }))
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (authStore._isLoading = false))
     }
   }

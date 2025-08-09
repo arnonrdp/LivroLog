@@ -2,9 +2,9 @@
   <q-card class="text-center q-pa-md" style="width: 400px; max-width: 85vw">
     <q-card-section>
       <q-tabs v-model="tab" active-bg-color="teal" active-color="white" class="text-teal" indicator-color="transparent">
-        <q-tab :label="$t('sign.signup')" name="signup" />
-        <q-tab :label="$t('sign.signin')" name="signin" />
-        <q-tab :label="$t('sign.recover')" name="recover" />
+        <q-tab :label="$t('signup')" name="signup" />
+        <q-tab :label="$t('signin')" name="signin" />
+        <q-tab :label="$t('recover')" name="recover" />
       </q-tabs>
     </q-card-section>
     <q-form greedy @reset="onReset" @submit="submit()">
@@ -14,7 +14,7 @@
           v-model="displayName"
           autofocus
           dense
-          :label="$t('sign.name')"
+          :label="$t('name')"
           lazy-rules
           required
           :rules="[(val) => val.length >= 2]"
@@ -27,7 +27,7 @@
           key="email-input"
           v-model="email"
           dense
-          :label="$t('sign.mail')"
+          :label="$t('mail')"
           lazy-rules
           required
           :rules="[(val, rules) => rules.email(val)]"
@@ -41,7 +41,7 @@
           v-if="tab !== 'recover'"
           v-model="password"
           dense
-          :label="$t('sign.password')"
+          :label="$t('password')"
           lazy-rules
           required
           :rules="[(val) => val.length >= 6]"
@@ -55,7 +55,7 @@
           v-if="tab === 'signup'"
           v-model="passwordConfirm"
           dense
-          :label="$t('sign.password-confirmation')"
+          :label="$t('password-confirmation')"
           lazy-rules
           required
           :rules="[(val) => password === val]"
@@ -68,25 +68,25 @@
       </q-card-section>
       <q-card-actions class="column">
         <div class="q-gutter-x-md">
-          <q-btn color="primary" :label="$t('sign.' + tab)" type="submit" />
-          <q-btn color="primary" flat :label="$t('sign.reset')" type="reset" />
+          <q-btn color="primary" :label="$t(tab)" type="submit" />
+          <q-btn color="primary" flat :label="$t('reset')" type="reset" />
         </div>
         <q-btn
           class="q-mt-md"
-          :loading="authStore.isGoogleLoading"
-          :disable="authStore.isGoogleLoading"
-          padding="0.5em 1em"
           color="white"
-          text-color="grey-7"
+          :disable="authStore.isGoogleLoading"
+          :loading="authStore.isGoogleLoading"
           outline
+          padding="0.5em 1em"
+          text-color="grey-7"
           @click="googleSignIn"
         >
-          <q-img alt="Google Logo" class="q-mr-xs" src="/google.svg" width="20px" height="20px" />
-          <span>{{ $t('sign.sign-google', 'Continue with Google') }}</span>
+          <q-img alt="Google Logo" class="q-mr-xs" height="20px" src="/google.svg" width="20px" />
+          <span>{{ $t('sign-google', 'Continue with Google') }}</span>
         </q-btn>
 
         <!-- Hidden Google Sign-In button for programmatic use -->
-        <div ref="googleButtonRef" style="display: none" aria-hidden="true"></div>
+        <div ref="googleButtonRef" aria-hidden="true" style="display: none"></div>
       </q-card-actions>
     </q-form>
   </q-card>
@@ -151,7 +151,7 @@ async function handleGoogleCredential(idToken: string) {
 function googleSignIn() {
   if (authStore.isGoogleLoading || !googleButtonElement) {
     if (!googleButtonElement) {
-      $q.notify({ message: t('sign.google-error', 'Google Sign In not available'), type: 'negative' })
+      $q.notify({ message: t('google-error', 'Google Sign In not available'), type: 'negative' })
     }
     return
   }
@@ -172,11 +172,11 @@ function signup() {
       password: password.value,
       password_confirmation: passwordConfirm.value
     })
-    .then(() => $q.notify({ icon: 'check_circle', message: t('sign.accountCreated') }))
+    .then(() => $q.notify({ message: t('account-created'), type: 'positive' }))
 }
 
 function resetPassword() {
-  authStore.postForgotPassword(email.value).then(() => $q.notify({ icon: 'check_circle', message: t('sign.password-reset') }))
+  authStore.postForgotPassword(email.value).then(() => $q.notify({ message: t('password-reset'), type: 'positive' }))
 }
 
 function onReset() {

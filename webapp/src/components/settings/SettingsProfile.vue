@@ -1,17 +1,29 @@
 <template>
   <q-form class="q-gutter-md q-mb-md" @submit.prevent="updateProfile">
-    <q-input v-model="displayName" :label="$t('book.shelfname')">
+    <q-input v-model="displayName" :label="$t('shelfname')">
       <template v-slot:prepend>
         <q-icon name="badge" />
       </template>
     </q-input>
-    <q-input v-model="username" debounce="500" :label="$t('sign.username')" :prefix="hostname" :rules="[(val) => usernameValidator(val)]">
+    <q-input v-model="username" debounce="500" :label="$t('username')" :prefix="hostname" :rules="[(val) => usernameValidator(val)]">
       <template v-slot:prepend>
         <q-icon name="link" />
       </template>
     </q-input>
+    <q-item>
+      <q-item-section avatar>
+        <q-icon name="lock" />
+      </q-item-section>
+      <q-item-section>
+        <q-item-label>{{ $t('private-profile') }}</q-item-label>
+        <q-item-label caption>{{ $t('private-profile-description') }}</q-item-label>
+      </q-item-section>
+      <q-item-section side>
+        <q-toggle v-model="isPrivate" />
+      </q-item-section>
+    </q-item>
     <div class="text-center">
-      <q-btn color="primary" icon="save" :label="$t('settings.update-profile')" :loading="authStore.isLoading" type="submit" />
+      <q-btn color="primary" icon="save" :label="$t('update-profile')" :loading="authStore.isLoading" type="submit" />
     </div>
   </q-form>
 </template>
@@ -20,11 +32,9 @@
 import type { User } from '@/models'
 import router from '@/router'
 import { useAuthStore, useUserStore } from '@/stores'
-import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const $q = useQuasar()
 const { t } = useI18n()
 
 const authStore = useAuthStore()
@@ -32,9 +42,10 @@ const userStore = useUserStore()
 
 const displayName = ref(authStore.user.display_name)
 const username = ref(authStore.user.username)
+const isPrivate = ref(authStore.user.is_private || false)
 const hostname = window.location.hostname + '/'
 
-document.title = `LivroLog | ${t('settings.profile')}`
+document.title = `LivroLog | ${t('profile')}`
 
 function usernameValidator(username: User['username']) {
   const routes = router.options.routes
@@ -44,10 +55,11 @@ function usernameValidator(username: User['username']) {
   return userStore.getCheckUsername(username.trim()).then((exists: boolean) => !exists)
 }
 
-function updateProfile() {
-  userStore
-    .putProfile({ display_name: displayName.value, username: username.value.trim().toLowerCase() })
-    .then(() => $q.notify({ icon: 'check_circle', message: t('settings.profile-updated') }))
-    .catch(() => $q.notify({ icon: 'error', message: t('settings.profile-updated-error') }))
+async function updateProfile() {
+  await userStore.putProfile({
+    display_name: displayName.value,
+    username: username.value.trim().toLowerCase(),
+    is_private: isPrivate.value
+  })
 }
 </script>

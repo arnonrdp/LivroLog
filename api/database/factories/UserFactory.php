@@ -26,6 +26,7 @@ class UserFactory extends Factory
         return [
             'id' => 'U-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4)),
             'display_name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),

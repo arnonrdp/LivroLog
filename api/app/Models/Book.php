@@ -122,6 +122,38 @@ class Book extends Model
     }
 
     /**
+     * Get the reviews for the book.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get only public reviews for the book.
+     */
+    public function publicReviews()
+    {
+        return $this->hasMany(Review::class)->public();
+    }
+
+    /**
+     * Get the average rating for the book.
+     */
+    public function getAverageRatingAttribute()
+    {
+        return $this->reviews()->public()->avg('rating');
+    }
+
+    /**
+     * Get the total number of reviews for the book.
+     */
+    public function getReviewsCountAttribute()
+    {
+        return $this->reviews()->public()->count();
+    }
+
+    /**
      * Get formatted publication date with appropriate precision
      */
     public function getFormattedPublishedDateAttribute()
@@ -147,7 +179,7 @@ class Book extends Model
     }
 
     /**
-     * Append formatted date to JSON output
+     * Append formatted date and review stats to JSON output
      */
-    protected $appends = ['formatted_published_date'];
+    protected $appends = ['formatted_published_date', 'average_rating', 'reviews_count'];
 }

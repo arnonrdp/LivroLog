@@ -797,6 +797,143 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Create new book with automatic enrichment",
+                "description": "Creates a new book and automatically enriches it with additional information from Google Books API. If book already exists, it will be enriched if needed and associated with the user.",
+                "operationId": "storeBook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "google_id": {
+                                        "description": "Google Books ID for enrichment",
+                                        "type": "string",
+                                        "example": "iO5pApw2JycC"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "The Ivory Tower and Harry Potter"
+                                    },
+                                    "authors": {
+                                        "type": "string",
+                                        "example": "Lana A. Whited"
+                                    },
+                                    "isbn": {
+                                        "type": "string",
+                                        "example": "0826215491"
+                                    },
+                                    "thumbnail": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "publisher": {
+                                        "type": "string",
+                                        "example": "University of Missouri Press"
+                                    },
+                                    "language": {
+                                        "type": "string",
+                                        "example": "en"
+                                    },
+                                    "published_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "page_count": {
+                                        "type": "integer",
+                                        "example": 324
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "hardcover",
+                                            "paperback",
+                                            "ebook",
+                                            "audiobook"
+                                        ]
+                                    },
+                                    "categories": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "edition": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Book created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        "enriched": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Book already exists",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        "enriched": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book found in database"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/showcase": {
@@ -955,36 +1092,36 @@
                 ]
             }
         },
-        "/api/books/read-dates": {
-            "patch": {
+        "/api/books/{id}/enrich": {
+            "post": {
                 "tags": [
                     "Books"
                 ],
-                "summary": "Update read dates for multiple books",
-                "description": "Updates read dates for multiple books for the authenticated user",
-                "operationId": "updateReadDates",
+                "summary": "Enrich book information using Google Books API",
+                "description": "Fetches additional information about a book from Google Books API and updates the local record",
+                "operationId": "enrichBook",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-3D6Y-9IO8"
+                        }
+                    }
+                ],
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "books": {
-                                        "type": "array",
-                                        "items": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "readIn": {
-                                                    "type": "string",
-                                                    "format": "date",
-                                                    "example": "2025-07-10"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
+                                    "google_id": {
+                                        "description": "Optional Google Books ID to use for enrichment",
+                                        "type": "string",
+                                        "example": "8fcQEAAAQBAJ"
                                     }
                                 },
                                 "type": "object"
@@ -994,20 +1131,24 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Read dates updated successfully",
+                        "description": "Book enriched successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Read dates updated successfully"
+                                            "example": "Book enriched successfully"
                                         },
-                                        "updated": {
-                                            "type": "integer",
-                                            "example": 4
+                                        "book_id": {
+                                            "type": "string",
+                                            "example": "B-3D6Y-9IO8"
                                         },
-                                        "errors": {
+                                        "added_fields": {
                                             "type": "array",
                                             "items": {
                                                 "type": "string"
@@ -1022,8 +1163,1210 @@
                     "401": {
                         "description": "Unauthenticated"
                     },
+                    "404": {
+                        "description": "Book not found"
+                    },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Enrichment failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/books/enrich-batch": {
+            "post": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Enrich multiple books in batch",
+                "description": "Enriches multiple books information using Google Books API",
+                "operationId": "enrichBooksInBatch",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "book_ids": {
+                                        "description": "Specific book IDs to enrich (optional)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Batch enrichment completed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "processed": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "success_count": {
+                                            "type": "integer",
+                                            "example": 8
+                                        },
+                                        "error_count": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/books/create-enriched": {
+            "post": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Create new book with enriched information",
+                "description": "Creates a new book directly from Google Books API with all available information",
+                "operationId": "createEnrichedBook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "google_id": {
+                                        "description": "Google Books ID",
+                                        "type": "string",
+                                        "example": "8fcQEAAAQBAJ"
+                                    },
+                                    "add_to_library": {
+                                        "description": "Add book to user's library",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Book created and enriched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book created and enriched successfully"
+                                        },
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        "info_quality": {
+                                            "type": "string",
+                                            "example": "complete"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Creation failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}/follow": {
+            "post": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Follow a user",
+                "operationId": "323c7347a2186e2b8c5d132d37dc94c1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-ABC1-DEF2"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully followed user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully followed user"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "follower": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "U-XYZ3-UVW4"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "username": {
+                                                            "type": "string",
+                                                            "example": "john_doe"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "following": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "U-ABC1-DEF2"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "Jane Smith"
+                                                        },
+                                                        "username": {
+                                                            "type": "string",
+                                                            "example": "jane_smith"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "following_count": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "followers_count": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request (already following, cannot follow self)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Already following this user"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ALREADY_FOLLOWING"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}/unfollow": {
+            "delete": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Unfollow a user",
+                "operationId": "b550cfbdd1110b0970fd88537985eb03",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-ABC1-DEF2"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully unfollowed user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully unfollowed user"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "following_count": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "followers_count": {
+                                                    "type": "integer",
+                                                    "example": 11
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request (not following user)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Not following this user"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "NOT_FOLLOWING"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}/followers": {
+            "get": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Get user followers",
+                "operationId": "7c7fd16394d48b870ab61fd3de263957",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-ABC1-DEF2"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 50,
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User followers list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "followers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "example": "U-XYZ3-UVW4"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "John Doe"
+                                                            },
+                                                            "username": {
+                                                                "type": "string",
+                                                                "example": "john_doe"
+                                                            },
+                                                            "avatar": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/avatar.jpg",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 45
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "has_more": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}/following": {
+            "get": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Get users that a user is following",
+                "operationId": "4d3c436715f0514cff60d46ab1c789a1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-ABC1-DEF2"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 50,
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users following list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "following": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "example": "U-XYZ3-UVW4"
+                                                            },
+                                                            "display_name": {
+                                                                "type": "string",
+                                                                "example": "Jane Smith"
+                                                            },
+                                                            "username": {
+                                                                "type": "string",
+                                                                "example": "jane_smith"
+                                                            },
+                                                            "avatar": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/avatar.jpg",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 8
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "has_more": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}/follow-status": {
+            "get": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Get follow status between current user and target user",
+                "operationId": "60ee92323193acc8aa8e7a0aeeec1b65",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-ABC1-DEF2"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Follow status information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "is_following": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "is_followed_by": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "mutual_follow": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get paginated list of reviews with visibility filtering",
+                "description": "Returns paginated reviews with visibility logic: authenticated users see public reviews + their own reviews (any visibility), non-authenticated users see only public reviews",
+                "operationId": "346169ce6ab0c633530a7cedc1a25fab",
+                "parameters": [
+                    {
+                        "name": "book_id",
+                        "in": "query",
+                        "description": "Filter by book ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "rating",
+                        "in": "query",
+                        "description": "Filter by rating",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 5,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReviewResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "links": {
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string"
+                                                },
+                                                "last": {
+                                                    "type": "string"
+                                                },
+                                                "prev": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "next": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated - will show only public reviews"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Create a new review",
+                "description": "Create a new review for a book. Users can only have one review per book.",
+                "operationId": "154c71f5f72b459d998f5ea451bd4c96",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "book_id",
+                                    "content",
+                                    "rating"
+                                ],
+                                "properties": {
+                                    "book_id": {
+                                        "description": "ID of the book being reviewed",
+                                        "type": "string",
+                                        "example": "B-XYZ3-UVW4"
+                                    },
+                                    "title": {
+                                        "description": "Optional title for the review",
+                                        "type": "string",
+                                        "maxLength": 200,
+                                        "example": "Amazing book!"
+                                    },
+                                    "content": {
+                                        "description": "Review content",
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "example": "This book was incredible..."
+                                    },
+                                    "rating": {
+                                        "description": "Rating from 1 to 5 stars",
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "visibility_level": {
+                                        "description": "Review visibility level",
+                                        "type": "string",
+                                        "enum": [
+                                            "private",
+                                            "friends",
+                                            "public"
+                                        ],
+                                        "example": "public"
+                                    },
+                                    "is_spoiler": {
+                                        "description": "Whether the review contains spoilers",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Review created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReviewResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "User already has a review for this book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You already have a review for this book"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get a specific review",
+                "description": "Get a specific review by ID with visibility checking. Private reviews can only be viewed by their owners.",
+                "operationId": "a9949d3a965ed93ae30547c07eef7505",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Review ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "R-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReviewResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Review not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not authorized to view this review",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Not authorized to view this review"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Update a review",
+                "description": "Update an existing review. Only the review owner can update their review.",
+                "operationId": "17776becb9faf054b5c49bc83ad6c974",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Review ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "R-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "description": "Optional review title",
+                                        "type": "string",
+                                        "maxLength": 200,
+                                        "example": "Updated title"
+                                    },
+                                    "content": {
+                                        "description": "Review content",
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "example": "Updated content..."
+                                    },
+                                    "rating": {
+                                        "description": "Rating from 1 to 5 stars",
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 4
+                                    },
+                                    "visibility_level": {
+                                        "description": "Review visibility level",
+                                        "type": "string",
+                                        "enum": [
+                                            "private",
+                                            "friends",
+                                            "public"
+                                        ],
+                                        "example": "public"
+                                    },
+                                    "is_spoiler": {
+                                        "description": "Whether the review contains spoilers",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReviewResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to update this review",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Not authorized to update this review"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Review not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Delete a review",
+                "description": "Delete an existing review. Only the review owner or admin can delete a review.",
+                "operationId": "89986343b5dbd2b909c2764aeb7e4096",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Review ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "R-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Review deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to delete this review",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Not authorized to delete this review"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Review not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reviews/{id}/helpful": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Mark a review as helpful",
+                "operationId": "21aff56c295b55cedd9c5a543c8dbb04",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review marked as helpful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review marked as helpful"
+                                        },
+                                        "helpful_count": {
+                                            "type": "integer",
+                                            "example": 13
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Review not found"
                     }
                 },
                 "security": [
@@ -1036,30 +2379,170 @@
     },
     "components": {
         "schemas": {
+            "ReviewResource": {
+                "title": "Review Resource",
+                "description": "Review resource with user and book information",
+                "properties": {
+                    "id": {
+                        "description": "Review ID",
+                        "type": "string",
+                        "example": "R-3D6Y-9IO8"
+                    },
+                    "user_id": {
+                        "description": "User ID who wrote the review",
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "book_id": {
+                        "description": "Book ID being reviewed",
+                        "type": "string",
+                        "example": "B-XYZ3-UVW4"
+                    },
+                    "title": {
+                        "description": "Review title",
+                        "type": "string",
+                        "example": "Amazing book!",
+                        "nullable": true
+                    },
+                    "content": {
+                        "description": "Review content",
+                        "type": "string",
+                        "example": "This book was incredible..."
+                    },
+                    "rating": {
+                        "description": "Rating from 1 to 5",
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "visibility_level": {
+                        "description": "Review visibility level",
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "friends",
+                            "public"
+                        ],
+                        "example": "public"
+                    },
+                    "is_spoiler": {
+                        "description": "Whether the review contains spoilers",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "helpful_count": {
+                        "description": "Number of users who found this review helpful",
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "created_at": {
+                        "description": "Review creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-08-04T12:57:42.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Review last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-08-04T12:57:42.000000Z"
+                    },
+                    "user": {
+                        "description": "User who wrote the review",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "example": "U-ABC1-DEF2"
+                            },
+                            "display_name": {
+                                "type": "string",
+                                "example": "John Doe"
+                            },
+                            "username": {
+                                "type": "string",
+                                "example": "johndoe"
+                            },
+                            "avatar": {
+                                "type": "string",
+                                "example": "https://example.com/avatar.jpg",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "book": {
+                        "description": "Book being reviewed",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "example": "B-XYZ3-UVW4"
+                            },
+                            "title": {
+                                "type": "string",
+                                "example": "The Great Book"
+                            },
+                            "thumbnail": {
+                                "type": "string",
+                                "example": "https://example.com/book-cover.jpg",
+                                "nullable": true
+                            },
+                            "formatted_published_date": {
+                                "type": "string",
+                                "example": "2023",
+                                "nullable": true
+                            },
+                            "average_rating": {
+                                "type": "string",
+                                "example": "4.5000",
+                                "nullable": true
+                            },
+                            "reviews_count": {
+                                "type": "integer",
+                                "example": 25
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "Book": {
                 "title": "Book",
-                "description": "Book model",
+                "description": "Book model with extended information",
                 "properties": {
                     "id": {
                         "type": "string",
                         "example": "B-3D6Y-9IO8"
                     },
+                    "google_id": {
+                        "type": "string",
+                        "example": "8fcQEAAAQBAJ",
+                        "nullable": true
+                    },
                     "isbn": {
                         "type": "string",
-                        "example": "9788533613379"
+                        "example": "9788533613379",
+                        "nullable": true
                     },
                     "title": {
                         "type": "string",
                         "example": "The Lord of the Rings"
                     },
+                    "subtitle": {
+                        "type": "string",
+                        "example": "The Fellowship of the Ring",
+                        "nullable": true
+                    },
                     "authors": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "example": [
-                            "J.R.R. Tolkien"
-                        ]
+                        "type": "string",
+                        "example": "J.R.R. Tolkien"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
                     },
                     "thumbnail": {
                         "type": "string",
@@ -1072,11 +2555,180 @@
                     },
                     "publisher": {
                         "type": "string",
-                        "example": "HarperCollins"
+                        "example": "HarperCollins",
+                        "nullable": true
+                    },
+                    "published_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "page_count": {
+                        "type": "integer",
+                        "example": 423,
+                        "nullable": true
+                    },
+                    "format": {
+                        "type": "string",
+                        "enum": [
+                            "hardcover",
+                            "paperback",
+                            "ebook",
+                            "audiobook"
+                        ],
+                        "nullable": true
+                    },
+                    "print_type": {
+                        "type": "string",
+                        "example": "BOOK",
+                        "nullable": true
+                    },
+                    "height": {
+                        "description": "Height in millimeters",
+                        "type": "number",
+                        "format": "float",
+                        "example": 198.5,
+                        "nullable": true
+                    },
+                    "width": {
+                        "description": "Width in millimeters",
+                        "type": "number",
+                        "format": "float",
+                        "example": 129.2,
+                        "nullable": true
+                    },
+                    "thickness": {
+                        "description": "Thickness in millimeters",
+                        "type": "number",
+                        "format": "float",
+                        "example": 23.1,
+                        "nullable": true
+                    },
+                    "maturity_rating": {
+                        "type": "string",
+                        "enum": [
+                            "NOT_MATURE",
+                            "MATURE"
+                        ],
+                        "nullable": true
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "industry_identifiers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "info_quality": {
+                        "type": "string",
+                        "enum": [
+                            "basic",
+                            "enhanced",
+                            "complete"
+                        ],
+                        "example": "enhanced"
+                    },
+                    "enriched_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     },
                     "edition": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Follow": {
+                "title": "Follow",
+                "description": "User follow relationship model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "follower_id": {
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "following_id": {
+                        "type": "string",
+                        "example": "U-XYZ3-UVW4"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Review": {
+                "title": "Review",
+                "description": "Book review model",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "R-3D6Y-9IO8"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "book_id": {
+                        "type": "string",
+                        "example": "B-XYZ3-UVW4"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Amazing book!",
+                        "nullable": true
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "This book was incredible..."
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "visibility_level": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "friends",
+                            "public"
+                        ],
+                        "example": "public"
+                    },
+                    "is_spoiler": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "helpful_count": {
+                        "type": "integer",
+                        "example": 12
                     },
                     "created_at": {
                         "type": "string",
@@ -1201,6 +2853,18 @@
                         ],
                         "example": "user"
                     },
+                    "followers_count": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "following_count": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "is_private": {
+                        "type": "boolean",
+                        "example": false
+                    },
                     "email_verified": {
                         "type": "boolean",
                         "example": false
@@ -1241,8 +2905,16 @@
             "description": "Book management"
         },
         {
+            "name": "Follows",
+            "description": "User follow/unfollow operations"
+        },
+        {
             "name": "Authors",
             "description": "Authors"
+        },
+        {
+            "name": "Reviews",
+            "description": "Reviews"
         }
     ]
 }

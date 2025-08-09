@@ -4,19 +4,48 @@
   <q-dialog v-model="shelfMenu" position="right">
     <q-card>
       <q-card-section class="column q-gutter-y-sm q-pb-none text-center">
-        <b class="text-lower">{{ `${$t('friends.following')} ${followingCount}` }}</b>
-        <q-btn
-          v-if="isAbleToFollow"
-          class="q-ml-sm text-bold"
-          flat
-          :icon-right="isFollowingPerson ? 'person_remove' : 'person_add'"
-          :label="$t('friends.follower', { count: followersCount })"
-          no-caps
-          @click="followOrUnfollow"
-        >
-          <q-tooltip>{{ isFollowingPerson ? $t('friends.unfollow') : $t('friends.follow') }}</q-tooltip>
-        </q-btn>
-        <b v-else>{{ $t('friends.follower', { count: followersCount }) }}</b>
+        <!-- User Info Section -->
+        <div v-if="currentUser" class="q-mb-md">
+          <!-- Avatar -->
+          <q-avatar class="q-mb-sm" size="60px">
+            <img v-if="currentUser.avatar" :alt="currentUser.display_name" :src="currentUser.avatar" />
+            <q-icon v-else name="person" size="30px" />
+          </q-avatar>
+
+          <!-- User Name -->
+          <div class="text-h6 text-weight-medium">{{ currentUser.display_name }}</div>
+          <div class="text-body2 text-grey q-mb-sm">@{{ currentUser.username }}</div>
+
+          <!-- Stats Row -->
+          <div class="row q-gutter-md justify-center q-mb-sm">
+            <!-- Books -->
+            <div class="text-center">
+              <div class="text-weight-bold">{{ currentUser.books?.length || 0 }}</div>
+              <div class="text-caption text-grey">{{ $t('books', { count: currentUser.books?.length || 0 }) }}</div>
+            </div>
+            <!-- Followers -->
+            <div class="text-center">
+              <div class="text-weight-bold">{{ currentUser.followers_count }}</div>
+              <div class="text-caption text-grey">{{ $t('follower', { count: currentUser.followers_count }) }}</div>
+            </div>
+            <!-- Following -->
+            <div class="text-center">
+              <div class="text-weight-bold">{{ currentUser.following_count }}</div>
+              <div class="text-caption text-grey">{{ $t('following') }}</div>
+            </div>
+          </div>
+
+          <!-- Follow Button -->
+          <q-btn
+            v-if="isAbleToFollow"
+            class="full-width q-mb-sm"
+            :color="isFollowingPerson ? 'grey' : 'primary'"
+            :icon="isFollowingPerson ? 'person_remove' : 'person_add'"
+            :label="isFollowingPerson ? $t('unfollow') : $t('follow')"
+            no-caps
+            @click="followOrUnfollow"
+          />
+        </div>
       </q-card-section>
       <q-card-section>
         <q-input
@@ -24,7 +53,7 @@
           dense
           :model-value="modelValue"
           outlined
-          :placeholder="$t('book.search')"
+          :placeholder="$t('search')"
           @update:model-value="$emit('update:model-value', $event)"
         >
           <template v-slot:append>
@@ -33,7 +62,7 @@
         </q-input>
       </q-card-section>
       <q-card-section>
-        {{ $t('book.sort') }}:
+        {{ $t('sort') }}:
         <q-list bordered class="non-selectable">
           <q-item v-for="(label, value) in bookLabels" :key="label" clickable @click="$emit('sort', value)">
             <q-item-section>{{ label }}</q-item-section>
@@ -48,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore, usePeopleStore, useUserStore } from '@/stores'
+import { useAuthStore, useFollowStore, usePeopleStore } from '@/stores'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -61,20 +90,26 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
+
 const authStore = useAuthStore()
+const followStore = useFollowStore()
 const peopleStore = usePeopleStore()
-const userStore = useUserStore()
 
 const bookLabels = {
-  authors: t('book.order-by-author'),
-  addedIn: t('book.order-by-date'),
-  readIn: t('book.order-by-read'),
-  title: t('book.order-by-title')
+  authors: t('order-by-author'),
+  addedIn: t('order-by-date'),
+  readIn: t('order-by-read'),
+  title: t('order-by-title')
 }
-const followersCount = ref(0)
-const followingCount = ref(0)
-const router = useRouter()
 const shelfMenu = ref(false)
+
+const currentUser = computed(() => {
+  if (router.currentRoute.value.path !== '/' && peopleStore.person?.id) {
+    return peopleStore.person
+  }
+  return authStore.user
+})
 
 const sortKeyComputed = computed(() => props.sortKey)
 const ascDescComputed = computed(() => props.ascDesc)
@@ -83,20 +118,31 @@ const isAbleToFollow = computed(() => {
 })
 const isFollowingPerson = computed(() => {
   if (!peopleStore.person?.id) return false
-  // return userStore.isFollowing(peopleStore.person.id)
+  return followStore.isFollowing(peopleStore.person.id)
 })
 
-onMounted(() => {
-  const user = router.currentRoute.value.path === '/' ? authStore.user : peopleStore.person
-  followersCount.value = user.followers?.length || 0
-  followingCount.value = user.following?.length || 0
-})
-
-function followOrUnfollow() {
-  if (isFollowingPerson.value) {
-    peopleStore.unfollow()
-  } else {
-    peopleStore.follow()
+onMounted(async () => {
+  // Se estivermos na própria estante, atualiza os dados do usuário
+  if (router.currentRoute.value.path === '/') {
+    await authStore.refreshUser()
   }
+
+  // Se estivermos vendo o perfil de outra pessoa, carrega o status de follow
+  if (peopleStore.person?.id && peopleStore.person.id !== authStore.user.id) {
+    await followStore.getFollowStatus(peopleStore.person.id)
+  }
+})
+
+async function followOrUnfollow() {
+  if (!peopleStore.person?.id) return
+
+  if (isFollowingPerson.value) {
+    await peopleStore.unfollow(peopleStore.person.id)
+  } else {
+    await peopleStore.follow(peopleStore.person.id)
+  }
+
+  // Atualiza os dados do usuário para refletir as novas contagens
+  await authStore.refreshUser()
 }
 </script>

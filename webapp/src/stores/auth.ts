@@ -1,3 +1,4 @@
+import { i18n } from '@/locales'
 import type { AuthResponse, User } from '@/models'
 import router from '@/router'
 import api from '@/utils/axios'
@@ -27,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
         return await work()
       } catch (error: any) {
         if (notifyOnError) {
-          Notify.create({ message: error.response?.data?.message || error.message, color: 'negative' })
+          Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
         }
         throw error
       } finally {
@@ -41,13 +42,19 @@ export const useAuthStore = defineStore('auth', {
 
     async getAuthMe() {
       return this._withLoading(async () => {
-        const response = await api.get('/auth/me')
-        this.$patch({ _user: response.data })
+        try {
+          const response = await api.get('/auth/me')
+          this.$patch({ _user: response.data })
 
-        if (this.isAuthenticated) {
-          router.push('/')
+          if (this.isAuthenticated) {
+            router.push('/')
+          }
+          return response.data
+        } catch (error) {
+          // Clear user data if auth fails
+          this.$patch({ _user: {} })
+          throw error
         }
-        return response.data
       })
     },
 
@@ -82,9 +89,21 @@ export const useAuthStore = defineStore('auth', {
     async postAuthLogout() {
       return this._withLoading(
         async () => {
-          await api.post('/auth/logout')
+          try {
+            await api.post('/auth/logout')
+          } catch (error) {
+            // Continue with logout even if API call fails
+            console.error('Logout API error:', error)
+          }
+
+          // Clear all auth data
           this.$reset()
+          localStorage.removeItem('auth_token')
           LocalStorage.clear()
+
+          // Clear persisted store data
+          localStorage.removeItem('auth')
+
           router.push('/login')
         },
         '_isLoading',
@@ -112,8 +131,10 @@ export const useAuthStore = defineStore('auth', {
 
     async postResetPassword(data: { token: string; email: string; password: string; password_confirmation: string }) {
       return this._withLoading(async () => {
-        const response = await api.post('/auth/reset-password', data)
-        return response.data
+        await api.post('/auth/reset-password', data).then((response) => {
+          Notify.create({ message: i18n.global.t('password-reset-success') })
+          return response.data
+        })
       })
     },
 
@@ -146,6 +167,19 @@ export const useAuthStore = defineStore('auth', {
       }
 
       return false
+    },
+
+    async refreshUser() {
+      return this._withLoading(
+        async () => {
+          const response = await api.get('/auth/me')
+          this.$patch({ _user: response.data })
+          LocalStorage.set('user', response.data)
+          return response.data
+        },
+        '_isLoading',
+        false
+      )
     }
   }
 })
