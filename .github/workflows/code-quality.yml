@@ -1,4 +1,4 @@
-name: Code Quality (Non-Blocking)
+name: Code Quality
 
 on:
   push:
@@ -8,16 +8,14 @@ on:
   workflow_call:
 
 jobs:
-  # Code style and formatting (non-blocking)
   code-style:
     runs-on: ubuntu-latest
-    continue-on-error: true  # Non-blocking
+    continue-on-error: true
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Backend code style
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -48,7 +46,7 @@ jobs:
         working-directory: ./api
         run: composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
-      - name: Laravel Pint check (non-blocking)
+      - name: Laravel Pint check
         working-directory: ./api
         continue-on-error: true
         run: |
@@ -56,11 +54,10 @@ jobs:
           if ./vendor/bin/pint --test; then
             echo "✅ PHP code style is perfect"
           else
-            echo "⚠️  PHP code style issues found (non-blocking)"
+            echo "⚠️  PHP code style issues found"
             echo "::warning::Run 'composer lint' to fix PHP code style issues"
           fi
 
-      # Frontend code style  
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -72,7 +69,7 @@ jobs:
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
 
-      - name: ESLint check (non-blocking)
+      - name: ESLint check
         working-directory: ./webapp
         continue-on-error: true
         run: |
@@ -80,11 +77,11 @@ jobs:
           if yarn lint:eslint; then
             echo "✅ JavaScript code style is perfect"
           else
-            echo "⚠️  JavaScript code style issues found (non-blocking)"
+            echo "⚠️  JavaScript code style issues found"
             echo "::warning::Run 'yarn lint' to fix JavaScript code style issues"
           fi
 
-      - name: Prettier check (non-blocking)
+      - name: Prettier check
         working-directory: ./webapp
         continue-on-error: true
         run: |
@@ -92,11 +89,10 @@ jobs:
           if yarn format-check; then
             echo "✅ Code formatting is perfect"
           else
-            echo "⚠️  Code formatting issues found (non-blocking)"
+            echo "⚠️  Code formatting issues found"
             echo "::warning::Run 'yarn format' to fix formatting issues"
           fi
 
-  # Documentation checks (non-blocking)
   documentation:
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -124,7 +120,7 @@ jobs:
         working-directory: ./api
         run: composer install --prefer-dist --no-interaction --ignore-platform-reqs
 
-      - name: Generate API documentation (non-blocking)
+      - name: Generate API documentation
         working-directory: ./api
         continue-on-error: true
         run: |
@@ -135,11 +131,10 @@ jobs:
           if php artisan l5-swagger:generate; then
             echo "✅ API documentation generated successfully"
           else
-            echo "⚠️  API documentation generation failed (non-blocking)"
+            echo "⚠️  API documentation generation failed"
             echo "::warning::API documentation could not be generated"
           fi
 
-  # Additional quality metrics (non-blocking)
   quality-metrics:
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -159,7 +154,7 @@ jobs:
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
 
-      - name: Bundle size analysis (non-blocking)
+      - name: Bundle size analysis
         working-directory: ./webapp
         continue-on-error: true
         run: |
@@ -177,7 +172,7 @@ jobs:
             echo "✅ Bundle size is reasonable (${BUNDLE_SIZE_MB}MB)"
           fi
 
-      - name: Dependency analysis (non-blocking)
+      - name: Dependency analysis
         continue-on-error: true
         run: |
           echo "📦 Analyzing dependencies..."
@@ -193,7 +188,6 @@ jobs:
             echo "::warning::High number of frontend dependencies ($FRONTEND_DEPS)"
           fi
 
-  # Summary (always runs)
   quality-summary:
     runs-on: ubuntu-latest
     needs: [code-style, documentation, quality-metrics]
@@ -202,11 +196,10 @@ jobs:
     steps:
       - name: Quality summary
         run: |
-          echo "🎨 Code Quality Report (Non-Blocking)"
+          echo "🎨 Code Quality Report"
           echo ""
           echo "Code Style: ${{ needs.code-style.result }}"
           echo "Documentation: ${{ needs.documentation.result }}"  
           echo "Quality Metrics: ${{ needs.quality-metrics.result }}"
           echo ""
-          echo "ℹ️  These checks are informational only and do not block deployment."
-          echo "Check the warnings above for suggestions to improve code quality."
+          echo "ℹ️  These checks are informational and do not block deployment."

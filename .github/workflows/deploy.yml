@@ -21,11 +21,9 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # CRITICAL: Run required checks first
   required-checks:
     uses: ./.github/workflows/required-checks.yml
 
-  # Pre-build job to determine what needs to be built
   detect-changes:
     needs: required-checks
     runs-on: ubuntu-latest
@@ -61,7 +59,6 @@ jobs:
             echo "environment=development" >> $GITHUB_OUTPUT
           fi
 
-  # Build jobs run in parallel only if needed
   build-api:
     runs-on: ubuntu-latest
     needs: detect-changes
@@ -178,7 +175,6 @@ jobs:
           path: frontend-build.tar.gz
           retention-days: 1
 
-  # Optimized deploy with parallel transfers
   deploy:
     runs-on: ubuntu-latest
     needs: [detect-changes, build-api, build-frontend]
@@ -203,7 +199,6 @@ jobs:
             echo "SHARED_ENV=.env.dev" >> $GITHUB_ENV
           fi
 
-      # Download artifacts only if they exist
       - name: Download API artifact
         if: needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
@@ -216,7 +211,6 @@ jobs:
         with:
           name: frontend-build-${{ github.sha }}
 
-      # Create release directory
       - name: Prepare release directory
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -233,7 +227,6 @@ jobs:
               sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}
             fi
 
-      # Parallel file transfers
       - name: Deploy API (if changed)
         if: needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@v0.1.7
@@ -254,7 +247,6 @@ jobs:
           source: 'frontend-build.tar.gz'
           target: '/tmp/'
 
-      # Extract and setup application
       - name: Setup application
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -300,7 +292,6 @@ jobs:
 
             echo "✅ Application setup completed"
 
-      # Database migrations with rollback capability
       - name: Run migrations (Production only)
         if: env.ENVIRONMENT == 'production' && (needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch')
         uses: appleboy/ssh-action@v1.0.0
@@ -321,7 +312,6 @@ jobs:
 
             echo "✅ Migrations completed successfully"
 
-      # Atomic switch
       - name: Switch to new release
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -355,7 +345,6 @@ jobs:
 
             echo "🚀 Deployment switched successfully!"
 
-      # Fast health checks
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -385,7 +374,6 @@ jobs:
 
             echo "🎉 Deployment completed!"
 
-  # Rollback job (manual trigger or automatic on failure)
   rollback:
     runs-on: ubuntu-latest
     if: failure() && github.event_name != 'workflow_dispatch'

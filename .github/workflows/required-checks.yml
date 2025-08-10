@@ -1,4 +1,4 @@
-name: Required Checks (Deploy Blockers)
+name: Required Checks
 
 on:
   push:
@@ -12,7 +12,6 @@ on:
   workflow_call:
 
 jobs:
-  # Critical checks that MUST pass before deploy
   security-critical:
     runs-on: ubuntu-latest
     
@@ -34,7 +33,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webapp/yarn.lock
 
-      # Backend security checks (CRITICAL)
+      # Backend security checks
       - name: Prepare Laravel directories
         working-directory: ./api
         run: |
@@ -53,11 +52,11 @@ jobs:
         run: |
           echo "🔍 Running security audit..."
           
-          # Check for vulnerabilities - but don't fail build for now
+          # Check for vulnerabilities
           composer audit --format=table || echo "::warning::Security vulnerabilities found in backend dependencies"
           echo "✅ Security audit completed (warnings only)"
 
-      # Frontend security checks (CRITICAL)
+      # Frontend security checks
       - name: Install frontend dependencies
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
@@ -68,16 +67,16 @@ jobs:
         run: |
           echo "🔍 Running frontend security audit..."
           
-          # Run yarn audit - but don't fail build for now
+          # Run yarn audit
           yarn audit || echo "::warning::Security vulnerabilities found in frontend dependencies"
           echo "✅ Security audit completed (warnings only)"
 
-      # Check for exposed secrets (CRITICAL)
+      # Check for exposed secrets
       - name: Scan for exposed secrets
         run: |
           echo "🔍 Scanning for exposed secrets..."
           
-          # Check for real secrets (not placeholders)
+          # Check for real secrets
           EXPOSED_SECRETS=$(grep -r --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git \
             -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{20,}" . || echo "")
           
@@ -88,7 +87,6 @@ jobs:
           fi
           echo "✅ No exposed secrets detected"
 
-  # Essential tests that must pass
   essential-tests:
     runs-on: ubuntu-latest
 
@@ -145,11 +143,10 @@ jobs:
       - name: Run essential tests (fast)
         working-directory: ./api
         run: |
-          # Run essential tests only (no coverage for speed)
+          # Run essential tests
           php artisan test --stop-on-failure
           echo "✅ Essential tests passed"
 
-  # TypeScript validation (CRITICAL for frontend)
   typescript-check:
     runs-on: ubuntu-latest
     
@@ -168,14 +165,14 @@ jobs:
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
 
-      - name: TypeScript check (CRITICAL)
+      - name: TypeScript check
         working-directory: ./webapp
         run: |
           echo "🔍 Running TypeScript validation..."
           yarn type-check
           echo "✅ TypeScript validation passed"
 
-      - name: Build test (CRITICAL)
+      - name: Build test
         working-directory: ./webapp
         run: |
           echo "🔍 Testing production build..."
@@ -192,18 +189,18 @@ jobs:
       - name: Check all required checks passed
         run: |
           if [[ "${{ needs.security-critical.result }}" != "success" ]]; then
-            echo "❌ Security checks failed - DEPLOYMENT BLOCKED"
+            echo "❌ Security checks failed"
             exit 1
           fi
           
           if [[ "${{ needs.essential-tests.result }}" != "success" ]]; then
-            echo "❌ Essential tests failed - DEPLOYMENT BLOCKED"
+            echo "❌ Essential tests failed"
             exit 1
           fi
           
           if [[ "${{ needs.typescript-check.result }}" != "success" ]]; then
-            echo "❌ TypeScript/Build checks failed - DEPLOYMENT BLOCKED"
+            echo "❌ TypeScript/Build checks failed"
             exit 1
           fi
           
-          echo "✅ ALL REQUIRED CHECKS PASSED - DEPLOYMENT ALLOWED"
+          echo "✅ All required checks passed"
