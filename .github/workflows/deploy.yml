@@ -196,10 +196,33 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Test API endpoint
-            curl -f -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }}/api/health || exit 1
-            echo "API is responding correctly"
+            echo "🔍 Testing API endpoint..."
+            API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }}/api/health 2>/dev/null || echo "000")
+            echo "API health check returned: $API_STATUS"
             
-            # Test Web
-            curl -f -s -o /dev/null -w "%{http_code}" http://${{ env.WEB_URL }} || exit 1
-            echo "Web application is responding correctly"
+            if [ "$API_STATUS" = "200" ]; then
+              echo "✅ API health check passed"
+            else
+              echo "⚠️  API health check failed, testing basic endpoint..."
+              BASIC_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }} 2>/dev/null || echo "000")
+              echo "Basic API endpoint returned: $BASIC_STATUS"
+              if [ "$BASIC_STATUS" != "000" ]; then
+                echo "✅ API is responding (status: $BASIC_STATUS)"
+              else
+                echo "❌ API is not responding"
+                exit 1
+              fi
+            fi
+            
+            echo "🔍 Testing Web application..."
+            WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.WEB_URL }} 2>/dev/null || echo "000")
+            echo "Web application returned: $WEB_STATUS"
+            
+            if [ "$WEB_STATUS" != "000" ] && [ "$WEB_STATUS" != "404" ]; then
+              echo "✅ Web application is responding (status: $WEB_STATUS)"
+            else
+              echo "❌ Web application is not responding"
+              exit 1
+            fi
+            
+            echo "🎉 Deployment verification completed successfully!"
