@@ -5,6 +5,16 @@ on:
     branches:
       - main
       - dev
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - production
 
 jobs:
   deploy:
@@ -16,7 +26,21 @@ jobs:
 
       - name: Set environment variables
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          # Check if triggered manually
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+              echo "DEPLOY_ENV=production" >> $GITHUB_ENV
+              echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
+              echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
+              echo "DEPLOY_PATH=/var/www/livrolog/releases" >> $GITHUB_ENV
+            else
+              echo "DEPLOY_ENV=development" >> $GITHUB_ENV
+              echo "API_URL=api.dev.livrolog.com" >> $GITHUB_ENV
+              echo "WEB_URL=dev.livrolog.com" >> $GITHUB_ENV
+              echo "DEPLOY_PATH=/var/www/livrolog-dev/releases" >> $GITHUB_ENV
+            fi
+          # Check branch for automatic deployment
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "DEPLOY_ENV=production" >> $GITHUB_ENV
             echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
             echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
