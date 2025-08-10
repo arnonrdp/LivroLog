@@ -1,61 +1,445 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# LivroLog Backend 🚀
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 REST API backend for the LivroLog personal library management system.
 
-## About Laravel
+## 🏗️ Technology Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+-   **Laravel 12** with PHP 8.4
+-   **MySQL 8.0** for primary database
+-   **Redis 7.0** for caching and sessions
+-   **Laravel Sanctum** for API authentication
+-   **Google Books API** for book enrichment
+-   **Swagger/OpenAPI** for API documentation
+-   **Docker** for containerization
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📋 Prerequisites
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-   Docker & Docker Compose
+-   Composer (for local development)
+-   PHP 8.4+ (for local development)
 
-## Learning Laravel
+## ⚡ Quick Start
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Using Docker (Recommended)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+# Start API service
+docker-compose up -d livrolog-api
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Install dependencies
+docker exec livrolog-api composer install
 
-## Laravel Sponsors
+# Setup application
+docker exec livrolog-api php artisan key:generate
+docker exec livrolog-api php artisan migrate
+docker exec livrolog-api php artisan db:seed
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The API will be available at: http://localhost:8000
 
-### Premium Partners
+### Local Development
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+cd api/
 
-## Contributing
+# Install dependencies
+composer install
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Setup environment
+cp .env.example .env
+php artisan key:generate
 
-## Code of Conduct
+# Run migrations
+php artisan migrate
+php artisan db:seed
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Start development server
+php artisan serve
+```
 
-## Security Vulnerabilities
+## 🔧 Development Commands
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Code Quality
 
-## License
+```bash
+# Format code with Laravel Pint
+docker exec livrolog-api ./vendor/bin/pint
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Run tests
+docker exec livrolog-api php artisan test
+
+# Run specific test
+docker exec livrolog-api php artisan test --filter=AuthTest
+```
+
+### Database Management
+
+```bash
+# Run migrations
+docker exec livrolog-api php artisan migrate
+
+# Fresh migration with seeding
+docker exec livrolog-api php artisan migrate:fresh --seed
+
+# Run seeders only
+docker exec livrolog-api php artisan db:seed
+
+# Create migration
+docker exec livrolog-api php artisan make:migration create_example_table
+```
+
+### Queue Processing
+
+```bash
+# Process queued jobs
+docker exec livrolog-api php artisan queue:work
+
+# Clear failed jobs
+docker exec livrolog-api php artisan queue:flush
+```
+
+### Book Enrichment
+
+```bash
+# Enrich all books with Google Books data
+docker exec livrolog-api php artisan books:enrich
+
+# Enrich specific book
+docker exec livrolog-api php artisan books:enrich --book-id=B-3D6Y-9IO8
+
+# Preview enrichment (dry run)
+docker exec livrolog-api php artisan books:enrich --dry-run
+
+# Force re-enrichment
+docker exec livrolog-api php artisan books:enrich --force
+```
+
+## 🏗️ Project Structure
+
+```
+api/
+├── app/
+│   ├── Console/Commands/        # Artisan commands
+│   ├── Http/
+│   │   ├── Controllers/Api/     # API controllers
+│   │   ├── Middleware/          # HTTP middleware
+│   │   └── Requests/            # Form requests
+│   ├── Models/                  # Eloquent models
+│   ├── Services/                # Business logic services
+│   └── Jobs/                    # Queued jobs
+├── database/
+│   ├── migrations/              # Database migrations
+│   ├── seeders/                 # Database seeders
+│   └── factories/               # Model factories
+├── routes/
+│   ├── api.php                  # API routes
+│   └── web.php                  # Web routes
+├── storage/
+│   └── logs/                    # Application logs
+└── tests/
+    ├── Feature/                 # Feature tests
+    └── Unit/                    # Unit tests
+```
+
+## 🔌 API Endpoints
+
+### Authentication
+
+-   `POST /api/auth/register` - Register new user
+-   `POST /api/auth/login` - Login with credentials
+-   `POST /api/auth/google` - Google OAuth sign-in
+-   `POST /api/auth/logout` - Logout current user
+-   `GET /api/auth/me` - Get authenticated user profile
+
+### Books Management
+
+-   `GET /api/books` - List all books with pagination
+-   `POST /api/books` - Create new book
+-   `GET /api/books/{id}` - Get book details
+-   `PUT /api/books/{id}` - Update book information
+-   `DELETE /api/books/{id}` - Delete book
+-   `GET /api/books/search?q={query}` - Search Google Books API
+-   `POST /api/books/create-enriched` - Create book with enriched data
+-   `POST /api/books/{id}/enrich` - Enrich existing book data
+-   `POST /api/books/enrich-batch` - Batch enrich multiple books
+
+### User Library
+
+-   `GET /api/user/books` - Get authenticated user's library
+-   `POST /api/user/books` - Add book to user's library
+-   `DELETE /api/user/books/{book_id}` - Remove book from library
+-   `PATCH /api/user/books/{book_id}/read-date` - Update reading date
+
+### Social Features
+
+-   `POST /api/users/{id}/follow` - Follow another user
+-   `DELETE /api/users/{id}/unfollow` - Unfollow user
+-   `GET /api/users/{id}/followers` - Get user's followers
+-   `GET /api/users/{id}/following` - Get users being followed
+-   `GET /api/users/{id}/follow-status` - Check follow relationship status
+
+### Reviews & Ratings
+
+-   `GET /api/reviews` - List book reviews
+-   `POST /api/reviews` - Create book review
+-   `PUT /api/reviews/{id}` - Update review
+-   `DELETE /api/reviews/{id}` - Delete review
+-   `POST /api/reviews/{id}/helpful` - Mark review as helpful
+
+### Showcase
+
+-   `GET /api/showcase` - Get featured books showcase
+-   `POST /api/showcase` - Add book to showcase
+-   `DELETE /api/showcase/{id}` - Remove from showcase
+
+## 🗄️ Database Schema
+
+### Core Models
+
+```sql
+-- Users and Authentication
+users (id, name, email, google_id, avatar, created_at, updated_at)
+
+-- Book Catalog
+books (id, google_books_id, title, authors, isbn, thumbnail, pages, published_date, description, ...)
+authors (id, name, created_at, updated_at)
+
+-- User Library (Many-to-Many)
+user_books (user_id, book_id, read_date, created_at, updated_at)
+
+-- Social Features
+follows (follower_id, following_id, created_at)
+reviews (id, user_id, book_id, rating, review, helpful_count, created_at, updated_at)
+
+-- Content Discovery
+showcase (id, book_id, created_at, updated_at)
+related_books (id, book_id, related_book_id, relationship_type, created_at, updated_at)
+```
+
+### Key Relationships
+
+-   **User ↔ Books**: Many-to-many through `user_books`
+-   **User ↔ Reviews**: One-to-many
+-   **User ↔ Follows**: Many-to-many self-referential
+-   **Books ↔ Authors**: Many-to-many
+-   **Books ↔ Reviews**: One-to-many
+
+## 🔒 Authentication & Security
+
+### Laravel Sanctum
+
+```php
+// API authentication with Bearer tokens
+'guards' => [
+    'api' => [
+        'driver' => 'sanctum',
+        'provider' => 'users',
+    ],
+],
+```
+
+### Google OAuth Integration
+
+```bash
+# Required environment variables
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_BOOKS_API_KEY=your-google-books-api-key
+```
+
+### Security Features
+
+-   CORS configured for frontend domain
+-   Rate limiting on API routes
+-   Request validation and sanitization
+-   Protected routes with Sanctum middleware
+-   SQL injection protection via Eloquent ORM
+
+## 🔄 Firebase Migration
+
+Comprehensive migration tools for importing data from Firebase/Firestore:
+
+### Migration Commands
+
+```bash
+# Discover existing Firebase collections
+docker exec livrolog-api php artisan firebase:discover
+
+# Import all data from Firebase export
+docker exec livrolog-api php artisan firebase:import --file=firebase-export.json
+
+# Dry run to preview import
+docker exec livrolog-api php artisan firebase:import --dry-run --file=firebase-export.json
+
+# Import showcase data only
+docker exec livrolog-api php artisan import:firestore-showcase
+```
+
+### Supported Data Migration
+
+-   ✅ **Users**: Authentication, profiles, and preferences
+-   ✅ **Books**: Complete catalog with metadata
+-   ✅ **User Libraries**: Personal book collections with read dates
+-   ✅ **Showcase**: Featured book displays
+-   ✅ **Relationships**: User follows and social connections
+-   ✅ **Timestamps**: Preserve original creation dates
+
+## 📚 Google Books Integration
+
+### Book Enrichment Service
+
+The system automatically enriches book data using Google Books API:
+
+```php
+// Enrich single book
+$bookService->enrichBook($book);
+
+// Batch enrichment
+$bookService->enrichBooks($books);
+```
+
+### Enriched Data Fields
+
+-   **Basic Info**: Title, authors, ISBN, description
+-   **Publishing**: Publisher, publication date, page count
+-   **Physical**: Dimensions, format (paperback/hardcover)
+-   **Content**: Categories, language, maturity rating
+-   **Media**: High-resolution thumbnails and previews
+
+### API Rate Limiting
+
+-   Respects Google Books API quotas
+-   Implements exponential backoff for rate limits
+-   Queued processing for large batch operations
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+docker exec livrolog-api php artisan test
+
+# Run specific test suite
+docker exec livrolog-api php artisan test tests/Feature/AuthTest.php
+
+# Run with coverage
+docker exec livrolog-api php artisan test --coverage
+```
+
+### Test Structure
+
+-   **Feature Tests**: End-to-end API testing
+-   **Unit Tests**: Individual class and method testing
+-   **Database**: Uses SQLite in-memory for fast test execution
+-   **Factories**: Generate realistic test data
+-   **Seeders**: Consistent test database state
+
+## ⚙️ Environment Configuration
+
+### Required Environment Variables
+
+```env
+# Application
+APP_NAME=LivroLog
+APP_ENV=local
+APP_KEY=base64:generated-key
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Database
+DB_CONNECTION=mysql
+DB_HOST=livrolog-mysql
+DB_PORT=3306
+DB_DATABASE=livrolog
+DB_USERNAME=root
+DB_PASSWORD=password
+
+# Redis
+REDIS_HOST=livrolog-redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+# Google Services
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_BOOKS_API_KEY=your-google-books-api-key
+
+# Queue
+QUEUE_CONNECTION=redis
+
+# Mail (optional)
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+```
+
+## 📊 Performance & Monitoring
+
+### Optimization Features
+
+-   **Database Indexing**: Optimized queries with proper indexes
+-   **Eager Loading**: Prevent N+1 query problems
+-   **Redis Caching**: API response and query result caching
+-   **Queue Processing**: Async handling of heavy operations
+-   **Response Compression**: Gzip compression for API responses
+
+### Monitoring & Debugging
+
+```bash
+# View application logs
+docker exec livrolog-api tail -f storage/logs/laravel.log
+
+# Monitor queue jobs
+docker exec livrolog-api php artisan queue:monitor
+
+# Database query debugging
+docker exec livrolog-api php artisan telescope:install  # Optional
+```
+
+## 📖 API Documentation
+
+### Swagger/OpenAPI
+
+-   **Interactive Docs**: http://localhost:8000/documentation
+-   **JSON Spec**: http://localhost:8000/docs/api.json
+-   **Auto-generated**: From controller docblocks and request validation
+
+### Postman Collection
+
+API endpoints can be imported into Postman using the OpenAPI specification URL.
+
+## 🚀 Deployment
+
+### Production Checklist
+
+-   [ ] Set `APP_ENV=production`
+-   [ ] Set `APP_DEBUG=false`
+-   [ ] Configure production database
+-   [ ] Set up Redis for caching
+-   [ ] Configure queue workers
+-   [ ] Set up SSL certificates
+-   [ ] Configure CORS for production frontend domain
+-   [ ] Set up monitoring and logging
+-   [ ] Configure backup strategy
+
+### Artisan Commands
+
+```bash
+# Production optimizations
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+
+# Database migration
+php artisan migrate --force
+```
+
+## 🔗 Related Documentation
+
+-   [Frontend Documentation](../webapp/README.md)
+-   [Project Overview](../README.md)
+-   [CLAUDE.md](../CLAUDE.md) - Development guidelines
