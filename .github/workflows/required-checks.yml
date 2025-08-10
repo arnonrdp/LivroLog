@@ -35,6 +35,14 @@ jobs:
           cache-dependency-path: webapp/yarn.lock
 
       # Backend security checks (CRITICAL)
+      - name: Prepare Laravel directories
+        working-directory: ./api
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 755 bootstrap/cache
+          mkdir -p storage/logs
+          chmod -R 755 storage
+
       - name: Install backend dependencies
         working-directory: ./api
         run: composer install --prefer-dist --no-interaction --ignore-platform-reqs
@@ -105,6 +113,14 @@ jobs:
           restore-keys: |
             composer-tests-${{ runner.os }}-
             composer-${{ runner.os }}-
+
+      - name: Prepare Laravel directories
+        working-directory: ./api
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 755 bootstrap/cache
+          mkdir -p storage/logs
+          chmod -R 755 storage
 
       - name: Install dependencies
         working-directory: ./api

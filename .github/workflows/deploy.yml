@@ -148,7 +148,7 @@ jobs:
             echo "VITE_API_URL=https://api.livrolog.com" > .env.production
             yarn build --mode production
           else
-            echo "VITE_API_URL=http://api.dev.livrolog.com" > .env.development
+            echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
             yarn build --mode development
           fi
 

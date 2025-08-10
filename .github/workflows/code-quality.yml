@@ -36,6 +36,14 @@ jobs:
             composer-style-${{ runner.os }}-
             composer-${{ runner.os }}-
 
+      - name: Prepare Laravel directories
+        working-directory: ./api
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 755 bootstrap/cache
+          mkdir -p storage/logs
+          chmod -R 755 storage
+
       - name: Install backend dependencies
         working-directory: ./api
         run: composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
@@ -103,6 +111,14 @@ jobs:
           php-version: 8.3
           extensions: mbstring, xml, ctype, iconv, intl, pdo, zip
           tools: composer:v2
+
+      - name: Prepare Laravel directories
+        working-directory: ./api
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R 755 bootstrap/cache
+          mkdir -p storage/logs
+          chmod -R 755 storage
 
       - name: Install dependencies
         working-directory: ./api
