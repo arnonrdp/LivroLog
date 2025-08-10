@@ -19,7 +19,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, hash, json, pcre, regex, session, zlib
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, hash, json, pcre, session, zlib
           tools: composer:v2
       
       - name: Setup Node.js
@@ -101,8 +101,14 @@ jobs:
             mkdir -p ${RELEASE_PATH}
             tar -xzf ${DEPLOYMENT_FILE} -C ${RELEASE_PATH} --strip-components=1
             
+            # Create storage directories
+            mkdir -p ${SHARED_PATH}/storage/{app,framework,logs}
+            mkdir -p ${SHARED_PATH}/storage/framework/{cache,sessions,views}
+            mkdir -p ${SHARED_PATH}/storage/app/public
+            
             # Link shared files
             ln -nfs ${SHARED_PATH}/.env ${RELEASE_PATH}/api/.env
+            rm -rf ${RELEASE_PATH}/api/storage
             ln -nfs ${SHARED_PATH}/storage ${RELEASE_PATH}/api/storage
             
             # Set permissions
