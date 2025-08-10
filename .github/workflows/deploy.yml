@@ -389,7 +389,7 @@ jobs:
   rollback:
     runs-on: ubuntu-latest
     if: failure() && github.event_name != 'workflow_dispatch'
-    needs: [deploy]
+    needs: [detect-changes, deploy]
 
     steps:
       - name: Automatic rollback
@@ -401,11 +401,24 @@ jobs:
           script: |
             echo "🔄 Performing automatic rollback..."
 
-            if [[ "${{ needs.detect-changes.outputs.environment }}" == "production" ]]; then
+            # Determine environment from branch or output
+            ENVIRONMENT="${{ needs.detect-changes.outputs.environment }}"
+            if [[ -z "$ENVIRONMENT" ]]; then
+              # Fallback: detect from branch
+              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                ENVIRONMENT="production"
+              else
+                ENVIRONMENT="development"
+              fi
+            fi
+
+            if [[ "$ENVIRONMENT" == "production" ]]; then
               DEPLOY_PATH="/var/www/livrolog"
             else
               DEPLOY_PATH="/var/www/livrolog-dev"
             fi
+            
+            echo "Rollback environment: $ENVIRONMENT"
 
             # Get previous release
             PREVIOUS=$(ls -t $DEPLOY_PATH/releases | sed -n '2p')
