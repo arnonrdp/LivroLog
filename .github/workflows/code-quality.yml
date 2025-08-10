@@ -42,7 +42,7 @@ jobs:
           mkdir -p storage/logs
           chmod -R 755 storage
 
-      - name: Install backend dependencies
+      - name: Install API dependencies
         working-directory: ./api
         run: composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
@@ -65,7 +65,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webapp/yarn.lock
 
-      - name: Install frontend dependencies
+      - name: Install webapp dependencies
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
 
@@ -150,7 +150,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webapp/yarn.lock
 
-      - name: Install frontend dependencies
+      - name: Install webapp dependencies
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
 
@@ -185,7 +185,7 @@ jobs:
           echo "Frontend dependencies: $FRONTEND_DEPS"
           
           if [ $FRONTEND_DEPS -gt 50 ]; then
-            echo "::warning::High number of frontend dependencies ($FRONTEND_DEPS)"
+            echo "::warning::High number of webapp dependencies ($FRONTEND_DEPS)"
           fi
 
   quality-summary:

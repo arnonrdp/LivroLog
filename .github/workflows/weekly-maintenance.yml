@@ -39,11 +39,11 @@ jobs:
           
           # Backend audit
           cd api
-          composer audit --format=json > ../backend-audit.json || true
+          composer audit --format=json > ../api-audit.json || true
           
           # Frontend audit  
           cd ../webapp
-          yarn audit --json > ../frontend-audit.json || true
+          yarn audit --json > ../webapp-audit.json || true
           
           echo "📊 Security audit completed"
 

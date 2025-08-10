@@ -42,7 +42,7 @@ jobs:
           mkdir -p storage/logs
           chmod -R 755 storage
 
-      - name: Install backend dependencies
+      - name: Install API dependencies
         working-directory: ./api
         run: composer install --prefer-dist --no-interaction --ignore-platform-reqs
 
@@ -53,11 +53,11 @@ jobs:
           echo "🔍 Running security audit..."
           
           # Check for vulnerabilities
-          composer audit --format=table || echo "::warning::Security vulnerabilities found in backend dependencies"
+          composer audit --format=table || echo "::warning::Security vulnerabilities found in API dependencies"
           echo "✅ Security audit completed (warnings only)"
 
       # Frontend security checks
-      - name: Install frontend dependencies
+      - name: Install webapp dependencies
         working-directory: ./webapp
         run: yarn install --frozen-lockfile --prefer-offline
 
@@ -65,10 +65,10 @@ jobs:
         working-directory: ./webapp
         continue-on-error: true
         run: |
-          echo "🔍 Running frontend security audit..."
+          echo "🔍 Running webapp security audit..."
           
           # Run yarn audit
-          yarn audit || echo "::warning::Security vulnerabilities found in frontend dependencies"
+          yarn audit || echo "::warning::Security vulnerabilities found in webapp dependencies"
           echo "✅ Security audit completed (warnings only)"
 
       # Check for exposed secrets

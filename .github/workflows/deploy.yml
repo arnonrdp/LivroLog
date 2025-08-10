@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       api-changed: ${{ steps.changes.outputs.api }}
-      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      webapp-changed: ${{ steps.changes.outputs.webapp }}
       environment: ${{ steps.env.outputs.environment }}
 
     steps:
@@ -45,7 +45,7 @@ jobs:
           filters: |
             api:
               - 'api/**'
-            frontend:
+            webapp:
               - 'webapp/**'
 
       - name: Set environment
@@ -119,10 +119,10 @@ jobs:
           path: api-build.tar.gz
           retention-days: 1
 
-  build-frontend:
+  build-webapp:
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend-changed == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.detect-changes.outputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
@@ -135,7 +135,7 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webapp/yarn.lock
 
-      - name: Build Frontend (optimized)
+      - name: Build webapp (optimized)
         working-directory: ./webapp
         run: |
           yarn install --frozen-lockfile --prefer-offline
@@ -164,21 +164,21 @@ jobs:
           </filesMatch>
           EOF
 
-      - name: Create Frontend artifact
+      - name: Create webapp artifact
         working-directory: ./webapp
-        run: tar -czf ../frontend-build.tar.gz dist/
+        run: tar -czf ../webapp-build.tar.gz dist/
 
-      - name: Upload Frontend artifact
+      - name: Upload webapp artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build-${{ github.sha }}
-          path: frontend-build.tar.gz
+          name: webapp-build-${{ github.sha }}
+          path: webapp-build.tar.gz
           retention-days: 1
 
   deploy:
     runs-on: ubuntu-latest
-    needs: [detect-changes, build-api, build-frontend]
-    if: always() && (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped')
+    needs: [detect-changes, build-api, build-webapp]
+    if: always() && (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') && (needs.build-webapp.result == 'success' || needs.build-webapp.result == 'skipped')
 
     env:
       TIMESTAMP: ${{ github.run_number }}-${{ github.sha }}
@@ -205,11 +205,11 @@ jobs:
         with:
           name: api-build-${{ github.sha }}
 
-      - name: Download Frontend artifact
-        if: needs.detect-changes.outputs.frontend-changed == 'true' || github.event_name == 'workflow_dispatch'
+      - name: Download webapp artifact
+        if: needs.detect-changes.outputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build-${{ github.sha }}
+          name: webapp-build-${{ github.sha }}
 
       - name: Prepare release directory
         uses: appleboy/ssh-action@v1.0.0
@@ -237,14 +237,14 @@ jobs:
           source: 'api-build.tar.gz'
           target: '/tmp/'
 
-      - name: Deploy Frontend (if changed)
-        if: needs.detect-changes.outputs.frontend-changed == 'true' || github.event_name == 'workflow_dispatch'
+      - name: Deploy webapp (if changed)
+        if: needs.detect-changes.outputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: 'frontend-build.tar.gz'
+          source: 'webapp-build.tar.gz'
           target: '/tmp/'
 
       - name: Setup application
@@ -274,13 +274,13 @@ jobs:
               fi
             fi
 
-            # Extract Frontend if changed  
-            if [[ "${{ needs.detect-changes.outputs.frontend-changed }}" == "true" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Extract webapp if changed  
+            if [[ "${{ needs.detect-changes.outputs.webapp-changed }}" == "true" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               cd $RELEASE_DIR/webapp
-              tar -xzf /tmp/frontend-build.tar.gz --strip-components=1
-              rm /tmp/frontend-build.tar.gz
+              tar -xzf /tmp/webapp-build.tar.gz --strip-components=1
+              rm /tmp/webapp-build.tar.gz
             else
-              # Copy current frontend if no changes
+              # Copy current webapp if no changes
               if [[ -d "${{ env.DEPLOY_PATH }}/current/webapp" ]]; then
                 cp -r ${{ env.DEPLOY_PATH }}/current/webapp/* $RELEASE_DIR/webapp/
               fi
