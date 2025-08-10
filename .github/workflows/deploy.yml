@@ -107,7 +107,7 @@ jobs:
             
             # Set permissions
             chmod -R 775 ${RELEASE_PATH}
-            chown -R bitnami:daemon ${RELEASE_PATH}
+            sudo chown -R bitnami:daemon ${RELEASE_PATH}
             
             # Run Laravel commands
             cd ${RELEASE_PATH}/api
