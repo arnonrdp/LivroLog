@@ -14,7 +14,7 @@
     },
     "servers": [
         {
-            "url": "{scheme}://{host}/api",
+            "url": "{scheme}://{host}",
             "description": "LivroLog API Server",
             "variables": {
                 "scheme": {
@@ -30,7 +30,7 @@
             }
         },
         {
-            "url": "http://localhost:8000/api",
+            "url": "http://localhost:8000",
             "description": "Local Development Server"
         }
     ],

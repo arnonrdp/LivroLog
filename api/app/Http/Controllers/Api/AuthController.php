@@ -27,7 +27,7 @@ use Laravel\Socialite\Facades\Socialite;
  * )
  *
  * @OA\Server(
- *     url="{scheme}://{host}/api",
+ *     url="{scheme}://{host}",
  *     description="LivroLog API Server",
  *     @OA\ServerVariable(
  *         serverVariable="scheme",
@@ -41,7 +41,7 @@ use Laravel\Socialite\Facades\Socialite;
  * )
  * 
  * @OA\Server(
- *     url="http://localhost:8000/api",
+ *     url="http://localhost:8000",
  *     description="Local Development Server"
  * )
  *
