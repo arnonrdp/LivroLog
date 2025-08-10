@@ -1,11 +1,10 @@
-name: Deploy to Lightsail
+name: Deploy LivroLog
 
 on:
   push:
     branches:
       - main
       - dev
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,139 +13,167 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Set environment variables
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "DEPLOY_ENV=production" >> $GITHUB_ENV
+            echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
+            echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/var/www/livrolog/releases" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "DEPLOY_ENV=development" >> $GITHUB_ENV
+            echo "API_URL=api.dev.livrolog.com" >> $GITHUB_ENV
+            echo "WEB_URL=dev.livrolog.com" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/var/www/livrolog-dev/releases" >> $GITHUB_ENV
+          fi
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, hash, json, pcre, session, zlib
-          tools: composer:v2
-      
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, bcmath
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
-      - name: Install Yarn
-        run: npm install -g yarn
-      
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
       - name: Cache Composer dependencies
         uses: actions/cache@v3
         with:
-          path: api/vendor
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
-      
+
+      - name: Install API dependencies
+        working-directory: ./api
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
       - name: Cache Yarn dependencies
         uses: actions/cache@v3
         with:
-          path: webapp/node_modules
+          path: ~/.cache/yarn
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: ${{ runner.os }}-yarn-
-      
-      - name: Install backend dependencies
-        working-directory: ./api
-        run: |
-          mkdir -p bootstrap/cache
-          chmod -R 775 bootstrap/cache
-          composer install --no-dev --optimize-autoloader --no-interaction
-          php artisan config:clear
-      
-      - name: Install frontend dependencies
-        working-directory: ./webapp
-        run: yarn install --frozen-lockfile
-      
-      - name: Build frontend
+
+      - name: Build Frontend
         working-directory: ./webapp
         run: |
-          echo "VITE_API_URL=https://api.livrolog.com" > .env.production
-          echo "VITE_APP_NAME=LivroLog" >> .env.production
-          yarn build
-      
-      - name: Create deployment package
-        run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          mkdir -p deployment
-          cp -r api deployment/
-          cp -r webapp/dist deployment/webapp
-          echo $TIMESTAMP > deployment/version.txt
-          tar -czf deployment-${TIMESTAMP}.tar.gz deployment/
-          echo "DEPLOYMENT_FILE=deployment-${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
-          echo "RELEASE_VERSION=${TIMESTAMP}" >> $GITHUB_ENV
-      
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.LIGHTSAIL_KEY }}" > ~/.ssh/lightsail_key
-          chmod 600 ~/.ssh/lightsail_key
-          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
-      
-      - name: Deploy to Lightsail
-        run: |
-          # Upload deployment package
-          scp -i ~/.ssh/lightsail_key ${{ env.DEPLOYMENT_FILE }} ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/tmp/
-          
-          # Execute deployment script
-          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
-            set -e
+          yarn install --frozen-lockfile
+          if [[ "${{ env.DEPLOY_ENV }}" == "production" ]]; then
+            echo "VITE_API_URL=https://api.livrolog.com" > .env.production
+            yarn build --mode production
+          else
+            echo "VITE_API_URL=http://api.dev.livrolog.com" > .env.development
+            yarn build --mode development
+          fi
+
+      - name: Create deployment timestamp
+        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Create release directory
+            RELEASE_DIR="${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}"
+            mkdir -p $RELEASE_DIR
             
-            # Variables
-            RELEASE_VERSION="${{ env.RELEASE_VERSION }}"
-            DEPLOYMENT_FILE="/tmp/${{ env.DEPLOYMENT_FILE }}"
-            RELEASE_PATH="/var/www/livrolog/releases/${RELEASE_VERSION}"
-            CURRENT_PATH="/var/www/livrolog/current"
-            SHARED_PATH="/var/www/livrolog/shared"
+            # Create base directory if doesn't exist (for dev environment)
+            if [[ "${{ env.DEPLOY_ENV }}" == "development" ]]; then
+              sudo mkdir -p /var/www/livrolog-dev/{releases,shared}
+              sudo chown -R bitnami:daemon /var/www/livrolog-dev
+            fi
+
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "api/,webapp/dist/"
+          target: "${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}"
+          strip_components: 0
+
+      - name: Setup application on server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            RELEASE_DIR="${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}"
             
-            # Extract deployment
-            mkdir -p ${RELEASE_PATH}
-            tar -xzf ${DEPLOYMENT_FILE} -C ${RELEASE_PATH} --strip-components=1
+            # Set correct base path
+            if [[ "${{ env.DEPLOY_ENV }}" == "production" ]]; then
+              BASE_PATH="/var/www/livrolog"
+              ENV_FILE="$BASE_PATH/shared/.env"
+            else
+              BASE_PATH="/var/www/livrolog-dev"
+              ENV_FILE="$BASE_PATH/shared/.env.dev"
+            fi
             
-            # Create storage directories
-            mkdir -p ${SHARED_PATH}/storage/{app,framework,logs}
-            mkdir -p ${SHARED_PATH}/storage/framework/{cache,sessions,views}
-            mkdir -p ${SHARED_PATH}/storage/app/public
+            # Create symlink for .env file
+            ln -nfs $ENV_FILE $RELEASE_DIR/api/.env
             
-            # Link shared files
-            ln -nfs ${SHARED_PATH}/.env ${RELEASE_PATH}/api/.env
-            rm -rf ${RELEASE_PATH}/api/storage
-            ln -nfs ${SHARED_PATH}/storage ${RELEASE_PATH}/api/storage
+            # Create storage symlinks
+            rm -rf $RELEASE_DIR/api/storage
+            ln -nfs $BASE_PATH/shared/storage $RELEASE_DIR/api/storage
             
             # Set permissions
-            chmod -R 775 ${RELEASE_PATH}
-            sudo chown -R bitnami:daemon ${RELEASE_PATH}
+            sudo chown -R bitnami:daemon $RELEASE_DIR
+            chmod -R 755 $RELEASE_DIR
+            chmod -R 775 $BASE_PATH/shared/storage
             
-            # Run Laravel commands
-            cd ${RELEASE_PATH}/api
-            php artisan key:generate --force
-            php artisan migrate --force
+            # Run migrations (only for production)
+            if [[ "${{ env.DEPLOY_ENV }}" == "production" ]]; then
+              cd $RELEASE_DIR/api
+              php artisan migrate --force
+            fi
+            
+            # Update symlink to new release
+            ln -nfs $RELEASE_DIR $BASE_PATH/current
+            
+            # Keep only last 5 releases
+            cd $BASE_PATH/releases
+            ls -t | tail -n +6 | xargs -r rm -rf
+            
+            # Restart services
+            sudo /opt/bitnami/ctlscript.sh restart apache
+            sudo /opt/bitnami/ctlscript.sh restart php-fpm
+            
+            # Clear Laravel caches
+            cd $BASE_PATH/current/api
+            php artisan config:clear
+            php artisan cache:clear
             php artisan config:cache
             php artisan route:cache
             
-            # Switch to new release
-            ln -nfs ${RELEASE_PATH} ${CURRENT_PATH}
-            
-            # Restart Apache
-            sudo /opt/bitnami/ctlscript.sh restart apache
-            
-            # Clean up old releases (keep last 5)
-            cd /var/www/livrolog/releases
-            ls -t | tail -n +6 | xargs -I {} rm -rf {}
-            
-            # Clean up deployment file
-            rm -f ${DEPLOYMENT_FILE}
-            
             echo "Deployment completed successfully!"
-          ENDSSH
-      
+
       - name: Verify deployment
-        run: |
-          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
-            curl -s -o /dev/null -w "%{http_code}" http://localhost || exit 1
-            echo "Application is responding!"
-          ENDSSH
-      
-      - name: Clean up
-        if: always()
-        run: |
-          rm -f ~/.ssh/lightsail_key
-          rm -f deployment-*.tar.gz
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Test API endpoint
+            curl -f -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }}/api/health || exit 1
+            echo "API is responding correctly"
+            
+            # Test Web
+            curl -f -s -o /dev/null -w "%{http_code}" http://${{ env.WEB_URL }} || exit 1
+            echo "Web application is responding correctly"

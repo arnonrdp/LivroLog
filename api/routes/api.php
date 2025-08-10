@@ -37,6 +37,15 @@ Route::middleware('throttle:10,1')->group(function () {
 // Public showcase route
 Route::get('/showcase', [BookController::class, 'showcase']);
 
+// Health check endpoint
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toIso8601String(),
+        'environment' => config('app.env'),
+    ]);
+});
+
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
     // Admin-only routes
