@@ -2,20 +2,13 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Health check endpoint for CI/CD
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'ok',
-        'timestamp' => now(),
-        'version' => config('app.version', '1.0.0')
-    ]);
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -43,17 +36,9 @@ Route::middleware(['throttle:10,1', 'cors'])->group(function () {
     Route::post('/auth/google', [AuthController::class, 'googleSignIn']);
 });
 
-// Public showcase route
+// Public routes
 Route::get('/showcase', [BookController::class, 'showcase']);
-
-// Health check endpoint
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'healthy',
-        'timestamp' => now()->toIso8601String(),
-        'environment' => config('app.env'),
-    ]);
-});
+Route::get('/health', [HealthController::class, 'index']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {

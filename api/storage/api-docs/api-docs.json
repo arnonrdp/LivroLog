@@ -14,8 +14,24 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8000",
-            "description": "LivroLog API Server"
+            "url": "{scheme}://{host}/api",
+            "description": "LivroLog API Server",
+            "variables": {
+                "scheme": {
+                    "enum": [
+                        "https",
+                        "http"
+                    ],
+                    "default": "https"
+                },
+                "host": {
+                    "default": "api.dev.livrolog.com"
+                }
+            }
+        },
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Local Development Server"
         }
     ],
     "paths": {
@@ -942,7 +958,7 @@
                     "Books"
                 ],
                 "summary": "List featured books for showcase",
-                "description": "Returns list of featured books for public display",
+                "description": "Returns 20 random books for public display",
                 "operationId": "getShowcase",
                 "responses": {
                     "200": {
@@ -952,7 +968,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/Showcase"
+                                        "$ref": "#/components/schemas/Book"
                                     }
                                 }
                             }
@@ -1008,18 +1024,31 @@
                 "tags": [
                     "Books"
                 ],
-                "summary": "Search books in Google Books API",
-                "description": "Searches books in Google Books API using search terms",
+                "summary": "Search books using multiple sources",
+                "description": "Searches books using multiple APIs (Google Books, Open Library) with intelligent fallback",
                 "operationId": "searchBooks",
                 "parameters": [
                     {
                         "name": "q",
                         "in": "query",
-                        "description": "Search term (minimum 3 characters)",
+                        "description": "Search term (minimum 3 characters) - can be ISBN, title, or author",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "tolkien"
+                            "example": "9786584956261"
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Force specific provider (optional) - for debugging",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "Google Books",
+                                "Open Library"
+                            ]
                         }
                     }
                 ],
@@ -1030,10 +1059,30 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "provider": {
+                                            "type": "string",
+                                            "example": "Google Books"
+                                        },
+                                        "total_found": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "search_strategy": {
+                                            "type": "string",
+                                            "example": "multi_source"
+                                        },
                                         "books": {
                                             "type": "array",
                                             "items": {
                                                 "properties": {
+                                                    "provider": {
+                                                        "type": "string",
+                                                        "example": "Google Books"
+                                                    },
                                                     "google_id": {
                                                         "type": "string",
                                                         "example": "YvkTEAAAQBAJ"
@@ -1063,7 +1112,27 @@
                                                     },
                                                     "language": {
                                                         "type": "string",
-                                                        "example": "en"
+                                                        "example": "pt-BR"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "providers_tried": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "provider": {
+                                                        "type": "string",
+                                                        "example": "Google Books"
+                                                    },
+                                                    "success": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "total_found": {
+                                                        "type": "integer",
+                                                        "example": 5
                                                     }
                                                 },
                                                 "type": "object"
@@ -1080,9 +1149,6 @@
                     },
                     "422": {
                         "description": "Invalid search term"
-                    },
-                    "500": {
-                        "description": "Search error"
                     }
                 },
                 "security": [
@@ -1814,6 +1880,96 @@
                         "sanctum": []
                     }
                 ]
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check endpoint",
+                "description": "Returns the health status of the API and its dependencies",
+                "operationId": "healthCheck",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "description": "Overall health status",
+                                            "type": "string",
+                                            "example": "healthy"
+                                        },
+                                        "timestamp": {
+                                            "description": "Current timestamp",
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-10T12:00:00Z"
+                                        },
+                                        "environment": {
+                                            "description": "Current environment",
+                                            "type": "string",
+                                            "example": "production"
+                                        },
+                                        "version": {
+                                            "description": "Application version",
+                                            "type": "string",
+                                            "example": "1.0.0"
+                                        },
+                                        "services": {
+                                            "description": "Health status of individual services",
+                                            "properties": {
+                                                "database": {
+                                                    "description": "Database connection status",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "cache": {
+                                                    "description": "Cache connection status",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "unhealthy"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "environment": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "services": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/reviews": {
@@ -2741,75 +2897,6 @@
                 },
                 "type": "object"
             },
-            "Showcase": {
-                "title": "Showcase",
-                "description": "Showcase book model",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "format": "int64",
-                        "example": 1
-                    },
-                    "title": {
-                        "type": "string",
-                        "example": "The Lord of the Rings"
-                    },
-                    "authors": {
-                        "type": "string",
-                        "example": "J.R.R. Tolkien"
-                    },
-                    "isbn": {
-                        "type": "string",
-                        "example": "9788533613379"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "thumbnail": {
-                        "type": "string",
-                        "format": "url",
-                        "nullable": true
-                    },
-                    "link": {
-                        "type": "string",
-                        "format": "url",
-                        "nullable": true
-                    },
-                    "publisher": {
-                        "type": "string",
-                        "example": "HarperCollins"
-                    },
-                    "language": {
-                        "type": "string",
-                        "example": "en"
-                    },
-                    "edition": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "order_index": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "is_active": {
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "notes": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "User": {
                 "title": "User",
                 "description": "User model",
@@ -2903,6 +2990,10 @@
         {
             "name": "Books",
             "description": "Book management"
+        },
+        {
+            "name": "Health",
+            "description": "Health check endpoints"
         },
         {
             "name": "Follows",

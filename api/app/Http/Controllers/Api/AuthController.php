@@ -27,8 +27,22 @@ use Laravel\Socialite\Facades\Socialite;
  * )
  *
  * @OA\Server(
- *     url=L5_SWAGGER_CONST_HOST,
- *     description="LivroLog API Server"
+ *     url="{scheme}://{host}/api",
+ *     description="LivroLog API Server",
+ *     @OA\ServerVariable(
+ *         serverVariable="scheme",
+ *         enum={"https", "http"},
+ *         default="https"
+ *     ),
+ *     @OA\ServerVariable(
+ *         serverVariable="host",
+ *         default="api.dev.livrolog.com"
+ *     )
+ * )
+ * 
+ * @OA\Server(
+ *     url="http://localhost:8000/api",
+ *     description="Local Development Server"
  * )
  *
  * @OA\SecurityScheme(
@@ -57,6 +71,11 @@ use Laravel\Socialite\Facades\Socialite;
  * @OA\Tag(
  *     name="Users",
  *     description="User management"
+ * )
+ *
+ * @OA\Tag(
+ *     name="Health",
+ *     description="Health check endpoints"
  * )
  */
 class AuthController extends Controller
