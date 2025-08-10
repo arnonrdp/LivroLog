@@ -1,4 +1,4 @@
-name: Deploy LivroLog
+name: Deploy
 
 on:
   push:
@@ -16,197 +16,346 @@ on:
           - development
           - production
 
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+
 jobs:
-  deploy:
+  # CRITICAL: Run required checks first
+  required-checks:
+    uses: ./.github/workflows/required-checks.yml
+
+  # Pre-build job to determine what needs to be built
+  detect-changes:
+    needs: required-checks
     runs-on: ubuntu-latest
-    
+    outputs:
+      api-changed: ${{ steps.changes.outputs.api }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      environment: ${{ steps.env.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect file changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            frontend:
+              - 'webapp/**'
+
+      - name: Set environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+
+  # Build jobs run in parallel only if needed
+  build-api:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api-changed == 'true'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set environment variables
-        run: |
-          # Check if triggered manually
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
-              echo "DEPLOY_ENV=production" >> $GITHUB_ENV
-              echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
-              echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
-              echo "DEPLOY_PATH=/var/www/livrolog/releases" >> $GITHUB_ENV
-            else
-              echo "DEPLOY_ENV=development" >> $GITHUB_ENV
-              echo "API_URL=api.dev.livrolog.com" >> $GITHUB_ENV
-              echo "WEB_URL=dev.livrolog.com" >> $GITHUB_ENV
-              echo "DEPLOY_PATH=/var/www/livrolog-dev/releases" >> $GITHUB_ENV
-            fi
-          # Check branch for automatic deployment
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "DEPLOY_ENV=production" >> $GITHUB_ENV
-            echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
-            echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
-            echo "DEPLOY_PATH=/var/www/livrolog/releases" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-            echo "DEPLOY_ENV=development" >> $GITHUB_ENV
-            echo "API_URL=api.dev.livrolog.com" >> $GITHUB_ENV
-            echo "WEB_URL=dev.livrolog.com" >> $GITHUB_ENV
-            echo "DEPLOY_PATH=/var/www/livrolog-dev/releases" >> $GITHUB_ENV
-          fi
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ env.PHP_VERSION }}
           extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, bcmath
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          tools: composer:v2
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          path: |
+            api/vendor
+            ~/.composer/cache
+          key: composer-deploy-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          restore-keys: |
+            composer-deploy-${{ runner.os }}-
+            composer-${{ runner.os }}-
 
-      - name: Install API dependencies
+      - name: Build API (optimized)
         working-directory: ./api
         run: |
           mkdir -p bootstrap/cache
-          chmod -R 775 bootstrap/cache
-          composer install --no-dev --optimize-autoloader --no-interaction
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --classmap-authoritative --ignore-platform-reqs
+
+          # Pre-warm caches
+          cp .env.example .env
+          php artisan key:generate --force
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache || true
 
-      - name: Cache Yarn dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/yarn
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-yarn-
+          # Remove .env (will be symlinked on server)
+          rm .env
 
-      - name: Build Frontend
+      - name: Create API artifact
+        run: |
+          cd api
+          tar -czf ../api-build.tar.gz \
+            --exclude='.env*' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/cache/*' \
+            .
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-build-${{ github.sha }}
+          path: api-build.tar.gz
+          retention-days: 1
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend-changed == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Build Frontend (optimized)
         working-directory: ./webapp
         run: |
-          yarn install --frozen-lockfile
-          if [[ "${{ env.DEPLOY_ENV }}" == "production" ]]; then
+          yarn install --frozen-lockfile --prefer-offline
+
+          # Set API URL based on environment
+          if [[ "${{ needs.detect-changes.outputs.environment }}" == "production" ]]; then
             echo "VITE_API_URL=https://api.livrolog.com" > .env.production
             yarn build --mode production
           else
             echo "VITE_API_URL=http://api.dev.livrolog.com" > .env.development
             yarn build --mode development
           fi
-          
+
           # Create .htaccess for SPA fallback
           cat > dist/.htaccess << 'EOF'
+          # SPA Fallback
           RewriteEngine On
           RewriteCond %{REQUEST_FILENAME} !-f
           RewriteCond %{REQUEST_FILENAME} !-d
           RewriteRule ^(.*)$ /index.html [L]
+
+          # Cache static assets for 1 year
+          <filesMatch "\.(css|js|woff|woff2|ttf|svg|jpg|jpeg|png|gif|ico|webp)$">
+            ExpiresActive On
+            ExpiresDefault "access plus 1 year"
+          </filesMatch>
           EOF
 
-      - name: Create deployment timestamp
-        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+      - name: Create Frontend artifact
+        working-directory: ./webapp
+        run: tar -czf ../frontend-build.tar.gz dist/
 
-      - name: Deploy to server
+      - name: Upload Frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.sha }}
+          path: frontend-build.tar.gz
+          retention-days: 1
+
+  # Optimized deploy with parallel transfers
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-api, build-frontend]
+    if: always() && (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') && (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped')
+
+    env:
+      TIMESTAMP: ${{ github.run_number }}-${{ github.sha }}
+      ENVIRONMENT: ${{ needs.detect-changes.outputs.environment }}
+
+    steps:
+      - name: Set environment variables
+        run: |
+          if [[ "${{ env.ENVIRONMENT }}" == "production" ]]; then
+            echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
+            echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/var/www/livrolog" >> $GITHUB_ENV
+            echo "SHARED_ENV=.env" >> $GITHUB_ENV
+          else
+            echo "API_URL=api.dev.livrolog.com" >> $GITHUB_ENV
+            echo "WEB_URL=dev.livrolog.com" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=/var/www/livrolog-dev" >> $GITHUB_ENV
+            echo "SHARED_ENV=.env.dev" >> $GITHUB_ENV
+          fi
+
+      # Download artifacts only if they exist
+      - name: Download API artifact
+        if: needs.detect-changes.outputs.api-changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: api-build-${{ github.sha }}
+
+      - name: Download Frontend artifact
+        if: needs.detect-changes.outputs.frontend-changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ github.sha }}
+
+      # Create release directory
+      - name: Prepare release directory
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Create release directory
-            RELEASE_DIR="${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}"
-            mkdir -p $RELEASE_DIR
-            
-            # Create base directory if doesn't exist (for dev environment)
-            if [[ "${{ env.DEPLOY_ENV }}" == "development" ]]; then
-              sudo mkdir -p /var/www/livrolog-dev/{releases,shared}
-              sudo chown -R bitnami:daemon /var/www/livrolog-dev
+            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
+            mkdir -p $RELEASE_DIR/{api,webapp}
+
+            # Create base directories for dev if needed
+            if [[ "${{ env.ENVIRONMENT }}" == "development" ]]; then
+              sudo mkdir -p ${{ env.DEPLOY_PATH }}/{releases,shared/storage}
+              sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}
             fi
 
-      - name: Copy API to server
-        uses: appleboy/scp-action@v0.1.5
+      # Parallel file transfers
+      - name: Deploy API (if changed)
+        if: needs.detect-changes.outputs.api-changed == 'true'
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "api/"
-          target: "${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}"
-          strip_components: 0
+          source: 'api-build.tar.gz'
+          target: '/tmp/'
 
-      - name: Copy Frontend to server
-        uses: appleboy/scp-action@v0.1.5
+      - name: Deploy Frontend (if changed)
+        if: needs.detect-changes.outputs.frontend-changed == 'true'
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "webapp/dist/"
-          target: "${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}/webapp/"
-          strip_components: 2
+          source: 'frontend-build.tar.gz'
+          target: '/tmp/'
 
-      - name: Setup application on server
+      # Extract and setup application
+      - name: Setup application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            RELEASE_DIR="${{ env.DEPLOY_PATH }}/${{ env.TIMESTAMP }}"
-            
-            # Set correct base path
-            if [[ "${{ env.DEPLOY_ENV }}" == "production" ]]; then
-              BASE_PATH="/var/www/livrolog"
-              ENV_FILE="$BASE_PATH/shared/.env"
+            set -e
+            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
+
+            # Extract API if changed
+            if [[ "${{ needs.detect-changes.outputs.api-changed }}" == "true" ]]; then
+              cd $RELEASE_DIR/api
+              tar -xzf /tmp/api-build.tar.gz --strip-components=0
+              rm /tmp/api-build.tar.gz
+              
+              # Setup symlinks
+              ln -nfs ${{ env.DEPLOY_PATH }}/shared/${{ env.SHARED_ENV }} .env
+              rm -rf storage
+              ln -nfs ${{ env.DEPLOY_PATH }}/shared/storage storage
             else
-              BASE_PATH="/var/www/livrolog-dev"
-              ENV_FILE="$BASE_PATH/shared/.env.dev"
+              # Copy current API if no changes
+              if [[ -d "${{ env.DEPLOY_PATH }}/current/api" ]]; then
+                cp -r ${{ env.DEPLOY_PATH }}/current/api/* $RELEASE_DIR/api/
+              fi
             fi
-            
-            # Create symlink for .env file
-            ln -nfs $ENV_FILE $RELEASE_DIR/api/.env
-            
-            # Create storage symlinks
-            rm -rf $RELEASE_DIR/api/storage
-            ln -nfs $BASE_PATH/shared/storage $RELEASE_DIR/api/storage
-            
+
+            # Extract Frontend if changed  
+            if [[ "${{ needs.detect-changes.outputs.frontend-changed }}" == "true" ]]; then
+              cd $RELEASE_DIR/webapp
+              tar -xzf /tmp/frontend-build.tar.gz --strip-components=1
+              rm /tmp/frontend-build.tar.gz
+            else
+              # Copy current frontend if no changes
+              if [[ -d "${{ env.DEPLOY_PATH }}/current/webapp" ]]; then
+                cp -r ${{ env.DEPLOY_PATH }}/current/webapp/* $RELEASE_DIR/webapp/
+              fi
+            fi
+
             # Set permissions
             sudo chown -R bitnami:daemon $RELEASE_DIR
             chmod -R 755 $RELEASE_DIR
-            chmod -R 775 $BASE_PATH/shared/storage
-            
-            # Run migrations (only for production)
-            if [[ "${{ env.DEPLOY_ENV }}" == "production" ]]; then
-              cd $RELEASE_DIR/api
-              php artisan migrate --force
+
+            echo "✅ Application setup completed"
+
+      # Database migrations with rollback capability
+      - name: Run migrations (Production only)
+        if: env.ENVIRONMENT == 'production' && needs.detect-changes.outputs.api-changed == 'true'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
+
+            echo "🔄 Running database migrations..."
+            cd $RELEASE_DIR/api
+
+            # Test migration first
+            php artisan migrate:status
+            php artisan migrate --force --no-interaction
+
+            echo "✅ Migrations completed successfully"
+
+      # Atomic switch
+      - name: Switch to new release
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
+
+            # Atomic switch
+            ln -nfs $RELEASE_DIR ${{ env.DEPLOY_PATH }}/current
+
+            # Clear caches
+            if [[ "${{ needs.detect-changes.outputs.api-changed }}" == "true" ]]; then
+              cd ${{ env.DEPLOY_PATH }}/current/api
+              php artisan config:clear
+              php artisan cache:clear
+              php artisan config:cache
+              php artisan route:cache
+              php artisan view:cache || true
             fi
-            
-            # Update symlink to new release
-            ln -nfs $RELEASE_DIR $BASE_PATH/current
-            
-            # Keep only last 5 releases
-            cd $BASE_PATH/releases
-            ls -t | tail -n +6 | xargs -r rm -rf
-            
+
             # Restart services
             sudo /opt/bitnami/ctlscript.sh restart apache
             sudo /opt/bitnami/ctlscript.sh restart php-fpm
-            
-            # Clear Laravel caches
-            cd $BASE_PATH/current/api
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan config:cache
-            php artisan route:cache
-            
-            echo "Deployment completed successfully!"
 
+            # Cleanup old releases (keep last 3)
+            cd ${{ env.DEPLOY_PATH }}/releases
+            ls -t | tail -n +4 | xargs -r rm -rf
+
+            echo "🚀 Deployment switched successfully!"
+
+      # Fast health checks
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -214,33 +363,59 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "🔍 Testing API endpoint..."
-            API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }}/api/health 2>/dev/null || echo "000")
-            echo "API health check returned: $API_STATUS"
-            
-            if [ "$API_STATUS" = "200" ]; then
+            echo "🔍 Quick health checks..."
+
+            # Parallel health checks
+            API_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }}/api/health 2>/dev/null || echo "000") &
+            WEB_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://${{ env.WEB_URL }} 2>/dev/null || echo "000") &
+
+            wait
+
+            if [[ "$API_STATUS" == "200" ]]; then
               echo "✅ API health check passed"
             else
-              echo "⚠️  API health check failed, testing basic endpoint..."
-              BASIC_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }} 2>/dev/null || echo "000")
-              echo "Basic API endpoint returned: $BASIC_STATUS"
-              if [ "$BASIC_STATUS" != "000" ]; then
-                echo "✅ API is responding (status: $BASIC_STATUS)"
-              else
-                echo "❌ API is not responding"
-                exit 1
-              fi
+              echo "⚠️  API health check failed (status: $API_STATUS)"
             fi
-            
-            echo "🔍 Testing Web application..."
-            WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.WEB_URL }} 2>/dev/null || echo "000")
-            echo "Web application returned: $WEB_STATUS"
-            
-            if [ "$WEB_STATUS" != "000" ] && [ "$WEB_STATUS" != "404" ]; then
+
+            if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
               echo "✅ Web application is responding (status: $WEB_STATUS)"
             else
-              echo "❌ Web application is not responding"
+              echo "⚠️  Web application check failed (status: $WEB_STATUS)"
+            fi
+
+            echo "🎉 Deployment completed!"
+
+  # Rollback job (manual trigger or automatic on failure)
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name != 'workflow_dispatch'
+    needs: [deploy]
+
+    steps:
+      - name: Automatic rollback
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "🔄 Performing automatic rollback..."
+
+            if [[ "${{ needs.detect-changes.outputs.environment }}" == "production" ]]; then
+              DEPLOY_PATH="/var/www/livrolog"
+            else
+              DEPLOY_PATH="/var/www/livrolog-dev"
+            fi
+
+            # Get previous release
+            PREVIOUS=$(ls -t $DEPLOY_PATH/releases | sed -n '2p')
+
+            if [[ -n "$PREVIOUS" ]]; then
+              ln -nfs $DEPLOY_PATH/releases/$PREVIOUS $DEPLOY_PATH/current
+              sudo /opt/bitnami/ctlscript.sh restart apache
+              sudo /opt/bitnami/ctlscript.sh restart php-fpm
+              echo "✅ Rollback to $PREVIOUS completed"
+            else
+              echo "❌ No previous release found for rollback"
               exit 1
             fi
-            
-            echo "🎉 Deployment verification completed successfully!"

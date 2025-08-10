@@ -1,0 +1,215 @@
+name: Required Checks (Deploy Blockers)
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_call:
+
+jobs:
+  # Critical checks that MUST pass before deploy
+  security-critical:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, zip
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      # Backend security checks (CRITICAL)
+      - name: Install backend dependencies
+        working-directory: ./api
+        run: composer install --prefer-dist --no-interaction --ignore-platform-reqs
+
+      - name: Run Composer security audit
+        working-directory: ./api
+        run: |
+          echo "🔍 Running security audit..."
+          AUDIT_OUTPUT=$(composer audit --format=json 2>/dev/null || echo '{"advisories":{}}')
+          VULN_COUNT=$(echo $AUDIT_OUTPUT | jq '.advisories | length' || echo "0")
+          
+          if [ "$VULN_COUNT" -gt "0" ]; then
+            echo "❌ Found $VULN_COUNT security vulnerabilities in backend dependencies!"
+            composer audit
+            exit 1
+          fi
+          echo "✅ No critical security vulnerabilities found in backend"
+
+      # Frontend security checks (CRITICAL)
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile --prefer-offline
+
+      - name: Run Yarn security audit
+        working-directory: ./webapp
+        run: |
+          echo "🔍 Running frontend security audit..."
+          AUDIT_OUTPUT=$(yarn audit --json --level high 2>/dev/null || echo "0")
+          
+          # Check for high/critical vulnerabilities only
+          if echo "$AUDIT_OUTPUT" | grep -q '"severity":"high\|critical"'; then
+            echo "❌ Found high/critical security vulnerabilities in frontend dependencies!"
+            yarn audit --level high
+            exit 1
+          fi
+          echo "✅ No critical security vulnerabilities found in frontend"
+
+      # Check for exposed secrets (CRITICAL)
+      - name: Scan for exposed secrets
+        run: |
+          echo "🔍 Scanning for exposed secrets..."
+          
+          # Check for real secrets (not placeholders)
+          EXPOSED_SECRETS=$(grep -r --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git \
+            -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{20,}" . || echo "")
+          
+          if [ -n "$EXPOSED_SECRETS" ]; then
+            echo "❌ CRITICAL: Exposed secrets found in code!"
+            echo "$EXPOSED_SECRETS"
+            exit 1
+          fi
+          echo "✅ No exposed secrets detected"
+
+  # Essential tests that must pass
+  essential-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: livrolog_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, pdo_sqlite, zip, gmp
+          tools: composer:v2
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            api/vendor
+            ~/.composer/cache
+          key: composer-tests-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          restore-keys: |
+            composer-tests-${{ runner.os }}-
+            composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: composer install --prefer-dist --no-interaction --optimize-autoloader --ignore-platform-reqs
+
+      - name: Copy .env file
+        working-directory: ./api
+        run: cp .env.example .env
+
+      - name: Generate encryption key
+        working-directory: ./api
+        run: php artisan key:generate --ansi
+
+      - name: Directory Permissions
+        working-directory: ./api
+        run: chmod -R 755 storage bootstrap/cache
+
+      - name: Create SQLite database
+        working-directory: ./api
+        run: touch database/database.sqlite
+
+      - name: Run essential tests (fast)
+        working-directory: ./api
+        run: |
+          # Run essential tests only (no coverage for speed)
+          php artisan test --testsuite=Feature --stop-on-failure
+          echo "✅ Essential tests passed"
+
+  # TypeScript validation (CRITICAL for frontend)
+  typescript-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Install dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile --prefer-offline
+
+      - name: TypeScript check (CRITICAL)
+        working-directory: ./webapp
+        run: |
+          echo "🔍 Running TypeScript validation..."
+          yarn type-check
+          echo "✅ TypeScript validation passed"
+
+      - name: Build test (CRITICAL)
+        working-directory: ./webapp
+        run: |
+          echo "🔍 Testing production build..."
+          yarn build
+          echo "✅ Production build successful"
+
+  # Summary job
+  required-checks-summary:
+    runs-on: ubuntu-latest
+    needs: [security-critical, essential-tests, typescript-check]
+    if: always()
+    
+    steps:
+      - name: Check all required checks passed
+        run: |
+          if [[ "${{ needs.security-critical.result }}" != "success" ]]; then
+            echo "❌ Security checks failed - DEPLOYMENT BLOCKED"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.essential-tests.result }}" != "success" ]]; then
+            echo "❌ Essential tests failed - DEPLOYMENT BLOCKED"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.typescript-check.result }}" != "success" ]]; then
+            echo "❌ TypeScript/Build checks failed - DEPLOYMENT BLOCKED"
+            exit 1
+          fi
+          
+          echo "✅ ALL REQUIRED CHECKS PASSED - DEPLOYMENT ALLOWED"

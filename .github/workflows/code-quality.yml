@@ -1,0 +1,196 @@
+name: Code Quality (Non-Blocking)
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_call:
+
+jobs:
+  # Code style and formatting (non-blocking)
+  code-style:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Non-blocking
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Backend code style
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, zip
+          tools: composer:v2
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            api/vendor
+            ~/.composer/cache
+          key: composer-style-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          restore-keys: |
+            composer-style-${{ runner.os }}-
+            composer-${{ runner.os }}-
+
+      - name: Install backend dependencies
+        working-directory: ./api
+        run: composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+      - name: Laravel Pint check (non-blocking)
+        working-directory: ./api
+        continue-on-error: true
+        run: |
+          echo "🎨 Checking PHP code style..."
+          if ./vendor/bin/pint --test; then
+            echo "✅ PHP code style is perfect"
+          else
+            echo "⚠️  PHP code style issues found (non-blocking)"
+            echo "::warning::Run 'composer lint' to fix PHP code style issues"
+          fi
+
+      # Frontend code style  
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile --prefer-offline
+
+      - name: ESLint check (non-blocking)
+        working-directory: ./webapp
+        continue-on-error: true
+        run: |
+          echo "🎨 Checking JavaScript/Vue code style..."
+          if yarn lint:eslint; then
+            echo "✅ JavaScript code style is perfect"
+          else
+            echo "⚠️  JavaScript code style issues found (non-blocking)"
+            echo "::warning::Run 'yarn lint' to fix JavaScript code style issues"
+          fi
+
+      - name: Prettier check (non-blocking)
+        working-directory: ./webapp
+        continue-on-error: true
+        run: |
+          echo "🎨 Checking code formatting..."
+          if yarn format-check; then
+            echo "✅ Code formatting is perfect"
+          else
+            echo "⚠️  Code formatting issues found (non-blocking)"
+            echo "::warning::Run 'yarn format' to fix formatting issues"
+          fi
+
+  # Documentation checks (non-blocking)
+  documentation:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, zip
+          tools: composer:v2
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: composer install --prefer-dist --no-interaction --ignore-platform-reqs
+
+      - name: Generate API documentation (non-blocking)
+        working-directory: ./api
+        continue-on-error: true
+        run: |
+          echo "📚 Generating API documentation..."
+          cp .env.example .env
+          php artisan key:generate --force
+          
+          if php artisan l5-swagger:generate; then
+            echo "✅ API documentation generated successfully"
+          else
+            echo "⚠️  API documentation generation failed (non-blocking)"
+            echo "::warning::API documentation could not be generated"
+          fi
+
+  # Additional quality metrics (non-blocking)
+  quality-metrics:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile --prefer-offline
+
+      - name: Bundle size analysis (non-blocking)
+        working-directory: ./webapp
+        continue-on-error: true
+        run: |
+          echo "📊 Analyzing bundle size..."
+          yarn build
+          
+          BUNDLE_SIZE_BYTES=$(du -sb dist | cut -f1)
+          BUNDLE_SIZE_MB=$((BUNDLE_SIZE_BYTES / 1024 / 1024))
+          
+          echo "Bundle size: ${BUNDLE_SIZE_MB}MB"
+          
+          if [ $BUNDLE_SIZE_BYTES -gt 10485760 ]; then
+            echo "::warning::Bundle size (${BUNDLE_SIZE_MB}MB) is larger than 10MB"
+          else
+            echo "✅ Bundle size is reasonable (${BUNDLE_SIZE_MB}MB)"
+          fi
+
+      - name: Dependency analysis (non-blocking)
+        continue-on-error: true
+        run: |
+          echo "📦 Analyzing dependencies..."
+          
+          # Count dependencies
+          BACKEND_DEPS=$(jq '.require | length' api/composer.json)
+          FRONTEND_DEPS=$(jq '.dependencies | length' webapp/package.json)
+          
+          echo "Backend dependencies: $BACKEND_DEPS"
+          echo "Frontend dependencies: $FRONTEND_DEPS"
+          
+          if [ $FRONTEND_DEPS -gt 50 ]; then
+            echo "::warning::High number of frontend dependencies ($FRONTEND_DEPS)"
+          fi
+
+  # Summary (always runs)
+  quality-summary:
+    runs-on: ubuntu-latest
+    needs: [code-style, documentation, quality-metrics]
+    if: always()
+    
+    steps:
+      - name: Quality summary
+        run: |
+          echo "🎨 Code Quality Report (Non-Blocking)"
+          echo ""
+          echo "Code Style: ${{ needs.code-style.result }}"
+          echo "Documentation: ${{ needs.documentation.result }}"  
+          echo "Quality Metrics: ${{ needs.quality-metrics.result }}"
+          echo ""
+          echo "ℹ️  These checks are informational only and do not block deployment."
+          echo "Check the warnings above for suggestions to improve code quality."
