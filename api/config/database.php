@@ -3,7 +3,9 @@
 use Illuminate\Support\Str;
 
 // Database configuration constants
-const DEFAULT_HOST = '127.0.0.1';
+if (!defined('DEFAULT_HOST')) {
+    define('DEFAULT_HOST', '127.0.0.1');
+}
 
 return [
 
