@@ -1,0 +1,145 @@
+name: Deploy to Lightsail
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, hash, json, pcre, regex, session, zlib
+          tools: composer:v2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Yarn
+        run: npm install -g yarn
+      
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v3
+        with:
+          path: webapp/node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: ${{ runner.os }}-yarn-
+      
+      - name: Install backend dependencies
+        working-directory: ./api
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction
+          php artisan config:clear
+      
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile
+      
+      - name: Build frontend
+        working-directory: ./webapp
+        run: |
+          echo "VITE_API_URL=http://${{ secrets.LIGHTSAIL_HOST }}/api" > .env.production
+          echo "VITE_APP_NAME=LivroLog" >> .env.production
+          yarn build
+      
+      - name: Create deployment package
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          mkdir -p deployment
+          cp -r api deployment/
+          cp -r webapp/dist deployment/webapp
+          echo $TIMESTAMP > deployment/version.txt
+          tar -czf deployment-${TIMESTAMP}.tar.gz deployment/
+          echo "DEPLOYMENT_FILE=deployment-${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${TIMESTAMP}" >> $GITHUB_ENV
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to Lightsail
+        run: |
+          # Upload deployment package
+          scp -i ~/.ssh/lightsail_key ${{ env.DEPLOYMENT_FILE }} ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/tmp/
+          
+          # Execute deployment script
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            set -e
+            
+            # Variables
+            RELEASE_VERSION="${{ env.RELEASE_VERSION }}"
+            DEPLOYMENT_FILE="/tmp/${{ env.DEPLOYMENT_FILE }}"
+            RELEASE_PATH="/var/www/livrolog/releases/${RELEASE_VERSION}"
+            CURRENT_PATH="/var/www/livrolog/current"
+            SHARED_PATH="/var/www/livrolog/shared"
+            
+            # Extract deployment
+            mkdir -p ${RELEASE_PATH}
+            tar -xzf ${DEPLOYMENT_FILE} -C ${RELEASE_PATH} --strip-components=1
+            
+            # Link shared files
+            ln -nfs ${SHARED_PATH}/.env ${RELEASE_PATH}/api/.env
+            ln -nfs ${SHARED_PATH}/storage ${RELEASE_PATH}/api/storage
+            
+            # Set permissions
+            chmod -R 775 ${RELEASE_PATH}
+            chown -R bitnami:daemon ${RELEASE_PATH}
+            
+            # Run Laravel commands
+            cd ${RELEASE_PATH}/api
+            php artisan key:generate --force
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            # Switch to new release
+            ln -nfs ${RELEASE_PATH} ${CURRENT_PATH}
+            
+            # Restart Apache
+            sudo /opt/bitnami/ctlscript.sh restart apache
+            
+            # Clean up old releases (keep last 5)
+            cd /var/www/livrolog/releases
+            ls -t | tail -n +6 | xargs -I {} rm -rf {}
+            
+            # Clean up deployment file
+            rm -f ${DEPLOYMENT_FILE}
+            
+            echo "Deployment completed successfully!"
+          ENDSSH
+      
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            curl -s -o /dev/null -w "%{http_code}" http://localhost || exit 1
+            echo "Application is responding!"
+          ENDSSH
+      
+      - name: Clean up
+        if: always()
+        run: |
+          rm -f ~/.ssh/lightsail_key
+          rm -f deployment-*.tar.gz
