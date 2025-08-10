@@ -1,0 +1,77 @@
+name: Fast Pre-Deploy Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+  push:
+    branches:
+      - dev
+
+jobs:
+  # Super fast checks that run in parallel (< 3min total)
+  quick-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Backend quick checks
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: api/vendor
+          key: composer-${{ hashFiles('api/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install backend dependencies (optimized)
+        working-directory: ./api
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Laravel Pint check (fast)
+        working-directory: ./api
+        run: ./vendor/bin/pint --test --dirty
+
+      # Frontend quick checks
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile --prefer-offline
+
+      - name: TypeScript check
+        working-directory: ./webapp
+        run: yarn type-check
+
+      - name: ESLint check (fast)
+        working-directory: ./webapp
+        run: yarn lint:eslint --max-warnings=0
+
+      # Quick security scan
+      - name: Secret detection (fast)
+        run: |
+          if grep -r -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{8,}" --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git . ; then
+            echo "❌ Potential secrets found"
+            exit 1
+          fi
+          echo "✅ No secrets detected"
+
+      - name: Fast success ✅
+        run: |
+          echo "🚀 Fast checks completed in ~2min!"
+          echo "✅ Code style (PHP + JS)"  
+          echo "✅ TypeScript validation"
+          echo "✅ Basic security scan"

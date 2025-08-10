@@ -1,0 +1,56 @@
+name: Frontend Code Quality
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "webapp/**"
+  pull_request:
+    paths:
+      - "webapp/**"
+  workflow_call:
+
+jobs:
+  frontend-quality:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./webapp
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --prefer-offline
+
+      - name: TypeScript type checking
+        run: yarn type-check
+
+      - name: Run linting
+        run: yarn lint
+
+      - name: Check code formatting
+        run: yarn format --check
+
+      - name: Build application
+        run: yarn build
+
+      - name: Check bundle size
+        run: |
+          BUNDLE_SIZE=$(du -sh dist | cut -f1)
+          echo "Bundle size: $BUNDLE_SIZE"
+          # Add warning if bundle is too large (>10MB)
+          BUNDLE_SIZE_BYTES=$(du -sb dist | cut -f1)
+          if [ $BUNDLE_SIZE_BYTES -gt 10485760 ]; then
+            echo "::warning::Bundle size ($BUNDLE_SIZE) is larger than 10MB"
+          fi

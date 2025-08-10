@@ -1,0 +1,109 @@
+name: Security Checks
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_call:
+  schedule:
+    # Run security checks weekly
+    - cron: '0 2 * * 1'
+
+jobs:
+  dependency-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, zip
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      # Backend security checks
+      - name: Install backend dependencies
+        working-directory: ./api
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Run Composer audit
+        working-directory: ./api
+        run: composer audit || echo "::warning::Composer audit found vulnerabilities"
+
+      # Frontend security checks  
+      - name: Install frontend dependencies
+        working-directory: ./webapp
+        run: yarn install --frozen-lockfile
+
+      - name: Run npm audit
+        working-directory: ./webapp
+        run: yarn audit || echo "::warning::Yarn audit found vulnerabilities"
+
+      # Check for secrets in code
+      - name: Check for exposed secrets
+        run: |
+          echo "Checking for potential secrets in code..."
+          
+          # Check for common secret patterns
+          if grep -r -i --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git \
+            -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{8,}" . ; then
+            echo "::error::Potential secrets found in code. Please review."
+            exit 1
+          fi
+          
+          # Check for API keys
+          if grep -r -i --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git \
+            -E "(api[_-]?key|access[_-]?token)\s*[:=]\s*['\"][^'\"]{10,}" . ; then
+            echo "::error::Potential API keys found in code. Please review."
+            exit 1
+          fi
+          
+          echo "No obvious secrets found in code."
+
+  security-headers:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check CORS configuration
+        working-directory: ./api
+        run: |
+          if grep -q "allowed_origins.*\*" config/cors.php; then
+            echo "::warning::CORS is configured to allow all origins (*). Consider restricting in production."
+          fi
+
+      - name: Check for security headers middleware
+        working-directory: ./api
+        run: |
+          if [ -f "app/Http/Middleware/SecurityHeaders.php" ]; then
+            echo "✅ Security headers middleware found"
+          else
+            echo "::warning::Consider adding security headers middleware"
+          fi
+
+      - name: Validate .env.example
+        working-directory: ./api
+        run: |
+          if [ -f ".env.example" ]; then
+            # Check if .env.example contains actual values instead of placeholders
+            if grep -E "^[A-Z_]+=.{10,}" .env.example | grep -v "your-" | grep -v "example" | grep -v "null" | grep -v "false" | grep -v "true"; then
+              echo "::error::.env.example may contain real values. Should only contain placeholders."
+              exit 1
+            fi
+            echo "✅ .env.example looks secure"
+          else
+            echo "::warning::.env.example not found"
+          fi

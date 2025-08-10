@@ -8,6 +8,15 @@ use App\Http\Controllers\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// Health check endpoint for CI/CD
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now(),
+        'version' => config('app.version', '1.0.0')
+    ]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | API Routes

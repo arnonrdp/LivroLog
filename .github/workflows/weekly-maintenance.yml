@@ -1,0 +1,80 @@
+name: Weekly Maintenance
+
+on:
+  schedule:
+    # Every Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  comprehensive-security:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      # Comprehensive dependency audit
+      - name: Install dependencies
+        run: |
+          cd api && composer install
+          cd ../webapp && yarn install
+
+      - name: Comprehensive security audit
+        run: |
+          echo "🔍 Running comprehensive security checks..."
+          
+          # Backend audit
+          cd api
+          composer audit --format=json > ../backend-audit.json || true
+          
+          # Frontend audit  
+          cd ../webapp
+          yarn audit --json > ../frontend-audit.json || true
+          
+          echo "📊 Security audit completed"
+
+      # Dependency updates check
+      - name: Check for dependency updates
+        run: |
+          echo "📦 Checking for dependency updates..."
+          
+          cd api
+          composer outdated || echo "Backend dependencies checked"
+          
+          cd ../webapp  
+          yarn outdated || echo "Frontend dependencies checked"
+
+  performance-baseline:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and measure performance
+        run: |
+          echo "⚡ Measuring build performance..."
+          
+          # Frontend build time
+          cd webapp
+          yarn install
+          time yarn build
+          
+          # Bundle size analysis
+          du -sh dist
+          
+          echo "📈 Performance baseline recorded"

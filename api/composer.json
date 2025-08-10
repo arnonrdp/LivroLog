@@ -59,6 +59,19 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "lint": [
+            "./vendor/bin/pint"
+        ],
+        "lint-test": [
+            "./vendor/bin/pint --test"
+        ],
+        "quality": [
+            "@lint-test",
+            "@test"
+        ],
+        "audit": [
+            "@composer audit"
         ]
     },
     "extra": {

@@ -1,0 +1,60 @@
+name: Backend Code Quality
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "api/**"
+  pull_request:
+    paths:
+      - "api/**"
+  workflow_call:
+
+jobs:
+  backend-quality:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, pdo_sqlite, zip, gmp, redis
+          tools: composer:v2
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            api/vendor
+            ~/.composer/cache
+          key: composer-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+            composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: Copy .env file
+        run: cp .env.example .env
+
+      - name: Generate encryption key
+        run: php artisan key:generate --ansi
+
+      - name: Directory Permissions
+        run: chmod -R 755 storage bootstrap/cache
+
+      - name: Run Laravel Pint (Code Style)
+        run: ./vendor/bin/pint --test
+
+      - name: Validate API documentation compiles
+        run: php artisan l5-swagger:generate

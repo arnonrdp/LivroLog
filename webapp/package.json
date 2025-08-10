@@ -13,7 +13,9 @@
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix",
     "lint": "yarn lint:oxlint && yarn lint:eslint",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "quality": "yarn type-check && yarn lint && yarn build",
+    "format-check": "prettier --check src/"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
