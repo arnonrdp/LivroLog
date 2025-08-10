@@ -34,11 +34,11 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/auth/google', [AuthController::class, 'googleSignIn']);
 });
 
-// Public showcase route
-Route::get('/showcase', [BookController::class, 'showcase']);
+// Public showcase route (with CORS)
+Route::middleware(['cors'])->get('/showcase', [BookController::class, 'showcase']);
 
-// Health check endpoint
-Route::get('/health', function () {
+// Health check endpoint (with CORS)
+Route::middleware(['cors'])->get('/health', function () {
     return response()->json([
         'status' => 'healthy',
         'timestamp' => now()->toIso8601String(),
