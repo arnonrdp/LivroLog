@@ -290,16 +290,16 @@ class DiscoverFirebaseData extends Command
         $this->line('');
 
         $this->line('2. 🔄 Run Migration:');
-        $this->line('   php artisan import:firestore-showcase --file=/path/to/export.json');
-        $this->line('   php artisan import:firestore-showcase --url=https://example.com/data.json');
+        $this->line('   php artisan firebase:import --file=/path/to/export.json');
+        $this->line('   php artisan firebase:import --url=https://example.com/data.json');
         $this->line('');
 
         $this->line('3. 📊 Test Migration:');
-        $this->line('   php artisan import:firestore-showcase --dry-run --file=/path/to/export.json');
+        $this->line('   php artisan firebase:import --dry-run --file=/path/to/export.json');
         $this->line('');
 
         $this->line('4. 🗑️  Clear and Import:');
-        $this->line('   php artisan import:firestore-showcase --clear --file=/path/to/export.json');
+        $this->line('   php artisan firebase:import --clear --file=/path/to/export.json');
         $this->line('');
 
         $this->info('💡 Need help? Check the documentation or run with --help');

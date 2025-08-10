@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\Book;
 use App\Models\Author;
 use App\Models\User;
-use App\Models\Showcase;
 use App\Exceptions\ImportException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +26,7 @@ class ImportFirebaseData extends Command
     protected $signature = 'firebase:import
                             {--file= : JSON file path containing Firebase export}
                             {--url= : URL to fetch Firebase data from}
-                            {--type=all : Data type to import (users,books,showcase,all)}
+                            {--type=all : Data type to import (users,books,all)}
                             {--clear : Clear existing data before import}
                             {--dry-run : Preview the import without making changes}
                             {--batch-size=' . self::DEFAULT_BATCH_SIZE . ' : Number of records to process at once}';
@@ -37,7 +36,7 @@ class ImportFirebaseData extends Command
      *
      * @var string
      */
-    protected $description = 'Import all data from Firebase/Firestore to MySQL (users, books, showcase)';
+    protected $description = 'Import all data from Firebase/Firestore to MySQL (users, books)';
 
     /**
      * Execute the console command.
@@ -200,9 +199,6 @@ class ImportFirebaseData extends Command
                     break;
                 case 'books':
                     $this->importBooks($documents);
-                    break;
-                case 'showcase':
-                    $this->importShowcase($documents);
                     break;
                 default:
                     $this->warn("⚠️  Unknown collection: {$collectionName} - skipping");
@@ -387,71 +383,6 @@ class ImportFirebaseData extends Command
         $this->info("✅ Books import completed: {$imported} imported, {$errors} errors");
     }
 
-    /**
-     * Import showcase
-     */
-    private function importShowcase(array $showcase): void
-    {
-        if ($this->option('dry-run')) {
-            $this->previewShowcase($showcase);
-            return;
-        }
-
-        if ($this->option('clear')) {
-            $this->clearShowcase();
-        }
-
-        $bar = $this->output->createProgressBar(count($showcase));
-        $bar->start();
-
-        $imported = 0;
-        $errors = 0;
-
-        foreach ($showcase as $index => $itemData) {
-            try {
-                // Corrigir campo authors ausente ou nulo
-                $authors = self::UNKNOWN_AUTHOR;
-                if (isset($itemData['authors'])) {
-                    if (is_array($itemData['authors'])) {
-                        $authors = implode(', ', $itemData['authors']);
-                    } elseif (is_string($itemData['authors'])) {
-                        $authors = $itemData['authors'];
-                    }
-                }
-
-                $item = [
-                    'title' => isset($itemData['title']) ? $itemData['title'] : 'Unknown Title',
-                    'authors' => $authors,
-                    'isbn' => isset($itemData['isbn']) ? $itemData['isbn'] : null,
-                    'description' => $this->getFieldValue($itemData, ['description', 'desc']),
-                    'thumbnail' => $this->getFieldValue($itemData, ['thumbnail', 'image']),
-                    'link' => $this->getFieldValue($itemData, ['link', 'url']),
-                    'publisher' => isset($itemData['publisher']) ? $itemData['publisher'] : null,
-                    'language' => $this->getFieldValue($itemData, ['language', 'lang'], 'pt-BR'),
-                    'edition' => isset($itemData['edition']) ? $itemData['edition'] : null,
-                    'order_index' => $this->getFieldValue($itemData, ['order', 'order_index'], $index),
-                    'is_active' => $this->getFieldValue($itemData, ['active', 'is_active'], true),
-                    'notes' => (isset($itemData['notes']) ? $itemData['notes'] : '') . ' - Imported from Firebase',
-                ];
-
-                Showcase::updateOrCreate(
-                    ['isbn' => $item['isbn'], 'title' => $item['title']],
-                    $item
-                );
-
-                $imported++;
-                $bar->advance();
-            } catch (\Exception $e) {
-                $errors++;
-                $this->error("\n❌ Error importing showcase item: {$e->getMessage()}");
-                $bar->advance();
-            }
-        }
-
-        $bar->finish();
-        $this->line('');
-        $this->info("✅ Showcase import completed: {$imported} imported, {$errors} errors");
-    }
 
     /**
      * Preview methods for dry-run
@@ -482,31 +413,6 @@ class ImportFirebaseData extends Command
         );
     }
 
-    private function previewShowcase(array $showcase): void
-    {
-        $this->info('🔍 Preview Mode - Showcase (first 5):');
-        $this->table(
-            ['Title', 'Authors', 'Active'],
-            collect($showcase)->take(5)->map(function($item) {
-                $title = isset($item['title']) ? $item['title'] : 'Unknown';
-                // Corrigir campo authors ausente ou nulo
-                $authors = self::UNKNOWN_AUTHOR;
-                if (isset($item['authors'])) {
-                    if (is_array($item['authors'])) {
-                        $authors = implode(', ', $item['authors']);
-                    } elseif (is_string($item['authors'])) {
-                        $authors = $item['authors'];
-                    }
-                }
-                $active = $this->getFieldValue($item, ['active', 'is_active'], true) ? 'Yes' : 'No';
-                return [
-                    substr($title, 0, self::TITLE_DISPLAY_MAX_LENGTH),
-                    substr($authors, 0, self::AUTHOR_DISPLAY_MAX_LENGTH),
-                    $active
-                ];
-            })->toArray()
-        );
-    }
 
     /**
      * Clear existing data methods
@@ -530,13 +436,6 @@ class ImportFirebaseData extends Command
         }
     }
 
-    private function clearShowcase(): void
-    {
-        if ($this->confirm('⚠️  This will delete all existing showcase data. Continue?', false)) {
-            Showcase::truncate();
-            $this->info('🗑️  Showcase table cleared.');
-        }
-    }
 
     /**
      * Import from custom format
@@ -558,14 +457,6 @@ class ImportFirebaseData extends Command
             $this->importUserBooks($data['user_books']);
         }
 
-        if (isset($data['showcase'])) {
-            $this->importShowcase($data['showcase']);
-        }
-
-        // If it's just an array, assume it's showcase data
-        if (is_array($data) && isset($data[0]) && !isset($data['users']) && !isset($data['books']) && !isset($data['user_books'])) {
-            $this->importShowcase($data);
-        }
     }
 
     /**
@@ -583,10 +474,6 @@ class ImportFirebaseData extends Command
             case 'books':
                 $books = $data['books'] ?? $data;
                 $this->importBooks($books);
-                break;
-            case 'showcase':
-                $showcase = $data['showcase'] ?? $data;
-                $this->importShowcase($showcase);
                 break;
             default:
                 throw ImportException::invalidJson("Unknown data type: {$type}");
@@ -615,15 +502,6 @@ class ImportFirebaseData extends Command
                     'isbn' => '9788525406552',
                     'language' => 'pt-BR',
                     'publisher' => 'Globo Livros'
-                ]
-            ],
-            'showcase' => [
-                [
-                    'title' => 'O Cortiço',
-                    'authors' => 'Aluísio Azevedo',
-                    'isbn' => '9788525406569',
-                    'description' => 'Romance naturalista brasileiro.',
-                    'active' => true
                 ]
             ]
         ];

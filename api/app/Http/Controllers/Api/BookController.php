@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Http\Resources\PaginatedResource;
-use App\Models\Showcase;
 use App\Services\BookEnrichmentService;
 use App\Services\MultiSourceBookSearchService;
 use Illuminate\Http\JsonResponse;
@@ -73,22 +72,22 @@ class BookController extends Controller
      *     operationId="getShowcase",
      *     tags={"Books"},
      *     summary="List featured books for showcase",
-     *     description="Returns list of featured books for public display",
+     *     description="Returns 20 random books for public display",
      *     @OA\Response(
      *         response=200,
      *         description="Featured books list",
      *         @OA\JsonContent(
      *             type="array",
-     *             @OA\Items(ref="#/components/schemas/Showcase")
+     *             @OA\Items(ref="#/components/schemas/Book")
      *         )
      *     )
      * )
      */
     public function showcase()
     {
-        // Returns featured books from showcase table
-        $showcaseBooks = Showcase::active()
-            ->ordered()
+        // Returns 20 random books from the books table
+        $showcaseBooks = Book::inRandomOrder()
+            ->limit(20)
             ->get();
 
         return response()->json($showcaseBooks);
