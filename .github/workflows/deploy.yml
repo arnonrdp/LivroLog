@@ -102,6 +102,21 @@ jobs:
             echo "VITE_API_URL=http://api.dev.livrolog.com" > .env.development
             yarn build --mode development
           fi
+          
+          # Create .htaccess for SPA fallback
+          cat > dist/.htaccess << 'EOF'
+          # SPA Fallback for Vue Router
+          RewriteEngine On
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule . /index.html [L]
+          
+          # Optional: Cache static assets
+          <filesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg)$">
+            ExpiresActive On
+            ExpiresDefault "access plus 1 month"
+          </filesMatch>
+          EOF
 
       - name: Create deployment timestamp
         run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
