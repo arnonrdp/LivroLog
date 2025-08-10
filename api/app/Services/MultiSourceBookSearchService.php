@@ -276,8 +276,8 @@ class MultiSourceBookSearchService
     private function buildCacheKey(string $query, array $options): string
     {
         $normalized = $this->normalizeQuery($query);
-        $optionsHash = md5(serialize($options));
-        return "multi_search:" . md5($normalized . $optionsHash);
+        $optionsHash = hash('sha256', serialize($options));
+        return "multi_search:" . hash('sha256', $normalized . $optionsHash);
     }
 
     /**

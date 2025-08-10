@@ -29,7 +29,7 @@ class FollowSeeder extends Seeder
         // Create some follow relationships
         foreach ($users as $index => $user) {
             // Each user follows 1-2 random other users
-            $followCount = min(rand(1, 2), $users->count() - 1);
+            $followCount = min(random_int(1, 2), $users->count() - 1);
             $otherUsers = $users->except($user->id)->random($followCount);
 
             foreach ($otherUsers as $otherUser) {

@@ -1,7 +1,7 @@
 FROM php:8.4-fpm
 
 # Install system dependencies, PHP extensions, Redis, and Xdebug
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     libicu-dev \
@@ -30,4 +30,14 @@ RUN echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/99-upload-limits.in
     echo "max_input_time = 300" >> /usr/local/etc/php/conf.d/99-upload-limits.ini && \
     echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/99-upload-limits.ini
 
+# Create non-root user for security
+RUN groupadd -g 1000 www-data-secure && \
+    useradd -u 1000 -g www-data-secure -m -s /bin/bash www-data-secure
+
 WORKDIR /var/www/html
+
+# Change ownership of the working directory to the non-root user
+RUN chown -R www-data-secure:www-data-secure /var/www/html
+
+# Switch to non-root user
+USER www-data-secure
