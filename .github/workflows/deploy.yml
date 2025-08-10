@@ -77,10 +77,12 @@ jobs:
       - name: Install API dependencies
         working-directory: ./api
         run: |
+          mkdir -p bootstrap/cache
+          chmod -R 775 bootstrap/cache
           composer install --no-dev --optimize-autoloader --no-interaction
           php artisan config:cache
           php artisan route:cache
-          php artisan view:cache
+          php artisan view:cache || true
 
       - name: Cache Yarn dependencies
         uses: actions/cache@v3
