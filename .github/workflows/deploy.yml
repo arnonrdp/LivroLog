@@ -59,7 +59,7 @@ jobs:
       - name: Build frontend
         working-directory: ./webapp
         run: |
-          echo "VITE_API_URL=http://${{ secrets.LIGHTSAIL_HOST }}/api" > .env.production
+          echo "VITE_API_URL=https://api.livrolog.com" > .env.production
           echo "VITE_APP_NAME=LivroLog" >> .env.production
           yarn build
       
