@@ -98,6 +98,9 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache || true
+          
+          # Generate Swagger documentation
+          php artisan l5-swagger:generate
 
           # Remove .env (will be symlinked on server)
           rm .env
@@ -325,7 +328,7 @@ jobs:
             # Atomic switch
             ln -nfs $RELEASE_DIR ${{ env.DEPLOY_PATH }}/current
 
-            # Clear caches
+            # Clear caches and regenerate
             if [[ "${{ needs.detect-changes.outputs.api-changed }}" == "true" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               cd ${{ env.DEPLOY_PATH }}/current/api
               php artisan config:clear
@@ -333,6 +336,9 @@ jobs:
               php artisan config:cache
               php artisan route:cache
               php artisan view:cache || true
+              
+              # Regenerate Swagger documentation
+              php artisan l5-swagger:generate
             fi
 
             # Restart services
