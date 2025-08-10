@@ -66,7 +66,7 @@ docker exec livrolog-frontend yarn dev
 ## 📋 Services
 
 - **Backend API**: http://localhost:8000 ([Documentation](http://localhost:8000/documentation))
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:8001
 - **MySQL**: localhost:3306
 - **Redis**: localhost:6379
 

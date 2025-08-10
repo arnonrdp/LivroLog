@@ -25,7 +25,7 @@ LivroLog/
 ### Services
 
 - **API**: http://localhost:8000
-- **Frontend**: http://localhost:3000 (dev: 8001)
+- **Frontend**: http://localhost:8001
 - **MySQL**: localhost:3306
 - **Redis**: localhost:6379
 - **API Docs**: http://localhost:8000/documentation
