@@ -40,7 +40,7 @@ jobs:
         run: yarn lint
 
       - name: Check code formatting
-        run: yarn format --check
+        run: yarn format-check
 
       - name: Build application
         run: yarn build

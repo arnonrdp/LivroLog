@@ -26,7 +26,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          php-version: 8.3
           extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, pdo_sqlite, zip, gmp, redis
           tools: composer:v2
 
@@ -42,7 +42,7 @@ jobs:
             composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-interaction --optimize-autoloader
+        run: composer install --prefer-dist --no-interaction --optimize-autoloader --ignore-platform-reqs
 
       - name: Copy .env file
         run: cp .env.example .env
