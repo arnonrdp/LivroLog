@@ -135,3 +135,31 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 ```
+
+### Fix deployment symlinks
+
+After deployment, ensure symlinks are created:
+
+```bash
+ssh livrolog
+cd /var/www/livrolog/current/api
+
+# Create .env symlink
+ln -sf ../../../shared/.env .env
+
+# Create storage symlink  
+rm -rf storage && ln -sf ../../../shared/storage storage
+
+# Clear caches
+php artisan config:clear && php artisan cache:clear
+```
+
+### Apache CSP Configuration
+
+The Content Security Policy must include proper quotes. Update `/opt/bitnami/apache/conf/bitnami/bitnami-ssl.conf`:
+
+```apache
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self' https://api.dev.livrolog.com https://api.livrolog.com https://accounts.google.com https://www.googleapis.com https://www.google-analytics.com https://analytics.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'"
+```
+
+**Important**: All CSP directives must use single quotes around keywords like `'self'` and `'unsafe-inline'`.
