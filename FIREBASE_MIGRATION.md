@@ -227,8 +227,8 @@ php artisan tinker
 
 ```bash
 # Testar endpoints
-curl -H "Authorization: Bearer TOKEN" http://localhost:8000/api/books
-curl http://localhost:8000/api/showcase
+curl -H "Authorization: Bearer TOKEN" http://localhost:8000/books
+curl http://localhost:8000/showcase
 ```
 
 #### 5.3 Testar Frontend

@@ -11,7 +11,7 @@ class HealthController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/health",
+     *     path="/health",
      *     operationId="healthCheck",
      *     tags={"Health"},
      *     summary="Health check endpoint",

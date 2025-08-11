@@ -95,7 +95,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/auth/register",
+     *     path="/auth/register",
      *     operationId="registerUser",
      *     tags={"Authentication"},
      *     summary="Register new user",
@@ -167,7 +167,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/auth/login",
+     *     path="/auth/login",
      *     operationId="loginUser",
      *     tags={"Authentication"},
      *     summary="User login",
@@ -225,7 +225,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/auth/logout",
+     *     path="/auth/logout",
      *     operationId="logoutUser",
      *     tags={"Authentication"},
      *     summary="User logout",
@@ -258,7 +258,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/auth/me",
+     *     path="/auth/me",
      *     operationId="getCurrentUser",
      *     tags={"Authentication"},
      *     summary="Get current user",
@@ -286,7 +286,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/password",
+     *     path="/password",
      *     operationId="updatePassword",
      *     tags={"Authentication"},
      *     summary="Update user password",
@@ -348,7 +348,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/auth/forgot-password",
+     *     path="/auth/forgot-password",
      *     operationId="forgotPassword",
      *     tags={"Authentication"},
      *     summary="Send password reset link",
@@ -394,7 +394,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/auth/reset-password",
+     *     path="/auth/reset-password",
      *     operationId="resetPassword",
      *     tags={"Authentication"},
      *     summary="Reset user password",
@@ -454,7 +454,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/auth/google",
+     *     path="/auth/google",
      *     operationId="googleRedirect",
      *     tags={"Authentication"},
      *     summary="Redirect to Google OAuth",
@@ -472,7 +472,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/auth/google/callback",
+     *     path="/auth/google/callback",
      *     operationId="googleCallback",
      *     tags={"Authentication"},
      *     summary="Google OAuth callback",
@@ -558,7 +558,7 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/auth/google",
+     *     path="/auth/google",
      *     operationId="googleSignIn",
      *     tags={"Authentication"},
      *     summary="Google Sign In with ID Token",

@@ -80,16 +80,16 @@ class FollowSystemTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->postJson("/api/users/{$user->id}/follow");
+        $response = $this->postJson("/users/{$user->id}/follow");
         $response->assertStatus(401);
 
-        $response = $this->deleteJson("/api/users/{$user->id}/unfollow");
+        $response = $this->deleteJson("/users/{$user->id}/unfollow");
         $response->assertStatus(401);
 
-        $response = $this->getJson("/api/users/{$user->id}/followers");
+        $response = $this->getJson("/users/{$user->id}/followers");
         $response->assertStatus(401);
 
-        $response = $this->getJson("/api/users/{$user->id}/following");
+        $response = $this->getJson("/users/{$user->id}/following");
         $response->assertStatus(401);
     }
 
@@ -99,7 +99,7 @@ class FollowSystemTest extends TestCase
         $following = User::factory()->create();
 
         $response = $this->actingAs($follower)
-            ->postJson("/api/users/{$following->id}/follow");
+            ->postJson("/users/{$following->id}/follow");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -117,7 +117,7 @@ class FollowSystemTest extends TestCase
         $this->followService->follow($follower, $following);
 
         $response = $this->actingAs($follower)
-            ->deleteJson("/api/users/{$following->id}/unfollow");
+            ->deleteJson("/users/{$following->id}/unfollow");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -136,7 +136,7 @@ class FollowSystemTest extends TestCase
         $this->followService->follow($follower2, $user);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/users/{$user->id}/followers");
+            ->getJson("/users/{$user->id}/followers");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -159,7 +159,7 @@ class FollowSystemTest extends TestCase
         $this->followService->follow($user, $following2);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/users/{$user->id}/following");
+            ->getJson("/users/{$user->id}/following");
 
         $response->assertStatus(200)
             ->assertJson([

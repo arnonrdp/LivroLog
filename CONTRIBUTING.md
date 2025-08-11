@@ -128,7 +128,7 @@ src/
 ```
 app/Http/Controllers/Api/    # API controllers
 app/Models/                  # Eloquent models
-routes/api.php              # API routes (/api/*)
+routes/api.php              # API routes (/*)
 ```
 
 ## 🔄 **Development Workflow**
@@ -187,9 +187,9 @@ docker exec livrolog-api php artisan migrate
 
 ### **API (localhost:8000)**
 
-- Base: `/api/`
-- Auth: `/api/auth/{login,register,logout,me}`
-- Books: `/api/books/`
+- Base: `/`
+- Auth: `/auth/{login,register,logout,me}`
+- Books: `/books/`
 - Documentation: `/documentation` (Swagger)
 
 ### **Frontend (localhost:8001)**

@@ -207,7 +207,7 @@ Create `.env` file in the webapp directory:
 
 ```env
 # API Configuration
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=http://localhost:8000
 
 # Google OAuth
 VITE_GOOGLE_CLIENT_ID=your-google-client-id

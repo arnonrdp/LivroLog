@@ -54,8 +54,8 @@ echo ""
 
 # Testar API
 echo "📋 7. Testando API..."
-echo "🌐 Endpoint /api/showcase:"
-curl -s http://localhost:8000/api/showcase | python3 -c "
+echo "🌐 Endpoint /showcase:"
+curl -s http://localhost:8000/showcase | python3 -c "
 import json, sys
 data = json.load(sys.stdin)
 print(f'Total de livros no showcase: {len(data)}')
@@ -76,7 +76,7 @@ echo "   - Real: php artisan firebase:import --clear --file=export.json"
 echo ""
 echo "3. ✅ Validar migração:"
 echo "   - Contar registros: php artisan tinker"
-echo "   - Testar API: curl http://localhost:8000/api/showcase"
+echo "   - Testar API: curl http://localhost:8000/showcase"
 echo "   - Testar frontend: yarn dev"
 echo ""
 echo "📚 Documentação completa: FIREBASE_MIGRATION.md"

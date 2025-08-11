@@ -7,10 +7,12 @@ Configure the following secrets in your GitHub repository settings (Settings →
 ### Required Secrets
 
 1. **SERVER_HOST**
+
    - Value: `35.170.25.86`
    - Description: IP address of the deployment server
 
 2. **SERVER_USER**
+
    - Value: `bitnami`
    - Description: SSH username for the server
 
@@ -28,6 +30,7 @@ Configure the following secrets in your GitHub repository settings (Settings →
 ### Branches and Environments
 
 - **main branch** → Production
+
   - Deploys to: `livrolog.com` and `api.livrolog.com`
   - Path: `/var/www/livrolog`
   - Uses: `.env` (production configuration)
@@ -103,6 +106,7 @@ sudo /opt/bitnami/ctlscript.sh restart apache
 ## Troubleshooting
 
 ### Check deployment logs
+
 ```bash
 ssh livrolog
 tail -f /opt/bitnami/apache/logs/error_log
@@ -110,10 +114,11 @@ tail -f /var/www/livrolog/current/api/storage/logs/laravel.log
 ```
 
 ### Test endpoints
+
 ```bash
 # Health check
-curl http://api.livrolog.com/api/health
-curl http://api.dev.livrolog.com/api/health
+curl http://api.livrolog.com/health
+curl http://api.dev.livrolog.com/health
 
 # Frontend
 curl -I http://livrolog.com
@@ -121,6 +126,7 @@ curl -I http://dev.livrolog.com
 ```
 
 ### Clear caches
+
 ```bash
 ssh livrolog
 cd /var/www/livrolog/current/api

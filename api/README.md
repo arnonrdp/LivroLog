@@ -145,52 +145,52 @@ api/
 
 ### Authentication
 
--   `POST /api/auth/register` - Register new user
--   `POST /api/auth/login` - Login with credentials
--   `POST /api/auth/google` - Google OAuth sign-in
--   `POST /api/auth/logout` - Logout current user
--   `GET /api/auth/me` - Get authenticated user profile
+-   `POST /auth/register` - Register new user
+-   `POST /auth/login` - Login with credentials
+-   `POST /auth/google` - Google OAuth sign-in
+-   `POST /auth/logout` - Logout current user
+-   `GET /auth/me` - Get authenticated user profile
 
 ### Books Management
 
--   `GET /api/books` - List all books with pagination
--   `POST /api/books` - Create new book
--   `GET /api/books/{id}` - Get book details
--   `PUT /api/books/{id}` - Update book information
--   `DELETE /api/books/{id}` - Delete book
--   `GET /api/books/search?q={query}` - Search Google Books API
--   `POST /api/books/create-enriched` - Create book with enriched data
--   `POST /api/books/{id}/enrich` - Enrich existing book data
--   `POST /api/books/enrich-batch` - Batch enrich multiple books
+-   `GET /books` - List all books with pagination
+-   `POST /books` - Create new book
+-   `GET /books/{id}` - Get book details
+-   `PUT /books/{id}` - Update book information
+-   `DELETE /books/{id}` - Delete book
+-   `GET /books/search?q={query}` - Search Google Books API
+-   `POST /books/create-enriched` - Create book with enriched data
+-   `POST /books/{id}/enrich` - Enrich existing book data
+-   `POST /books/enrich-batch` - Batch enrich multiple books
 
 ### User Library
 
--   `GET /api/user/books` - Get authenticated user's library
--   `POST /api/user/books` - Add book to user's library
--   `DELETE /api/user/books/{book_id}` - Remove book from library
--   `PATCH /api/user/books/{book_id}/read-date` - Update reading date
+-   `GET /user/books` - Get authenticated user's library
+-   `POST /user/books` - Add book to user's library
+-   `DELETE /user/books/{book_id}` - Remove book from library
+-   `PATCH /user/books/{book_id}/read-date` - Update reading date
 
 ### Social Features
 
--   `POST /api/users/{id}/follow` - Follow another user
--   `DELETE /api/users/{id}/unfollow` - Unfollow user
--   `GET /api/users/{id}/followers` - Get user's followers
--   `GET /api/users/{id}/following` - Get users being followed
--   `GET /api/users/{id}/follow-status` - Check follow relationship status
+-   `POST /users/{id}/follow` - Follow another user
+-   `DELETE /users/{id}/unfollow` - Unfollow user
+-   `GET /users/{id}/followers` - Get user's followers
+-   `GET /users/{id}/following` - Get users being followed
+-   `GET /users/{id}/follow-status` - Check follow relationship status
 
 ### Reviews & Ratings
 
--   `GET /api/reviews` - List book reviews
--   `POST /api/reviews` - Create book review
--   `PUT /api/reviews/{id}` - Update review
--   `DELETE /api/reviews/{id}` - Delete review
--   `POST /api/reviews/{id}/helpful` - Mark review as helpful
+-   `GET /reviews` - List book reviews
+-   `POST /reviews` - Create book review
+-   `PUT /reviews/{id}` - Update review
+-   `DELETE /reviews/{id}` - Delete review
+-   `POST /reviews/{id}/helpful` - Mark review as helpful
 
 ### Showcase
 
--   `GET /api/showcase` - Get featured books showcase
--   `POST /api/showcase` - Add book to showcase
--   `DELETE /api/showcase/{id}` - Remove from showcase
+-   `GET /showcase` - Get featured books showcase
+-   `POST /showcase` - Add book to showcase
+-   `DELETE /showcase/{id}` - Remove from showcase
 
 ## 🗄️ Database Schema
 

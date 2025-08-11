@@ -19,7 +19,7 @@ class BookController extends Controller
 
     /**
      *     @OA\Get(
-     *     path="/api/books",
+     *     path="/books",
      *     operationId="getBooks",
      *     tags={"Books"},
      *     summary="List books",
@@ -68,7 +68,7 @@ class BookController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/showcase",
+     *     path="/showcase",
      *     operationId="getShowcase",
      *     tags={"Books"},
      *     summary="List featured books for showcase",
@@ -95,7 +95,7 @@ class BookController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/books",
+     *     path="/books",
      *     operationId="storeBook",
      *     tags={"Books"},
      *     summary="Create new book with automatic enrichment",
@@ -291,7 +291,7 @@ class BookController extends Controller
      * Display the specified resource.
      *
      * @OA\Get(
-     *     path="/api/books/{id}",
+     *     path="/books/{id}",
      *     operationId="getBookById",
      *     tags={"Books"},
      *     summary="Get book details",
@@ -356,7 +356,7 @@ class BookController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/books/search",
+     *     path="/books/search",
      *     operationId="searchBooks",
      *     tags={"Books"},
      *     summary="Search books using multiple sources",
@@ -524,7 +524,7 @@ class BookController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/books/{id}/enrich",
+     *     path="/books/{id}/enrich",
      *     operationId="enrichBook",
      *     tags={"Books"},
      *     summary="Enrich book information using Google Books API",
@@ -575,7 +575,7 @@ class BookController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/books/enrich-batch",
+     *     path="/books/enrich-batch",
      *     operationId="enrichBooksInBatch",
      *     tags={"Books"},
      *     summary="Enrich multiple books in batch",
@@ -614,7 +614,7 @@ class BookController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/books/create-enriched",
+     *     path="/books/create-enriched",
      *     operationId="createEnrichedBook",
      *     tags={"Books"},
      *     summary="Create new book with enriched information",

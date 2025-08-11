@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Post(
- *     path="/api/authors/merge",
+ *     path="/authors/merge",
  *     summary="Merge two duplicate authors into one",
  *     description="Moves all books from the source author to the target author and deletes the duplicate author. **Admin access required.**",
  *     tags={"Authors"},

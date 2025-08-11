@@ -35,7 +35,7 @@
         }
     ],
     "paths": {
-        "/api/auth/register": {
+        "/auth/register": {
             "post": {
                 "tags": [
                     "Authentication"
@@ -135,7 +135,7 @@
                 }
             }
         },
-        "/api/auth/login": {
+        "/auth/login": {
             "post": {
                 "tags": [
                     "Authentication"
@@ -218,7 +218,7 @@
                 }
             }
         },
-        "/api/auth/logout": {
+        "/auth/logout": {
             "post": {
                 "tags": [
                     "Authentication"
@@ -267,7 +267,7 @@
                 ]
             }
         },
-        "/api/auth/me": {
+        "/auth/me": {
             "get": {
                 "tags": [
                     "Authentication"
@@ -310,7 +310,7 @@
                 ]
             }
         },
-        "/api/password": {
+        "/password": {
             "put": {
                 "tags": [
                     "Authentication"
@@ -395,7 +395,7 @@
                 ]
             }
         },
-        "/api/auth/forgot-password": {
+        "/auth/forgot-password": {
             "post": {
                 "tags": [
                     "Authentication"
@@ -461,7 +461,7 @@
                 }
             }
         },
-        "/api/auth/reset-password": {
+        "/auth/reset-password": {
             "post": {
                 "tags": [
                     "Authentication"
@@ -544,7 +544,7 @@
                 }
             }
         },
-        "/api/auth/google": {
+        "/auth/google": {
             "get": {
                 "tags": [
                     "Authentication"
@@ -627,7 +627,7 @@
                 }
             }
         },
-        "/api/auth/google/callback": {
+        "/auth/google/callback": {
             "get": {
                 "tags": [
                     "Authentication"
@@ -688,14 +688,14 @@
                 }
             }
         },
-        "/api/authors/merge": {
+        "/authors/merge": {
             "post": {
                 "tags": [
                     "Authors"
                 ],
                 "summary": "Merge two duplicate authors into one",
                 "description": "Moves all books from the source author to the target author and deletes the duplicate author. **Admin access required.**",
-                "operationId": "d25e7ab98ccb891844da86916cce44b9",
+                "operationId": "60ea6c60ea185c87b8dedeceb6eb6983",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -756,7 +756,7 @@
                 ]
             }
         },
-        "/api/books": {
+        "/books": {
             "get": {
                 "tags": [
                     "Books"
@@ -952,7 +952,7 @@
                 ]
             }
         },
-        "/api/showcase": {
+        "/showcase": {
             "get": {
                 "tags": [
                     "Books"
@@ -977,7 +977,7 @@
                 }
             }
         },
-        "/api/books/{id}": {
+        "/books/{id}": {
             "get": {
                 "tags": [
                     "Books"
@@ -1019,7 +1019,7 @@
                 ]
             }
         },
-        "/api/books/search": {
+        "/books/search": {
             "get": {
                 "tags": [
                     "Books"
@@ -1158,7 +1158,7 @@
                 ]
             }
         },
-        "/api/books/{id}/enrich": {
+        "/books/{id}/enrich": {
             "post": {
                 "tags": [
                     "Books"
@@ -1243,7 +1243,7 @@
                 ]
             }
         },
-        "/api/books/enrich-batch": {
+        "/books/enrich-batch": {
             "post": {
                 "tags": [
                     "Books"
@@ -1312,7 +1312,7 @@
                 ]
             }
         },
-        "/api/books/create-enriched": {
+        "/books/create-enriched": {
             "post": {
                 "tags": [
                     "Books"
@@ -1384,13 +1384,13 @@
                 ]
             }
         },
-        "/api/users/{id}/follow": {
+        "/users/{id}/follow": {
             "post": {
                 "tags": [
                     "Follows"
                 ],
                 "summary": "Follow a user",
-                "operationId": "323c7347a2186e2b8c5d132d37dc94c1",
+                "operationId": "6f109447b27b2dcc26dbf7dfeb0ce585",
                 "parameters": [
                     {
                         "name": "id",
@@ -1505,13 +1505,13 @@
                 ]
             }
         },
-        "/api/users/{id}/unfollow": {
+        "/users/{id}/unfollow": {
             "delete": {
                 "tags": [
                     "Follows"
                 ],
                 "summary": "Unfollow a user",
-                "operationId": "b550cfbdd1110b0970fd88537985eb03",
+                "operationId": "a370b6512b85f3dccf6bb694dc770a43",
                 "parameters": [
                     {
                         "name": "id",
@@ -1592,13 +1592,13 @@
                 ]
             }
         },
-        "/api/users/{id}/followers": {
+        "/users/{id}/followers": {
             "get": {
                 "tags": [
                     "Follows"
                 ],
                 "summary": "Get user followers",
-                "operationId": "7c7fd16394d48b870ab61fd3de263957",
+                "operationId": "6e630eb56369e97c29b81c98e068fbd1",
                 "parameters": [
                     {
                         "name": "id",
@@ -1710,13 +1710,13 @@
                 ]
             }
         },
-        "/api/users/{id}/following": {
+        "/users/{id}/following": {
             "get": {
                 "tags": [
                     "Follows"
                 ],
                 "summary": "Get users that a user is following",
-                "operationId": "4d3c436715f0514cff60d46ab1c789a1",
+                "operationId": "2b478d3762ffcd6828796157b9f2529b",
                 "parameters": [
                     {
                         "name": "id",
@@ -1828,13 +1828,13 @@
                 ]
             }
         },
-        "/api/users/{id}/follow-status": {
+        "/users/{id}/follow-status": {
             "get": {
                 "tags": [
                     "Follows"
                 ],
                 "summary": "Get follow status between current user and target user",
-                "operationId": "60ee92323193acc8aa8e7a0aeeec1b65",
+                "operationId": "7a22f304792b3dff5e7a3ec9cd75e7bf",
                 "parameters": [
                     {
                         "name": "id",
@@ -1882,7 +1882,7 @@
                 ]
             }
         },
-        "/api/health": {
+        "/health": {
             "get": {
                 "tags": [
                     "Health"
@@ -1972,14 +1972,14 @@
                 }
             }
         },
-        "/api/reviews": {
+        "/reviews": {
             "get": {
                 "tags": [
                     "Reviews"
                 ],
                 "summary": "Get paginated list of reviews with visibility filtering",
                 "description": "Returns paginated reviews with visibility logic: authenticated users see public reviews + their own reviews (any visibility), non-authenticated users see only public reviews",
-                "operationId": "346169ce6ab0c633530a7cedc1a25fab",
+                "operationId": "a0d00e73ae8bc8abf7a182a3bcc3e145",
                 "parameters": [
                     {
                         "name": "book_id",
@@ -2098,7 +2098,7 @@
                 ],
                 "summary": "Create a new review",
                 "description": "Create a new review for a book. Users can only have one review per book.",
-                "operationId": "154c71f5f72b459d998f5ea451bd4c96",
+                "operationId": "9fe745d363761b681b0e4f1d129e2456",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -2211,14 +2211,14 @@
                 ]
             }
         },
-        "/api/reviews/{id}": {
+        "/reviews/{id}": {
             "get": {
                 "tags": [
                     "Reviews"
                 ],
                 "summary": "Get a specific review",
                 "description": "Get a specific review by ID with visibility checking. Private reviews can only be viewed by their owners.",
-                "operationId": "a9949d3a965ed93ae30547c07eef7505",
+                "operationId": "59c58623cd284fa1d22b01b6eaa87729",
                 "parameters": [
                     {
                         "name": "id",
@@ -2287,7 +2287,7 @@
                 ],
                 "summary": "Update a review",
                 "description": "Update an existing review. Only the review owner can update their review.",
-                "operationId": "17776becb9faf054b5c49bc83ad6c974",
+                "operationId": "aab08b97bf5c417a4ae9061ecddf416c",
                 "parameters": [
                     {
                         "name": "id",
@@ -2423,7 +2423,7 @@
                 ],
                 "summary": "Delete a review",
                 "description": "Delete an existing review. Only the review owner or admin can delete a review.",
-                "operationId": "89986343b5dbd2b909c2764aeb7e4096",
+                "operationId": "27b37ca28fa012ce66153cad66bedfc9",
                 "parameters": [
                     {
                         "name": "id",
@@ -2483,13 +2483,13 @@
                 ]
             }
         },
-        "/api/reviews/{id}/helpful": {
+        "/reviews/{id}/helpful": {
             "post": {
                 "tags": [
                     "Reviews"
                 ],
                 "summary": "Mark a review as helpful",
-                "operationId": "21aff56c295b55cedd9c5a543c8dbb04",
+                "operationId": "7697b3cefc793bb5fd78126b9b8a068c",
                 "parameters": [
                     {
                         "name": "id",

@@ -25,7 +25,7 @@ class FollowController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/users/{id}/follow",
+     *     path="/users/{id}/follow",
      *     summary="Follow a user",
      *     tags={"Follows"},
      *     security={{"sanctum":{}}},
@@ -89,7 +89,7 @@ class FollowController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/users/{id}/unfollow",
+     *     path="/users/{id}/unfollow",
      *     summary="Unfollow a user",
      *     tags={"Follows"},
      *     security={{"sanctum":{}}},
@@ -139,7 +139,7 @@ class FollowController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/users/{id}/followers",
+     *     path="/users/{id}/followers",
      *     summary="Get user followers",
      *     tags={"Follows"},
      *     security={{"sanctum":{}}},
@@ -205,7 +205,7 @@ class FollowController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/users/{id}/following",
+     *     path="/users/{id}/following",
      *     summary="Get users that a user is following",
      *     tags={"Follows"},
      *     security={{"sanctum":{}}},
@@ -271,7 +271,7 @@ class FollowController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/users/{id}/follow-status",
+     *     path="/users/{id}/follow-status",
      *     summary="Get follow status between current user and target user",
      *     tags={"Follows"},
      *     security={{"sanctum":{}}},

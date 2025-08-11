@@ -14,7 +14,7 @@ class ReviewController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/reviews",
+     *     path="/reviews",
      *     summary="Get paginated list of reviews with visibility filtering",
      *     description="Returns paginated reviews with visibility logic: authenticated users see public reviews + their own reviews (any visibility), non-authenticated users see only public reviews",
      *     tags={"Reviews"},
@@ -128,7 +128,7 @@ class ReviewController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/reviews",
+     *     path="/reviews",
      *     summary="Create a new review",
      *     description="Create a new review for a book. Users can only have one review per book.",
      *     tags={"Reviews"},
@@ -213,7 +213,7 @@ class ReviewController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/reviews/{id}",
+     *     path="/reviews/{id}",
      *     summary="Get a specific review",
      *     description="Get a specific review by ID with visibility checking. Private reviews can only be viewed by their owners.",
      *     tags={"Reviews"},
@@ -269,7 +269,7 @@ class ReviewController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/reviews/{id}",
+     *     path="/reviews/{id}",
      *     summary="Update a review",
      *     description="Update an existing review. Only the review owner can update their review.",
      *     tags={"Reviews"},
@@ -349,7 +349,7 @@ class ReviewController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/reviews/{id}",
+     *     path="/reviews/{id}",
      *     summary="Delete a review",
      *     description="Delete an existing review. Only the review owner or admin can delete a review.",
      *     tags={"Reviews"},
@@ -401,7 +401,7 @@ class ReviewController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/reviews/{id}/helpful",
+     *     path="/reviews/{id}/helpful",
      *     summary="Mark a review as helpful",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
