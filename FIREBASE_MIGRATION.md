@@ -366,16 +366,15 @@ php artisan firebase:discover
 
 ## ✅ Checklist de Migração
 
-- [ ] Backup dos dados atuais
-- [ ] Export dos dados Firebase
-- [ ] Validação do JSON exportado
-- [ ] Teste com `--dry-run`
-- [ ] Migração de showcase
-- [ ] Migração de books
-- [ ] Migração de users
-- [ ] Validação dos dados importados
-- [ ] Teste da API
-- [ ] Teste do frontend
+- [x] Backup dos dados atuais
+- [x] Export dos dados Firebase
+- [x] Validação do JSON exportado
+- [x] Teste com `--dry-run`
+- [x] Migração de books
+- [x] Migração de users
+- [x] Validação dos dados importados
+- [x] Teste da API
+- [x] Teste do frontend
 - [ ] Configuração de senhas
 - [ ] Backup final
 - [ ] Remoção de dependências Firebase

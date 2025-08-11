@@ -70,9 +70,10 @@ Este documento detalha as fases de implementação do sistema de busca multi-fon
 ### Status: 📋 **PLANEJADO**
 
 ### Pré-requisitos
+
 - [ ] Conta Amazon Associates aprovada
 - [ ] Amazon Product Advertising API access
-- [ ] Conta AWS para Lightsail deployment
+- [x] Conta AWS para Lightsail deployment
 
 ### 2.1 Amazon Product Advertising API Integration
 
@@ -111,13 +112,13 @@ Este documento detalha as fases de implementação do sistema de busca multi-fon
 
 ## 📈 Resultados Esperados
 
-| Métrica | Atual | Fase 1 | Fase 2 |
-|---------|-------|--------|--------|
-| Taxa de Sucesso | ~70% | **85%** ✅ | ~95% |
-| Fontes de Dados | 1 | **2** ✅ | 3 |
-| Monetização | ❌ | ❌ | ✅ |
-| Custo Mensal | $0 | **$0** ✅ | ~$30 |
-| Status | - | **PRONTO** ✅ | Aguardando contas |
+| Métrica         | Atual | Fase 1        | Fase 2            |
+| --------------- | ----- | ------------- | ----------------- |
+| Taxa de Sucesso | ~70%  | **85%** ✅    | ~95%              |
+| Fontes de Dados | 1     | **2** ✅      | 3                 |
+| Monetização     | ❌    | ❌            | ✅                |
+| Custo Mensal    | $0    | **$0** ✅     | ~$30              |
+| Status          | -     | **PRONTO** ✅ | Aguardando contas |
 
 ---
 
@@ -164,11 +165,13 @@ AMAZON_PA_API_ENABLED=false
 ## 🧪 Testing Strategy
 
 ### Fase 1
+
 - [ ] Unit tests para cada provider
 - [ ] Integration tests para fluxo multi-fonte
 - [ ] Test cases com ISBNs conhecidos que falham no Google Books
 
 ### Fase 2
+
 - [ ] Tests para Amazon API integration
 - [ ] Tests para geração de affiliate links
 - [ ] Load testing para múltiplas fontes
@@ -180,11 +183,13 @@ AMAZON_PA_API_ENABLED=false
 ### Decisões Técnicas
 
 1. **Por que não ISBNdb na Fase 1?**
+
    - Custo de $14.95/mês
    - Open Library oferece cobertura similar gratuitamente
    - ISBNdb pode ser adicionado como Fase 2.5 se necessário
 
 2. **Por que Amazon na Fase 2?**
+
    - Requer conta de afiliados + API approval
    - Complexidade técnica higher (assinatura AWS)
    - Mas oferece melhor monetização + cobertura BR
@@ -199,16 +204,19 @@ AMAZON_PA_API_ENABLED=false
 ## 🚨 Próximos Passos
 
 ### Prioridade Alta
+
 1. [ ] Implementar OpenLibraryProvider
 2. [ ] Integrar sistema de cache
 3. [ ] Testar com ISBNs problemáticos
 
 ### Prioridade Média
+
 4. [ ] Documentar APIs no Swagger
 5. [ ] Criar dashboard de métricas
 6. [ ] Implementar retry logic
 
 ### Prioridade Baixa
+
 7. [ ] CDN para imagens
 8. [ ] Batch processing
 9. [ ] Admin interface para configurações
