@@ -1,0 +1,140 @@
+name: Post Deploy Configuration
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - name: Configure Production Environment
+        if: inputs.environment == 'production'
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Update production .env with secrets
+            cat > /var/www/livrolog/shared/.env << 'EOF'
+            APP_NAME=LivroLog
+            APP_ENV=production
+            APP_DEBUG=false
+            APP_KEY=base64:8MtpwN68JG8Zsr4di/+fGTrAREXlRwhrT5TPqADiW+4=
+            APP_URL=http://${{ secrets.SERVER_HOST }}
+            APP_FRONTEND_URL=http://${{ secrets.SERVER_HOST }}
+            
+            DB_CONNECTION=mysql
+            DB_HOST=localhost
+            DB_PORT=3306
+            DB_DATABASE=livrolog
+            DB_USERNAME=root
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            
+            REDIS_HOST=127.0.0.1
+            REDIS_PORT=6379
+            REDIS_PASSWORD=null
+            
+            MAIL_MAILER=ses
+            MAIL_FROM_ADDRESS=noreply@livrolog.com
+            MAIL_FROM_NAME=LivroLog
+            
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_DEFAULT_REGION=us-east-1
+            AWS_SES_REGION=us-east-1
+            
+            SESSION_DRIVER=file
+            CACHE_DRIVER=file
+            QUEUE_CONNECTION=sync
+            
+            LOG_CHANNEL=daily
+            LOG_LEVEL=error
+            
+            GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY || '' }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || '' }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
+            
+            AMAZON_PA_API_ENABLED=false
+            OPEN_LIBRARY_ENABLED=true
+            EOF
+            
+            # Fix Apache ServerName
+            sudo sed -i "s/ServerName .*/ServerName ${{ secrets.SERVER_HOST }}/" /opt/bitnami/apache2/conf/vhosts/livrolog.conf
+            
+            # Clear caches
+            cd /var/www/livrolog/current/api
+            php artisan cache:clear
+            php artisan config:clear
+            
+      - name: Configure Development Environment
+        if: inputs.environment == 'development'
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Update dev .env with secrets
+            cat > /var/www/livrolog-dev/shared/.env.dev << 'EOF'
+            APP_NAME=LivroLog
+            APP_ENV=development
+            APP_DEBUG=true
+            APP_KEY=base64:8MtpwN68JG8Zsr4di/+fGTrAREXlRwhrT5TPqADiW+4=
+            APP_URL=http://api.dev.livrolog.com
+            APP_FRONTEND_URL=http://dev.livrolog.com
+            
+            DB_CONNECTION=mysql
+            DB_HOST=localhost
+            DB_PORT=3306
+            DB_DATABASE=livrolog_dev
+            DB_USERNAME=root
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            
+            REDIS_HOST=127.0.0.1
+            REDIS_PORT=6379
+            REDIS_PASSWORD=null
+            
+            MAIL_MAILER=ses
+            MAIL_FROM_ADDRESS=noreply@livrolog.com
+            MAIL_FROM_NAME="LivroLog Dev"
+            
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_DEFAULT_REGION=us-east-1
+            AWS_SES_REGION=us-east-1
+            
+            SESSION_DRIVER=file
+            CACHE_DRIVER=file
+            QUEUE_CONNECTION=sync
+            
+            LOG_CHANNEL=daily
+            LOG_LEVEL=debug
+            
+            GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY || '' }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || '' }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
+            
+            AMAZON_PA_API_ENABLED=false
+            OPEN_LIBRARY_ENABLED=true
+            EOF
+            
+            # Clear caches
+            cd /var/www/livrolog-dev/current/api
+            php artisan cache:clear
+            php artisan config:clear
+            
+      - name: Restart Apache
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            sudo /opt/bitnami/ctlscript.sh restart apache

@@ -7,6 +7,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
+    sourcemap: false, // Disable source maps to avoid eval() usage
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -25,6 +26,13 @@ export default defineConfig({
         }
       }
     }
+  },
+
+  // Configure development options to avoid eval()
+  define: {
+    __VUE_PROD_DEVTOOLS__: false,
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false
   },
 
   plugins: [

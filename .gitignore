@@ -51,7 +51,4 @@ pnpm-debug.log*
 # Temporary files
 *.tmp
 *.temp
-PROJETO MODELO
-
-# Project model (temporary)
-/PROJETO-MODELO/
+firebase_migration.sql
