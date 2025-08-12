@@ -10,11 +10,11 @@ on:
       environment:
         description: 'Environment to deploy'
         required: true
-        default: 'development'
+        default: 'Development'
         type: choice
         options:
-          - development
-          - production
+          - Development
+          - Production
 
 env:
   PHP_VERSION: '8.3'
@@ -54,9 +54,9 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "environment=Production" >> $GITHUB_OUTPUT
           else
-            echo "environment=development" >> $GITHUB_OUTPUT
+            echo "environment=Development" >> $GITHUB_OUTPUT
           fi
 
   build-api:
@@ -99,7 +99,7 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache || true
-          
+
           # Generate Swagger documentation
           php artisan l5-swagger:generate
 
@@ -147,9 +147,9 @@ jobs:
 
           # Debug: Check if GOOGLE_CLIENT_ID secret exists
           echo "Debug: GOOGLE_CLIENT_ID exists: ${{ secrets.GOOGLE_CLIENT_ID != '' }}"
-          
+
           # Set API URL and Google Client ID based on environment
-          if [[ "${{ needs.detect-changes.outputs.environment }}" == "production" ]]; then
+          if [[ "${{ needs.detect-changes.outputs.environment }}" == "Production" ]]; then
             echo "VITE_API_URL=https://api.livrolog.com" > .env.production
             echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
             echo "VITE_APP_NAME=LivroLog" >> .env.production
@@ -203,7 +203,7 @@ jobs:
     steps:
       - name: Set environment variables
         run: |
-          if [[ "${{ env.ENVIRONMENT }}" == "production" ]]; then
+          if [[ "${{ env.ENVIRONMENT }}" == "Production" ]]; then
             echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
             echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
             echo "DEPLOY_PATH=/var/www/livrolog" >> $GITHUB_ENV
@@ -309,7 +309,7 @@ jobs:
             echo "✅ Application setup completed"
 
       - name: Run migrations (Production only)
-        if: env.ENVIRONMENT == 'production' && (needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch')
+        if: env.ENVIRONMENT == 'Production' && (needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch')
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -420,18 +420,18 @@ jobs:
             if [[ -z "$ENVIRONMENT" ]]; then
               # Fallback: detect from branch
               if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-                ENVIRONMENT="production"
+                ENVIRONMENT="Production"
               else
-                ENVIRONMENT="development"
+                ENVIRONMENT="Development"
               fi
             fi
 
-            if [[ "$ENVIRONMENT" == "production" ]]; then
+            if [[ "$ENVIRONMENT" == "Production" ]]; then
               DEPLOY_PATH="/var/www/livrolog"
             else
               DEPLOY_PATH="/var/www/livrolog-dev"
             fi
-            
+
             echo "Rollback environment: $ENVIRONMENT"
 
             # Get previous release
