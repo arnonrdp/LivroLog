@@ -9,6 +9,7 @@ class PaginatedUserResource extends JsonResource
     public function toArray($request)
     {
         $pagination = $this->resource;
+
         return [
             'data' => UserResource::collection($pagination->items()),
             'meta' => [
@@ -18,7 +19,7 @@ class PaginatedUserResource extends JsonResource
                 'per_page' => $pagination->perPage(),
                 'to' => $pagination->lastItem(),
                 'total' => $pagination->total(),
-            ]
+            ],
         ];
     }
 

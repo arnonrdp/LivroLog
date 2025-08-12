@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Book;
 use App\Http\Resources\PaginatedResource;
+use App\Models\Book;
 use App\Services\BookEnrichmentService;
 use App\Services\MultiSourceBookSearchService;
 use Illuminate\Http\JsonResponse;
@@ -25,44 +25,52 @@ class BookController extends Controller
      *     summary="List books",
      *     description="Returns paginated list of books",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Books list",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Book")),
      *             @OA\Property(property="current_page", type="integer"),
      *             @OA\Property(property="total", type="integer"),
      *             @OA\Property(property="per_page", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function index(Request $request)
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        
+
         $query = $user->books()->withPivot('added_at', 'read_at');
-        
+
         // If 'all' parameter is present, return all books without pagination
         if ($request->has('all') && $request->get('all') === 'true') {
             $books = $query->get();
+
             return response()->json(['data' => $books]);
         }
-        
+
         // Otherwise, paginate with configurable per_page parameter (default 20)
         $perPage = $request->get('per_page', 20);
         $books = $query->paginate($perPage);
+
         return new PaginatedResource($books);
     }
 
@@ -73,11 +81,14 @@ class BookController extends Controller
      *     tags={"Books"},
      *     summary="List featured books for showcase",
      *     description="Returns 20 most popular books (most present in user libraries) for public display",
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Featured books list",
+     *
      *         @OA\JsonContent(
      *             type="array",
+     *
      *             @OA\Items(ref="#/components/schemas/Book")
      *         )
      *     )
@@ -104,9 +115,12 @@ class BookController extends Controller
      *     summary="Create new book with automatic enrichment",
      *     description="Creates a new book and automatically enriches it with additional information from Google Books API. If book already exists, it will be enriched if needed and associated with the user.",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="google_id", type="string", example="iO5pApw2JycC", description="Google Books ID for enrichment"),
      *             @OA\Property(property="title", type="string", example="The Ivory Tower and Harry Potter"),
      *             @OA\Property(property="authors", type="string", example="Lana A. Whited"),
@@ -122,24 +136,31 @@ class BookController extends Controller
      *             @OA\Property(property="edition", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Book created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="book", ref="#/components/schemas/Book"),
      *             @OA\Property(property="enriched", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Book created successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Book already exists",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="book", ref="#/components/schemas/Book"),
      *             @OA\Property(property="enriched", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Book found in database")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=422, description="Validation error")
      * )
@@ -150,12 +171,12 @@ class BookController extends Controller
         $request->validate([
             'google_id' => self::VALIDATION_NULLABLE_STRING,
             'title' => 'required|string|max:255',
-            'isbn' => self::VALIDATION_NULLABLE_STRING . '|max:20',
+            'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
             'thumbnail' => 'nullable|url|max:512',
             'description' => self::VALIDATION_NULLABLE_STRING,
-            'language' => self::VALIDATION_NULLABLE_STRING . '|max:10',
-            'publisher' => self::VALIDATION_NULLABLE_STRING . '|max:255',
+            'language' => self::VALIDATION_NULLABLE_STRING.'|max:10',
+            'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
             'published_date' => ['nullable', function ($attribute, $value, $fail) {
                 if ($value === null) {
                     return;
@@ -174,9 +195,10 @@ class BookController extends Controller
                 // Accept full date formats
                 try {
                     \Carbon\Carbon::parse($value);
+
                     return;
                 } catch (\Exception $e) {
-                    $fail('The ' . $attribute . ' field must be a valid date, year (YYYY), or year-month (YYYY-MM).');
+                    $fail('The '.$attribute.' field must be a valid date, year (YYYY), or year-month (YYYY-MM).');
                 }
             }],
             'page_count' => 'nullable|integer|min:1',
@@ -231,7 +253,7 @@ class BookController extends Controller
             }
         }
 
-        if (!$user->books()->where('books.id', $book->id)->exists()) {
+        if (! $user->books()->where('books.id', $book->id)->exists()) {
             $user->books()->attach($book->id, [
                 'added_at' => now(),
             ]);
@@ -240,7 +262,7 @@ class BookController extends Controller
         return response()->json([
             'book' => $book,
             'enriched' => $needsEnrichment,
-            'message' => $needsEnrichment ? 'Book found and enriched' : 'Book found in database'
+            'message' => $needsEnrichment ? 'Book found and enriched' : 'Book found in database',
         ], 200);
     }
 
@@ -251,7 +273,7 @@ class BookController extends Controller
     {
         $bookData = $request->all();
 
-        if (!empty($bookData['published_date'])) {
+        if (! empty($bookData['published_date'])) {
             $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
         }
 
@@ -272,7 +294,7 @@ class BookController extends Controller
         return response()->json([
             'book' => $book,
             'enriched' => $enrichmentResult ? $enrichmentResult['success'] : false,
-            'message' => 'Book created successfully'
+            'message' => 'Book created successfully',
         ], 201);
     }
 
@@ -300,24 +322,30 @@ class BookController extends Controller
      *     summary="Get book details",
      *     description="Returns a single book by its custom ID.",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Book ID (e.g. B-3D6Y-9IO8)",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="B-3D6Y-9IO8")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Book details",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/Book")
      *     ),
+     *
      *     @OA\Response(response=404, description="Not found")
      * )
      */
     public function show(string $id)
     {
         $book = Book::with(['users', 'relatedBooks'])->findOrFail($id);
+
         return response()->json($book);
     }
 
@@ -330,7 +358,7 @@ class BookController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'isbn' => 'nullable|string|max:20|unique:books,isbn,' . $book->id,
+            'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$book->id,
             'authors' => 'nullable|string',
             'thumbnail' => 'nullable|url|max:512',
             'language' => 'nullable|string|max:10',
@@ -349,11 +377,12 @@ class BookController extends Controller
     public function destroy(Request $request, string $id)
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
         $book = Book::findOrFail($id);
         $user->books()->detach($book->id);
+
         return response()->json(['message' => 'Book removed from your library']);
     }
 
@@ -365,24 +394,31 @@ class BookController extends Controller
      *     summary="Search books using multiple sources",
      *     description="Searches books using multiple APIs (Google Books, Open Library) with intelligent fallback",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="q",
      *         in="query",
      *         description="Search term (minimum 3 characters) - can be ISBN, title, or author",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="9786584956261")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="provider",
      *         in="query",
      *         description="Force specific provider (optional) - for debugging",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"Google Books", "Open Library"})
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Search results",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="provider", type="string", example="Google Books"),
      *             @OA\Property(property="total_found", type="integer", example=5),
@@ -390,7 +426,9 @@ class BookController extends Controller
      *             @OA\Property(
      *                 property="books",
      *                 type="array",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="provider", type="string", example="Google Books"),
      *                     @OA\Property(property="google_id", type="string", example="YvkTEAAAQBAJ"),
      *                     @OA\Property(property="title", type="string", example="The Hobbit"),
@@ -405,7 +443,9 @@ class BookController extends Controller
      *             @OA\Property(
      *                 property="providers_tried",
      *                 type="array",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="provider", type="string", example="Google Books"),
      *                     @OA\Property(property="success", type="boolean", example=true),
      *                     @OA\Property(property="total_found", type="integer", example=5)
@@ -413,6 +453,7 @@ class BookController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=422, description="Invalid search term")
      * )
@@ -421,7 +462,7 @@ class BookController extends Controller
     {
         $request->validate([
             'q' => 'required|string|min:3',
-            'provider' => 'nullable|string|in:Google Books,Open Library'
+            'provider' => 'nullable|string|in:Google Books,Open Library',
         ]);
 
         $query = $request->input('q');
@@ -433,7 +474,7 @@ class BookController extends Controller
         } else {
             // Use multi-source search with fallback
             $result = $multiSearchService->search($query, [
-                'maxResults' => 40
+                'maxResults' => 40,
             ]);
         }
 
@@ -448,7 +489,7 @@ class BookController extends Controller
         return Http::get('https://www.googleapis.com/books/v1/volumes', [
             'q' => $query,
             'maxResults' => 40,
-            'printType' => 'books'
+            'printType' => 'books',
         ]);
     }
 
@@ -533,29 +574,38 @@ class BookController extends Controller
      *     summary="Enrich book information using Google Books API",
      *     description="Fetches additional information about a book from Google Books API and updates the local record",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Book ID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="B-3D6Y-9IO8")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", description="Optional Google Books ID to use for enrichment")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Book enriched successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Book enriched successfully"),
      *             @OA\Property(property="book_id", type="string", example="B-3D6Y-9IO8"),
      *             @OA\Property(property="added_fields", type="array", @OA\Items(type="string"))
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Book not found"),
      *     @OA\Response(response=422, description="Enrichment failed")
@@ -564,7 +614,7 @@ class BookController extends Controller
     public function enrichBook(Request $request, Book $book, BookEnrichmentService $enrichmentService)
     {
         $request->validate([
-            'google_id' => 'nullable|string'
+            'google_id' => 'nullable|string',
         ]);
 
         $result = $enrichmentService->enrichBook($book, $request->input('google_id'));
@@ -584,22 +634,29 @@ class BookController extends Controller
      *     summary="Enrich multiple books in batch",
      *     description="Enriches multiple books information using Google Books API",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="book_ids", type="array", @OA\Items(type="string"), description="Specific book IDs to enrich (optional)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Batch enrichment completed",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="processed", type="integer", example=10),
      *             @OA\Property(property="success_count", type="integer", example=8),
      *             @OA\Property(property="error_count", type="integer", example=2),
      *             @OA\Property(property="results", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
@@ -607,7 +664,7 @@ class BookController extends Controller
     {
         $request->validate([
             'book_ids' => 'nullable|array',
-            'book_ids.*' => 'string|exists:books,id'
+            'book_ids.*' => 'string|exists:books,id',
         ]);
 
         $result = $enrichmentService->enrichBooksInBatch($request->input('book_ids'));
@@ -623,23 +680,30 @@ class BookController extends Controller
      *     summary="Create new book with enriched information",
      *     description="Creates a new book directly from Google Books API with all available information",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", description="Google Books ID"),
      *             @OA\Property(property="add_to_library", type="boolean", example=true, description="Add book to user's library")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Book created and enriched successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Book created and enriched successfully"),
      *             @OA\Property(property="book", ref="#/components/schemas/Book"),
      *             @OA\Property(property="info_quality", type="string", example="complete")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=422, description="Creation failed")
      * )
@@ -648,7 +712,7 @@ class BookController extends Controller
     {
         $request->validate([
             'google_id' => 'required|string',
-            'add_to_library' => 'boolean'
+            'add_to_library' => 'boolean',
         ]);
 
         $userId = $request->boolean('add_to_library') ? $request->user()->id : null;
@@ -686,8 +750,9 @@ class BookController extends Controller
         } catch (\Exception $e) {
             \Log::warning('Error parsing publication date', [
                 'date_string' => $dateString,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }

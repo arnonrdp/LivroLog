@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Review;
-use App\Models\Book;
 use App\Http\Resources\ReviewResource;
-use Illuminate\Http\Request;
+use App\Models\Book;
+use App\Models\Review;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ReviewController extends Controller
 {
@@ -19,34 +19,45 @@ class ReviewController extends Controller
      *     description="Returns paginated reviews with visibility logic: authenticated users see public reviews + their own reviews (any visibility), non-authenticated users see only public reviews",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="book_id",
      *         in="query",
      *         description="Filter by book ID",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
      *         description="Filter by user ID",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="rating",
      *         in="query",
      *         description="Filter by rating",
+     *
      *         @OA\Schema(type="integer", minimum=1, maximum=5)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number for pagination",
+     *
      *         @OA\Schema(type="integer", minimum=1, default=1)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ReviewResource")),
      *             @OA\Property(property="meta", type="object",
      *                 @OA\Property(property="current_page", type="integer"),
@@ -65,13 +76,14 @@ class ReviewController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated - will show only public reviews")
      * )
      */
     public function index(Request $request): JsonResponse
     {
         $query = Review::with(['user:id,display_name,username,avatar', 'book:id,title,thumbnail'])
-                      ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         // Filter by book
         if ($request->has('book_id')) {
@@ -97,7 +109,7 @@ class ReviewController extends Controller
             // 2. Their own reviews (all visibility levels)
             $query->where(function ($q) use ($user) {
                 $q->where('visibility_level', 'public')
-                  ->orWhere('user_id', $user->id);
+                    ->orWhere('user_id', $user->id);
             });
         } else {
             // Non-authenticated users only see public reviews
@@ -133,10 +145,13 @@ class ReviewController extends Controller
      *     description="Create a new review for a book. Users can only have one review per book.",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"book_id", "content", "rating"},
+     *
      *             @OA\Property(property="book_id", type="string", example="B-XYZ3-UVW4", description="ID of the book being reviewed"),
      *             @OA\Property(property="title", type="string", example="Amazing book!", maxLength=200, description="Optional title for the review"),
      *             @OA\Property(property="content", type="string", example="This book was incredible...", maxLength=2000, description="Review content"),
@@ -145,11 +160,14 @@ class ReviewController extends Controller
      *             @OA\Property(property="is_spoiler", type="boolean", example=false, description="Whether the review contains spoilers")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Review created successfully",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ReviewResource")
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -157,15 +175,20 @@ class ReviewController extends Controller
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string"),
      *             @OA\Property(property="errors", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=409,
      *         description="User already has a review for this book",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="You already have a review for this book")
      *         )
      *     )
@@ -186,19 +209,19 @@ class ReviewController extends Controller
 
         // Check if user already has a review for this book
         $existingReview = Review::where('user_id', $user->id)
-                               ->where('book_id', $validated['book_id'])
-                               ->first();
+            ->where('book_id', $validated['book_id'])
+            ->first();
 
         if ($existingReview) {
             return response()->json([
                 'message' => 'You already have a review for this book. Please update your existing review instead.',
-                'existing_review_id' => $existingReview->id
+                'existing_review_id' => $existingReview->id,
             ], 409);
         }
 
         // Verify book exists
         $book = Book::find($validated['book_id']);
-        if (!$book) {
+        if (! $book) {
             return response()->json(['message' => 'Book not found'], 404);
         }
 
@@ -218,29 +241,39 @@ class ReviewController extends Controller
      *     description="Get a specific review by ID with visibility checking. Private reviews can only be viewed by their owners.",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Review ID",
+     *
      *         @OA\Schema(type="string", example="R-3D6Y-9IO8")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ReviewResource")
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Review not found")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Not authorized to view this review",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Not authorized to view this review")
      *         )
      *     )
@@ -249,9 +282,9 @@ class ReviewController extends Controller
     public function show(string $id): JsonResponse
     {
         $review = Review::with(['user:id,display_name,username,avatar', 'book:id,title,thumbnail'])
-                       ->find($id);
+            ->find($id);
 
-        if (!$review) {
+        if (! $review) {
             return response()->json(['message' => 'Review not found'], 404);
         }
 
@@ -259,7 +292,7 @@ class ReviewController extends Controller
 
         // Check if user can see this review
         if ($review->visibility_level === 'private') {
-            if (!$user || $user->id !== $review->user_id) {
+            if (! $user || $user->id !== $review->user_id) {
                 return response()->json(['message' => 'Not authorized to view this review'], 403);
             }
         }
@@ -274,16 +307,21 @@ class ReviewController extends Controller
      *     description="Update an existing review. Only the review owner can update their review.",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Review ID",
+     *
      *         @OA\Schema(type="string", example="R-3D6Y-9IO8")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="title", type="string", example="Updated title", maxLength=200, description="Optional review title"),
      *             @OA\Property(property="content", type="string", example="Updated content...", maxLength=2000, description="Review content"),
      *             @OA\Property(property="rating", type="integer", minimum=1, maximum=5, example=4, description="Rating from 1 to 5 stars"),
@@ -291,11 +329,14 @@ class ReviewController extends Controller
      *             @OA\Property(property="is_spoiler", type="boolean", example=true, description="Whether the review contains spoilers")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review updated successfully",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ReviewResource")
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -303,21 +344,29 @@ class ReviewController extends Controller
      *     @OA\Response(
      *         response=403,
      *         description="Not authorized to update this review",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Not authorized to update this review")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Review not found")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string"),
      *             @OA\Property(property="errors", type="object")
      *         )
@@ -354,13 +403,16 @@ class ReviewController extends Controller
      *     description="Delete an existing review. Only the review owner or admin can delete a review.",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Review ID",
+     *
      *         @OA\Schema(type="string", example="R-3D6Y-9IO8")
      *     ),
+     *
      *     @OA\Response(
      *         response=204,
      *         description="Review deleted successfully"
@@ -372,14 +424,19 @@ class ReviewController extends Controller
      *     @OA\Response(
      *         response=403,
      *         description="Not authorized to delete this review",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Not authorized to delete this review")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Review not found")
      *         )
      *     )
@@ -390,7 +447,7 @@ class ReviewController extends Controller
         $user = Auth::user();
 
         // Only the review owner or admin can delete
-        if ($user->id !== $review->user_id && !$user->isAdmin()) {
+        if ($user->id !== $review->user_id && ! $user->isAdmin()) {
             return response()->json(['message' => 'Not authorized to delete this review'], 403);
         }
 
@@ -405,20 +462,26 @@ class ReviewController extends Controller
      *     summary="Mark a review as helpful",
      *     tags={"Reviews"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Review marked as helpful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Review marked as helpful"),
      *             @OA\Property(property="helpful_count", type="integer", example=13)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Review not found"
@@ -436,7 +499,7 @@ class ReviewController extends Controller
 
         return response()->json([
             'message' => 'Review marked as helpful',
-            'helpful_count' => $review->helpful_count
+            'helpful_count' => $review->helpful_count,
         ]);
     }
 }

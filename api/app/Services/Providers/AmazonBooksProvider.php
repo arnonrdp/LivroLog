@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Amazon Product Advertising API Provider (Phase 2)
- * 
+ *
  * This provider will be enabled when Amazon PA API credentials are configured.
  * Requires Amazon Associates account and approved PA API access.
- * 
+ *
  * Features:
  * - Excellent coverage for Brazilian books
  * - Automatic affiliate links generation
@@ -20,10 +20,10 @@ use Illuminate\Support\Facades\Log;
 class AmazonBooksProvider implements BookSearchProvider
 {
     private const PRIORITY = 2; // Between Google Books (1) and Open Library (3)
-    
+
     public function search(string $query, array $options = []): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return $this->buildErrorResponse('Amazon PA API is not configured');
         }
 
@@ -34,10 +34,10 @@ class AmazonBooksProvider implements BookSearchProvider
         // 3. Multiple search strategies (ISBN, title+author)
         // 4. Affiliate link generation
         // 5. Image URL optimization
-        
+
         Log::info('AmazonBooksProvider: Integration pending Phase 2', [
             'query' => $query,
-            'message' => 'Amazon PA API integration will be implemented in Phase 2'
+            'message' => 'Amazon PA API integration will be implemented in Phase 2',
         ]);
 
         return $this->buildErrorResponse('Amazon PA API integration pending (Phase 2)');
@@ -50,10 +50,10 @@ class AmazonBooksProvider implements BookSearchProvider
 
     public function isEnabled(): bool
     {
-        return config('services.amazon.enabled', false) && 
-               !empty(config('services.amazon.pa_api_key')) &&
-               !empty(config('services.amazon.pa_secret_key')) &&
-               !empty(config('services.amazon.associate_tag'));
+        return config('services.amazon.enabled', false) &&
+               ! empty(config('services.amazon.pa_api_key')) &&
+               ! empty(config('services.amazon.pa_secret_key')) &&
+               ! empty(config('services.amazon.associate_tag'));
     }
 
     public function getPriority(): int
@@ -71,15 +71,15 @@ class AmazonBooksProvider implements BookSearchProvider
             'provider' => $this->getName(),
             'books' => [],
             'total_found' => 0,
-            'message' => $message
+            'message' => $message,
         ];
     }
 
     // TODO: Phase 2 Implementation
-    // 
+    //
     // Private methods to be implemented:
     // - buildSearchRequest(string $query, array $options): array
-    // - signRequest(array $request): array  
+    // - signRequest(array $request): array
     // - searchByIsbn(string $isbn): array
     // - searchByKeyword(string $keyword): array
     // - processAmazonResults(array $data): array

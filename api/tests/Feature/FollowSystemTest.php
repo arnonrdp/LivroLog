@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Follow;
+use App\Models\User;
 use App\Services\FollowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -104,7 +104,7 @@ class FollowSystemTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Successfully followed user'
+                'message' => 'Successfully followed user',
             ]);
     }
 
@@ -122,7 +122,7 @@ class FollowSystemTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Successfully unfollowed user'
+                'message' => 'Successfully unfollowed user',
             ]);
     }
 
@@ -143,9 +143,9 @@ class FollowSystemTest extends TestCase
                 'success' => true,
                 'data' => [
                     'pagination' => [
-                        'total' => 2
-                    ]
-                ]
+                        'total' => 2,
+                    ],
+                ],
             ]);
     }
 
@@ -166,9 +166,9 @@ class FollowSystemTest extends TestCase
                 'success' => true,
                 'data' => [
                     'pagination' => [
-                        'total' => 2
-                    ]
-                ]
+                        'total' => 2,
+                    ],
+                ],
             ]);
     }
 

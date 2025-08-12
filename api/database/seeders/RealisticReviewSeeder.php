@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Book;
 use App\Models\Review;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +13,10 @@ class RealisticReviewSeeder extends Seeder
     {
         // Pegar apenas usuários que têm livros na biblioteca
         $userBooks = DB::table('users_books')->get();
-        
+
         if ($userBooks->isEmpty()) {
             $this->command->warn('No user books found. Run UserBookSeeder first.');
+
             return;
         }
 
@@ -42,30 +41,30 @@ class RealisticReviewSeeder extends Seeder
         // Para cada usuário-livro, talvez criar uma review (40% de chance)
         foreach ($userBooks as $userBook) {
             $hasReview = random_int(1, 100) <= 40; // 40% de chance de ter review
-            
+
             if ($hasReview) {
                 $reviewData = $reviewTexts[array_rand($reviewTexts)];
-                
+
                 // Algumas reviews têm spoiler
                 $isSpoiler = random_int(1, 100) <= 15; // 15% de chance de ter spoiler
-                
+
                 // Diferentes níveis de visibilidade
                 $visibilityOptions = ['public', 'public', 'public', 'friends', 'private']; // Maior chance de ser pública
                 $visibility = $visibilityOptions[array_rand($visibilityOptions)];
-                
+
                 // Rating entre 1 e 5
                 $rating = random_int(1, 5);
-                
+
                 // Algumas reviews recebem votos de helpful
                 $helpfulCount = random_int(0, 25);
-                
+
                 // Data da review (após data de leitura, se existir)
-                $reviewDate = $userBook->read_at ? 
-                    \Carbon\Carbon::parse($userBook->read_at)->addDays(random_int(1, 30)) : 
+                $reviewDate = $userBook->read_at ?
+                    \Carbon\Carbon::parse($userBook->read_at)->addDays(random_int(1, 30)) :
                     \Carbon\Carbon::parse($userBook->added_at)->addDays(random_int(1, 60));
 
                 Review::create([
-                    'id' => 'R-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4)),
+                    'id' => 'R-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4)),
                     'user_id' => $userBook->user_id,
                     'book_id' => $userBook->book_id,
                     'title' => $reviewData['title'],

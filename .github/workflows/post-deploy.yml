@@ -14,7 +14,7 @@ jobs:
     
     steps:
       - name: Configure Production Environment
-        if: inputs.environment == 'production'
+        if: inputs.environment == 'Production'
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -26,7 +26,7 @@ jobs:
             APP_NAME=LivroLog
             APP_ENV=production
             APP_DEBUG=false
-            APP_KEY=base64:8MtpwN68JG8Zsr4di/+fGTrAREXlRwhrT5TPqADiW+4=
+            APP_KEY=${{ secrets.APP_KEY }}
             APP_URL=http://${{ secrets.SERVER_HOST }}
             APP_FRONTEND_URL=http://${{ secrets.SERVER_HOST }}
             
@@ -74,7 +74,7 @@ jobs:
             php artisan config:clear
             
       - name: Configure Development Environment
-        if: inputs.environment == 'development'
+        if: inputs.environment == 'Development'
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -86,7 +86,7 @@ jobs:
             APP_NAME=LivroLog
             APP_ENV=development
             APP_DEBUG=true
-            APP_KEY=base64:8MtpwN68JG8Zsr4di/+fGTrAREXlRwhrT5TPqADiW+4=
+            APP_KEY=${{ secrets.APP_KEY }}
             APP_URL=http://api.dev.livrolog.com
             APP_FRONTEND_URL=http://dev.livrolog.com
             

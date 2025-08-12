@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Book;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +16,7 @@ class UserBookSeeder extends Seeder
 
         if ($users->isEmpty() || $books->isEmpty()) {
             $this->command->warn('Users or Books not found. Run UserSeeder and BookSeeder first.');
+
             return;
         }
 
@@ -25,17 +26,17 @@ class UserBookSeeder extends Seeder
             $minBooks = min(10, $books->count());
             $bookCount = random_int($minBooks, $maxBooks);
             $userBooks = $books->random($bookCount);
-            
+
             foreach ($userBooks as $book) {
                 // Algumas pessoas têm data de leitura, outras não
                 $hasReadDate = random_int(1, 100) <= 60; // 60% de chance de ter data de leitura
                 $readAt = null;
-                
+
                 if ($hasReadDate) {
                     // Data de leitura aleatória nos últimos 2 anos
                     $readAt = now()->subDays(random_int(1, 730));
                 }
-                
+
                 // Data de adição à biblioteca (sempre anterior à data de leitura)
                 $addedAt = $readAt ? $readAt->copy()->subDays(random_int(1, 30)) : now()->subDays(random_int(1, 365));
 

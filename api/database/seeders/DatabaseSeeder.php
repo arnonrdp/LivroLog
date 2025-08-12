@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
             RealisticReviewSeeder::class,
             SocialSeeder::class,
         ]);
-        
+
         $this->command->info('✅ Database seeded successfully with realistic data!');
         $this->command->info('📊 Created:');
         $this->command->info('   - 10 Users (9 regular + 1 admin)');

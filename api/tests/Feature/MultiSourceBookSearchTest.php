@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Services\MultiSourceBookSearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
 
 class MultiSourceBookSearchTest extends TestCase
 {
@@ -16,18 +16,18 @@ class MultiSourceBookSearchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->searchService = new MultiSourceBookSearchService();
+        $this->searchService = new MultiSourceBookSearchService;
     }
 
     public function test_search_service_initialization()
     {
         $stats = $this->searchService->getSearchStats();
-        
+
         $this->assertIsArray($stats);
         $this->assertArrayHasKey('total_providers', $stats);
         $this->assertArrayHasKey('active_providers', $stats);
         $this->assertArrayHasKey('provider_details', $stats);
-        
+
         // Should have at least Google Books and Open Library enabled by default
         $this->assertGreaterThanOrEqual(2, $stats['active_providers']);
     }
@@ -47,21 +47,21 @@ class MultiSourceBookSearchTest extends TestCase
                             'industryIdentifiers' => [
                                 [
                                     'type' => 'ISBN_13',
-                                    'identifier' => '9781234567890'
-                                ]
+                                    'identifier' => '9781234567890',
+                                ],
                             ],
                             'imageLinks' => [
-                                'thumbnail' => 'https://example.com/cover.jpg'
+                                'thumbnail' => 'https://example.com/cover.jpg',
                             ],
                             'description' => 'Test description',
                             'publisher' => 'Test Publisher',
                             'publishedDate' => '2024',
                             'pageCount' => 200,
-                            'language' => 'en'
-                        ]
-                    ]
-                ]
-            ])
+                            'language' => 'en',
+                        ],
+                    ],
+                ],
+            ]),
         ]);
 
         $result = $this->searchService->search('9781234567890');
@@ -70,7 +70,7 @@ class MultiSourceBookSearchTest extends TestCase
         $this->assertEquals('Google Books', $result['provider']);
         $this->assertGreaterThan(0, $result['total_found']);
         $this->assertNotEmpty($result['books']);
-        
+
         $book = $result['books'][0];
         $this->assertEquals('Test Book', $book['title']);
         $this->assertEquals('Test Author', $book['authors']);
@@ -83,20 +83,20 @@ class MultiSourceBookSearchTest extends TestCase
         Http::fake([
             'https://www.googleapis.com/books/v1/volumes*' => Http::response([
                 'totalItems' => 0,
-                'items' => []
+                'items' => [],
             ]),
             'https://openlibrary.org/api/books*' => Http::response([
                 'ISBN:9781234567890' => [
                     'title' => 'Test Book from Open Library',
                     'authors' => [
-                        ['name' => 'Test Author']
+                        ['name' => 'Test Author'],
                     ],
                     'publishers' => ['Test Publisher'],
                     'publish_date' => '2024',
                     'number_of_pages' => 150,
-                    'url' => 'https://openlibrary.org/books/test'
-                ]
-            ])
+                    'url' => 'https://openlibrary.org/books/test',
+                ],
+            ]),
         ]);
 
         $result = $this->searchService->search('9781234567890');
@@ -105,7 +105,7 @@ class MultiSourceBookSearchTest extends TestCase
         $this->assertEquals('Open Library', $result['provider']);
         $this->assertGreaterThan(0, $result['total_found']);
         $this->assertNotEmpty($result['books']);
-        
+
         $book = $result['books'][0];
         $this->assertEquals('Test Book from Open Library', $book['title']);
         $this->assertEquals('Test Author', $book['authors']);
@@ -118,13 +118,13 @@ class MultiSourceBookSearchTest extends TestCase
         Http::fake([
             'https://www.googleapis.com/books/v1/volumes*' => Http::response([
                 'totalItems' => 0,
-                'items' => []
+                'items' => [],
             ]),
             'https://openlibrary.org/api/books*' => Http::response([]),
             'https://openlibrary.org/search.json*' => Http::response([
                 'numFound' => 0,
-                'docs' => []
-            ])
+                'docs' => [],
+            ]),
         ]);
 
         $result = $this->searchService->search('nonexistentbook123');
@@ -147,11 +147,11 @@ class MultiSourceBookSearchTest extends TestCase
                         'id' => 'google-test-id',
                         'volumeInfo' => [
                             'title' => 'Google Books Result',
-                            'authors' => ['Google Author']
-                        ]
-                    ]
-                ]
-            ])
+                            'authors' => ['Google Author'],
+                        ],
+                    ],
+                ],
+            ]),
         ]);
 
         $result = $this->searchService->searchWithSpecificProvider('Google Books', 'test query');
@@ -168,7 +168,7 @@ class MultiSourceBookSearchTest extends TestCase
                 $query = $request->data()['q'] ?? '';
                 // Should receive normalized ISBN without hyphens
                 $this->assertStringContainsString('isbn:9781234567890', $query);
-                
+
                 return Http::response([
                     'totalItems' => 1,
                     'items' => [
@@ -176,12 +176,12 @@ class MultiSourceBookSearchTest extends TestCase
                             'id' => 'normalized-test',
                             'volumeInfo' => [
                                 'title' => 'Normalized ISBN Test',
-                                'authors' => ['Test Author']
-                            ]
-                        ]
-                    ]
+                                'authors' => ['Test Author'],
+                            ],
+                        ],
+                    ],
                 ]);
-            }
+            },
         ]);
 
         // Test with hyphenated ISBN
@@ -199,11 +199,11 @@ class MultiSourceBookSearchTest extends TestCase
                         'id' => 'cache-test-id',
                         'volumeInfo' => [
                             'title' => 'Cached Book',
-                            'authors' => ['Cache Author']
-                        ]
-                    ]
-                ]
-            ])
+                            'authors' => ['Cache Author'],
+                        ],
+                    ],
+                ],
+            ]),
         ]);
 
         // First search - should hit API
@@ -212,7 +212,7 @@ class MultiSourceBookSearchTest extends TestCase
 
         // Second search - should hit cache (no HTTP call expected)
         Http::assertSentCount(1); // Only one HTTP request should have been made
-        
+
         $result2 = $this->searchService->search('cache-test-query');
         $this->assertTrue($result2['success']);
         $this->assertEquals($result1['books'], $result2['books']);

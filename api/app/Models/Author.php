@@ -10,13 +10,13 @@ class Author extends Model
 {
     use HasFactory;
 
-
     protected $fillable = [
         'id',
         'name',
     ];
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected static function boot()
@@ -24,7 +24,7 @@ class Author extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = 'A-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
+                $model->{$model->getKeyName()} = 'A-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
             }
         });
     }

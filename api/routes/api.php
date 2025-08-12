@@ -2,13 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\ReviewController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 
 /*
 |--------------------------------------------------------------------------

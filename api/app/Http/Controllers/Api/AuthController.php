@@ -17,9 +17,11 @@ use Laravel\Socialite\Facades\Socialite;
  *     title="LivroLog API",
  *     version="1.0.0",
  *     description="Personal library management system with Google Books API integration",
+ *
  *     @OA\Contact(
  *         email="support@livrolog.com"
  *     ),
+ *
  *     @OA\License(
  *         name="MIT",
  *         url="https://opensource.org/licenses/MIT"
@@ -29,6 +31,7 @@ use Laravel\Socialite\Facades\Socialite;
  * @OA\Server(
  *     url="{scheme}://{host}",
  *     description="LivroLog API Server",
+ *
  *     @OA\ServerVariable(
  *         serverVariable="scheme",
  *         enum={"https", "http"},
@@ -39,7 +42,7 @@ use Laravel\Socialite\Facades\Socialite;
  *         default="api.dev.livrolog.com"
  *     )
  * )
- * 
+ *
  * @OA\Server(
  *     url="http://localhost:8000",
  *     description="Local Development Server"
@@ -57,22 +60,18 @@ use Laravel\Socialite\Facades\Socialite;
  *     name="Authentication",
  *     description="User authentication endpoints"
  * )
- *
  * @OA\Tag(
  *     name="Books",
  *     description="Book management"
  * )
- *
  * @OA\Tag(
  *     name="User Library",
  *     description="User's personal library"
  * )
- *
  * @OA\Tag(
  *     name="Users",
  *     description="User management"
  * )
- *
  * @OA\Tag(
  *     name="Health",
  *     description="Health check endpoints"
@@ -82,7 +81,9 @@ class AuthController extends Controller
 {
     // Validation constants to avoid duplication
     private const VALIDATION_REQUIRED_STRING = 'required|string';
+
     private const VALIDATION_REQUIRED_EMAIL = 'required|email';
+
     private const LIBRARY_SUFFIX = "'s Library";
 
     // Password validation rules
@@ -90,7 +91,7 @@ class AuthController extends Controller
         'required',
         'string',
         'min:8',
-        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/'
+        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
     ];
 
     /**
@@ -100,11 +101,14 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="Register new user",
      *     description="Creates a new user account and returns access token",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="User data",
+     *
      *         @OA\JsonContent(
      *             required={"display_name","email","username","password"},
+     *
      *             @OA\Property(property="display_name", type="string", example="John Doe", description="User display name"),
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
      *             @OA\Property(property="username", type="string", example="john_doe", description="Unique username"),
@@ -112,19 +116,25 @@ class AuthController extends Controller
      *             @OA\Property(property="shelf_name", type="string", example="John's Library", description="Shelf name (optional)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="User registered successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
      *             @OA\Property(property="access_token", type="string", example="1|aBcDeF123456..."),
      *             @OA\Property(property="token_type", type="string", example="Bearer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(property="errors", type="object")
      *         )
@@ -134,8 +144,8 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'display_name' => self::VALIDATION_REQUIRED_STRING . '|max:255',
-            'email' => self::VALIDATION_REQUIRED_EMAIL . '|max:255|unique:users',
+            'display_name' => self::VALIDATION_REQUIRED_STRING.'|max:255',
+            'email' => self::VALIDATION_REQUIRED_EMAIL.'|max:255|unique:users',
             'username' => [
                 'required',
                 'string',
@@ -143,7 +153,7 @@ class AuthController extends Controller
                 'max:20',
                 'unique:users',
                 'regex:/^[a-zA-Z0-9_]+$/', // Only letters, numbers, and underscores
-                'not_regex:/^(admin|api|www|root|support|help|about|contact|terms|privacy|settings|profile|user|users|book|books)$/i' // Reserved usernames
+                'not_regex:/^(admin|api|www|root|support|help|about|contact|terms|privacy|settings|profile|user|users|book|books)$/i', // Reserved usernames
             ],
             'password' => self::VALIDATION_PASSWORD_RULES,
         ]);
@@ -153,7 +163,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'shelf_name' => $request->shelf_name ?? $request->display_name . self::LIBRARY_SUFFIX,
+            'shelf_name' => $request->shelf_name ?? $request->display_name.self::LIBRARY_SUFFIX,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -172,28 +182,37 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="User login",
      *     description="Authenticates user and returns access token",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Login credentials",
+     *
      *         @OA\JsonContent(
      *             required={"email","password"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
      *             @OA\Property(property="password", type="string", format="password", example="password123", description="User password")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Login successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
      *             @OA\Property(property="access_token", type="string", example="1|aBcDeF123456..."),
      *             @OA\Property(property="token_type", type="string", example="Bearer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Invalid credentials",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(property="errors", type="object")
      *         )
@@ -207,7 +226,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (! Auth::attempt($request->only('email', 'password'))) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
@@ -231,17 +250,23 @@ class AuthController extends Controller
      *     summary="User logout",
      *     description="Invalidates the current access token",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Logout successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Logged out successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -252,7 +277,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Logged out successfully'
+            'message' => 'Logged out successfully',
         ]);
     }
 
@@ -264,15 +289,20 @@ class AuthController extends Controller
      *     summary="Get current user",
      *     description="Returns the authenticated user information",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="User information",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/User")
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated.")
      *         )
      *     )
@@ -281,6 +311,7 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user()->loadCount(['followers', 'following']);
+
         return response()->json($user);
     }
 
@@ -292,27 +323,36 @@ class AuthController extends Controller
      *     summary="Update user password",
      *     description="Updates the authenticated user's password",
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Password update data",
+     *
      *         @OA\JsonContent(
      *             required={"current_password","password","password_confirmation"},
+     *
      *             @OA\Property(property="current_password", type="string", format="password", description="Current password"),
      *             @OA\Property(property="password", type="string", format="password", description="New password"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", description="New password confirmation")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password updated successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Password updated successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="The given data was invalid."),
      *             @OA\Property(property="errors", type="object")
      *         )
@@ -329,20 +369,20 @@ class AuthController extends Controller
         $user = $request->user();
 
         // Verify current password
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'The current password is incorrect.',
-                'errors' => ['current_password' => ['The current password is incorrect.']]
+                'errors' => ['current_password' => ['The current password is incorrect.']],
             ], 422);
         }
 
         // Update password
         $user->update([
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
         ]);
 
         return response()->json([
-            'message' => 'Password updated successfully'
+            'message' => 'Password updated successfully',
         ]);
     }
 
@@ -353,25 +393,34 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="Send password reset link",
      *     description="Sends a password reset link to the user's email",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Email address",
+     *
      *         @OA\JsonContent(
      *             required={"email"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password reset link sent",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Password reset link sent successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Error sending password reset link",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unable to send password reset link.")
      *         )
      *     )
@@ -399,28 +448,37 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="Reset user password",
      *     description="Resets the user's password using the token received via email",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Password reset data",
+     *
      *         @OA\JsonContent(
      *             required={"token","email","password","password_confirmation"},
+     *
      *             @OA\Property(property="token", type="string", description="Password reset token"),
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
      *             @OA\Property(property="password", type="string", format="password", description="New password"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", description="New password confirmation")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Password reset successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Password reset successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Error resetting password",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unable to reset password.")
      *         )
      *     )
@@ -438,7 +496,7 @@ class AuthController extends Controller
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, $password) {
                 $user->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->save();
 
                 $user->setRememberToken(Str::random(60));
@@ -459,6 +517,7 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="Redirect to Google OAuth",
      *     description="Redirects user to Google for OAuth authentication",
+     *
      *     @OA\Response(
      *         response=302,
      *         description="Redirect to Google OAuth URL"
@@ -477,26 +536,34 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="Google OAuth callback",
      *     description="Handles Google OAuth callback and creates/authenticates user",
+     *
      *     @OA\Parameter(
      *         name="code",
      *         in="query",
      *         description="Authorization code from Google",
      *         required=true,
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Authentication successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
      *             @OA\Property(property="access_token", type="string"),
      *             @OA\Property(property="token_type", type="string", example="Bearer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="OAuth error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="OAuth authentication failed")
      *         )
      *     )
@@ -510,7 +577,7 @@ class AuthController extends Controller
             // Check if user already exists by google_id
             $user = User::where('google_id', $googleUser->id)->first();
 
-            if (!$user) {
+            if (! $user) {
                 // Check if user exists by email
                 $user = User::where('email', $googleUser->email)->first();
 
@@ -533,7 +600,7 @@ class AuthController extends Controller
                         'username' => $username,
                         'avatar' => $googleUser->avatar,
                         'password' => Hash::make(Str::random(32)), // Random password since they'll use Google
-                        'shelf_name' => $googleUser->name . "'s Library",
+                        'shelf_name' => $googleUser->name."'s Library",
                         'email_verified' => true,
                         'email_verified_at' => now(),
                     ]);
@@ -551,7 +618,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'OAuth authentication failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -563,27 +630,36 @@ class AuthController extends Controller
      *     tags={"Authentication"},
      *     summary="Google Sign In with ID Token",
      *     description="Authenticates user using Google ID Token for frontend integration",
+     *
      *     @OA\RequestBody(
      *         required=true,
      *         description="Google ID Token",
+     *
      *         @OA\JsonContent(
      *             required={"id_token"},
+     *
      *             @OA\Property(property="id_token", type="string", description="Google ID Token from frontend")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Authentication successful",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="user", ref="#/components/schemas/User"),
      *             @OA\Property(property="access_token", type="string"),
      *             @OA\Property(property="token_type", type="string", example="Bearer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Invalid token",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Invalid Google ID Token")
      *         )
      *     )
@@ -600,7 +676,7 @@ class AuthController extends Controller
             $client = new \Google_Client(['client_id' => config('services.google.client_id')]);
             $payload = $client->verifyIdToken($request->id_token);
 
-            if (!$payload) {
+            if (! $payload) {
                 return response()->json(['message' => 'Invalid Google ID Token'], 400);
             }
 
@@ -613,7 +689,7 @@ class AuthController extends Controller
             // Check if user already exists by google_id
             $user = User::where('google_id', $googleId)->first();
 
-            if (!$user) {
+            if (! $user) {
                 // Check if user exists by email
                 $user = User::where('email', $email)->first();
 
@@ -636,7 +712,7 @@ class AuthController extends Controller
                         'username' => $username,
                         'avatar' => $avatar,
                         'password' => Hash::make(Str::random(32)), // Random password since they'll use Google
-                        'shelf_name' => $name . "'s Library",
+                        'shelf_name' => $name."'s Library",
                         'email_verified' => $emailVerified,
                         'email_verified_at' => $emailVerified ? now() : null,
                     ]);
@@ -654,7 +730,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Google Sign In failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -683,7 +759,7 @@ class AuthController extends Controller
 
         // Check for uniqueness - if exists, try with numbers
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
+            $username = $baseUsername.$counter;
             $counter++;
         }
 

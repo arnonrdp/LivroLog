@@ -145,23 +145,16 @@ jobs:
         run: |
           yarn install --frozen-lockfile --prefer-offline
 
-          # Debug: Check if GOOGLE_CLIENT_ID secret exists
-          echo "Debug: GOOGLE_CLIENT_ID exists: ${{ secrets.GOOGLE_CLIENT_ID != '' }}"
-
           # Set API URL and Google Client ID based on environment
           if [[ "${{ needs.detect-changes.outputs.environment }}" == "Production" ]]; then
             echo "VITE_API_URL=https://api.livrolog.com" > .env.production
             echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
             echo "VITE_APP_NAME=LivroLog" >> .env.production
-            echo "Debug: .env.production contents:"
-            cat .env.production | sed 's/\(GOOGLE_CLIENT_ID=\).*/\1[REDACTED]/'
             yarn build --mode production
           else
             echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
             echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.development
             echo "VITE_APP_NAME=LivroLog" >> .env.development
-            echo "Debug: .env.development contents:"
-            cat .env.development | sed 's/\(GOOGLE_CLIENT_ID=\).*/\1[REDACTED]/'
             yarn build --mode development
           fi
 
@@ -238,7 +231,7 @@ jobs:
             mkdir -p $RELEASE_DIR/{api,webapp}
 
             # Create base directories for dev if needed
-            if [[ "${{ env.ENVIRONMENT }}" == "development" ]]; then
+            if [[ "${{ env.ENVIRONMENT }}" == "Development" ]]; then
               sudo mkdir -p ${{ env.DEPLOY_PATH }}/{releases,shared/storage}
               sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}
             fi

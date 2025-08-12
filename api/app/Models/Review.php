@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
  *     type="object",
  *     title="Review",
  *     description="Book review model",
+ *
  *     @OA\Property(property="id", type="string", example="R-3D6Y-9IO8"),
  *     @OA\Property(property="user_id", type="string", example="U-ABC1-DEF2"),
  *     @OA\Property(property="book_id", type="string", example="B-XYZ3-UVW4"),
@@ -30,6 +31,7 @@ class Review extends Model
     use HasFactory;
 
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -54,7 +56,7 @@ class Review extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = 'R-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
+                $model->{$model->getKeyName()} = 'R-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
             }
         });
     }

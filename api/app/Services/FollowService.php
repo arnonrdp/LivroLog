@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Follow;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class FollowService
 {
@@ -19,7 +19,7 @@ class FollowService
             return [
                 'success' => false,
                 'message' => 'You cannot follow yourself',
-                'code' => 'CANNOT_FOLLOW_SELF'
+                'code' => 'CANNOT_FOLLOW_SELF',
             ];
         }
 
@@ -28,7 +28,7 @@ class FollowService
             return [
                 'success' => false,
                 'message' => 'Already following this user',
-                'code' => 'ALREADY_FOLLOWING'
+                'code' => 'ALREADY_FOLLOWING',
             ];
         }
 
@@ -52,7 +52,7 @@ class FollowService
                 'following' => $following->only(['id', 'display_name', 'username']),
                 'following_count' => $follower->fresh()->following_count,
                 'followers_count' => $following->fresh()->followers_count,
-            ]
+            ],
         ];
     }
 
@@ -62,19 +62,19 @@ class FollowService
     public function unfollow(User $follower, User $following): array
     {
         // Check if not following
-        if (!$follower->isFollowing($following)) {
+        if (! $follower->isFollowing($following)) {
             return [
                 'success' => false,
                 'message' => 'Not following this user',
-                'code' => 'NOT_FOLLOWING'
+                'code' => 'NOT_FOLLOWING',
             ];
         }
 
         DB::transaction(function () use ($follower, $following) {
             // Remove follow relationship
             Follow::where('follower_id', $follower->id)
-                  ->where('followed_id', $following->id)
-                  ->delete();
+                ->where('followed_id', $following->id)
+                ->delete();
 
             // Update counters
             $follower->decrement('following_count');
@@ -89,7 +89,7 @@ class FollowService
                 'following' => $following->only(['id', 'display_name', 'username']),
                 'following_count' => $follower->fresh()->following_count,
                 'followers_count' => $following->fresh()->followers_count,
-            ]
+            ],
         ];
     }
 
@@ -120,8 +120,8 @@ class FollowService
                     'total' => $followers->total(),
                     'last_page' => $followers->lastPage(),
                     'has_more' => $followers->hasMorePages(),
-                ]
-            ]
+                ],
+            ],
         ];
     }
 
@@ -144,8 +144,8 @@ class FollowService
                     'total' => $following->total(),
                     'last_page' => $following->lastPage(),
                     'has_more' => $following->hasMorePages(),
-                ]
-            ]
+                ],
+            ],
         ];
     }
 
@@ -169,8 +169,8 @@ class FollowService
         return $user1->followers()
             ->whereIn('follower_id', function ($query) use ($user2) {
                 $query->select('follower_id')
-                      ->from('follows')
-                      ->where('followed_id', $user2->id);
+                    ->from('follows')
+                    ->where('followed_id', $user2->id);
             })
             ->select(['id', 'display_name', 'username', 'avatar'])
             ->get();
@@ -184,16 +184,16 @@ class FollowService
         // Get users that are followed by people the current user follows
         // but not already followed by the current user
         return User::whereIn('id', function ($query) use ($user) {
-                $query->select('followed_id')
-                      ->from('follows as f1')
-                      ->join('follows as f2', 'f1.followed_id', '=', 'f2.follower_id')
-                      ->where('f1.follower_id', $user->id)
-                      ->where('f2.followed_id', '!=', $user->id);
-            })
+            $query->select('followed_id')
+                ->from('follows as f1')
+                ->join('follows as f2', 'f1.followed_id', '=', 'f2.follower_id')
+                ->where('f1.follower_id', $user->id)
+                ->where('f2.followed_id', '!=', $user->id);
+        })
             ->whereNotIn('id', function ($query) use ($user) {
                 $query->select('followed_id')
-                      ->from('follows')
-                      ->where('follower_id', $user->id);
+                    ->from('follows')
+                    ->where('follower_id', $user->id);
             })
             ->where('id', '!=', $user->id)
             ->select(['id', 'display_name', 'username', 'avatar', 'followers_count'])
@@ -228,7 +228,7 @@ class FollowService
         return [
             'success' => true,
             'message' => "Updated follow counts for {$updated} users",
-            'updated_count' => $updated
+            'updated_count' => $updated,
         ];
     }
 }

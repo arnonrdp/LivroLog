@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @OA\Schema(
@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
  *     type="object",
  *     title="User",
  *     description="User model",
+ *
  *     @OA\Property(property="id", type="string", example="U-1ABC-2DEF"),
  *     @OA\Property(property="google_id", type="string", example="123456789012345678901", nullable=true),
  *     @OA\Property(property="display_name", type="string", example="John Doe"),
@@ -34,14 +35,13 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
-
     protected $fillable = [
         'google_id',
         'display_name',
@@ -59,6 +59,7 @@ class User extends Authenticatable
     ];
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected static function boot()
@@ -66,7 +67,7 @@ class User extends Authenticatable
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = 'U-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
+                $model->{$model->getKeyName()} = 'U-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
             }
         });
     }
@@ -104,8 +105,8 @@ class User extends Authenticatable
     public function books()
     {
         return $this->belongsToMany(Book::class, 'users_books')
-                    ->withPivot('added_at', 'read_at')
-                    ->withTimestamps();
+            ->withPivot('added_at', 'read_at')
+            ->withTimestamps();
     }
 
     /**
@@ -129,8 +130,7 @@ class User extends Authenticatable
      */
     public function following()
     {
-        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'followed_id')
-                    ->withTimestamps();
+        return $this->buildFollowRelationship('follower_id', 'followed_id');
     }
 
     /**
@@ -138,8 +138,7 @@ class User extends Authenticatable
      */
     public function followers()
     {
-        return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id')
-                    ->withTimestamps();
+        return $this->buildFollowRelationship('followed_id', 'follower_id');
     }
 
     /**
@@ -163,7 +162,7 @@ class User extends Authenticatable
      */
     public function isFollowing(User $user): bool
     {
-        return $this->following()->where('followed_id', $user->id)->exists();
+        return $this->checkFollowRelationship($user, 'following');
     }
 
     /**
@@ -171,6 +170,25 @@ class User extends Authenticatable
      */
     public function isFollowedBy(User $user): bool
     {
-        return $this->followers()->where('follower_id', $user->id)->exists();
+        return $this->checkFollowRelationship($user, 'followers');
+    }
+
+    /**
+     * Build follow relationship with consistent configuration
+     */
+    private function buildFollowRelationship(string $foreignKey, string $relatedKey)
+    {
+        return $this->belongsToMany(User::class, 'follows', $foreignKey, $relatedKey)
+            ->withTimestamps();
+    }
+
+    /**
+     * Check follow relationship existence
+     */
+    private function checkFollowRelationship(User $user, string $relationshipType): bool
+    {
+        $column = $relationshipType === 'following' ? 'followed_id' : 'follower_id';
+
+        return $this->$relationshipType()->where($column, $user->id)->exists();
     }
 }

@@ -48,8 +48,9 @@ class FixFollowCounts extends Command
         try {
             if ($userId) {
                 $user = \App\Models\User::find($userId);
-                if (!$user) {
+                if (! $user) {
                     $this->error("User with ID '{$userId}' not found.");
+
                     return Command::FAILURE;
                 }
 
@@ -74,10 +75,12 @@ class FixFollowCounts extends Command
 
             $this->newLine();
             $this->info('Follow counts reconciliation completed!');
+
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error('Error during reconciliation: ' . $e->getMessage());
+            $this->error('Error during reconciliation: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }
@@ -95,14 +98,14 @@ class FixFollowCounts extends Command
                 'Followers',
                 $user->followers_count,
                 $actualFollowersCount,
-                $actualFollowersCount - $user->followers_count
+                $actualFollowersCount - $user->followers_count,
             ],
             [
                 'Following',
                 $user->following_count,
                 $actualFollowingCount,
-                $actualFollowingCount - $user->following_count
-            ]
+                $actualFollowingCount - $user->following_count,
+            ],
         ]);
 
         if ($user->followers_count !== $actualFollowersCount || $user->following_count !== $actualFollowingCount) {
@@ -141,8 +144,8 @@ class FixFollowCounts extends Command
 
         $this->info("Scanned {$totalUsers} users.");
 
-        if (!empty($inconsistentUsers)) {
-            $this->warn(count($inconsistentUsers) . ' users have inconsistent counts:');
+        if (! empty($inconsistentUsers)) {
+            $this->warn(count($inconsistentUsers).' users have inconsistent counts:');
             $this->table(['User', 'Followers (Current/Actual)', 'Following (Current/Actual)'], $inconsistentUsers);
         } else {
             $this->info('All user counts are consistent!');
@@ -161,7 +164,7 @@ class FixFollowCounts extends Command
                 $this->info('All follow counts were already correct.');
             }
         } else {
-            $this->error('Reconciliation failed: ' . ($result['message'] ?? 'Unknown error'));
+            $this->error('Reconciliation failed: '.($result['message'] ?? 'Unknown error'));
         }
     }
 }

@@ -9,31 +9,33 @@ use Illuminate\Support\Facades\Log;
 class GoogleBooksProvider implements BookSearchProvider
 {
     private const API_BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
+
     private const PRIORITY = 1; // Highest priority (fastest, free)
 
     public function search(string $query, array $options = []): array
     {
         try {
             $searchQuery = $this->buildSearchQuery($query, $options);
-            
+
             Log::info('GoogleBooksProvider: Searching', [
                 'original_query' => $query,
                 'search_query' => $searchQuery,
-                'options' => $options
+                'options' => $options,
             ]);
 
             $response = Http::timeout(10)->get(self::API_BASE_URL, [
                 'q' => $searchQuery,
                 'maxResults' => $options['maxResults'] ?? 40,
                 'printType' => 'books',
-                'key' => config('services.google_books.api_key')
+                'key' => config('services.google_books.api_key'),
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('GoogleBooksProvider: API request failed', [
                     'status' => $response->status(),
-                    'response' => $response->body()
+                    'response' => $response->body(),
                 ]);
+
                 return $this->buildErrorResponse('API request failed');
             }
 
@@ -43,7 +45,7 @@ class GoogleBooksProvider implements BookSearchProvider
             Log::info('GoogleBooksProvider: Search completed', [
                 'query' => $searchQuery,
                 'total_items' => $data['totalItems'] ?? 0,
-                'returned_items' => count($books)
+                'returned_items' => count($books),
             ]);
 
             // Only consider it success if we actually found books
@@ -57,7 +59,7 @@ class GoogleBooksProvider implements BookSearchProvider
             Log::error('GoogleBooksProvider: Search error', [
                 'query' => $query,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return $this->buildErrorResponse($e->getMessage());
@@ -87,6 +89,7 @@ class GoogleBooksProvider implements BookSearchProvider
         // If it looks like an ISBN, search by ISBN
         if ($this->looksLikeIsbn($query)) {
             $cleanIsbn = $this->normalizeIsbn($query);
+
             return "isbn:{$cleanIsbn}";
         }
 
@@ -104,7 +107,7 @@ class GoogleBooksProvider implements BookSearchProvider
      */
     private function processResults(array $data): array
     {
-        if (!isset($data['items'])) {
+        if (! isset($data['items'])) {
             return [];
         }
 
@@ -125,7 +128,7 @@ class GoogleBooksProvider implements BookSearchProvider
     private function transformGoogleBookItem(array $item): ?array
     {
         $volumeInfo = $item['volumeInfo'] ?? [];
-        
+
         // Skip items without essential information
         if (empty($volumeInfo['title'])) {
             return null;
@@ -160,22 +163,9 @@ class GoogleBooksProvider implements BookSearchProvider
      */
     private function extractIsbnFromItem(array $volumeInfo): ?string
     {
-        if (!isset($volumeInfo['industryIdentifiers'])) {
-            return null;
-        }
-
         // Prefer ISBN-13, then ISBN-10
-        $preferredTypes = ['ISBN_13', 'ISBN_10'];
-        
-        foreach ($preferredTypes as $type) {
-            foreach ($volumeInfo['industryIdentifiers'] as $identifier) {
-                if ($identifier['type'] === $type) {
-                    return $identifier['identifier'];
-                }
-            }
-        }
-
-        return null;
+        return $this->extractSpecificIsbn($volumeInfo, 'ISBN_13')
+            ?? $this->extractSpecificIsbn($volumeInfo, 'ISBN_10');
     }
 
     /**
@@ -183,7 +173,7 @@ class GoogleBooksProvider implements BookSearchProvider
      */
     private function extractSpecificIsbn(array $volumeInfo, string $type): ?string
     {
-        if (!isset($volumeInfo['industryIdentifiers'])) {
+        if (! isset($volumeInfo['industryIdentifiers'])) {
             return null;
         }
 
@@ -208,6 +198,7 @@ class GoogleBooksProvider implements BookSearchProvider
             $secureUrl = str_replace('http:', 'https:', $thumbnail);
             // Increase image quality if possible
             $secureUrl = str_replace('&edge=curl', '', $secureUrl);
+
             return $secureUrl;
         }
 
@@ -220,6 +211,7 @@ class GoogleBooksProvider implements BookSearchProvider
     private function looksLikeIsbn(string $query): bool
     {
         $cleaned = preg_replace('/[^0-9X]/i', '', $query);
+
         return strlen($cleaned) === 10 || strlen($cleaned) === 13;
     }
 
@@ -236,13 +228,7 @@ class GoogleBooksProvider implements BookSearchProvider
      */
     private function buildSuccessResponse(array $books, int $totalFound): array
     {
-        return [
-            'success' => true,
-            'provider' => $this->getName(),
-            'books' => $books,
-            'total_found' => $totalFound,
-            'message' => "Found {$totalFound} books"
-        ];
+        return $this->buildResponse(true, $books, $totalFound, "Found {$totalFound} books");
     }
 
     /**
@@ -250,12 +236,20 @@ class GoogleBooksProvider implements BookSearchProvider
      */
     private function buildErrorResponse(string $message): array
     {
+        return $this->buildResponse(false, [], 0, $message);
+    }
+
+    /**
+     * Build standardized response
+     */
+    private function buildResponse(bool $success, array $books, int $totalFound, string $message): array
+    {
         return [
-            'success' => false,
+            'success' => $success,
             'provider' => $this->getName(),
-            'books' => [],
-            'total_found' => 0,
-            'message' => $message
+            'books' => $books,
+            'total_found' => $totalFound,
+            'message' => $message,
         ];
     }
 }

@@ -3,13 +3,14 @@
 namespace App\Services;
 
 use App\Models\Book;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class BookEnrichmentService
 {
     private const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
+
     private const BATCH_SIZE = 10;
 
     /**
@@ -20,11 +21,11 @@ class BookEnrichmentService
         try {
             $googleBookData = $this->fetchBookFromGoogle($googleId ?? $book->google_id ?? $book->isbn);
 
-            if (!$googleBookData) {
+            if (! $googleBookData) {
                 return [
                     'success' => false,
                     'message' => 'Book not found in Google Books API',
-                    'book_id' => $book->id
+                    'book_id' => $book->id,
                 ];
             }
 
@@ -35,19 +36,19 @@ class BookEnrichmentService
                 'success' => true,
                 'message' => 'Book enriched successfully',
                 'book_id' => $book->id,
-                'added_fields' => array_keys($enrichedData)
+                'added_fields' => array_keys($enrichedData),
             ];
 
         } catch (\Exception $e) {
             Log::error('Error enriching book', [
                 'book_id' => $book->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Internal error: ' . $e->getMessage(),
-                'book_id' => $book->id
+                'message' => 'Internal error: '.$e->getMessage(),
+                'book_id' => $book->id,
             ];
         }
     }
@@ -55,7 +56,7 @@ class BookEnrichmentService
     /**
      * Enriches multiple books in batch
      */
-    public function enrichBooksInBatch(array $bookIds = null): array
+    public function enrichBooksInBatch(?array $bookIds = null): array
     {
         $query = Book::where('info_quality', 'basic')
             ->whereNull('enriched_at');
@@ -78,7 +79,7 @@ class BookEnrichmentService
             'processed' => count($results),
             'results' => $results,
             'success_count' => collect($results)->where('success', true)->count(),
-            'error_count' => collect($results)->where('success', false)->count()
+            'error_count' => collect($results)->where('success', false)->count(),
         ];
     }
 
@@ -88,8 +89,8 @@ class BookEnrichmentService
     private function fetchBookFromGoogle(string $identifier): ?array
     {
         // First tries to search by specific Google Books ID
-        if (strlen($identifier) > 10 && !is_numeric($identifier)) {
-            $response = Http::get(self::GOOGLE_BOOKS_API . '/' . $identifier);
+        if (strlen($identifier) > 10 && ! is_numeric($identifier)) {
+            $response = Http::get(self::GOOGLE_BOOKS_API.'/'.$identifier);
 
             if ($response->successful()) {
                 return $response->json();
@@ -98,12 +99,13 @@ class BookEnrichmentService
 
         // If not found, tries to search as ISBN
         $response = Http::get(self::GOOGLE_BOOKS_API, [
-            'q' => 'isbn:' . $identifier,
-            'maxResults' => 1
+            'q' => 'isbn:'.$identifier,
+            'maxResults' => 1,
         ]);
 
         if ($response->successful()) {
             $data = $response->json();
+
             return $data['items'][0] ?? null;
         }
 
@@ -147,8 +149,8 @@ class BookEnrichmentService
         // Mark as enriched
         $data['enriched_at'] = now();
 
-        return array_filter($data, function($value) {
-            return !is_null($value) && !(is_string($value) && $value === '');
+        return array_filter($data, function ($value) {
+            return ! is_null($value) && ! (is_string($value) && $value === '');
         });
     }
 
@@ -198,7 +200,7 @@ class BookEnrichmentService
             // Only update if we have better precision or no existing date
             $shouldUpdateDate = false;
 
-            if (!$currentDate) {
+            if (! $currentDate) {
                 // No existing date, use Google's data
                 $shouldUpdateDate = true;
             } else {
@@ -213,7 +215,7 @@ class BookEnrichmentService
                 if ($hasYearOnlyPrecision && ($googleHasFullDate || $googleHasYearMonth)) {
                     // We have year-only, Google has better precision
                     $shouldUpdateDate = true;
-                } elseif (!$hasYearOnlyPrecision && $googleHasYearOnly) {
+                } elseif (! $hasYearOnlyPrecision && $googleHasYearOnly) {
                     // We have better precision than Google, don't update
                     $shouldUpdateDate = false;
                 } elseif ($googleHasFullDate) {
@@ -366,8 +368,9 @@ class BookEnrichmentService
         } catch (\Exception $e) {
             Log::warning('Error parsing publication date', [
                 'date_string' => $dateString,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -449,7 +452,7 @@ class BookEnrichmentService
         }
 
         // Check for dimensions separately
-        if (!empty($height) && !empty($width) && !empty($thickness)) {
+        if (! empty($height) && ! empty($width) && ! empty($thickness)) {
             $completeCount++;
         }
 
@@ -470,7 +473,7 @@ class BookEnrichmentService
         try {
             $googleBookData = $this->fetchBookFromGoogle($googleId);
 
-            if (!$googleBookData) {
+            if (! $googleBookData) {
                 return [
                     'success' => false,
                     'message' => 'Book not found in Google Books API',
@@ -501,18 +504,18 @@ class BookEnrichmentService
                 'success' => true,
                 'message' => 'Book created and enriched successfully',
                 'book' => $book,
-                'info_quality' => $book->info_quality
+                'info_quality' => $book->info_quality,
             ];
 
         } catch (\Exception $e) {
             Log::error('Error creating enriched book', [
                 'google_id' => $googleId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Internal error: ' . $e->getMessage(),
+                'message' => 'Internal error: '.$e->getMessage(),
             ];
         }
     }
