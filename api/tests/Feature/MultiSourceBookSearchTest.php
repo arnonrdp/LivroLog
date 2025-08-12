@@ -34,42 +34,13 @@ class MultiSourceBookSearchTest extends TestCase
 
     public function test_search_with_isbn_success()
     {
-        // Mock Google Books API response
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response([
-                'totalItems' => 1,
-                'items' => [
-                    [
-                        'id' => 'test-id-123',
-                        'volumeInfo' => [
-                            'title' => 'Test Book',
-                            'authors' => ['Test Author'],
-                            'industryIdentifiers' => [
-                                [
-                                    'type' => 'ISBN_13',
-                                    'identifier' => '9781234567890',
-                                ],
-                            ],
-                            'imageLinks' => [
-                                'thumbnail' => 'https://example.com/cover.jpg',
-                            ],
-                            'description' => 'Test description',
-                            'publisher' => 'Test Publisher',
-                            'publishedDate' => '2024',
-                            'pageCount' => 200,
-                            'language' => 'en',
-                        ],
-                    ],
-                ],
-            ]),
+            'https://www.googleapis.com/books/v1/volumes*' => Http::response($this->getGoogleBooksResponse()),
         ]);
 
         $result = $this->searchService->search('9781234567890');
 
-        $this->assertTrue($result['success']);
-        $this->assertEquals('Google Books', $result['provider']);
-        $this->assertGreaterThan(0, $result['total_found']);
-        $this->assertNotEmpty($result['books']);
+        $this->assertSuccessfulGoogleBooksResult($result);
 
         $book = $result['books'][0];
         $this->assertEquals('Test Book', $book['title']);
@@ -79,12 +50,8 @@ class MultiSourceBookSearchTest extends TestCase
 
     public function test_search_with_fallback_to_open_library()
     {
-        // Mock Google Books API to return empty results
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response([
-                'totalItems' => 0,
-                'items' => [],
-            ]),
+            'https://www.googleapis.com/books/v1/volumes*' => Http::response($this->getEmptyGoogleBooksResponse()),
             'https://openlibrary.org/api/books*' => Http::response([
                 'ISBN:9781234567890' => [
                     'title' => 'Test Book from Open Library',
@@ -114,12 +81,8 @@ class MultiSourceBookSearchTest extends TestCase
 
     public function test_search_with_no_results()
     {
-        // Mock all APIs to return empty results
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response([
-                'totalItems' => 0,
-                'items' => [],
-            ]),
+            'https://www.googleapis.com/books/v1/volumes*' => Http::response($this->getEmptyGoogleBooksResponse()),
             'https://openlibrary.org/api/books*' => Http::response([]),
             'https://openlibrary.org/search.json*' => Http::response([
                 'numFound' => 0,
@@ -216,5 +179,51 @@ class MultiSourceBookSearchTest extends TestCase
         $result2 = $this->searchService->search('cache-test-query');
         $this->assertTrue($result2['success']);
         $this->assertEquals($result1['books'], $result2['books']);
+    }
+
+    private function getGoogleBooksResponse(): array
+    {
+        return [
+            'totalItems' => 1,
+            'items' => [
+                [
+                    'id' => 'test-id-123',
+                    'volumeInfo' => [
+                        'title' => 'Test Book',
+                        'authors' => ['Test Author'],
+                        'industryIdentifiers' => [
+                            [
+                                'type' => 'ISBN_13',
+                                'identifier' => '9781234567890',
+                            ],
+                        ],
+                        'imageLinks' => [
+                            'thumbnail' => 'https://example.com/cover.jpg',
+                        ],
+                        'description' => 'Test description',
+                        'publisher' => 'Test Publisher',
+                        'publishedDate' => '2024',
+                        'pageCount' => 200,
+                        'language' => 'en',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    private function getEmptyGoogleBooksResponse(): array
+    {
+        return [
+            'totalItems' => 0,
+            'items' => [],
+        ];
+    }
+
+    private function assertSuccessfulGoogleBooksResult(array $result): void
+    {
+        $this->assertTrue($result['success']);
+        $this->assertEquals('Google Books', $result['provider']);
+        $this->assertGreaterThan(0, $result['total_found']);
+        $this->assertNotEmpty($result['books']);
     }
 }

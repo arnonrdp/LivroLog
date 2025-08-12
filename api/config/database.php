@@ -11,15 +11,24 @@ if (! defined('DEFAULT_HOST')) {
 if (! function_exists('createDatabaseConnection')) {
     function createDatabaseConnection(string $driver, array $overrides = []): array
     {
+        $portMap = [
+            'pgsql' => '5432',
+            'sqlsrv' => '1433',
+        ];
+
+        $charsetMap = [
+            'pgsql' => 'utf8',
+        ];
+
         $defaults = [
             'driver' => $driver,
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', DEFAULT_HOST),
-            'port' => env('DB_PORT', $driver === 'pgsql' ? '5432' : ($driver === 'sqlsrv' ? '1433' : '3306')),
+            'port' => env('DB_PORT', $portMap[$driver] ?? '3306'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', $driver === 'pgsql' ? 'utf8' : 'utf8mb4'),
+            'charset' => env('DB_CHARSET', $charsetMap[$driver] ?? 'utf8mb4'),
             'prefix' => '',
             'prefix_indexes' => true,
         ];
