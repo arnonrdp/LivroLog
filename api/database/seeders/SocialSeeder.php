@@ -20,7 +20,7 @@ class SocialSeeder extends Seeder
         // Criar relacionamentos de follows realísticos
         foreach ($users as $user) {
             // Cada usuário segue entre 0-8 pessoas
-            $followCount = rand(0, 8);
+            $followCount = random_int(0, 8);
             
             if ($followCount > 0) {
                 // Escolher usuários aleatórios para seguir (exceto ele mesmo)
@@ -36,7 +36,7 @@ class SocialSeeder extends Seeder
                     
                     if (!$existingFollow) {
                         // Data de follow aleatória nos últimos 6 meses
-                        $followDate = now()->subDays(rand(1, 180));
+                        $followDate = now()->subDays(random_int(1, 180));
                         
                         DB::table('follows')->insert([
                             'follower_id' => $user->id,

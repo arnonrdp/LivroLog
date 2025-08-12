@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
             UserBookSeeder::class,
             RealisticReviewSeeder::class,
             SocialSeeder::class,
-            ShowcaseSeeder::class,
         ]);
         
         $this->command->info('✅ Database seeded successfully with realistic data!');
@@ -27,6 +26,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('   - 10-30 Books per user in their libraries');
         $this->command->info('   - Reviews with different ratings, visibility, and spoiler settings');
         $this->command->info('   - Social follows between users');
-        $this->command->info('   - Showcase books for users');
+        $this->command->info('   - Popular books available via /showcase endpoint');
     }
 }

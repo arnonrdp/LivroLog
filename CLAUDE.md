@@ -88,11 +88,6 @@ docker exec livrolog-api php artisan queue:work
 docker exec livrolog-api php artisan books:enrich
 docker exec livrolog-api php artisan books:enrich --book-id=B-3D6Y-9IO8
 docker exec livrolog-api php artisan books:enrich --dry-run
-
-# Firebase migration
-docker exec livrolog-api php artisan firebase:discover
-docker exec livrolog-api php artisan firebase:import --file=firebase-export.json
-docker exec livrolog-api php artisan import:firestore-showcase
 ```
 
 ### Frontend (Vue.js)
@@ -302,11 +297,3 @@ function fetchBooks() {
 
 - `VITE_API_URL` - Backend API URL
 - `VITE_GOOGLE_CLIENT_ID` - Google OAuth client
-
-## Migration from Firebase
-
-The project includes comprehensive Firebase/Firestore migration tools:
-
-- Import users, books, and showcase data
-- Preserve relationships and timestamps
-- See FIREBASE_MIGRATION.md for details

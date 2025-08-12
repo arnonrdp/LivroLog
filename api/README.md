@@ -255,35 +255,6 @@ GOOGLE_BOOKS_API_KEY=your-google-books-api-key
 -   Protected routes with Sanctum middleware
 -   SQL injection protection via Eloquent ORM
 
-## 🔄 Firebase Migration
-
-Comprehensive migration tools for importing data from Firebase/Firestore:
-
-### Migration Commands
-
-```bash
-# Discover existing Firebase collections
-docker exec livrolog-api php artisan firebase:discover
-
-# Import all data from Firebase export
-docker exec livrolog-api php artisan firebase:import --file=firebase-export.json
-
-# Dry run to preview import
-docker exec livrolog-api php artisan firebase:import --dry-run --file=firebase-export.json
-
-# Import showcase data only
-docker exec livrolog-api php artisan import:firestore-showcase
-```
-
-### Supported Data Migration
-
--   ✅ **Users**: Authentication, profiles, and preferences
--   ✅ **Books**: Complete catalog with metadata
--   ✅ **User Libraries**: Personal book collections with read dates
--   ✅ **Showcase**: Featured book displays
--   ✅ **Relationships**: User follows and social connections
--   ✅ **Timestamps**: Preserve original creation dates
-
 ## 📚 Google Books Integration
 
 ### Book Enrichment Service

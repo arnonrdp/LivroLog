@@ -23,21 +23,21 @@ class UserBookSeeder extends Seeder
         foreach ($users as $user) {
             $maxBooks = min(20, $books->count());
             $minBooks = min(10, $books->count());
-            $bookCount = rand($minBooks, $maxBooks);
+            $bookCount = random_int($minBooks, $maxBooks);
             $userBooks = $books->random($bookCount);
             
             foreach ($userBooks as $book) {
                 // Algumas pessoas têm data de leitura, outras não
-                $hasReadDate = rand(1, 100) <= 60; // 60% de chance de ter data de leitura
+                $hasReadDate = random_int(1, 100) <= 60; // 60% de chance de ter data de leitura
                 $readAt = null;
                 
                 if ($hasReadDate) {
                     // Data de leitura aleatória nos últimos 2 anos
-                    $readAt = now()->subDays(rand(1, 730));
+                    $readAt = now()->subDays(random_int(1, 730));
                 }
                 
                 // Data de adição à biblioteca (sempre anterior à data de leitura)
-                $addedAt = $readAt ? $readAt->copy()->subDays(rand(1, 30)) : now()->subDays(rand(1, 365));
+                $addedAt = $readAt ? $readAt->copy()->subDays(random_int(1, 30)) : now()->subDays(random_int(1, 365));
 
                 DB::table('users_books')->insert([
                     'user_id' => $user->id,

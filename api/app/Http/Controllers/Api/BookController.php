@@ -72,7 +72,7 @@ class BookController extends Controller
      *     operationId="getShowcase",
      *     tags={"Books"},
      *     summary="List featured books for showcase",
-     *     description="Returns 20 random books for public display",
+     *     description="Returns 20 most popular books (most present in user libraries) for public display",
      *     @OA\Response(
      *         response=200,
      *         description="Featured books list",
@@ -85,8 +85,11 @@ class BookController extends Controller
      */
     public function showcase()
     {
-        // Returns 20 random books from the books table
-        $showcaseBooks = Book::inRandomOrder()
+        // Returns 20 most popular books (most present in user libraries)
+        $showcaseBooks = Book::select('books.*', DB::raw('COUNT(users_books.book_id) as library_count'))
+            ->leftJoin('users_books', 'books.id', '=', 'users_books.book_id')
+            ->groupBy('books.id')
+            ->orderByDesc('library_count')
             ->limit(20)
             ->get();
 

@@ -1,7 +1,7 @@
 <template>
   <section class="flex justify-around">
     <figure v-for="book of shuffledShowcase" :key="book.id">
-      <div class="cursor-pointer" @click="goTo(book.link)">
+      <div>
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
       </div>
@@ -37,9 +37,6 @@ function secureRandom(): number {
   return buffer[0] / 255
 }
 
-function goTo(link: Book['link']) {
-  window.open(link, '_blank')
-}
 </script>
 
 <style scoped>
