@@ -143,12 +143,16 @@ jobs:
         run: |
           yarn install --frozen-lockfile --prefer-offline
 
-          # Set API URL based on environment
+          # Set API URL and Google Client ID based on environment
           if [[ "${{ needs.detect-changes.outputs.environment }}" == "production" ]]; then
             echo "VITE_API_URL=https://api.livrolog.com" > .env.production
+            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
+            echo "VITE_APP_NAME=LivroLog" >> .env.production
             yarn build --mode production
           else
             echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
+            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.development
+            echo "VITE_APP_NAME=LivroLog" >> .env.development
             yarn build --mode development
           fi
 
