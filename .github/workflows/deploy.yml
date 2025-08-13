@@ -262,8 +262,8 @@ jobs:
             echo "🧪 Running comprehensive smoke tests..."
 
             # Set environment variables for smoke tests
-            export API_URL="http://${{ env.API_URL }}"
-            export WEB_URL="http://${{ env.WEB_URL }}"
+            export API_URL="https://${{ env.API_URL }}"
+            export WEB_URL="https://${{ env.WEB_URL }}"
             export TIMEOUT=15
             export RETRIES=3
 
@@ -283,7 +283,7 @@ jobs:
               fi
             else
               echo "⚠️  API smoke test script not found, falling back to basic health check..."
-              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.API_URL }}/api/health" 2>/dev/null || echo "000")
+              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" -L "https://${{ env.API_URL }}/health" 2>/dev/null || echo "000")
               if [[ "$API_STATUS" == "200" ]]; then
                 echo "✅ API basic health check passed"
               else
@@ -305,7 +305,7 @@ jobs:
               fi
             else
               echo "⚠️  Frontend smoke test script not found, falling back to basic check..."
-              WEB_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.WEB_URL }}" 2>/dev/null || echo "000")
+              WEB_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" -L "https://${{ env.WEB_URL }}" 2>/dev/null || echo "000")
               if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
                 echo "✅ Frontend basic check passed (status: $WEB_STATUS)"
               else
@@ -386,7 +386,7 @@ jobs:
               echo "🔍 Verifying rollback with quick health checks..."
               
               # Quick API health check
-              API_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" "http://$API_URL/api/health" 2>/dev/null || echo "000")
+              API_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" -L "https://$API_URL/health" 2>/dev/null || echo "000")
               if [[ "$API_STATUS" == "200" ]]; then
                 echo "✅ API health check passed after rollback"
               else
@@ -394,7 +394,7 @@ jobs:
               fi
               
               # Quick frontend check
-              WEB_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" "http://$WEB_URL" 2>/dev/null || echo "000")
+              WEB_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" -L "https://$WEB_URL" 2>/dev/null || echo "000")
               if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
                 echo "✅ Frontend check passed after rollback (status: $WEB_STATUS)"
               else
