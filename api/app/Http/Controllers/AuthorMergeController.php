@@ -19,19 +19,28 @@ class AuthorMergeController extends Controller
         $toId = $request->input('to_author_id');
 
         DB::transaction(function () use ($fromId, $toId) {
-            $fromAuthor = Author::findOrFail($fromId);
-            $toAuthor = Author::findOrFail($toId);
+            [$fromAuthor, $toAuthor] = $this->getAuthors($fromId, $toId);
 
-            // Update all books from the source author to the destination author
-            $bookIds = $fromAuthor->books->pluck('id')->toArray();
-            if ($bookIds) {
-                $toAuthor->books()->syncWithoutDetaching($bookIds);
-            }
-
-            // Remove the source author from the pivot table
+            $this->mergeBooks($fromAuthor, $toAuthor);
             $fromAuthor->delete();
         });
 
-        return response()->json(['message' => 'Autores mesclados com sucesso.']);
+        return response()->json(['message' => 'Authors merged successfully.']);
+    }
+
+    private function getAuthors(int $fromId, int $toId): array
+    {
+        return [
+            Author::findOrFail($fromId),
+            Author::findOrFail($toId),
+        ];
+    }
+
+    private function mergeBooks(Author $fromAuthor, Author $toAuthor): void
+    {
+        $bookIds = $fromAuthor->books->pluck('id')->toArray();
+        if ($bookIds) {
+            $toAuthor->books()->syncWithoutDetaching($bookIds);
+        }
     }
 }

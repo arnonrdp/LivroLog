@@ -14,7 +14,7 @@ class ReviewCollection extends ResourceCollection
      */
     public function toArray(Request $request): array
     {
-        if (!$this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+        if (! $this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator) {
             return ['data' => ReviewResource::collection($this->collection)];
         }
 

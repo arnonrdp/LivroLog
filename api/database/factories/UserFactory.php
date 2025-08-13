@@ -24,7 +24,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => 'U-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4)),
+            'id' => 'U-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4)),
             'display_name' => fake()->name(),
             'username' => fake()->unique()->userName(),
             'email' => fake()->unique()->safeEmail(),

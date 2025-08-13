@@ -7,8 +7,8 @@ interface BookSearchProvider
     /**
      * Search for books using various search criteria
      *
-     * @param string $query Search query (ISBN, title, or title+author)
-     * @param array $options Additional search options
+     * @param  string  $query  Search query (ISBN, title, or title+author)
+     * @param  array  $options  Additional search options
      * @return array Search results with standardized format
      */
     public function search(string $query, array $options = []): array;

@@ -18,6 +18,6 @@ class BookEnrichmentException extends Exception
 
     public static function enrichmentServiceUnavailable(): self
     {
-        return new self("Book enrichment service is currently unavailable");
+        return new self('Book enrichment service is currently unavailable');
     }
 }

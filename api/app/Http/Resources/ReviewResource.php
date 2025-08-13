@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     type="object",
  *     title="Review Resource",
  *     description="Review resource with user and book information",
+ *
  *     @OA\Property(property="id", type="string", example="R-3D6Y-9IO8", description="Review ID"),
  *     @OA\Property(property="user_id", type="string", example="U-ABC1-DEF2", description="User ID who wrote the review"),
  *     @OA\Property(property="book_id", type="string", example="B-XYZ3-UVW4", description="Book ID being reviewed"),

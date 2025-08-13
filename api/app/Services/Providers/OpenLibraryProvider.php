@@ -9,8 +9,11 @@ use Illuminate\Support\Facades\Log;
 class OpenLibraryProvider implements BookSearchProvider
 {
     private const API_BASE_URL = 'https://openlibrary.org/api/books';
+
     private const SEARCH_API_URL = 'https://openlibrary.org/search.json';
+
     private const COVERS_API_URL = 'https://covers.openlibrary.org/b';
+
     private const PRIORITY = 2; // Second priority (free, good coverage)
 
     public function search(string $query, array $options = []): array
@@ -31,7 +34,7 @@ class OpenLibraryProvider implements BookSearchProvider
             Log::error('OpenLibraryProvider: Search error', [
                 'query' => $query,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return $this->buildErrorResponse($e->getMessage());
@@ -59,23 +62,24 @@ class OpenLibraryProvider implements BookSearchProvider
     private function searchByIsbn(string $query): array
     {
         $cleanIsbn = $this->normalizeIsbn($query);
-        
+
         Log::info('OpenLibraryProvider: Searching by ISBN', [
             'original_query' => $query,
-            'clean_isbn' => $cleanIsbn
+            'clean_isbn' => $cleanIsbn,
         ]);
 
         $response = Http::timeout(10)->get(self::API_BASE_URL, [
             'bibkeys' => "ISBN:{$cleanIsbn}",
             'format' => 'json',
-            'jscmd' => 'data'
+            'jscmd' => 'data',
         ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::warning('OpenLibraryProvider: ISBN API request failed', [
                 'status' => $response->status(),
-                'isbn' => $cleanIsbn
+                'isbn' => $cleanIsbn,
             ]);
+
             return $this->buildErrorResponse('ISBN API request failed');
         }
 
@@ -84,7 +88,7 @@ class OpenLibraryProvider implements BookSearchProvider
 
         Log::info('OpenLibraryProvider: ISBN search completed', [
             'isbn' => $cleanIsbn,
-            'found_items' => count($books)
+            'found_items' => count($books),
         ]);
 
         // Only consider it success if we actually found books
@@ -103,7 +107,7 @@ class OpenLibraryProvider implements BookSearchProvider
         $searchParams = [
             'q' => $query,
             'format' => 'json',
-            'limit' => $options['maxResults'] ?? 20
+            'limit' => $options['maxResults'] ?? 20,
         ];
 
         // Add specific search fields if provided
@@ -116,16 +120,17 @@ class OpenLibraryProvider implements BookSearchProvider
 
         Log::info('OpenLibraryProvider: Searching by text', [
             'query' => $query,
-            'params' => $searchParams
+            'params' => $searchParams,
         ]);
 
         $response = Http::timeout(15)->get(self::SEARCH_API_URL, $searchParams);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::warning('OpenLibraryProvider: Search API request failed', [
                 'status' => $response->status(),
-                'query' => $query
+                'query' => $query,
             ]);
+
             return $this->buildErrorResponse('Search API request failed');
         }
 
@@ -135,7 +140,7 @@ class OpenLibraryProvider implements BookSearchProvider
         Log::info('OpenLibraryProvider: Text search completed', [
             'query' => $query,
             'total_found' => $data['numFound'] ?? 0,
-            'returned_items' => count($books)
+            'returned_items' => count($books),
         ]);
 
         // Only consider it success if we actually found books
@@ -153,7 +158,7 @@ class OpenLibraryProvider implements BookSearchProvider
     {
         $books = [];
         $key = "ISBN:{$isbn}";
-        
+
         if (isset($data[$key])) {
             $book = $this->transformOpenLibraryBook($data[$key], $isbn);
             if ($book) {
@@ -169,7 +174,7 @@ class OpenLibraryProvider implements BookSearchProvider
      */
     private function processSearchResults(array $data): array
     {
-        if (!isset($data['docs'])) {
+        if (! isset($data['docs'])) {
             return [];
         }
 
@@ -195,7 +200,7 @@ class OpenLibraryProvider implements BookSearchProvider
 
         // Extract ISBNs
         $isbns = $this->extractIsbns($bookData);
-        
+
         return [
             'provider' => $this->getName(),
             'google_id' => null,
@@ -260,7 +265,7 @@ class OpenLibraryProvider implements BookSearchProvider
     {
         $isbns = [
             'isbn_10' => null,
-            'isbn_13' => null
+            'isbn_13' => null,
         ];
 
         if (isset($bookData['identifiers']['isbn_10'])) {
@@ -280,7 +285,7 @@ class OpenLibraryProvider implements BookSearchProvider
     private function extractFirstIsbn(array $doc): ?string
     {
         // Try ISBN-13 first, then ISBN-10
-        if (!empty($doc['isbn'])) {
+        if (! empty($doc['isbn'])) {
             foreach ($doc['isbn'] as $isbn) {
                 $clean = $this->normalizeIsbn($isbn);
                 if (strlen($clean) === 13) {
@@ -303,7 +308,7 @@ class OpenLibraryProvider implements BookSearchProvider
      */
     private function extractSpecificIsbn(array $doc, int $length): ?string
     {
-        if (!empty($doc['isbn'])) {
+        if (! empty($doc['isbn'])) {
             foreach ($doc['isbn'] as $isbn) {
                 $clean = $this->normalizeIsbn($isbn);
                 if (strlen($clean) === $length) {
@@ -320,12 +325,12 @@ class OpenLibraryProvider implements BookSearchProvider
      */
     private function buildCoverUrl(?string $isbn): ?string
     {
-        if (!$isbn) {
+        if (! $isbn) {
             return null;
         }
 
         // Use medium size cover from Open Library
-        return self::COVERS_API_URL . "/isbn/{$isbn}-M.jpg";
+        return self::COVERS_API_URL."/isbn/{$isbn}-M.jpg";
     }
 
     /**
@@ -365,13 +370,13 @@ class OpenLibraryProvider implements BookSearchProvider
         if (empty($publishers)) {
             return null;
         }
-        
+
         // Handle both string and array formats
         $publisher = $publishers[0];
         if (is_array($publisher) && isset($publisher['name'])) {
             return $publisher['name'];
         }
-        
+
         return is_string($publisher) ? $publisher : null;
     }
 
@@ -462,6 +467,7 @@ class OpenLibraryProvider implements BookSearchProvider
     private function looksLikeIsbn(string $query): bool
     {
         $cleaned = preg_replace('/[^0-9X]/i', '', $query);
+
         return strlen($cleaned) === 10 || strlen($cleaned) === 13;
     }
 
@@ -483,7 +489,7 @@ class OpenLibraryProvider implements BookSearchProvider
             'provider' => $this->getName(),
             'books' => $books,
             'total_found' => $totalFound,
-            'message' => "Found {$totalFound} books"
+            'message' => "Found {$totalFound} books",
         ];
     }
 
@@ -497,7 +503,7 @@ class OpenLibraryProvider implements BookSearchProvider
             'provider' => $this->getName(),
             'books' => [],
             'total_found' => 0,
-            'message' => $message
+            'message' => $message,
         ];
     }
 }

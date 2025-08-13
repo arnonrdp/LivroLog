@@ -16,10 +16,13 @@ class HealthController extends Controller
      *     tags={"Health"},
      *     summary="Health check endpoint",
      *     description="Returns the health status of the API and its dependencies",
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Service is healthy",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="status", type="string", example="healthy", description="Overall health status"),
      *             @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-10T12:00:00Z", description="Current timestamp"),
      *             @OA\Property(property="environment", type="string", example="production", description="Current environment"),
@@ -33,10 +36,13 @@ class HealthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=503,
      *         description="Service unavailable",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="status", type="string", example="unhealthy"),
      *             @OA\Property(property="timestamp", type="string", format="date-time"),
      *             @OA\Property(property="environment", type="string"),
@@ -53,8 +59,8 @@ class HealthController extends Controller
             'cache' => $this->checkCache(),
         ];
 
-        $isHealthy = !in_array(false, $services, true);
-        
+        $isHealthy = ! in_array(false, $services, true);
+
         $response = [
             'status' => $isHealthy ? 'healthy' : 'unhealthy',
             'timestamp' => now()->toIso8601String(),
@@ -70,6 +76,7 @@ class HealthController extends Controller
     {
         try {
             DB::connection()->getPdo();
+
             return true;
         } catch (\Exception $e) {
             return false;
@@ -80,6 +87,7 @@ class HealthController extends Controller
     {
         try {
             Cache::store()->put('health_check', true, 10);
+
             return Cache::store()->get('health_check') === true;
         } catch (\Exception $e) {
             return false;

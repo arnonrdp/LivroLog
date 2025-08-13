@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
  *     type="object",
  *     title="Book",
  *     description="Book model with extended information",
+ *
  *     @OA\Property(property="id", type="string", example="B-3D6Y-9IO8"),
  *     @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", nullable=true),
  *     @OA\Property(property="isbn", type="string", example="9788533613379", nullable=true),
@@ -47,6 +48,7 @@ class Book extends Model
     private const DECIMAL_PRECISION = 'decimal:2';
 
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -90,7 +92,7 @@ class Book extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = 'B-' . strtoupper(Str::random(4)) . '-' . strtoupper(Str::random(4));
+                $model->{$model->getKeyName()} = 'B-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
             }
         });
     }
@@ -109,8 +111,8 @@ class Book extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'users_books')
-                    ->withPivot('added_at', 'read_at')
-                    ->withTimestamps();
+            ->withPivot('added_at', 'read_at')
+            ->withTimestamps();
     }
 
     /**
@@ -158,24 +160,23 @@ class Book extends Model
      */
     public function getFormattedPublishedDateAttribute()
     {
-        if (!$this->published_date) {
+        if (! $this->published_date) {
             return null;
         }
 
         $date = $this->published_date;
+        $format = 'Y-m-d'; // Default: full date precision
 
-        // If date is January 1st, likely we only have year precision
+        // Determine appropriate format based on date precision
         if ($date->format('m-d') === '01-01') {
-            return $date->format('Y');
+            // If date is January 1st, likely we only have year precision
+            $format = 'Y';
+        } elseif ($date->format('d') === '01') {
+            // If day is 1st, likely we only have year-month precision
+            $format = 'Y-m';
         }
 
-        // If day is 1st, likely we only have year-month precision
-        if ($date->format('d') === '01') {
-            return $date->format('Y-m');
-        }
-
-        // Full date precision
-        return $date->format('Y-m-d');
+        return $date->format($format);
     }
 
     /**

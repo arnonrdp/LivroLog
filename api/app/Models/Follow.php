@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  *     type="object",
  *     title="Follow",
  *     description="User follow relationship model",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="follower_id", type="string", example="U-ABC1-DEF2"),
  *     @OA\Property(property="following_id", type="string", example="U-XYZ3-UVW4"),
@@ -65,6 +66,6 @@ class Follow extends Model
     public function scopeRelationship($query, $followerId, $followedId)
     {
         return $query->where('follower_id', $followerId)
-                    ->where('followed_id', $followedId);
+            ->where('followed_id', $followedId);
     }
 }

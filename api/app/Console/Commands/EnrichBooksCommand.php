@@ -10,6 +10,7 @@ class EnrichBooksCommand extends Command
 {
     // Constants for timing and limits
     private const BATCH_PAUSE_MICROSECONDS = 500000; // 500ms
+
     private const TITLE_DISPLAY_MAX_LENGTH = 40;
 
     /**
@@ -43,22 +44,23 @@ class EnrichBooksCommand extends Command
 
         if ($totalBooks === 0) {
             $this->info('✅ No books found for enrichment.');
-            return Command::SUCCESS;
-        }
-
-        $this->info("📖 Found {$totalBooks} books to process");
-        $this->showCurrentStats();
-
-        if ($this->option('dry-run')) {
-            return $this->handleDryRun($books);
-        }
-
-        if (!$this->confirmProcessing($totalBooks)) {
+            $result = Command::SUCCESS;
+        } elseif ($this->option('dry-run')) {
+            $this->info("📖 Found {$totalBooks} books to process");
+            $this->showCurrentStats();
+            $result = $this->handleDryRun($books);
+        } elseif (! $this->confirmProcessing($totalBooks)) {
+            $this->info("📖 Found {$totalBooks} books to process");
+            $this->showCurrentStats();
             $this->info('❌ Operation cancelled.');
-            return Command::SUCCESS;
+            $result = Command::SUCCESS;
+        } else {
+            $this->info("📖 Found {$totalBooks} books to process");
+            $this->showCurrentStats();
+            $result = $this->processBooks($books, $enrichmentService);
         }
 
-        return $this->processBooks($books, $enrichmentService);
+        return $result;
     }
 
     /**
@@ -71,21 +73,21 @@ class EnrichBooksCommand extends Command
         if ($this->option('book-id')) {
             $bookIds = $this->option('book-id');
             $query->whereIn('id', $bookIds);
-            $this->info("📚 Processing specific books: " . implode(', ', $bookIds));
+            $this->info('📚 Processing specific books: '.implode(', ', $bookIds));
         } elseif ($this->option('only-basic')) {
             $query->where('info_quality', 'basic');
-            $this->info("📊 Processing only books with basic info quality...");
+            $this->info('📊 Processing only books with basic info quality...');
         } else {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereIn('info_quality', ['basic', 'enhanced'])
-                  ->orWhereNull('enriched_at');
+                    ->orWhereNull('enriched_at');
             });
-            $this->info("📊 Processing books with basic/enhanced quality or never enriched...");
+            $this->info('📊 Processing books with basic/enhanced quality or never enriched...');
         }
 
-        if (!$this->option('book-id')) {
+        if (! $this->option('book-id')) {
             $query->orderBy('created_at', 'desc')
-                  ->limit($this->option('max-books'));
+                ->limit($this->option('max-books'));
         }
 
         return $query->get();
@@ -99,15 +101,16 @@ class EnrichBooksCommand extends Command
         $this->warn('🔍 DRY-RUN MODE - No changes will be made');
         $this->table(
             ['ID', 'Title', 'Current Quality', 'Last Update'],
-            $books->map(function($book) {
+            $books->map(function ($book) {
                 return [
                     $book->id,
-                    substr($book->title, 0, self::TITLE_DISPLAY_MAX_LENGTH) . (strlen($book->title) > self::TITLE_DISPLAY_MAX_LENGTH ? '...' : ''),
+                    substr($book->title, 0, self::TITLE_DISPLAY_MAX_LENGTH).(strlen($book->title) > self::TITLE_DISPLAY_MAX_LENGTH ? '...' : ''),
                     $book->info_quality ?? 'basic',
-                    $book->enriched_at ? $book->enriched_at->format('d/m/Y H:i') : 'Never'
+                    $book->enriched_at ? $book->enriched_at->format('d/m/Y H:i') : 'Never',
                 ];
             })->toArray()
         );
+
         return Command::SUCCESS;
     }
 
@@ -168,17 +171,17 @@ class EnrichBooksCommand extends Command
 
                 if ($result['success']) {
                     $successful++;
-                    $this->line("\n✅ {$book->title}: " . $result['message']);
-                    if (isset($result['added_fields']) && !empty($result['added_fields'])) {
-                        $this->line("   📝 Added fields: " . implode(', ', $result['added_fields']));
+                    $this->line("\n✅ {$book->title}: ".$result['message']);
+                    if (isset($result['added_fields']) && ! empty($result['added_fields'])) {
+                        $this->line('   📝 Added fields: '.implode(', ', $result['added_fields']));
                     }
                 } else {
                     $errors++;
-                    $this->line("\n❌ {$book->title}: " . $result['message']);
+                    $this->line("\n❌ {$book->title}: ".$result['message']);
                 }
             } catch (\Exception $e) {
                 $errors++;
-                $this->line("\n💥 Error processing {$book->title}: " . $e->getMessage());
+                $this->line("\n💥 Error processing {$book->title}: ".$e->getMessage());
             }
 
             $processed++;
@@ -238,6 +241,7 @@ class EnrichBooksCommand extends Command
         if ($total === 0) {
             return '0%';
         }
-        return round(($part / $total) * 100, 1) . '%';
+
+        return round(($part / $total) * 100, 1).'%';
     }
 }

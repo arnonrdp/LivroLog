@@ -3,8 +3,52 @@
 use Illuminate\Support\Str;
 
 // Database configuration constants
-if (!defined('DEFAULT_HOST')) {
+if (! defined('DEFAULT_HOST')) {
     define('DEFAULT_HOST', '127.0.0.1');
+}
+
+// Helper functions for database configuration
+if (! function_exists('createDatabaseConnection')) {
+    function createDatabaseConnection(string $driver, array $overrides = []): array
+    {
+        $portMap = [
+            'pgsql' => '5432',
+            'sqlsrv' => '1433',
+        ];
+
+        $charsetMap = [
+            'pgsql' => 'utf8',
+        ];
+
+        $defaults = [
+            'driver' => $driver,
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', DEFAULT_HOST),
+            'port' => env('DB_PORT', $portMap[$driver] ?? '3306'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', $charsetMap[$driver] ?? 'utf8mb4'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+        ];
+
+        return array_merge($defaults, $overrides);
+    }
+}
+
+if (! function_exists('createRedisConnection')) {
+    function createRedisConnection(string $database = '0'): array
+    {
+        return [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', DEFAULT_HOST),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env($database === '0' ? 'REDIS_DB' : 'REDIS_CACHE_DB', $database),
+        ];
+    }
 }
 
 return [
@@ -47,75 +91,37 @@ return [
             'synchronous' => null,
         ],
 
-        'mysql' => [
-            'driver' => 'mysql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', DEFAULT_HOST),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+        'mysql' => createDatabaseConnection('mysql', [
             'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
-        ],
+        ]),
 
-        'mariadb' => [
-            'driver' => 'mariadb',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', DEFAULT_HOST),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+        'mariadb' => createDatabaseConnection('mariadb', [
             'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
-        ],
+        ]),
 
-        'pgsql' => [
-            'driver' => 'pgsql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', DEFAULT_HOST),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', 'utf8'),
-            'prefix' => '',
-            'prefix_indexes' => true,
+        'pgsql' => createDatabaseConnection('pgsql', [
             'search_path' => 'public',
             'sslmode' => 'prefer',
-        ],
+        ]),
 
-        'sqlsrv' => [
-            'driver' => 'sqlsrv',
-            'url' => env('DB_URL'),
+        'sqlsrv' => createDatabaseConnection('sqlsrv', [
             'host' => env('DB_HOST', 'localhost'),
-            'port' => env('DB_PORT', '1433'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
-            'prefix' => '',
-            'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
-        ],
+        ]),
 
     ],
 
@@ -156,23 +162,9 @@ return [
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
-        'default' => [
-            'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', DEFAULT_HOST),
-            'username' => env('REDIS_USERNAME'),
-            'password' => env('REDIS_PASSWORD'),
-            'port' => env('REDIS_PORT', '6379'),
-            'database' => env('REDIS_DB', '0'),
-        ],
+        'default' => createRedisConnection('0'),
 
-        'cache' => [
-            'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', DEFAULT_HOST),
-            'username' => env('REDIS_USERNAME'),
-            'password' => env('REDIS_PASSWORD'),
-            'port' => env('REDIS_PORT', '6379'),
-            'database' => env('REDIS_CACHE_DB', '1'),
-        ],
+        'cache' => createRedisConnection('1'),
 
     ],
 

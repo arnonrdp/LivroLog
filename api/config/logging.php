@@ -6,7 +6,7 @@ use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
 // Log file path constant
-if (!defined('DEFAULT_LOG_PATH')) {
+if (! defined('DEFAULT_LOG_PATH')) {
     define('DEFAULT_LOG_PATH', 'logs/laravel.log');
 }
 

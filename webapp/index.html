@@ -25,6 +25,9 @@
     <!-- Cross-Origin-Opener-Policy for Google Sign In -->
     <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none" />
+    
+    <!-- CSP - Ultra permissive for development (allows everything needed) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-eval' 'unsafe-inline' data: blob:;" />
 
     <!-- Primary Meta Tags -->
     <title>LivroLog</title>

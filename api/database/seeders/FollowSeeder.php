@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Follow;
+use App\Models\User;
 use App\Services\FollowService;
 use Illuminate\Database\Seeder;
 
@@ -21,13 +21,14 @@ class FollowSeeder extends Seeder
 
         if ($users->count() < 2) {
             $this->command->info('Need at least 2 users to create follow relationships');
+
             return;
         }
 
         $this->command->info("Creating follow relationships for {$users->count()} users...");
 
         // Create some follow relationships
-        foreach ($users as $index => $user) {
+        foreach ($users as $user) {
             // Each user follows 1-2 random other users
             $followCount = min(random_int(1, 2), $users->count() - 1);
             $otherUsers = $users->except($user->id)->random($followCount);
@@ -51,7 +52,7 @@ class FollowSeeder extends Seeder
         $avgFollowing = User::avg('following_count');
 
         $this->command->info("Total follow relationships: {$totalFollows}");
-        $this->command->info("Average followers per user: " . round($avgFollowers, 2));
-        $this->command->info("Average following per user: " . round($avgFollowing, 2));
+        $this->command->info('Average followers per user: '.round($avgFollowers, 2));
+        $this->command->info('Average following per user: '.round($avgFollowing, 2));
     }
 }

@@ -3,16 +3,18 @@
 namespace App\Services;
 
 use App\Contracts\BookSearchProvider;
+use App\Services\Providers\AmazonBooksProvider;
 use App\Services\Providers\GoogleBooksProvider;
 use App\Services\Providers\OpenLibraryProvider;
-use App\Services\Providers\AmazonBooksProvider;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class MultiSourceBookSearchService
 {
     private array $providers = [];
+
     private const CACHE_TTL_SUCCESS = 86400; // 24 hours for successful results
+
     private const CACHE_TTL_FAILURE = 3600;  // 1 hour for failed results
 
     public function __construct()
@@ -23,8 +25,8 @@ class MultiSourceBookSearchService
     /**
      * Search for books using multiple sources with fallback strategy
      *
-     * @param string $query Search query (ISBN, title, or title+author)
-     * @param array $options Search options
+     * @param  string  $query  Search query (ISBN, title, or title+author)
+     * @param  array  $options  Search options
      * @return array Standardized search results
      */
     public function search(string $query, array $options = []): array
@@ -37,8 +39,9 @@ class MultiSourceBookSearchService
             Log::info('MultiSourceBookSearchService: Cache hit', [
                 'query' => $query,
                 'cache_key' => $cacheKey,
-                'cached_provider' => $cachedResult['provider'] ?? 'unknown'
+                'cached_provider' => $cachedResult['provider'] ?? 'unknown',
             ]);
+
             return $cachedResult;
         }
 
@@ -46,7 +49,7 @@ class MultiSourceBookSearchService
             'original_query' => $query,
             'normalized_query' => $normalizedQuery,
             'options' => $options,
-            'active_providers' => count($this->getActiveProviders())
+            'active_providers' => count($this->getActiveProviders()),
         ]);
 
         $lastResult = null;
@@ -60,18 +63,18 @@ class MultiSourceBookSearchService
                     'provider' => $provider->getName(),
                     'success' => $result['success'],
                     'total_found' => $result['total_found'],
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ];
 
                 if ($result['success'] && $result['total_found'] > 0) {
                     // Success! Cache and return
                     $finalResult = $this->buildFinalResult($result, $query, $providerResults);
                     Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
-                    
+
                     Log::info('MultiSourceBookSearchService: Search successful', [
                         'query' => $query,
                         'successful_provider' => $provider->getName(),
-                        'total_found' => $result['total_found']
+                        'total_found' => $result['total_found'],
                     ]);
 
                     return $finalResult;
@@ -83,26 +86,26 @@ class MultiSourceBookSearchService
                 Log::error('MultiSourceBookSearchService: Provider error', [
                     'provider' => $provider->getName(),
                     'query' => $query,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
 
                 $providerResults[] = [
                     'provider' => $provider->getName(),
                     'success' => false,
                     'total_found' => 0,
-                    'message' => 'Provider error: ' . $e->getMessage()
+                    'message' => 'Provider error: '.$e->getMessage(),
                 ];
             }
         }
 
         // No provider found results - build failure response
-        $failureResult = $this->buildFailureResult($query, $providerResults, $lastResult);
+        $failureResult = $this->buildFailureResult($query, $providerResults);
         Cache::put($cacheKey, $failureResult, self::CACHE_TTL_FAILURE);
 
         Log::warning('MultiSourceBookSearchService: No results found', [
             'query' => $query,
             'providers_tried' => count($providerResults),
-            'provider_results' => $providerResults
+            'provider_results' => $providerResults,
         ]);
 
         return $failureResult;
@@ -114,22 +117,22 @@ class MultiSourceBookSearchService
     public function searchWithSpecificProvider(string $providerName, string $query, array $options = []): array
     {
         $provider = $this->findProviderByName($providerName);
-        
-        if (!$provider) {
+
+        if (! $provider) {
             return [
                 'success' => false,
                 'message' => "Provider '{$providerName}' not found",
                 'books' => [],
-                'total_found' => 0
+                'total_found' => 0,
             ];
         }
 
-        if (!$provider->isEnabled()) {
+        if (! $provider->isEnabled()) {
             return [
                 'success' => false,
                 'message' => "Provider '{$providerName}' is disabled",
                 'books' => [],
-                'total_found' => 0
+                'total_found' => 0,
             ];
         }
 
@@ -142,7 +145,7 @@ class MultiSourceBookSearchService
     public function getSearchStats(): array
     {
         $activeProviders = $this->getActiveProviders();
-        
+
         return [
             'total_providers' => count($this->providers),
             'active_providers' => count($activeProviders),
@@ -150,9 +153,9 @@ class MultiSourceBookSearchService
                 return [
                     'name' => $provider->getName(),
                     'enabled' => $provider->isEnabled(),
-                    'priority' => $provider->getPriority()
+                    'priority' => $provider->getPriority(),
                 ];
-            }, $activeProviders)
+            }, $activeProviders),
         ];
     }
 
@@ -172,16 +175,16 @@ class MultiSourceBookSearchService
     private function initializeProviders(): void
     {
         $this->providers = [
-            new GoogleBooksProvider(),
-            new AmazonBooksProvider(), // Phase 2 - disabled by default
-            new OpenLibraryProvider(),
+            new GoogleBooksProvider,
+            new AmazonBooksProvider, // Phase 2 - disabled by default
+            new OpenLibraryProvider,
             // Future providers:
             // new ISBNdbProvider(),
         ];
 
         Log::debug('MultiSourceBookSearchService: Providers initialized', [
             'total_providers' => count($this->providers),
-            'enabled_providers' => count($this->getActiveProviders())
+            'enabled_providers' => count($this->getActiveProviders()),
         ]);
     }
 
@@ -212,6 +215,7 @@ class MultiSourceBookSearchService
                 return $provider;
             }
         }
+
         return null;
     }
 
@@ -221,17 +225,17 @@ class MultiSourceBookSearchService
     private function searchWithProvider(BookSearchProvider $provider, string $query, array $options): array
     {
         $startTime = microtime(true);
-        
+
         $result = $provider->search($query, $options);
-        
+
         $duration = round((microtime(true) - $startTime) * 1000, 2);
-        
+
         Log::info('MultiSourceBookSearchService: Provider search completed', [
             'provider' => $provider->getName(),
             'query' => $query,
             'success' => $result['success'],
             'total_found' => $result['total_found'],
-            'duration_ms' => $duration
+            'duration_ms' => $duration,
         ]);
 
         return $result;
@@ -244,7 +248,7 @@ class MultiSourceBookSearchService
     {
         // Remove excessive whitespace
         $normalized = trim(preg_replace('/\s+/', ' ', $query));
-        
+
         // If it looks like ISBN, clean it
         if ($this->looksLikeIsbn($normalized)) {
             $normalized = $this->normalizeIsbn($normalized);
@@ -259,6 +263,7 @@ class MultiSourceBookSearchService
     private function looksLikeIsbn(string $query): bool
     {
         $cleaned = preg_replace('/[^0-9X]/i', '', $query);
+
         return strlen($cleaned) === 10 || strlen($cleaned) === 13;
     }
 
@@ -277,7 +282,8 @@ class MultiSourceBookSearchService
     {
         $normalized = $this->normalizeQuery($query);
         $optionsHash = hash('sha256', serialize($options));
-        return "multi_search:" . hash('sha256', $normalized . $optionsHash);
+
+        return 'multi_search:'.hash('sha256', $normalized.$optionsHash);
     }
 
     /**
@@ -289,14 +295,14 @@ class MultiSourceBookSearchService
             'original_query' => $originalQuery,
             'search_strategy' => 'multi_source',
             'providers_tried' => $providerResults,
-            'cached_at' => now()->toISOString()
+            'cached_at' => now()->toISOString(),
         ]);
     }
 
     /**
      * Build failure result when no provider found results
      */
-    private function buildFailureResult(string $query, array $providerResults, ?array $lastResult): array
+    private function buildFailureResult(string $query, array $providerResults): array
     {
         return [
             'success' => false,
@@ -308,7 +314,7 @@ class MultiSourceBookSearchService
             'search_strategy' => 'multi_source',
             'providers_tried' => $providerResults,
             'cached_at' => now()->toISOString(),
-            'suggestions' => $this->buildSearchSuggestions($query)
+            'suggestions' => $this->buildSearchSuggestions($query),
         ];
     }
 
@@ -321,12 +327,12 @@ class MultiSourceBookSearchService
 
         // If looks like ISBN but failed, suggest title search
         if ($this->looksLikeIsbn($query)) {
-            $suggestions[] = "Try searching by book title instead of ISBN";
-            $suggestions[] = "Verify the ISBN is correct and try again";
+            $suggestions[] = 'Try searching by book title instead of ISBN';
+            $suggestions[] = 'Verify the ISBN is correct and try again';
         } else {
-            $suggestions[] = "Try using more specific keywords";
-            $suggestions[] = "Search by ISBN if you have it";
-            $suggestions[] = "Check spelling of title and author name";
+            $suggestions[] = 'Try using more specific keywords';
+            $suggestions[] = 'Search by ISBN if you have it';
+            $suggestions[] = 'Check spelling of title and author name';
         }
 
         return $suggestions;

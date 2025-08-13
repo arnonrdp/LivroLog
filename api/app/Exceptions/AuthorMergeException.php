@@ -16,6 +16,6 @@ class AuthorMergeException extends \Exception
 
     public static function cannotMergeWithSelf(): self
     {
-        return new self("Cannot merge author with itself");
+        return new self('Cannot merge author with itself');
     }
 }

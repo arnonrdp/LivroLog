@@ -2,13 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\ReviewController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -22,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Auth routes (public)
-Route::middleware(['throttle:5,1', 'cors'])->group(function () {
+Route::middleware(['throttle:5,1'])->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -30,7 +28,7 @@ Route::middleware(['throttle:5,1', 'cors'])->group(function () {
 });
 
 // Google OAuth routes (public)
-Route::middleware(['throttle:10,1', 'cors'])->group(function () {
+Route::middleware(['throttle:10,1'])->group(function () {
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
     Route::post('/auth/google', [AuthController::class, 'googleSignIn']);
