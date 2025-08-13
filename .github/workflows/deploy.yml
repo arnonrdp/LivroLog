@@ -96,7 +96,7 @@ jobs:
         with:
           name: webapp-build-${{ github.sha }}
 
-      - name: prepare / release directory
+      - name: Prepare release directory
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -112,7 +112,7 @@ jobs:
               sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}
             fi
 
-      - name: deploy / api
+      - name: Deploy API (if changed)
         if: needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -122,7 +122,7 @@ jobs:
           source: 'api-build.tar.gz'
           target: '/tmp/'
 
-      - name: deploy / webapp
+      - name: Deploy webapp (if changed)
         if: needs.detect-changes.outputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -132,7 +132,7 @@ jobs:
           source: 'webapp-build.tar.gz'
           target: '/tmp/'
 
-      - name: setup / application
+      - name: Setup application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -177,7 +177,7 @@ jobs:
 
             echo "✅ Application setup completed"
 
-      - name: migrate / database
+      - name: Run migrations (Production only)
         if: env.ENVIRONMENT == 'Production' && (needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch')
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -214,7 +214,7 @@ jobs:
 
             echo "✅ Migrations completed successfully"
 
-      - name: switch / release
+      - name: Switch to new release
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -250,7 +250,7 @@ jobs:
 
             echo "🚀 Deployment switched successfully!"
 
-      - name: test / smoke tests
+      - name: Run smoke tests
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -283,7 +283,7 @@ jobs:
               fi
             else
               echo "⚠️  API smoke test script not found, falling back to basic health check..."
-              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.API_URL }}/health" 2>/dev/null || echo "000")
+              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.API_URL }}/api/health" 2>/dev/null || echo "000")
               if [[ "$API_STATUS" == "200" ]]; then
                 echo "✅ API basic health check passed"
               else
@@ -332,7 +332,7 @@ jobs:
     needs: [detect-changes, deploy]
 
     steps:
-      - name: rollback / automatic
+      - name: Automatic rollback
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
