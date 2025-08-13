@@ -96,7 +96,7 @@ jobs:
         with:
           name: webapp-build-${{ github.sha }}
 
-      - name: Prepare release directory
+      - name: prepare / release directory
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -112,7 +112,7 @@ jobs:
               sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}
             fi
 
-      - name: Deploy API (if changed)
+      - name: deploy / api
         if: needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -122,7 +122,7 @@ jobs:
           source: 'api-build.tar.gz'
           target: '/tmp/'
 
-      - name: Deploy webapp (if changed)
+      - name: deploy / webapp
         if: needs.detect-changes.outputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -132,7 +132,7 @@ jobs:
           source: 'webapp-build.tar.gz'
           target: '/tmp/'
 
-      - name: Setup application
+      - name: setup / application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -177,7 +177,7 @@ jobs:
 
             echo "✅ Application setup completed"
 
-      - name: Run migrations (Production only)
+      - name: migrate / database
         if: env.ENVIRONMENT == 'Production' && (needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch')
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -196,17 +196,17 @@ jobs:
             php artisan view:clear || true
             php artisan config:clear || true
 
-            # Remove existing cache and session files
-            rm -rf storage/framework/sessions/* || true
-            rm -rf storage/framework/views/* || true
-            rm -rf storage/framework/cache/* || true
+            # Ensure shared storage directories exist with proper permissions
+            sudo mkdir -p ${{ env.DEPLOY_PATH }}/shared/storage/{app,framework/{cache,sessions,testing,views},logs}
 
-            # Ensure storage directories exist with proper permissions
-            mkdir -p storage/{app,framework/{cache,sessions,testing,views},logs}
+            # Set ownership first, then permissions on shared storage
+            sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}/shared/storage
+            sudo chmod -R 775 ${{ env.DEPLOY_PATH }}/shared/storage
 
-            # Set ownership first, then permissions
-            sudo chown -R bitnami:daemon storage
-            chmod -R 775 storage
+            # Remove existing cache and session files from shared storage
+            rm -rf ${{ env.DEPLOY_PATH }}/shared/storage/framework/sessions/* || true
+            rm -rf ${{ env.DEPLOY_PATH }}/shared/storage/framework/views/* || true
+            rm -rf ${{ env.DEPLOY_PATH }}/shared/storage/framework/cache/* || true
 
             # Test migration first
             php artisan migrate:status
@@ -214,7 +214,7 @@ jobs:
 
             echo "✅ Migrations completed successfully"
 
-      - name: Switch to new release
+      - name: switch / release
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -250,7 +250,7 @@ jobs:
 
             echo "🚀 Deployment switched successfully!"
 
-      - name: Run smoke tests
+      - name: test / smoke tests
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -332,7 +332,7 @@ jobs:
     needs: [detect-changes, deploy]
 
     steps:
-      - name: Automatic rollback
+      - name: rollback / automatic
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
