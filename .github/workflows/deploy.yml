@@ -50,141 +50,19 @@ jobs:
             echo "environment=Development" >> $GITHUB_OUTPUT
           fi
 
-  build-api:
-    name: build / api
-    runs-on: ubuntu-latest
+  build:
     needs: detect-changes
-    if: needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
-    environment: ${{ needs.detect-changes.outputs.environment }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, bcmath
-          tools: composer:v2
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            api/vendor
-            ~/.composer/cache
-          key: composer-deploy-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
-          restore-keys: |
-            composer-deploy-${{ runner.os }}-
-            composer-${{ runner.os }}-
-
-      - name: Build API (optimized)
-        working-directory: ./api
-        run: |
-          mkdir -p bootstrap/cache
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --classmap-authoritative --ignore-platform-reqs
-
-          # Pre-warm caches
-          cp .env.example .env
-          php artisan key:generate --force
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache || true
-
-          # Generate Swagger documentation
-          php artisan l5-swagger:generate
-
-          # Remove .env (will be symlinked on server)
-          rm .env
-
-      - name: Create API artifact
-        run: |
-          cd api
-          tar -czf ../api-build.tar.gz \
-            --exclude='.env*' \
-            --exclude='storage/logs/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/cache/*' \
-            .
-
-      - name: Upload API artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-build-${{ github.sha }}
-          path: api-build.tar.gz
-          retention-days: 1
-
-  build-webapp:
-    name: build / webapp
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
-    environment: ${{ needs.detect-changes.outputs.environment }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
-          cache-dependency-path: webapp/yarn.lock
-
-      - name: Build webapp (optimized)
-        working-directory: ./webapp
-        run: |
-          yarn install --frozen-lockfile --prefer-offline
-
-          # Set API URL and Google Client ID based on environment
-          if [[ "${{ needs.detect-changes.outputs.environment }}" == "Production" ]]; then
-            echo "VITE_API_URL=https://api.livrolog.com" > .env.production
-            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
-            echo "VITE_APP_NAME=LivroLog" >> .env.production
-            yarn build --mode production
-          else
-            echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
-            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.development
-            echo "VITE_APP_NAME=LivroLog" >> .env.development
-            yarn build --mode development
-          fi
-
-          # Create .htaccess for SPA fallback
-          cat > dist/.htaccess << 'EOF'
-          # SPA Fallback
-          RewriteEngine On
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule ^(.*)$ /index.html [L]
-
-          # Cache static assets for 1 year
-          <filesMatch "\.(css|js|woff|woff2|ttf|svg|jpg|jpeg|png|gif|ico|webp)$">
-            ExpiresActive On
-            ExpiresDefault "access plus 1 year"
-          </filesMatch>
-          EOF
-
-      - name: Create webapp artifact
-        working-directory: ./webapp
-        run: tar -czf ../webapp-build.tar.gz dist/
-
-      - name: Upload webapp artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: webapp-build-${{ github.sha }}
-          path: webapp-build.tar.gz
-          retention-days: 1
+    uses: ./.github/workflows/build.yml
+    with:
+      api-changed: ${{ needs.detect-changes.outputs.api-changed }}
+      webapp-changed: ${{ needs.detect-changes.outputs.webapp-changed }}
+      environment: ${{ needs.detect-changes.outputs.environment }}
+    secrets: inherit
 
   deploy:
     runs-on: ubuntu-latest
-    needs: [detect-changes, build-api, build-webapp]
-    if: always() && (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') && (needs.build-webapp.result == 'success' || needs.build-webapp.result == 'skipped')
+    needs: [detect-changes, build]
+    if: always() && needs.build.result == 'success'
 
     env:
       TIMESTAMP: ${{ github.run_number }}-${{ github.sha }}
