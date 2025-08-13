@@ -190,8 +190,20 @@ jobs:
             echo "🔄 Running database migrations..."
             cd $RELEASE_DIR/api
 
+            # Clear Laravel caches to avoid permission conflicts
+            php artisan cache:clear || true
+            php artisan view:clear || true
+            php artisan config:clear || true
+
+            # Remove existing cache and session files
+            rm -rf storage/framework/sessions/* || true
+            rm -rf storage/framework/views/* || true
+            rm -rf storage/framework/cache/* || true
+
             # Ensure storage directories exist with proper permissions
             mkdir -p storage/{app,framework/{cache,sessions,testing,views},logs}
+
+            # Set ownership first, then permissions
             sudo chown -R bitnami:daemon storage
             chmod -R 775 storage
 
@@ -237,34 +249,72 @@ jobs:
 
             echo "🚀 Deployment switched successfully!"
 
-      - name: Verify deployment
+      - name: Run smoke tests
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "🔍 Quick health checks..."
+            set -e
 
-            # Parallel health checks
-            API_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://${{ env.API_URL }}/api/health 2>/dev/null || echo "000") &
-            WEB_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://${{ env.WEB_URL }} 2>/dev/null || echo "000") &
+            echo "🧪 Running comprehensive smoke tests..."
 
-            wait
+            # Set environment variables for smoke tests
+            export API_URL="http://${{ env.API_URL }}"
+            export WEB_URL="http://${{ env.WEB_URL }}"
+            export TIMEOUT=15
+            export RETRIES=3
 
-            if [[ "$API_STATUS" == "200" ]]; then
-              echo "✅ API health check passed"
+            # Navigate to current release
+            cd ${{ env.DEPLOY_PATH }}/current
+
+            # Run API smoke tests
+            echo ""
+            echo "🔍 Testing API endpoints..."
+            if [[ -f "scripts/smoke-test-api.sh" ]]; then
+              chmod +x scripts/smoke-test-api.sh
+              if ./scripts/smoke-test-api.sh; then
+                echo "✅ API smoke tests passed"
+              else
+                echo "❌ API smoke tests failed"
+                exit 1
+              fi
             else
-              echo "⚠️  API health check failed (status: $API_STATUS)"
+              echo "⚠️  API smoke test script not found, falling back to basic health check..."
+              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.API_URL }}/health" 2>/dev/null || echo "000")
+              if [[ "$API_STATUS" == "200" ]]; then
+                echo "✅ API basic health check passed"
+              else
+                echo "❌ API health check failed (status: $API_STATUS)"
+                exit 1
+              fi
             fi
 
-            if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
-              echo "✅ Web application is responding (status: $WEB_STATUS)"
+            # Run Frontend smoke tests
+            echo ""
+            echo "🌐 Testing frontend application..."
+            if [[ -f "scripts/smoke-test-webapp.sh" ]]; then
+              chmod +x scripts/smoke-test-webapp.sh
+              if ./scripts/smoke-test-webapp.sh; then
+                echo "✅ Frontend smoke tests passed"
+              else
+                echo "❌ Frontend smoke tests failed"
+                exit 1
+              fi
             else
-              echo "⚠️  Web application check failed (status: $WEB_STATUS)"
+              echo "⚠️  Frontend smoke test script not found, falling back to basic check..."
+              WEB_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.WEB_URL }}" 2>/dev/null || echo "000")
+              if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
+                echo "✅ Frontend basic check passed (status: $WEB_STATUS)"
+              else
+                echo "❌ Frontend check failed (status: $WEB_STATUS)"
+                exit 1
+              fi
             fi
 
-            echo "🎉 Deployment completed!"
+            echo ""
+            echo "🎉 All smoke tests passed! Deployment verified successfully."
 
   post-deploy:
     needs: [detect-changes, deploy]
@@ -286,7 +336,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "🔄 Performing automatic rollback..."
+            set -e
+            echo "🔄 Performing automatic rollback due to deployment failure..."
 
             # Determine environment from branch or output
             ENVIRONMENT="${{ needs.detect-changes.outputs.environment }}"
@@ -301,21 +352,65 @@ jobs:
 
             if [[ "$ENVIRONMENT" == "Production" ]]; then
               DEPLOY_PATH="/var/www/livrolog"
+              API_URL="api.livrolog.com"
+              WEB_URL="livrolog.com"
             else
               DEPLOY_PATH="/var/www/livrolog-dev"
+              API_URL="api.dev.livrolog.com"
+              WEB_URL="dev.livrolog.com"
             fi
 
             echo "Rollback environment: $ENVIRONMENT"
+            echo "Deploy path: $DEPLOY_PATH"
 
             # Get previous release
-            PREVIOUS=$(ls -t $DEPLOY_PATH/releases | sed -n '2p')
+            PREVIOUS=$(ls -t $DEPLOY_PATH/releases 2>/dev/null | sed -n '2p')
 
-            if [[ -n "$PREVIOUS" ]]; then
+            if [[ -n "$PREVIOUS" && -d "$DEPLOY_PATH/releases/$PREVIOUS" ]]; then
+              echo "Rolling back to previous release: $PREVIOUS"
+              
+              # Atomic switch to previous release
               ln -nfs $DEPLOY_PATH/releases/$PREVIOUS $DEPLOY_PATH/current
+              
+              # Restart services
               sudo /opt/bitnami/ctlscript.sh restart apache
               sudo /opt/bitnami/ctlscript.sh restart php-fpm
-              echo "✅ Rollback to $PREVIOUS completed"
+              
+              # Wait for services to restart
+              sleep 5
+              
+              # Verify rollback worked with smoke tests
+              echo "🔍 Verifying rollback with quick health checks..."
+              
+              # Quick API health check
+              API_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" "http://$API_URL/api/health" 2>/dev/null || echo "000")
+              if [[ "$API_STATUS" == "200" ]]; then
+                echo "✅ API health check passed after rollback"
+              else
+                echo "⚠️  API health check failed after rollback (status: $API_STATUS)"
+              fi
+              
+              # Quick frontend check
+              WEB_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" "http://$WEB_URL" 2>/dev/null || echo "000")
+              if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
+                echo "✅ Frontend check passed after rollback (status: $WEB_STATUS)"
+              else
+                echo "⚠️  Frontend check failed after rollback (status: $WEB_STATUS)"
+              fi
+              
+              # Remove failed release
+              FAILED_RELEASE="${{ github.run_number }}-${{ github.sha }}"
+              if [[ -d "$DEPLOY_PATH/releases/$FAILED_RELEASE" ]]; then
+                echo "🗑️  Removing failed release: $FAILED_RELEASE"
+                rm -rf "$DEPLOY_PATH/releases/$FAILED_RELEASE"
+              fi
+              
+              echo "✅ Rollback to $PREVIOUS completed successfully"
+              echo "🚨 Deployment failed and was automatically rolled back!"
+              
             else
               echo "❌ No previous release found for rollback"
+              echo "Available releases:"
+              ls -la $DEPLOY_PATH/releases/ 2>/dev/null || echo "No releases directory found"
               exit 1
             fi
