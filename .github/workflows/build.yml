@@ -1,0 +1,159 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      api-changed:
+        type: string
+        required: true
+      webapp-changed:
+        type: string
+        required: true
+      environment:
+        type: string
+        required: true
+    outputs:
+      api-artifact:
+        description: 'API build artifact name'
+        value: ${{ jobs.api.outputs.artifact }}
+      webapp-artifact:
+        description: 'Webapp build artifact name'
+        value: ${{ jobs.webapp.outputs.artifact }}
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+
+jobs:
+  api:
+    name: api
+    runs-on: ubuntu-latest
+    if: inputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
+    environment: ${{ inputs.environment }}
+    outputs:
+      artifact: api-build-${{ github.sha }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, bcmath
+          tools: composer:v2
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            api/vendor
+            ~/.composer/cache
+          key: composer-deploy-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          restore-keys: |
+            composer-deploy-${{ runner.os }}-
+            composer-${{ runner.os }}-
+
+      - name: Build API (optimized)
+        working-directory: ./api
+        run: |
+          mkdir -p bootstrap/cache
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --classmap-authoritative --ignore-platform-reqs
+
+          # Pre-warm caches
+          cp .env.example .env
+          php artisan key:generate --force
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache || true
+
+          # Generate Swagger documentation
+          php artisan l5-swagger:generate
+
+          # Remove .env (will be symlinked on server)
+          rm .env
+
+      - name: Create API artifact
+        run: |
+          cd api
+          tar -czf ../api-build.tar.gz \
+            --exclude='.env*' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/cache/*' \
+            .
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-build-${{ github.sha }}
+          path: api-build.tar.gz
+          retention-days: 1
+
+  webapp:
+    name: webapp
+    runs-on: ubuntu-latest
+    if: inputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
+    environment: ${{ inputs.environment }}
+    outputs:
+      artifact: webapp-build-${{ github.sha }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: webapp/yarn.lock
+
+      - name: Build webapp (optimized)
+        working-directory: ./webapp
+        run: |
+          yarn install --frozen-lockfile --prefer-offline
+
+          # Set API URL and Google Client ID based on environment
+          if [[ "${{ inputs.environment }}" == "Production" ]]; then
+            echo "VITE_API_URL=https://api.livrolog.com" > .env.production
+            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
+            echo "VITE_APP_NAME=LivroLog" >> .env.production
+            yarn build --mode production
+          else
+            echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
+            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.development
+            echo "VITE_APP_NAME=LivroLog" >> .env.development
+            yarn build --mode development
+          fi
+
+          # Create .htaccess for SPA fallback
+          cat > dist/.htaccess << 'EOF'
+          # SPA Fallback
+          RewriteEngine On
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^(.*)$ /index.html [L]
+
+          # Cache static assets for 1 year
+          <filesMatch "\.(css|js|woff|woff2|ttf|svg|jpg|jpeg|png|gif|ico|webp)$">
+            ExpiresActive On
+            ExpiresDefault "access plus 1 year"
+          </filesMatch>
+          EOF
+
+      - name: Create webapp artifact
+        working-directory: ./webapp
+        run: tar -czf ../webapp-build.tar.gz dist/
+
+      - name: Upload webapp artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-build-${{ github.sha }}
+          path: webapp-build.tar.gz
+          retention-days: 1
