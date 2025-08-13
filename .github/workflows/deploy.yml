@@ -6,15 +6,6 @@ on:
       - main
       - dev
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to deploy'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - main
 
 env:
   PHP_VERSION: '8.3'
@@ -37,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Detect file changes
         id: changes
@@ -52,15 +43,8 @@ jobs:
       - name: Set environment
         id: env
         run: |
-          # For workflow_dispatch, determine environment from selected branch
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ github.event.inputs.branch }}" == "main" ]]; then
-              echo "environment=Production" >> $GITHUB_OUTPUT
-            else
-              echo "environment=Development" >> $GITHUB_OUTPUT
-            fi
-          # For push events, determine from the actual branch
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          # Determine environment from the current branch
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "environment=Production" >> $GITHUB_OUTPUT
           else
             echo "environment=Development" >> $GITHUB_OUTPUT
@@ -77,7 +61,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -144,7 +128,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
