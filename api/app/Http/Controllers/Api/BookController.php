@@ -96,9 +96,15 @@ class BookController extends Controller
     public function showcase()
     {
         // Returns 20 most popular books (most present in user libraries)
-        $showcaseBooks = Book::select('books.*', DB::raw('COUNT(users_books.book_id) as library_count'))
-            ->leftJoin('users_books', 'books.id', '=', 'users_books.book_id')
-            ->groupBy('books.id')
+        // Using subquery to avoid GROUP BY issues
+        $showcaseBooks = DB::table('books')
+            ->selectRaw('books.*, COALESCE(book_counts.library_count, 0) as library_count')
+            ->leftJoin(
+                DB::raw('(SELECT book_id, COUNT(*) as library_count FROM users_books GROUP BY book_id) as book_counts'),
+                'books.id',
+                '=',
+                'book_counts.book_id'
+            )
             ->orderByDesc('library_count')
             ->limit(20)
             ->get();
