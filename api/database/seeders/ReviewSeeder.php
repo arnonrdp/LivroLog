@@ -69,8 +69,8 @@ class ReviewSeeder extends Seeder
 
         $createdReviews = 0;
 
-        foreach ($users as $userIndex => $user) {
-            foreach ($books as $bookIndex => $book) {
+        foreach ($users as $user) {
+            foreach ($books as $book) {
                 // Create only some reviews, not all combinations
                 if ($createdReviews >= count($reviewsData)) {
                     break 2;

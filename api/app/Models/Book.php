@@ -165,19 +165,18 @@ class Book extends Model
         }
 
         $date = $this->published_date;
+        $format = 'Y-m-d'; // Default: full date precision
 
-        // If date is January 1st, likely we only have year precision
+        // Determine appropriate format based on date precision
         if ($date->format('m-d') === '01-01') {
-            return $date->format('Y');
+            // If date is January 1st, likely we only have year precision
+            $format = 'Y';
+        } elseif ($date->format('d') === '01') {
+            // If day is 1st, likely we only have year-month precision
+            $format = 'Y-m';
         }
 
-        // If day is 1st, likely we only have year-month precision
-        if ($date->format('d') === '01') {
-            return $date->format('Y-m');
-        }
-
-        // Full date precision
-        return $date->format('Y-m-d');
+        return $date->format($format);
     }
 
     /**

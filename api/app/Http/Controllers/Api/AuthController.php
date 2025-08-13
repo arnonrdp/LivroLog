@@ -600,7 +600,7 @@ class AuthController extends Controller
                         'username' => $username,
                         'avatar' => $googleUser->avatar,
                         'password' => Hash::make(Str::random(32)), // Random password since they'll use Google
-                        'shelf_name' => $googleUser->name."'s Library",
+                        'shelf_name' => $googleUser->name.self::LIBRARY_SUFFIX,
                         'email_verified' => true,
                         'email_verified_at' => now(),
                     ]);
@@ -712,7 +712,7 @@ class AuthController extends Controller
                         'username' => $username,
                         'avatar' => $avatar,
                         'password' => Hash::make(Str::random(32)), // Random password since they'll use Google
-                        'shelf_name' => $name."'s Library",
+                        'shelf_name' => $name.self::LIBRARY_SUFFIX,
                         'email_verified' => $emailVerified,
                         'email_verified_at' => $emailVerified ? now() : null,
                     ]);

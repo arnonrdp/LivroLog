@@ -193,43 +193,69 @@ class BookEnrichmentService
     {
         $data = [];
 
-        if (isset($volumeInfo['publishedDate'])) {
-            $googleDate = $volumeInfo['publishedDate'];
-            $currentDate = $book ? $book->published_date : null;
+        if (! isset($volumeInfo['publishedDate'])) {
+            return $data;
+        }
 
-            // Only update if we have better precision or no existing date
-            $shouldUpdateDate = false;
+        $googleDate = $volumeInfo['publishedDate'];
+        $currentDate = $book ? $book->published_date : null;
 
-            if (! $currentDate) {
-                // No existing date, use Google's data
-                $shouldUpdateDate = true;
-            } else {
-                // Check if current date is just a year (month and day are January 1st)
-                $hasYearOnlyPrecision = $currentDate->format('m-d') === '01-01';
+        $shouldUpdateDate = $this->shouldUpdatePublishedDate($currentDate, $googleDate);
 
-                // Check Google's date precision
-                $googleHasFullDate = preg_match('/^\d{4}-\d{2}-\d{2}/', $googleDate);
-                $googleHasYearMonth = preg_match('/^\d{4}-\d{2}$/', $googleDate);
-                $googleHasYearOnly = preg_match('/^\d{4}$/', $googleDate);
-
-                if ($hasYearOnlyPrecision && ($googleHasFullDate || $googleHasYearMonth)) {
-                    // We have year-only, Google has better precision
-                    $shouldUpdateDate = true;
-                } elseif (! $hasYearOnlyPrecision && $googleHasYearOnly) {
-                    // We have better precision than Google, don't update
-                    $shouldUpdateDate = false;
-                } elseif ($googleHasFullDate) {
-                    // Google has full date, generally use it
-                    $shouldUpdateDate = true;
-                }
-            }
-
-            if ($shouldUpdateDate) {
-                $data['published_date'] = $this->parsePublishedDate($googleDate);
-            }
+        if ($shouldUpdateDate) {
+            $data['published_date'] = $this->parsePublishedDate($googleDate);
         }
 
         return $data;
+    }
+
+    /**
+     * Determine if we should update the published date
+     */
+    private function shouldUpdatePublishedDate($currentDate, string $googleDate): bool
+    {
+        if (! $currentDate) {
+            return true; // No existing date, use Google's data
+        }
+
+        $hasYearOnlyPrecision = $currentDate->format('m-d') === '01-01';
+        $googlePrecision = $this->getDatePrecision($googleDate);
+
+        return $this->shouldReplaceBasedOnPrecision($hasYearOnlyPrecision, $googlePrecision);
+    }
+
+    /**
+     * Get the precision level of a date string
+     */
+    private function getDatePrecision(string $dateString): string
+    {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $dateString)) {
+            return 'full';
+        }
+        if (preg_match('/^\d{4}-\d{2}$/', $dateString)) {
+            return 'year_month';
+        }
+        if (preg_match('/^\d{4}$/', $dateString)) {
+            return 'year_only';
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Determine if we should replace current date based on precision comparison
+     */
+    private function shouldReplaceBasedOnPrecision(bool $hasYearOnlyPrecision, string $googlePrecision): bool
+    {
+        if ($hasYearOnlyPrecision && in_array($googlePrecision, ['full', 'year_month'])) {
+            return true; // We have year-only, Google has better precision
+        }
+
+        if (! $hasYearOnlyPrecision && $googlePrecision === 'year_only') {
+            return false; // We have better precision than Google
+        }
+
+        return $googlePrecision === 'full'; // Use Google if it has full date
     }
 
     /**

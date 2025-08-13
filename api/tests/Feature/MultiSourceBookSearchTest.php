@@ -11,6 +11,14 @@ class MultiSourceBookSearchTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes*';
+
+    private const TEST_ISBN = '9781234567890';
+
+    private const TEST_AUTHOR = 'Test Author';
+
+    private const GOOGLE_BOOKS_PROVIDER = 'Google Books';
+
     protected MultiSourceBookSearchService $searchService;
 
     protected function setUp(): void
@@ -19,7 +27,7 @@ class MultiSourceBookSearchTest extends TestCase
         $this->searchService = new MultiSourceBookSearchService;
     }
 
-    public function test_search_service_initialization()
+    public function test_search_service_initialization(): void
     {
         $stats = $this->searchService->getSearchStats();
 
@@ -28,35 +36,38 @@ class MultiSourceBookSearchTest extends TestCase
         $this->assertArrayHasKey('active_providers', $stats);
         $this->assertArrayHasKey('provider_details', $stats);
 
-        // Should have at least Google Books and Open Library enabled by default
+        $this->assertIsInt($stats['active_providers']);
         $this->assertGreaterThanOrEqual(2, $stats['active_providers']);
     }
 
-    public function test_search_with_isbn_success()
+    public function test_search_with_isbn_success(): void
     {
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response($this->getGoogleBooksResponse()),
+            self::GOOGLE_BOOKS_API_URL => Http::response($this->getGoogleBooksResponse()),
         ]);
 
-        $result = $this->searchService->search('9781234567890');
+        $result = $this->searchService->search(self::TEST_ISBN);
 
         $this->assertSuccessfulGoogleBooksResult($result);
 
+        $this->assertArrayHasKey('books', $result);
+        $this->assertNotEmpty($result['books']);
+
         $book = $result['books'][0];
         $this->assertEquals('Test Book', $book['title']);
-        $this->assertEquals('Test Author', $book['authors']);
-        $this->assertEquals('9781234567890', $book['isbn']);
+        $this->assertEquals(self::TEST_AUTHOR, $book['authors']);
+        $this->assertEquals(self::TEST_ISBN, $book['isbn']);
     }
 
-    public function test_search_with_fallback_to_open_library()
+    public function test_search_with_fallback_to_open_library(): void
     {
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response($this->getEmptyGoogleBooksResponse()),
+            self::GOOGLE_BOOKS_API_URL => Http::response($this->getEmptyGoogleBooksResponse()),
             'https://openlibrary.org/api/books*' => Http::response([
-                'ISBN:9781234567890' => [
+                'ISBN:'.self::TEST_ISBN => [
                     'title' => 'Test Book from Open Library',
                     'authors' => [
-                        ['name' => 'Test Author'],
+                        ['name' => self::TEST_AUTHOR],
                     ],
                     'publishers' => ['Test Publisher'],
                     'publish_date' => '2024',
@@ -66,23 +77,24 @@ class MultiSourceBookSearchTest extends TestCase
             ]),
         ]);
 
-        $result = $this->searchService->search('9781234567890');
+        $result = $this->searchService->search(self::TEST_ISBN);
 
         $this->assertTrue($result['success']);
         $this->assertEquals('Open Library', $result['provider']);
         $this->assertGreaterThan(0, $result['total_found']);
         $this->assertNotEmpty($result['books']);
 
+        $this->assertArrayHasKey('books', $result);
         $book = $result['books'][0];
         $this->assertEquals('Test Book from Open Library', $book['title']);
-        $this->assertEquals('Test Author', $book['authors']);
-        $this->assertEquals('9781234567890', $book['isbn']);
+        $this->assertEquals(self::TEST_AUTHOR, $book['authors']);
+        $this->assertEquals(self::TEST_ISBN, $book['isbn']);
     }
 
-    public function test_search_with_no_results()
+    public function test_search_with_no_results(): void
     {
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response($this->getEmptyGoogleBooksResponse()),
+            self::GOOGLE_BOOKS_API_URL => Http::response($this->getEmptyGoogleBooksResponse()),
             'https://openlibrary.org/api/books*' => Http::response([]),
             'https://openlibrary.org/search.json*' => Http::response([
                 'numFound' => 0,
@@ -90,7 +102,14 @@ class MultiSourceBookSearchTest extends TestCase
             ]),
         ]);
 
-        $result = $this->searchService->search('nonexistentbook123');
+        $testQuery = 'nonexistentbook123';
+        $result = $this->searchService->search($testQuery);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('success', $result);
+        $this->assertArrayHasKey('provider', $result);
+        $this->assertArrayHasKey('total_found', $result);
+        $this->assertArrayHasKey('books', $result);
 
         $this->assertFalse($result['success']);
         $this->assertEquals('Multi-Source', $result['provider']);
@@ -100,10 +119,10 @@ class MultiSourceBookSearchTest extends TestCase
         $this->assertArrayHasKey('providers_tried', $result);
     }
 
-    public function test_search_with_specific_provider()
+    public function test_search_with_specific_provider(): void
     {
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response([
+            self::GOOGLE_BOOKS_API_URL => Http::response([
                 'totalItems' => 1,
                 'items' => [
                     [
@@ -117,45 +136,59 @@ class MultiSourceBookSearchTest extends TestCase
             ]),
         ]);
 
-        $result = $this->searchService->searchWithSpecificProvider('Google Books', 'test query');
+        $testQuery = 'test query';
+        $result = $this->searchService->searchWithSpecificProvider(self::GOOGLE_BOOKS_PROVIDER, $testQuery);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('success', $result);
+        $this->assertArrayHasKey('provider', $result);
+        $this->assertArrayHasKey('books', $result);
 
         $this->assertTrue($result['success']);
-        $this->assertEquals('Google Books', $result['provider']);
+        $this->assertEquals(self::GOOGLE_BOOKS_PROVIDER, $result['provider']);
+        $this->assertNotEmpty($result['books']);
         $this->assertContains('Google Books Result', array_column($result['books'], 'title'));
     }
 
-    public function test_isbn_normalization()
+    public function test_isbn_normalization(): void
     {
-        Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => function ($request) {
-                $query = $request->data()['q'] ?? '';
-                // Should receive normalized ISBN without hyphens
-                $this->assertStringContainsString('isbn:9781234567890', $query);
+        $normalizedIsbn = self::TEST_ISBN;
+        $hyphenatedIsbn = '978-1-234-567-89-0';
 
-                return Http::response([
-                    'totalItems' => 1,
-                    'items' => [
-                        [
-                            'id' => 'normalized-test',
-                            'volumeInfo' => [
-                                'title' => 'Normalized ISBN Test',
-                                'authors' => ['Test Author'],
-                            ],
+        Http::fake([
+            self::GOOGLE_BOOKS_API_URL => Http::response([
+                'totalItems' => 1,
+                'items' => [
+                    [
+                        'id' => 'normalized-test',
+                        'volumeInfo' => [
+                            'title' => 'Normalized ISBN Test',
+                            'authors' => [self::TEST_AUTHOR],
                         ],
                     ],
-                ]);
-            },
+                ],
+            ]),
         ]);
 
-        // Test with hyphenated ISBN
-        $result = $this->searchService->search('978-1-234-567-89-0');
+        $result = $this->searchService->search($hyphenatedIsbn);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('success', $result);
         $this->assertTrue($result['success']);
+
+        Http::assertSent(function ($request) use ($normalizedIsbn) {
+            $url = $request->url();
+
+            return str_contains($url, $normalizedIsbn);
+        });
     }
 
-    public function test_cache_functionality()
+    public function test_cache_functionality(): void
     {
+        $testQuery = 'cache-test-query';
+
         Http::fake([
-            'https://www.googleapis.com/books/v1/volumes*' => Http::response([
+            self::GOOGLE_BOOKS_API_URL => Http::response([
                 'totalItems' => 1,
                 'items' => [
                     [
@@ -169,15 +202,22 @@ class MultiSourceBookSearchTest extends TestCase
             ]),
         ]);
 
-        // First search - should hit API
-        $result1 = $this->searchService->search('cache-test-query');
+        $result1 = $this->searchService->search($testQuery);
+
+        $this->assertIsArray($result1);
+        $this->assertArrayHasKey('success', $result1);
         $this->assertTrue($result1['success']);
 
-        // Second search - should hit cache (no HTTP call expected)
-        Http::assertSentCount(1); // Only one HTTP request should have been made
+        Http::assertSentCount(1);
 
-        $result2 = $this->searchService->search('cache-test-query');
+        $result2 = $this->searchService->search($testQuery);
+
+        $this->assertIsArray($result2);
+        $this->assertArrayHasKey('success', $result2);
         $this->assertTrue($result2['success']);
+
+        $this->assertArrayHasKey('books', $result1);
+        $this->assertArrayHasKey('books', $result2);
         $this->assertEquals($result1['books'], $result2['books']);
     }
 
@@ -190,15 +230,15 @@ class MultiSourceBookSearchTest extends TestCase
                     'id' => 'test-id-123',
                     'volumeInfo' => [
                         'title' => 'Test Book',
-                        'authors' => ['Test Author'],
+                        'authors' => [self::TEST_AUTHOR],
                         'industryIdentifiers' => [
                             [
                                 'type' => 'ISBN_13',
-                                'identifier' => '9781234567890',
+                                'identifier' => self::TEST_ISBN,
                             ],
                         ],
                         'imageLinks' => [
-                            'thumbnail' => 'https://example.com/cover.jpg',
+                            'thumbnail' => 'https://books.google.com/books/content/images/frontcover/test.jpg',
                         ],
                         'description' => 'Test description',
                         'publisher' => 'Test Publisher',
@@ -222,7 +262,7 @@ class MultiSourceBookSearchTest extends TestCase
     private function assertSuccessfulGoogleBooksResult(array $result): void
     {
         $this->assertTrue($result['success']);
-        $this->assertEquals('Google Books', $result['provider']);
+        $this->assertEquals(self::GOOGLE_BOOKS_PROVIDER, $result['provider']);
         $this->assertGreaterThan(0, $result['total_found']);
         $this->assertNotEmpty($result['books']);
     }

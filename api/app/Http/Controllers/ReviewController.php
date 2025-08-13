@@ -12,6 +12,10 @@ use Illuminate\Validation\Rule;
 
 class ReviewController extends Controller
 {
+    private const USER_RELATION_FIELDS = self::USER_RELATION_FIELDS;
+
+    private const BOOK_RELATION_FIELDS = self::BOOK_RELATION_FIELDS;
+
     /**
      * @OA\Get(
      *     path="/reviews",
@@ -82,7 +86,7 @@ class ReviewController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Review::with(['user:id,display_name,username,avatar', 'book:id,title,thumbnail'])
+        $query = Review::with([self::USER_RELATION_FIELDS, self::BOOK_RELATION_FIELDS])
             ->orderBy('created_at', 'desc');
 
         // Filter by book
@@ -229,7 +233,7 @@ class ReviewController extends Controller
         $validated['is_spoiler'] = $validated['is_spoiler'] ?? false;
 
         $review = Review::create($validated);
-        $review->load(['user:id,display_name,username,avatar', 'book:id,title,thumbnail']);
+        $review->load([self::USER_RELATION_FIELDS, self::BOOK_RELATION_FIELDS]);
 
         return response()->json($review, 201);
     }
@@ -281,7 +285,7 @@ class ReviewController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $review = Review::with(['user:id,display_name,username,avatar', 'book:id,title,thumbnail'])
+        $review = Review::with([self::USER_RELATION_FIELDS, self::BOOK_RELATION_FIELDS])
             ->find($id);
 
         if (! $review) {
@@ -291,10 +295,8 @@ class ReviewController extends Controller
         $user = Auth::user();
 
         // Check if user can see this review
-        if ($review->visibility_level === 'private') {
-            if (! $user || $user->id !== $review->user_id) {
-                return response()->json(['message' => 'Not authorized to view this review'], 403);
-            }
+        if ($review->visibility_level === 'private' && (! $user || $user->id !== $review->user_id)) {
+            return response()->json(['message' => 'Not authorized to view this review'], 403);
         }
 
         return response()->json($review);
@@ -391,7 +393,7 @@ class ReviewController extends Controller
         ]);
 
         $review->update($validated);
-        $review->load(['user:id,display_name,username,avatar', 'book:id,title,thumbnail']);
+        $review->load([self::USER_RELATION_FIELDS, self::BOOK_RELATION_FIELDS]);
 
         return response()->json($review);
     }

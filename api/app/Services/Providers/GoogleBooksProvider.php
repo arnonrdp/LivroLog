@@ -30,30 +30,7 @@ class GoogleBooksProvider implements BookSearchProvider
                 'key' => config('services.google_books.api_key'),
             ]);
 
-            if (! $response->successful()) {
-                Log::warning('GoogleBooksProvider: API request failed', [
-                    'status' => $response->status(),
-                    'response' => $response->body(),
-                ]);
-
-                return $this->buildErrorResponse('API request failed');
-            }
-
-            $data = $response->json();
-            $books = $this->processResults($data);
-
-            Log::info('GoogleBooksProvider: Search completed', [
-                'query' => $searchQuery,
-                'total_items' => $data['totalItems'] ?? 0,
-                'returned_items' => count($books),
-            ]);
-
-            // Only consider it success if we actually found books
-            if (count($books) > 0) {
-                return $this->buildSuccessResponse($books, count($books));
-            } else {
-                return $this->buildErrorResponse('No books found in Google Books');
-            }
+            $result = $this->processApiResponse($response, $searchQuery, $query);
 
         } catch (\Exception $e) {
             Log::error('GoogleBooksProvider: Search error', [
@@ -62,8 +39,40 @@ class GoogleBooksProvider implements BookSearchProvider
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->buildErrorResponse($e->getMessage());
+            $result = $this->buildErrorResponse($e->getMessage());
         }
+
+        return $result;
+    }
+
+    /**
+     * Process the API response and determine the result
+     */
+    private function processApiResponse($response, string $searchQuery, string $originalQuery): array
+    {
+        if (! $response->successful()) {
+            Log::warning('GoogleBooksProvider: API request failed', [
+                'status' => $response->status(),
+                'response' => $response->body(),
+            ]);
+
+            return $this->buildErrorResponse('API request failed');
+        }
+
+        $data = $response->json();
+        $books = $this->processResults($data);
+
+        Log::info('GoogleBooksProvider: Search completed', [
+            'query' => $searchQuery,
+            'total_items' => $data['totalItems'] ?? 0,
+            'returned_items' => count($books),
+        ]);
+
+        if (count($books) > 0) {
+            return $this->buildSuccessResponse($books, count($books));
+        }
+
+        return $this->buildErrorResponse('No books found in Google Books');
     }
 
     public function getName(): string

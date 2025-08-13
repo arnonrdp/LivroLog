@@ -44,24 +44,23 @@ class EnrichBooksCommand extends Command
 
         if ($totalBooks === 0) {
             $this->info('✅ No books found for enrichment.');
-
-            return Command::SUCCESS;
-        }
-
-        $this->info("📖 Found {$totalBooks} books to process");
-        $this->showCurrentStats();
-
-        if ($this->option('dry-run')) {
-            return $this->handleDryRun($books);
-        }
-
-        if (! $this->confirmProcessing($totalBooks)) {
+            $result = Command::SUCCESS;
+        } elseif ($this->option('dry-run')) {
+            $this->info("📖 Found {$totalBooks} books to process");
+            $this->showCurrentStats();
+            $result = $this->handleDryRun($books);
+        } elseif (! $this->confirmProcessing($totalBooks)) {
+            $this->info("📖 Found {$totalBooks} books to process");
+            $this->showCurrentStats();
             $this->info('❌ Operation cancelled.');
-
-            return Command::SUCCESS;
+            $result = Command::SUCCESS;
+        } else {
+            $this->info("📖 Found {$totalBooks} books to process");
+            $this->showCurrentStats();
+            $result = $this->processBooks($books, $enrichmentService);
         }
 
-        return $this->processBooks($books, $enrichmentService);
+        return $result;
     }
 
     /**

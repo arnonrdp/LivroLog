@@ -10,7 +10,6 @@ use App\Services\MultiSourceBookSearchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class BookController extends Controller
 {
@@ -359,10 +358,10 @@ class BookController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$book->id,
-            'authors' => 'nullable|string',
+            'authors' => self::VALIDATION_NULLABLE_STRING,
             'thumbnail' => 'nullable|url|max:512',
-            'language' => 'nullable|string|max:10',
-            'publisher' => 'nullable|string|max:255',
+            'language' => self::VALIDATION_NULLABLE_STRING.'|max:10',
+            'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
             'edition' => 'nullable|string|max:50',
         ]);
 
@@ -484,30 +483,6 @@ class BookController extends Controller
     /**
      * Fetch data from Google Books API
      */
-    private function fetchGoogleBooksData(string $query)
-    {
-        return Http::get('https://www.googleapis.com/books/v1/volumes', [
-            'q' => $query,
-            'maxResults' => 40,
-            'printType' => 'books',
-        ]);
-    }
-
-    /**
-     * Process Google Books API response data
-     */
-    private function processGoogleBooksResults(array $data): array
-    {
-        $books = [];
-
-        if (isset($data['items'])) {
-            foreach ($data['items'] as $item) {
-                $books[] = $this->transformGoogleBookItem($item);
-            }
-        }
-
-        return $books;
-    }
 
     /**
      * Transform a single Google Book item to our format
@@ -614,7 +589,7 @@ class BookController extends Controller
     public function enrichBook(Request $request, Book $book, BookEnrichmentService $enrichmentService)
     {
         $request->validate([
-            'google_id' => 'nullable|string',
+            'google_id' => self::VALIDATION_NULLABLE_STRING,
         ]);
 
         $result = $enrichmentService->enrichBook($book, $request->input('google_id'));
@@ -735,18 +710,20 @@ class BookController extends Controller
     private function parsePublishedDate(string $dateString): ?\Carbon\Carbon
     {
         try {
-            // Year only (4 digits)
+            $result = null;
+
             if (preg_match('/^\d{4}$/', $dateString)) {
-                return \Carbon\Carbon::createFromFormat('Y', $dateString)->startOfYear();
+                // Year only (4 digits)
+                $result = \Carbon\Carbon::createFromFormat('Y', $dateString)->startOfYear();
+            } elseif (preg_match('/^\d{4}-\d{2}$/', $dateString)) {
+                // Year and month (YYYY-MM)
+                $result = \Carbon\Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
+            } else {
+                // Full date
+                $result = \Carbon\Carbon::parse($dateString);
             }
-            // Year and month (YYYY-MM)
-            elseif (preg_match('/^\d{4}-\d{2}$/', $dateString)) {
-                return \Carbon\Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
-            }
-            // Full date
-            else {
-                return \Carbon\Carbon::parse($dateString);
-            }
+
+            return $result;
         } catch (\Exception $e) {
             \Log::warning('Error parsing publication date', [
                 'date_string' => $dateString,

@@ -28,7 +28,7 @@ class FollowSeeder extends Seeder
         $this->command->info("Creating follow relationships for {$users->count()} users...");
 
         // Create some follow relationships
-        foreach ($users as $index => $user) {
+        foreach ($users as $user) {
             // Each user follows 1-2 random other users
             $followCount = min(random_int(1, 2), $users->count() - 1);
             $otherUsers = $users->except($user->id)->random($followCount);

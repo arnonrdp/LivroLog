@@ -99,7 +99,7 @@ class MultiSourceBookSearchService
         }
 
         // No provider found results - build failure response
-        $failureResult = $this->buildFailureResult($query, $providerResults, $lastResult);
+        $failureResult = $this->buildFailureResult($query, $providerResults);
         Cache::put($cacheKey, $failureResult, self::CACHE_TTL_FAILURE);
 
         Log::warning('MultiSourceBookSearchService: No results found', [
@@ -302,7 +302,7 @@ class MultiSourceBookSearchService
     /**
      * Build failure result when no provider found results
      */
-    private function buildFailureResult(string $query, array $providerResults, ?array $lastResult): array
+    private function buildFailureResult(string $query, array $providerResults): array
     {
         return [
             'success' => false,
