@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['javascript-typescript', 'python']
+        language: ['javascript-typescript']
         # CodeQL supports: 'cpp', 'csharp', 'go', 'java', 'javascript-typescript', 'python', 'ruby', 'swift'
         # Use 'javascript-typescript' to analyze TypeScript and JavaScript together
 
