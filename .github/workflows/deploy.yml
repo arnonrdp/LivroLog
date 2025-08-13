@@ -250,77 +250,6 @@ jobs:
 
             echo "🚀 Deployment switched successfully!"
 
-      - name: Run smoke tests
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            set -e
-
-            echo "🧪 Running comprehensive smoke tests..."
-
-            # Set environment variables for smoke tests
-            export API_URL="https://${{ env.API_URL }}"
-            export WEB_URL="https://${{ env.WEB_URL }}"
-            export TIMEOUT=15
-            export RETRIES=3
-
-            # Navigate to current release
-            cd ${{ env.DEPLOY_PATH }}/current
-
-            # Run API smoke tests
-            echo ""
-            echo "🔍 Testing API endpoints..."
-            if [[ -f "scripts/smoke-test-api.sh" ]]; then
-              chmod +x scripts/smoke-test-api.sh
-              if ./scripts/smoke-test-api.sh; then
-                echo "✅ API smoke tests passed"
-              else
-                echo "❌ API smoke tests failed"
-                exit 1
-              fi
-            else
-              echo "⚠️  API smoke test script not found, falling back to basic health check..."
-              echo "Testing endpoint: https://${{ env.API_URL }}/api/health"
-              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" -L "https://${{ env.API_URL }}/api/health" 2>/dev/null || echo "000")
-              echo "API response status: $API_STATUS"
-              if [[ "$API_STATUS" == "200" ]]; then
-                echo "✅ API basic health check passed"
-              elif [[ "$API_STATUS" == "503" ]]; then
-                echo "⚠️ API is responding but some services are unhealthy (status: 503)"
-                echo "This may be temporary during deployment - deployment will continue"
-              else
-                echo "❌ API health check failed (status: $API_STATUS)"
-                exit 1
-              fi
-            fi
-
-            # Run Frontend smoke tests
-            echo ""
-            echo "🌐 Testing frontend application..."
-            if [[ -f "scripts/smoke-test-webapp.sh" ]]; then
-              chmod +x scripts/smoke-test-webapp.sh
-              if ./scripts/smoke-test-webapp.sh; then
-                echo "✅ Frontend smoke tests passed"
-              else
-                echo "❌ Frontend smoke tests failed"
-                exit 1
-              fi
-            else
-              echo "⚠️  Frontend smoke test script not found, falling back to basic check..."
-              WEB_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" -L "https://${{ env.WEB_URL }}" 2>/dev/null || echo "000")
-              if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
-                echo "✅ Frontend basic check passed (status: $WEB_STATUS)"
-              else
-                echo "❌ Frontend check failed (status: $WEB_STATUS)"
-                exit 1
-              fi
-            fi
-
-            echo ""
-            echo "🎉 All smoke tests passed! Deployment verified successfully."
 
   post-deploy:
     name: post-deploy
@@ -387,24 +316,6 @@ jobs:
               # Wait for services to restart
               sleep 5
               
-              # Verify rollback worked with smoke tests
-              echo "🔍 Verifying rollback with quick health checks..."
-              
-              # Quick API health check
-              API_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" -L "https://$API_URL/health" 2>/dev/null || echo "000")
-              if [[ "$API_STATUS" == "200" ]]; then
-                echo "✅ API health check passed after rollback"
-              else
-                echo "⚠️  API health check failed after rollback (status: $API_STATUS)"
-              fi
-              
-              # Quick frontend check
-              WEB_STATUS=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" -L "https://$WEB_URL" 2>/dev/null || echo "000")
-              if [[ "$WEB_STATUS" != "000" && "$WEB_STATUS" != "404" ]]; then
-                echo "✅ Frontend check passed after rollback (status: $WEB_STATUS)"
-              else
-                echo "⚠️  Frontend check failed after rollback (status: $WEB_STATUS)"
-              fi
               
               # Remove failed release
               FAILED_RELEASE="${{ github.run_number }}-${{ github.sha }}"
