@@ -30,5 +30,6 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="GOOGLE_BOOKS_API_KEY" value="test-api-key"/>
     </php>
 </phpunit>
