@@ -272,9 +272,9 @@ jobs:
             # Run API smoke tests
             echo ""
             echo "🔍 Testing API endpoints..."
-            if [[ -f "api/scripts/smoke-test.sh" ]]; then
-              chmod +x api/scripts/smoke-test.sh
-              if ./api/scripts/smoke-test.sh; then
+            if [[ -f "scripts/smoke-test-api.sh" ]]; then
+              chmod +x scripts/smoke-test-api.sh
+              if ./scripts/smoke-test-api.sh; then
                 echo "✅ API smoke tests passed"
               else
                 echo "❌ API smoke tests failed"
@@ -282,7 +282,7 @@ jobs:
               fi
             else
               echo "⚠️  API smoke test script not found, falling back to basic health check..."
-              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.API_URL }}/api/health" 2>/dev/null || echo "000")
+              API_STATUS=$(timeout 15 curl -s -o /dev/null -w "%{http_code}" "http://${{ env.API_URL }}/health" 2>/dev/null || echo "000")
               if [[ "$API_STATUS" == "200" ]]; then
                 echo "✅ API basic health check passed"
               else
@@ -294,9 +294,9 @@ jobs:
             # Run Frontend smoke tests
             echo ""
             echo "🌐 Testing frontend application..."
-            if [[ -f "../scripts/smoke-test-frontend.sh" ]]; then
-              chmod +x ../scripts/smoke-test-frontend.sh
-              if ../scripts/smoke-test-frontend.sh; then
+            if [[ -f "scripts/smoke-test-webapp.sh" ]]; then
+              chmod +x scripts/smoke-test-webapp.sh
+              if ./scripts/smoke-test-webapp.sh; then
                 echo "✅ Frontend smoke tests passed"
               else
                 echo "❌ Frontend smoke tests failed"

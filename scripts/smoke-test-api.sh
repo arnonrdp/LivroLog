@@ -104,7 +104,7 @@ test_health_endpoint() {
     log_info "Testing health endpoint..."
     
     local response
-    response=$(http_request "$API_URL/api/health" 200)
+    response=$(http_request "$API_URL/health" 200)
     
     if [[ $? -eq 0 ]]; then
         if validate_json "$response" "status timestamp services"; then
@@ -137,7 +137,7 @@ test_showcase_endpoint() {
     log_info "Testing showcase endpoint..."
     
     local response
-    response=$(http_request "$API_URL/api/showcase" 200)
+    response=$(http_request "$API_URL/showcase" 200)
     
     if [[ $? -eq 0 ]]; then
         if validate_json "$response"; then
@@ -154,7 +154,7 @@ test_books_search() {
     log_info "Testing books search endpoint..."
     
     local response
-    response=$(http_request "$API_URL/api/books/search?q=test" 401)
+    response=$(http_request "$API_URL/books/search?q=test" 401)
     
     if [[ $? -eq 0 ]]; then
         if validate_json "$response" "message"; then
@@ -171,7 +171,7 @@ test_auth_me_without_token() {
     log_info "Testing auth/me endpoint without token..."
     
     local response
-    response=$(http_request "$API_URL/api/auth/me" 401)
+    response=$(http_request "$API_URL/auth/me" 401)
     
     if [[ $? -eq 0 ]]; then
         if validate_json "$response" "message"; then
@@ -188,7 +188,7 @@ test_cors_headers() {
     log_info "Testing CORS headers..."
     
     local headers
-    headers=$(curl -s -I --connect-timeout "$TIMEOUT" "$API_URL/api/health" 2>/dev/null | grep -i "access-control" || echo "")
+    headers=$(curl -s -I --connect-timeout "$TIMEOUT" "$API_URL/health" 2>/dev/null | grep -i "access-control" || echo "")
     
     if [[ -n "$headers" ]]; then
         log_success "CORS headers - Present"
@@ -201,7 +201,7 @@ test_api_docs() {
     log_info "Testing API documentation endpoint..."
     
     local response
-    response=$(http_request "$API_URL/api/documentation" 200 "GET")
+    response=$(http_request "$API_URL/documentation" 200 "GET")
     
     if [[ $? -eq 0 ]]; then
         if [[ "$response" == *"swagger"* ]] || [[ "$response" == *"openapi"* ]] || [[ "$response" == *"api"* ]]; then
