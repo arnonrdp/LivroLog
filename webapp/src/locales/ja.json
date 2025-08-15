@@ -5,6 +5,7 @@
   "account-updated-error": "アカウントの更新に失敗しました。\nページを更新して、再試行してください。",
   "add": "本を追加",
   "add-review": "レビューを追加します",
+  "add-to-library-to-review": "この本をライブラリに追加して確認してください",
   "added-to-shelf": "棚に追加された本",
   "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
   "bookcase-model": "本棚モデル",

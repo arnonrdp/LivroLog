@@ -5,6 +5,7 @@
   "account-updated-error": "Hesap güncellenemedi.\nSayfayi yenileyin ve tekrar deneyin.",
   "add": "Kitap ekle",
   "add-review": "İnceleme Ekle",
+  "add-to-library-to-review": "Bu kitabı incelemek için kütüphanenize ekleyin",
   "added-to-shelf": "Kitap rafiniza eklendi",
   "addlabel": "Başliğa, yazara, yayinciya, yayina, ISBN'ye göre arama yapin...",
   "bookcase-model": "kitaplık modeli",

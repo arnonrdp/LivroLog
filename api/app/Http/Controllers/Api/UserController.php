@@ -20,7 +20,14 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::withCount('books');
+        $query = User::withCount(['books', 'followers', 'following']);
+
+        // Add is_following status for authenticated users
+        if ($authUser = $request->user()) {
+            $query->withExists(['followers as is_following' => function ($q) use ($authUser) {
+                $q->where('follower_id', $authUser->id);
+            }]);
+        }
 
         // Global filter
         $filter = $request->input('filter');

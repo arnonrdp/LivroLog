@@ -16,7 +16,9 @@ export const useBookStore = defineStore('book', {
   getters: {
     books: (state) => state._books,
     isLoading: (state) => state._isLoading,
-    searchResults: (state) => state._searchResults
+    searchResults: (state) => state._searchResults,
+    isBookInUserLibrary: (state) => (bookId: string) => 
+      state._books.some((book) => book.id === bookId)
   },
 
   actions: {

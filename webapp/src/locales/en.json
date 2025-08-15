@@ -5,6 +5,7 @@
   "account-updated-error": "Failed to update account.\nRefresh the page and try again.",
   "add": "Add book",
   "add-review": "Add Review",
+  "add-to-library-to-review": "Add this book to your library to review it",
   "added-to-shelf": "Book added to your shelf",
   "addlabel": "Search by title, author, publisher, release, ISBN...",
   "bookcase-model": "Bookcase model",

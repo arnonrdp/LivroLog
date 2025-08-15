@@ -5,6 +5,7 @@
   "account-updated-error": "Falha ao atualizar a conta.\nAtualize a página e tente novamente.",
   "add": "Adicionar livro",
   "add-review": "Adicionar Review",
+  "add-to-library-to-review": "Adicione este livro à sua estante para poder avaliá-lo",
   "added-to-shelf": "Livro adicionado à sua estante",
   "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
   "bookcase-model": "modelo de estante",

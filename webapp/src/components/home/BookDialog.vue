@@ -36,8 +36,8 @@
 
       <!-- Scrollable Content -->
       <q-scroll-area style="height: 400px">
-        <!-- Read Date Section -->
-        <q-card-section>
+        <!-- Read Date Section (only for books in user's library) -->
+        <q-card-section v-if="isBookInLibrary">
           <div class="text-subtitle1 q-mb-md row items-center">
             <q-icon class="q-mr-sm" name="event" />
             {{ $t('read-date') }}
@@ -45,7 +45,7 @@
           <q-input v-model="readDate" class="q-mb-md" dense :label="$t('read-date')" outlined type="date" />
         </q-card-section>
 
-        <q-separator />
+        <q-separator v-if="isBookInLibrary" />
 
         <!-- Existing Reviews -->
         <q-card-section>
@@ -123,7 +123,15 @@
 
         <q-separator />
 
-        <!-- Add Review Section -->
+        <!-- Book Not in Library Message -->
+        <q-card-section v-if="!isBookInLibrary && !userReview">
+          <div class="text-center q-py-md text-grey-6">
+            <q-icon class="q-mb-sm" name="info" size="2em" />
+            <div class="text-body2">{{ $t('add-to-library-to-review', 'Adicione este livro à sua estante para poder avaliá-lo') }}</div>
+          </div>
+        </q-card-section>
+
+        <!-- Add Review Section (only for books in user's library) -->
         <q-card-section v-if="canAddReview">
           <div class="text-subtitle1 q-mb-md row items-center">
             <q-icon class="q-mr-sm" name="add_comment" />
@@ -196,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Book, CreateReviewRequest, Review } from '@/models'
+import type { Book, CreateReviewRequest, Review, UpdateReviewRequest } from '@/models'
 import { useAuthStore, useBookStore, useReviewStore } from '@/stores'
 import { useQuasar } from 'quasar'
 import { computed, ref, watch } from 'vue'
@@ -240,7 +248,8 @@ const showDialog = computed({
 const bookReviews = computed(() => reviewStore.reviews)
 const currentUserId = computed(() => authStore.user?.id)
 const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
-const canAddReview = computed(() => !userReview.value)
+const isBookInLibrary = computed(() => bookStore.isBookInUserLibrary(props.book.id))
+const canAddReview = computed(() => !userReview.value && isBookInLibrary.value)
 
 const visibilityOptions = computed(() => [
   { label: t('private'), value: 'private' },
@@ -256,7 +265,13 @@ watch(
       reviewStore.clearReviews()
       loading.value = true
 
-      readDate.value = props.book.pivot?.read_at ? new Date(props.book.pivot.read_at).toISOString().split('T')[0] : ''
+      const pivotReadAt = props.book.pivot?.read_at
+      readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
+
+      // Load user's books to check if this book is in their library
+      if (authStore.user && bookStore.books.length === 0) {
+        await bookStore.getUserBooks()
+      }
 
       await loadBookReviews()
       loading.value = false
@@ -331,21 +346,43 @@ async function handleSave() {
 
   // Save review if content is provided
   if (reviewForm.value.content.trim()) {
-    const reviewData = {
-      book_id: props.book.id,
-      title: reviewForm.value.title || undefined,
-      content: reviewForm.value.content,
-      rating: reviewForm.value.rating,
-      visibility_level: reviewForm.value.visibility_level,
-      is_spoiler: reviewForm.value.is_spoiler
-    }
-
     const existingReview = userReview.value
 
     if (existingReview) {
-      promises.push(reviewStore.putReview(existingReview.id, reviewData))
+      // For update, only include fields that have values
+      const updateData: UpdateReviewRequest = {
+        content: reviewForm.value.content,
+        rating: reviewForm.value.rating,
+        visibility_level: reviewForm.value.visibility_level
+      }
+
+      // Only add optional fields if they have values
+      if (reviewForm.value.title) {
+        updateData.title = reviewForm.value.title
+      }
+      if (reviewForm.value.is_spoiler !== undefined) {
+        updateData.is_spoiler = reviewForm.value.is_spoiler
+      }
+
+      promises.push(reviewStore.putReview(existingReview.id, updateData))
     } else {
-      promises.push(reviewStore.postReview(reviewData))
+      // For create, build the request properly
+      const createData: CreateReviewRequest = {
+        book_id: props.book.id,
+        content: reviewForm.value.content,
+        rating: reviewForm.value.rating,
+        visibility_level: reviewForm.value.visibility_level
+      }
+
+      // Only add optional fields if they have values
+      if (reviewForm.value.title) {
+        createData.title = reviewForm.value.title
+      }
+      if (reviewForm.value.is_spoiler !== undefined) {
+        createData.is_spoiler = reviewForm.value.is_spoiler
+      }
+
+      promises.push(reviewStore.postReview(createData))
     }
   }
 

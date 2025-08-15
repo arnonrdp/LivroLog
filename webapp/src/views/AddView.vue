@@ -13,24 +13,10 @@
     <section class="items-baseline justify-center row">
       <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
         <q-btn color="primary" icon="add" round @click.once="addBook(book)" />
-        <a>
-          <img
-            v-if="book.thumbnail"
-            :alt="`Cover of ${book.title}`"
-            :class="{ 'cursor-pointer': book.description }"
-            :src="book.thumbnail"
-            style="width: 8rem"
-            @click="book.description && showBookSummary(book)"
-          />
-          <img
-            v-else
-            :alt="`No cover available for ${book.title}`"
-            :class="{ 'cursor-pointer': book.description }"
-            src="@/assets/no_cover.jpg"
-            style="width: 8rem"
-            @click="book.description && showBookSummary(book)"
-          />
-        </a>
+        <div class="book-cover" @click="showBookReviews(book)">
+          <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" style="width: 8rem" />
+          <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" style="width: 8rem" />
+        </div>
         <figcaption style="max-width: 8rem">{{ book.title }}</figcaption>
         <figcaption id="authors" style="max-width: 8rem">
           <span class="text-body2 text-weight-bold">
@@ -40,39 +26,26 @@
       </figure>
     </section>
 
-    <q-dialog v-model="isDialogOpen" class="book-summary-dialog">
-      <q-card bordered>
-        <q-card-section>
-          <h3>{{ selectedBook?.title }}</h3>
-          <q-separator />
-          <div class="q-mt-md q-pa-md">
-            <div class="book-summary">{{ selectedBook?.description }}</div>
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn v-close-popup color="primary" flat label="Close" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <!-- Book Reviews Dialog -->
+    <BookDialog v-if="selectedBook" v-model="showBookDialog" :book="selectedBook" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import TheLoading from '@/components/add/TheLoading.vue'
+import BookDialog from '@/components/home/BookDialog.vue'
 import type { Book } from '@/models'
 import { useBookStore } from '@/stores'
-import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const $q = useQuasar()
 const { t } = useI18n()
 
 const bookStore = useBookStore()
 
 const books = ref<Book[]>([])
 const seek = ref('')
-const isDialogOpen = ref(false)
+const showBookDialog = ref(false)
 const isSearching = ref(false)
 const selectedBook = ref<Book | null>(null)
 
@@ -95,9 +68,9 @@ function clearSearch() {
   books.value = []
 }
 
-function showBookSummary(book: Book) {
+function showBookReviews(book: Book) {
   selectedBook.value = book
-  isDialogOpen.value = !!selectedBook.value?.description
+  showBookDialog.value = true
 }
 </script>
 
@@ -114,4 +87,11 @@ figure
     opacity: 1
     transition: 0.5s
     visibility: visible
+
+.book-cover
+  cursor: pointer
+  transition: transform 0.2s ease
+
+  &:hover
+    transform: scale(1.05)
 </style>

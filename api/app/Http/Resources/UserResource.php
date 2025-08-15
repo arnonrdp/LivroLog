@@ -23,6 +23,9 @@ class UserResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'books_count' => $this->when(isset($this->books_count), $this->books_count),
+            'followers_count' => $this->when(isset($this->followers_count), $this->followers_count),
+            'following_count' => $this->when(isset($this->following_count), $this->following_count),
+            'is_following' => $this->when(isset($this->is_following), (bool) $this->is_following),
         ];
     }
 }

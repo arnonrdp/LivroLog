@@ -1,10 +1,12 @@
 export interface Book {
   addedIn?: Date | string | number
   authors?: string
+  categories?: string | string[]
   created_at?: string
   description?: string
   edition?: string
   id: string
+  industry_identifiers?: string | unknown[]
   isbn?: string
   ISBN?: string
   language: string

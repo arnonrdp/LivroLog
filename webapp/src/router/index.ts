@@ -32,18 +32,6 @@ const routes: Array<RouteRecordRaw> = [
     props: true
   },
   {
-    path: '/:username/followers',
-    component: () => import('@/views/FollowersView.vue'),
-    props: true,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/:username/following',
-    component: () => import('@/views/FollowingView.vue'),
-    props: true,
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/settings',
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true }

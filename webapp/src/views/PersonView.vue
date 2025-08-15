@@ -101,7 +101,14 @@ function onSort(label: string | number) {
 }
 
 async function addBook(book: Book) {
-  book = { ...book, addedIn: Date.now(), readIn: '' }
-  await bookStore.postBook(book)
+  // Parse JSON string fields to proper arrays
+  const bookData = {
+    ...book,
+    categories: typeof book.categories === 'string' ? JSON.parse(book.categories) : book.categories,
+    industry_identifiers: typeof book.industry_identifiers === 'string' ? JSON.parse(book.industry_identifiers) : book.industry_identifiers,
+    addedIn: Date.now(),
+    readIn: ''
+  }
+  await bookStore.postBook(bookData)
 }
 </script>

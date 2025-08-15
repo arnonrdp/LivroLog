@@ -126,11 +126,6 @@ onMounted(async () => {
   if (router.currentRoute.value.path === '/') {
     await authStore.refreshUser()
   }
-
-  // Se estivermos vendo o perfil de outra pessoa, carrega o status de follow
-  if (peopleStore.person?.id && peopleStore.person.id !== authStore.user.id) {
-    await followStore.getFollowStatus(peopleStore.person.id)
-  }
 })
 
 async function followOrUnfollow() {

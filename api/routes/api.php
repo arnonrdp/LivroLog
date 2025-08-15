@@ -75,8 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Follow system
     Route::post('/users/{user}/follow', [FollowController::class, 'follow']);
     Route::delete('/users/{user}/unfollow', [FollowController::class, 'unfollow']);
-    Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
-    Route::get('/users/{user}/following', [FollowController::class, 'following']);
     Route::get('/users/{user}/follow-status', [FollowController::class, 'followStatus']);
 
     // Reviews (authenticated routes)

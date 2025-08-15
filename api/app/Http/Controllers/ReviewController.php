@@ -12,9 +12,9 @@ use Illuminate\Validation\Rule;
 
 class ReviewController extends Controller
 {
-    private const USER_RELATION_FIELDS = self::USER_RELATION_FIELDS;
+    private const USER_RELATION_FIELDS = 'user';
 
-    private const BOOK_RELATION_FIELDS = self::BOOK_RELATION_FIELDS;
+    private const BOOK_RELATION_FIELDS = 'book';
 
     /**
      * @OA\Get(

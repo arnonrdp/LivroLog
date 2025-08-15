@@ -56,10 +56,8 @@ function onFilter(title: Book['title']) {
 }
 
 function openBookDialog(book: Book) {
-  if (selfUser.value) {
-    selectedBook.value = book
-    showBookDialog.value = true
-  }
+  selectedBook.value = book
+  showBookDialog.value = true
 }
 </script>
 
