@@ -128,7 +128,7 @@ export const useBookStore = defineStore('book', {
         })
         .then((response) => {
           this._books = this._books.map((book) =>
-            book.id === bookId ? { ...book, pivot: { ...book.pivot, read_at: readDate } as typeof book.pivot } : book
+            book.id === bookId && book.pivot ? { ...book, pivot: { ...book.pivot, read_at: readDate } } : book
           )
           Notify.create({ message: i18n.global.t('read-date-saved'), type: 'positive' })
           return response.data

@@ -26,7 +26,9 @@ function shuffleArray(array: Book[]): Book[] {
   const result = array.slice()
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(secureRandom() * (i + 1))
-    ;[result[i], result[j]] = [result[j], result[i]]
+    const temp = result[i]
+    result[i] = result[j]!
+    result[j] = temp!
   }
   return result
 }
@@ -34,7 +36,7 @@ function shuffleArray(array: Book[]): Book[] {
 function secureRandom(): number {
   const buffer = new Uint8Array(1)
   window.crypto.getRandomValues(buffer)
-  return buffer[0] / 255
+  return buffer[0]! / 255
 }
 
 </script>

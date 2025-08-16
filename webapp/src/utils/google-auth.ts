@@ -11,7 +11,7 @@ export interface GoogleUserInfo {
   id: string
   email: string
   name: string
-  picture?: string
+  picture: string
   email_verified: boolean
 }
 
@@ -87,13 +87,18 @@ export class GoogleAuth {
     await this.ensureInitialized()
     this.initRequest((r) => callback(r.credential))
 
-    window.google.accounts.id.renderButton(element, {
+    const buttonConfig: Parameters<typeof window.google.accounts.id.renderButton>[1] = {
       theme: options.theme || 'outline',
       size: options.size || 'large',
       text: options.text || 'continue_with',
-      shape: options.shape || 'rectangular',
-      width: options.width
-    })
+      shape: options.shape || 'rectangular'
+    }
+    
+    if (options.width) {
+      buttonConfig.width = options.width
+    }
+    
+    window.google.accounts.id.renderButton(element, buttonConfig)
   }
 
   static async signIn(): Promise<string> {
@@ -108,7 +113,7 @@ export class GoogleAuth {
     try {
       const { sub: id, email, name, picture, email_verified = false } = jwtDecode<JwtPayload>(idToken)
 
-      return { id, email, name, picture, email_verified }
+      return { id, email, name, picture: picture || '', email_verified }
     } catch (error) {
       console.error('Failed to decode Google ID token:', error)
       throw new Error(`Failed to decode Google ID token: ${error instanceof Error ? error.message : 'Unknown error'}`)

@@ -37,14 +37,14 @@ export const useAuthStore = defineStore('auth', {
     },
 
     setUser(user: User) {
-      this.$patch({ _user: user })
+      this._user = user
     },
 
     async getAuthMe() {
       return this._withLoading(async () => {
         try {
           const response = await api.get('/auth/me')
-          this.$patch({ _user: response.data })
+          this._user = response.data
 
           if (this.isAuthenticated) {
             router.push('/')
@@ -52,7 +52,7 @@ export const useAuthStore = defineStore('auth', {
           return response.data
         } catch (error) {
           // Clear user data if auth fails
-          this.$patch({ _user: {} })
+          this._user = {} as User
           throw error
         }
       })
@@ -65,7 +65,7 @@ export const useAuthStore = defineStore('auth', {
 
         localStorage.setItem('auth_token', authData.access_token)
         LocalStorage.set('user', authData.user)
-        this.$patch({ _user: authData.user })
+        this._user = authData.user
         router.push('/')
 
         return authData
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', {
 
         localStorage.setItem('auth_token', authData.access_token)
         LocalStorage.set('user', authData.user)
-        this.$patch({ _user: authData.user })
+        this._user = authData.user
         router.push('/')
 
         return authData
@@ -145,7 +145,7 @@ export const useAuthStore = defineStore('auth', {
 
         localStorage.setItem('auth_token', authData.access_token)
         LocalStorage.set('user', authData.user)
-        this.$patch({ _user: authData.user })
+        this._user = authData.user
         Notify.create({ message: 'Login with Google successful!', type: 'positive' })
         router.push('/')
 
@@ -162,7 +162,7 @@ export const useAuthStore = defineStore('auth', {
       const userData = LocalStorage.getItem('user')
 
       if (token && userData && typeof userData === 'object') {
-        this.$patch({ _user: userData as User })
+        this._user = userData as User
         return true
       }
 
@@ -173,7 +173,7 @@ export const useAuthStore = defineStore('auth', {
       return this._withLoading(
         async () => {
           const response = await api.get('/auth/me')
-          this.$patch({ _user: response.data })
+          this._user = response.data
           LocalStorage.set('user', response.data)
           return response.data
         },

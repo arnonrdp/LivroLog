@@ -198,4 +198,138 @@ class FollowController extends Controller
 
         return response()->json($status);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/users/{id}/followers",
+     *     summary="Get list of followers for a user",
+     *     tags={"Follows"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="U-ABC1-DEF2")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of followers",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="followers",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/User")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="pagination",
+     *                     type="object",
+     *                     @OA\Property(property="total", type="integer", example=10),
+     *                     @OA\Property(property="current_page", type="integer", example=1),
+     *                     @OA\Property(property="per_page", type="integer", example=20),
+     *                     @OA\Property(property="last_page", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
+    public function followers(Request $request, User $user): JsonResponse
+    {
+        $perPage = $request->get('per_page', 20);
+        $followers = $user->followers()->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'followers' => $followers->items(),
+                'pagination' => [
+                    'total' => $followers->total(),
+                    'current_page' => $followers->currentPage(),
+                    'per_page' => $followers->perPage(),
+                    'last_page' => $followers->lastPage(),
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/users/{id}/following",
+     *     summary="Get list of users that a user is following",
+     *     tags={"Follows"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="U-ABC1-DEF2")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of following users",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="following",
+     *                     type="array",
+     *                     @OA\Items(ref="#/components/schemas/User")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="pagination",
+     *                     type="object",
+     *                     @OA\Property(property="total", type="integer", example=10),
+     *                     @OA\Property(property="current_page", type="integer", example=1),
+     *                     @OA\Property(property="per_page", type="integer", example=20),
+     *                     @OA\Property(property="last_page", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
+    public function following(Request $request, User $user): JsonResponse
+    {
+        $perPage = $request->get('per_page', 20);
+        $following = $user->following()->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'following' => $following->items(),
+                'pagination' => [
+                    'total' => $following->total(),
+                    'current_page' => $following->currentPage(),
+                    'per_page' => $following->perPage(),
+                    'last_page' => $following->lastPage(),
+                ],
+            ],
+        ]);
+    }
 }

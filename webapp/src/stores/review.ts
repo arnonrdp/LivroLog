@@ -95,8 +95,8 @@ export const useReviewStore = defineStore('review', {
 
       return await this.putReview(review.id, { visibility_level: newVisibility }).then((result) => {
         const reviewIndex = this._reviews.findIndex((r) => r.id === review.id)
-        if (reviewIndex !== -1) {
-          this._reviews[reviewIndex].visibility_level = newVisibility
+        if (reviewIndex !== -1 && this._reviews[reviewIndex]) {
+          this._reviews[reviewIndex]!.visibility_level = newVisibility
         }
         return newVisibility
       })
