@@ -20,33 +20,6 @@ export interface FollowResponse {
   code?: string
 }
 
-export interface FollowersResponse {
-  success: boolean
-  data: {
-    followers: Pick<User, 'id' | 'display_name' | 'username' | 'avatar'>[]
-    pagination: {
-      current_page: number
-      per_page: number
-      total: number
-      last_page: number
-      has_more: boolean
-    }
-  }
-}
-
-export interface FollowingResponse {
-  success: boolean
-  data: {
-    following: Pick<User, 'id' | 'display_name' | 'username' | 'avatar'>[]
-    pagination: {
-      current_page: number
-      per_page: number
-      total: number
-      last_page: number
-      has_more: boolean
-    }
-  }
-}
 
 export interface FollowStatus {
   is_following: boolean

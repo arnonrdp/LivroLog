@@ -6,6 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Schema(
+ *     schema="Author",
+ *     type="object",
+ *     title="Author",
+ *     description="Author model",
+ *
+ *     @OA\Property(property="id", type="string", example="A-1ABC-2DEF"),
+ *     @OA\Property(property="name", type="string", example="J.R.R. Tolkien"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class Author extends Model
 {
     use HasFactory;

@@ -53,7 +53,25 @@
 
             <!-- Follow Button -->
             <q-card-actions class="justify-center">
-              <FollowButton dense size="sm" :user-id="props.row.id" @click.stop />
+              <q-btn
+                v-if="!isSelf(props.row.id)"
+                class="follow-btn"
+                :color="getFollowingStatus(props.row.id, props.row.is_following) ? 'grey-7' : 'primary'"
+                dense
+                :icon="getFollowingStatus(props.row.id, props.row.is_following) ? 'person_remove' : 'person_add'"
+                :label="getFollowingStatus(props.row.id, props.row.is_following) ? $t('unfollow') : $t('follow')"
+                :loading="userLoadingStates[props.row.id] || false"
+                :outline="getFollowingStatus(props.row.id, props.row.is_following)"
+                :unelevated="!getFollowingStatus(props.row.id, props.row.is_following)"
+                @click.stop="toggleFollow(props.row.id, props.row.is_following)"
+              >
+                <q-tooltip v-if="followStore.isMutualFollow(props.row.id)">
+                  {{ $t('mutual-follow') }}
+                </q-tooltip>
+                <q-tooltip v-else-if="followStore.isFollowedBy(props.row.id)">
+                  {{ $t('follows-you') }}
+                </q-tooltip>
+              </q-btn>
             </q-card-actions>
           </q-card>
         </div>
@@ -63,9 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import FollowButton from '@/components/follow/FollowButton.vue'
 import type { User } from '@/models'
-import { useUserStore } from '@/stores'
+import { useFollowStore, useUserStore } from '@/stores'
 import type { QTableColumn, QTableProps } from 'quasar'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -73,7 +90,11 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 document.title = `LivroLog | ${t('people')}`
 
+const followStore = useFollowStore()
 const userStore = useUserStore()
+
+const localFollowStatus = ref<Record<string, boolean>>({})
+const userLoadingStates = ref<Record<string, boolean>>({})
 
 const columns: QTableColumn<User>[] = [
   { name: 'id', label: 'ID', field: 'id' },
@@ -86,6 +107,50 @@ const pagination = ref<NonNullable<QTableProps['pagination']>>({ descending: tru
 onMounted(() => {
   getUsers({ pagination: pagination.value })
 })
+
+function isSelf(userId: string): boolean {
+  return userStore.me.id === userId
+}
+
+function getFollowingStatus(userId: string, apiStatus?: boolean): boolean {
+  // Priority: local state > API status > store state
+  if (localFollowStatus.value[userId] !== undefined) {
+    return localFollowStatus.value[userId]
+  }
+  if (apiStatus !== undefined) {
+    return apiStatus
+  }
+  return followStore.isFollowing(userId)
+}
+
+async function toggleFollow(userId: string, currentStatus?: boolean) {
+  if (userLoadingStates.value[userId]) return
+
+  const wasFollowing = getFollowingStatus(userId, currentStatus)
+
+  // Set loading state for this specific user
+  userLoadingStates.value[userId] = true
+
+  // Optimistic update
+  localFollowStatus.value[userId] = !wasFollowing
+
+  try {
+    if (wasFollowing) {
+      await followStore.deleteUserFollow(userId)
+    } else {
+      await followStore.postUserFollow(userId)
+    }
+    // Keep the local state updated with the successful result
+    localFollowStatus.value[userId] = !wasFollowing
+  } catch (error) {
+    // Revert on error
+    localFollowStatus.value[userId] = wasFollowing
+    console.error('Error toggling follow:', error)
+  } finally {
+    // Clear loading state for this specific user
+    userLoadingStates.value[userId] = false
+  }
+}
 
 async function getUsers(props: Partial<QTableProps>) {
   if (props.pagination) {
@@ -127,5 +192,9 @@ async function getUsers(props: Partial<QTableProps>) {
 
 .card-link:hover {
   color: rgba(0, 0, 0, 0.85);
+}
+
+.follow-btn {
+  min-width: 100px;
 }
 </style>

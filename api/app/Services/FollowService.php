@@ -102,54 +102,6 @@ class FollowService
     }
 
     /**
-     * Get followers of a user.
-     */
-    public function getFollowers(User $user, int $perPage = 20): array
-    {
-        $followers = $user->followers()
-            ->select(['users.id', 'users.display_name', 'users.username', 'users.avatar'])
-            ->paginate($perPage);
-
-        return [
-            'success' => true,
-            'data' => [
-                'followers' => $followers->items(),
-                'pagination' => [
-                    'current_page' => $followers->currentPage(),
-                    'per_page' => $followers->perPage(),
-                    'total' => $followers->total(),
-                    'last_page' => $followers->lastPage(),
-                    'has_more' => $followers->hasMorePages(),
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Get users that a user is following.
-     */
-    public function getFollowing(User $user, int $perPage = 20): array
-    {
-        $following = $user->following()
-            ->select(['users.id', 'users.display_name', 'users.username', 'users.avatar'])
-            ->paginate($perPage);
-
-        return [
-            'success' => true,
-            'data' => [
-                'following' => $following->items(),
-                'pagination' => [
-                    'current_page' => $following->currentPage(),
-                    'per_page' => $following->perPage(),
-                    'total' => $following->total(),
-                    'last_page' => $following->lastPage(),
-                    'has_more' => $following->hasMorePages(),
-                ],
-            ],
-        ];
-    }
-
-    /**
      * Get follow status between current user and target user.
      */
     public function getFollowStatus(User $currentUser, User $targetUser): array

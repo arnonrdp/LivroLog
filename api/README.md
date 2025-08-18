@@ -173,10 +173,9 @@ api/
 ### Social Features
 
 -   `POST /users/{id}/follow` - Follow another user
--   `DELETE /users/{id}/unfollow` - Unfollow user
+-   `DELETE /users/{id}/follow` - Unfollow user
 -   `GET /users/{id}/followers` - Get user's followers
 -   `GET /users/{id}/following` - Get users being followed
--   `GET /users/{id}/follow-status` - Check follow relationship status
 
 ### Reviews & Ratings
 

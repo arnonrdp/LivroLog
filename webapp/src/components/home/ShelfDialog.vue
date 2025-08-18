@@ -77,8 +77,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore, useFollowStore, usePeopleStore } from '@/stores'
-import { computed, onMounted, ref } from 'vue'
+import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -94,7 +94,7 @@ const router = useRouter()
 
 const authStore = useAuthStore()
 const followStore = useFollowStore()
-const peopleStore = usePeopleStore()
+const userStore = useUserStore()
 
 const bookLabels = {
   authors: t('order-by-author'),
@@ -105,44 +105,33 @@ const bookLabels = {
 const shelfMenu = ref(false)
 
 const currentUser = computed(() => {
-  if (router.currentRoute.value.path !== '/' && peopleStore.person?.id) {
-    return peopleStore.person
+  // When we're on the home page, show logged-in user
+  if (router.currentRoute.value.path === '/') {
+    return userStore.me
   }
-  return authStore.user
+  // When on other user's page, show that user (from userStore.currentUser)
+  return userStore.currentUser
 })
 
 const sortKeyComputed = computed(() => props.sortKey)
 const ascDescComputed = computed(() => props.ascDesc)
 const isAbleToFollow = computed(() => {
-  return router.currentRoute.value.path !== '/' && authStore.isAuthenticated && peopleStore.person.id !== authStore.user.id
+  return router.currentRoute.value.path !== '/' && authStore.isAuthenticated && userStore.currentUser.id !== userStore.me.id
 })
 const isFollowingPerson = computed(() => {
-  if (!peopleStore.person?.id) return false
-  return followStore.isFollowing(peopleStore.person.id)
-})
-
-onMounted(async () => {
-  // Se estivermos na própria estante, atualiza os dados do usuário
-  if (router.currentRoute.value.path === '/') {
-    await authStore.refreshUser()
-  }
-
-  // Se estivermos vendo o perfil de outra pessoa, carrega o status de follow
-  if (peopleStore.person?.id && peopleStore.person.id !== authStore.user.id) {
-    await followStore.getFollowStatus(peopleStore.person.id)
-  }
+  if (!userStore.currentUser?.id) return false
+  return followStore.isFollowing(userStore.currentUser.id)
 })
 
 async function followOrUnfollow() {
-  if (!peopleStore.person?.id) return
+  if (!userStore.currentUser?.id) return
 
   if (isFollowingPerson.value) {
-    await peopleStore.unfollow(peopleStore.person.id)
+    await followStore.deleteUserFollow(userStore.currentUser.id)
   } else {
-    await peopleStore.follow(peopleStore.person.id)
+    await followStore.postUserFollow(userStore.currentUser.id)
   }
 
-  // Atualiza os dados do usuário para refletir as novas contagens
   await authStore.refreshUser()
 }
 </script>

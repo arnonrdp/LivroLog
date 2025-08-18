@@ -155,11 +155,15 @@ class BookEnrichmentService
     }
 
     /**
-     * Extract basic information (subtitle, description)
+     * Extract basic information (title, subtitle, description)
      */
     private function extractBasicInfo(array $volumeInfo): array
     {
         $data = [];
+
+        if (isset($volumeInfo['title'])) {
+            $data['title'] = $volumeInfo['title'];
+        }
 
         if (isset($volumeInfo['subtitle'])) {
             $data['subtitle'] = $volumeInfo['subtitle'];

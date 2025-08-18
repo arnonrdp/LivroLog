@@ -5,7 +5,7 @@
     </q-btn>
   </div>
   <q-form class="q-gutter-md q-mt-md" @submit.prevent="updateAccount">
-    <q-input v-model="authStore.user.email" :label="$t('mail')" lazy-rules required :rules="[(val, rules) => rules.email(val)]">
+    <q-input v-model="userStore.me.email" :label="$t('mail')" lazy-rules required :rules="[(val, rules) => rules.email(val)]">
       <template v-slot:prepend>
         <q-icon name="mail" />
       </template>
@@ -31,7 +31,7 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
-const email = ref(authStore.user.email)
+const email = ref(userStore.me.email)
 const password = ref('')
 
 document.title = `LivroLog | ${t('account')}`
@@ -42,6 +42,6 @@ async function logout() {
 
 async function updateAccount() {
   const credential = { email: email.value, password: password.value }
-  await userStore.putAccount(credential)
+  await authStore.putMe(credential)
 }
 </script>

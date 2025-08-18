@@ -51,8 +51,8 @@ const books = ref([] as Book[])
 document.title = `LivroLog | ${t('books')}`
 
 onMounted(() => {
-  // Fetch all books without pagination for settings page
-  bookStore.getBooks(true).then(() => {
+  // Use the user's library instead of global books catalog
+  bookStore.getUserBooks().then(() => {
     books.value = bookStore.books.map((book) => ({
       ...book,
       readIn: book.readIn || book.pivot?.read_at || ''
@@ -64,7 +64,7 @@ async function updateReadDates(updatedBooks: Book[]) {
   const promises = []
   for (const book of updatedBooks) {
     if (book.readIn) {
-      promises.push(bookStore.updateBookReadDate(book.id, String(book.readIn)))
+      promises.push(bookStore.patchUserBookReadDate(book.id, String(book.readIn)))
     }
   }
 

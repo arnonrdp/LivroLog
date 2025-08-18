@@ -53,18 +53,18 @@
 
 <script setup lang="ts">
 import type { Review } from '@/models'
-import { useAuthStore, useReviewStore } from '@/stores'
+import { useReviewStore, useUserStore } from '@/stores'
 import { computed, ref } from 'vue'
 
 defineProps<{
   reviews: Review[]
 }>()
 
-const authStore = useAuthStore()
 const reviewStore = useReviewStore()
+const userStore = useUserStore()
 
 const showSpoiler = ref<Record<string, boolean>>({})
-const currentUserId = computed(() => authStore.user?.id)
+const currentUserId = computed(() => userStore.me?.id)
 
 function formatDate(dateString: string) {
   const date = new Date(dateString)
@@ -72,6 +72,6 @@ function formatDate(dateString: string) {
 }
 
 async function markAsHelpful(reviewId: string) {
-  await reviewStore.postReviewHelpful(reviewId)
+  await reviewStore.postReviewsHelpful(reviewId)
 }
 </script>

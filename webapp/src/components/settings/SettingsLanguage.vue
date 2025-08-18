@@ -13,17 +13,16 @@
 
 <script setup lang="ts">
 import { localeOptions } from '@/locales'
-import { useAuthStore, useUserStore } from '@/stores'
+import { useAuthStore } from '@/stores'
 import { useI18n } from 'vue-i18n'
 
 const { locale, t } = useI18n({ useScope: 'global' })
 
 const authStore = useAuthStore()
-const userStore = useUserStore()
 
 document.title = `LivroLog | ${t('language')}`
 
 function saveLocale() {
-  userStore.putProfile({ locale: locale.value })
+  authStore.putMe({ locale: locale.value })
 }
 </script>

@@ -4,7 +4,6 @@ Personal library management system that allows users to organize their reading c
 
 <p align="center">
 <a href="https://livrolog.com"><img src="https://img.shields.io/website?url=https%3A%2F%2Flivrolog.com" /></a>
-<img src="https://img.shields.io/github/package-json/v/arnonrdp/LivroLog?filename=webapp%2Fpackage.json" />
 <img src="https://img.shields.io/github/repo-size/arnonrdp/LivroLog" />
 <img alt="GitHub commit activity (branch)" src="https://img.shields.io/github/commit-activity/m/arnonrdp/LivroLog" />
 <br />

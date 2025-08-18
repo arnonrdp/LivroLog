@@ -1,26 +1,23 @@
-import { i18n } from '@/locales'
 import type { Meta, User } from '@/models'
-import router from '@/router'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
-import { useAuthStore } from './auth'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
     _isLoading: false,
     _meta: {} as Meta,
-    _people: [] as User[]
+    _people: [] as User[],
+    _me: {} as User,
+    _currentUser: {} as User
   }),
 
   getters: {
     isLoading: (state) => state._isLoading,
-    // Following functionality placeholder - will be implemented with social features
-    isFollowing: (_state) => (_personId: number) => {
-      return false
-    },
     meta: (state) => state._meta,
-    people: (state) => state._people
+    people: (state) => state._people,
+    me: (state) => state._me,
+    currentUser: (state) => state._currentUser
   },
 
   actions: {
@@ -36,46 +33,32 @@ export const useUserStore = defineStore('user', {
         .finally(() => (this._isLoading = false))
     },
 
-    async putAccount(data: object) {
-      const authStore = useAuthStore()
-      authStore._isLoading = true
-      return await api
-        .put('/account', data)
-        .then((response) => {
-          authStore.setUser(response.data.user)
-          Notify.create({ message: i18n.global.t('account-updated'), type: 'positive' })
-          return response.data
-        })
-        .catch(() => Notify.create({ message: i18n.global.t('account-updated-error'), type: 'negative' }))
-        .finally(() => (authStore._isLoading = false))
-    },
 
-    async deleteAccount() {
-      const authStore = useAuthStore()
-      authStore._isLoading = true
+    async getUser(identifier: string) {
+      if (!identifier) {
+        this.$patch({ _currentUser: {} })
+        return Promise.resolve()
+      }
+      this._isLoading = true
       return await api
-        .delete('/account')
-        .then(() => router.push('/login'))
-        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
-        .finally(() => (authStore._isLoading = false))
+        .get(`/users/${identifier}`)
+        .then((response) => this.$patch({ _currentUser: response.data }))
+        .catch(() => this.$patch({ _currentUser: {} }))
+        .finally(() => (this._isLoading = false))
     },
 
     async getCheckUsername(username: string) {
-      return await api.get(`/check-username?username=${username}`).then((response) => response.data.exists)
+      return await api.get(`/auth/check-username?username=${username}`).then((response) => response.data.exists)
     },
 
-    async putProfile(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
-      const authStore = useAuthStore()
-      authStore._isLoading = true
-      return await api
-        .put('/profile', data)
-        .then((response) => {
-          authStore.setUser(response.data.user)
-          Notify.create({ message: i18n.global.t('profile-updated'), type: 'positive' })
-          return response.data
-        })
-        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
-        .finally(() => (authStore._isLoading = false))
+    // Set the current logged in user
+    setMe(user: User) {
+      this._me = user
+    },
+
+    // Update a specific property of the current user
+    updateMe(updates: Partial<User>) {
+      this._me = { ...this._me, ...updates }
     }
   }
 })

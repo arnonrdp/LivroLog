@@ -83,7 +83,7 @@ class FollowSystemTest extends TestCase
         $response = $this->postJson("/users/{$user->id}/follow");
         $response->assertStatus(401);
 
-        $response = $this->deleteJson("/users/{$user->id}/unfollow");
+        $response = $this->deleteJson("/users/{$user->id}/follow");
         $response->assertStatus(401);
 
         $response = $this->getJson("/users/{$user->id}/followers");
@@ -117,7 +117,7 @@ class FollowSystemTest extends TestCase
         $this->followService->follow($follower, $following);
 
         $response = $this->actingAs($follower)
-            ->deleteJson("/users/{$following->id}/unfollow");
+            ->deleteJson("/users/{$following->id}/follow");
 
         $response->assertStatus(200)
             ->assertJson([

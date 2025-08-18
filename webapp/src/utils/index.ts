@@ -15,8 +15,8 @@ const sortAccessors: Record<string, Accessor> = {
 export function sortBooks(books: Book[], sortKey: string | number, ascDesc: string): Book[] {
   const getValue = sortAccessors[sortKey as string] ?? sortAccessors.title
   return books.slice().sort((a, b) => {
-    const aVal = getValue(a)
-    const bVal = getValue(b)
+    const aVal = getValue!(a)
+    const bVal = getValue!(b)
     if (aVal === bVal) return 0
     return aVal > bVal === (ascDesc === 'asc') ? 1 : -1
   })

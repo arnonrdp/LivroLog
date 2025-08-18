@@ -62,19 +62,27 @@ use Laravel\Socialite\Facades\Socialite;
  * )
  * @OA\Tag(
  *     name="Books",
- *     description="Book management"
- * )
- * @OA\Tag(
- *     name="User Library",
- *     description="User's personal library"
- * )
- * @OA\Tag(
- *     name="Users",
- *     description="User management"
+ *     description="Book management and search"
  * )
  * @OA\Tag(
  *     name="Health",
  *     description="Health check endpoints"
+ * )
+ * @OA\Tag(
+ *     name="Reviews",
+ *     description="Book reviews and ratings"
+ * )
+ * @OA\Tag(
+ *     name="Social",
+ *     description="Follow system and social features"
+ * )
+ * @OA\Tag(
+ *     name="User Library",
+ *     description="User's personal library management"
+ * )
+ * @OA\Tag(
+ *     name="Users",
+ *     description="User management and profiles"
  * )
  */
 class AuthController extends Controller
@@ -764,5 +772,226 @@ class AuthController extends Controller
         }
 
         return $username;
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/auth/me",
+     *     operationId="updateUserProfile",
+     *     tags={"Authentication"},
+     *     summary="Update user profile and account",
+     *     description="Updates the authenticated user's profile and account information",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Profile and account data to update",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="display_name", type="string", example="John Doe", description="User display name"),
+     *             @OA\Property(property="username", type="string", example="john_doe", description="Unique username"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
+     *             @OA\Property(property="shelf_name", type="string", example="John's Library", description="Custom shelf name"),
+     *             @OA\Property(property="locale", type="string", example="en", description="User preferred language"),
+     *             @OA\Property(property="is_private", type="boolean", example=false, description="Whether profile is private")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profile updated successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Profile updated successfully"),
+     *             @OA\Property(property="user", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function updateMe(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'display_name' => 'sometimes|string|max:255',
+            'username' => 'sometimes|string|max:100|unique:users,username,'.$user->id,
+            'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
+            'shelf_name' => 'sometimes|string|max:255',
+            'locale' => 'sometimes|string|max:10',
+            'is_private' => 'sometimes|boolean',
+        ]);
+
+        $user->update($request->only([
+            'display_name',
+            'username',
+            'email',
+            'shelf_name',
+            'locale',
+            'is_private',
+        ]));
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh()->loadCount(['followers', 'following']),
+        ]);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/auth/password",
+     *     operationId="updateUserPassword",
+     *     tags={"Authentication"},
+     *     summary="Update user password",
+     *     description="Updates the authenticated user's password",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Password update data",
+     *
+     *         @OA\JsonContent(
+     *             required={"current_password","password","password_confirmation"},
+     *
+     *             @OA\Property(property="current_password", type="string", format="password", description="Current password"),
+     *             @OA\Property(property="password", type="string", format="password", description="New password"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", description="New password confirmation")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password updated successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Password updated successfully")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function updatePassword2(Request $request)
+    {
+        return $this->updatePassword($request);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/auth/me",
+     *     operationId="deleteUserAccount",
+     *     tags={"Authentication"},
+     *     summary="Delete user account",
+     *     description="Permanently deletes the authenticated user's account and all associated data",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Account deleted successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Account deleted successfully")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function deleteMe(Request $request)
+    {
+        $user = $request->user();
+
+        // Delete user's tokens
+        $user->tokens()->delete();
+
+        // Delete the user account
+        $user->delete();
+
+        return response()->json(['message' => 'Account deleted successfully']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/auth/check-username",
+     *     operationId="checkUsernameAvailability",
+     *     tags={"Authentication"},
+     *     summary="Check username availability",
+     *     description="Checks if a username is available for registration or update",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="username",
+     *         in="query",
+     *         description="Username to check",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="john_doe")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Username availability status",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="exists", type="boolean", example=false, description="Whether username already exists"),
+     *             @OA\Property(property="available", type="boolean", example=true, description="Whether username is available for use")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function checkUsername(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:100',
+        ]);
+
+        $username = $request->input('username');
+        $exists = User::where('username', $username)->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'available' => ! $exists,
+        ]);
     }
 }

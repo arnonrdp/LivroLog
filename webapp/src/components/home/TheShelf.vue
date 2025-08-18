@@ -1,17 +1,6 @@
 <template>
   <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
-      <q-btn
-        v-if="selfUser"
-        color="negative"
-        icon="close"
-        round
-        size="sm"
-        style="right: -1rem; top: 1rem"
-        @click.stop="$emit('emitRemoveID', book.id)"
-      />
-      <q-btn v-else color="primary" icon="add" round size="sm" style="right: -1rem; top: 1rem" @click.stop="$emit('emitAddID', book)" />
-
       <!-- Make the book image clickable -->
       <div class="book-cover" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
@@ -20,8 +9,6 @@
 
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">
         {{ book.title }}
-        <br />
-        <small>{{ $t('click-to-review') }}</small>
       </q-tooltip>
     </figure>
   </section>
@@ -32,23 +19,17 @@
 
 <script setup lang="ts">
 import type { Book, User } from '@/models'
-import { useAuthStore } from '@/stores'
 import { ref } from 'vue'
-import { useRoute } from 'vue-router'
 import BookDialog from './BookDialog.vue'
 
 defineProps<{
   books: User['books']
 }>()
 
-defineEmits(['emitAddID', 'emitReadDate', 'emitRemoveID', 'readDateUpdated'])
-
-const authStore = useAuthStore()
-const route = useRoute()
+defineEmits(['readDateUpdated'])
 
 const filter = ref('')
 const selectedBook = ref<Book | null>(null)
-const selfUser = ref(!route.params.username || route.params.username === authStore.user.username)
 const showBookDialog = ref(false)
 
 function onFilter(title: Book['title']) {
@@ -56,10 +37,8 @@ function onFilter(title: Book['title']) {
 }
 
 function openBookDialog(book: Book) {
-  if (selfUser.value) {
-    selectedBook.value = book
-    showBookDialog.value = true
-  }
+  selectedBook.value = book
+  showBookDialog.value = true
 }
 </script>
 
@@ -83,20 +62,6 @@ section figure {
   margin: 0 1.5rem;
   max-width: 80px;
   position: relative;
-}
-
-figure button {
-  opacity: 0;
-  position: absolute;
-  visibility: hidden;
-  z-index: 1;
-}
-
-figure button:hover,
-figure:hover button {
-  opacity: 1;
-  transition: 0.5s;
-  visibility: visible;
 }
 
 .book-cover {

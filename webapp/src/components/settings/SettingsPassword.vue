@@ -31,7 +31,7 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
-const email = ref(authStore.user.email)
+const email = ref(userStore.me.email)
 const oldPass = ref('')
 const newPass = ref('')
 const confPass = ref('')
@@ -49,6 +49,6 @@ function isConfirmationPassword(password: string) {
 async function updateAccount() {
   const credential = { email: email.value, password: oldPass.value, newPass: newPass.value }
 
-  await userStore.putAccount(credential)
+  await authStore.putMe(credential)
 }
 </script>
