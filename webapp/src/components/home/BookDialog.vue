@@ -179,6 +179,26 @@
       <q-separator />
       <q-card-actions align="right" class="q-pa-md">
         <q-btn v-close-popup flat :label="$t('close')" />
+
+        <!-- Add/Remove from Library Button -->
+        <q-btn
+          v-if="!isBookInLibrary"
+          color="primary"
+          :disable="libraryLoading"
+          :label="$t('add-to-library')"
+          :loading="libraryLoading"
+          @click="addToLibrary"
+        />
+        <q-btn
+          v-else
+          color="negative"
+          :disable="libraryLoading"
+          :label="$t('remove-from-library')"
+          :loading="libraryLoading"
+          outline
+          @click="removeFromLibrary"
+        />
+
         <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
       </q-card-actions>
     </q-card>
@@ -205,7 +225,7 @@
 
 <script setup lang="ts">
 import type { Book, CreateReviewRequest, Review, UpdateReviewRequest } from '@/models'
-import { useAuthStore, useBookStore, useReviewStore } from '@/stores'
+import { useBookStore, useReviewStore, useUserStore } from '@/stores'
 import { useQuasar } from 'quasar'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -222,11 +242,13 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const $q = useQuasar()
-const authStore = useAuthStore()
-const reviewStore = useReviewStore()
+
 const bookStore = useBookStore()
+const reviewStore = useReviewStore()
+const userStore = useUserStore()
 
 const loading = ref(false)
+const libraryLoading = ref(false)
 const readDate = ref('')
 const showSpoiler = ref<Record<string, boolean>>({})
 const editingReview = ref<Review | null>(null)
@@ -246,9 +268,32 @@ const showDialog = computed({
   set: (value) => emit('update:modelValue', value)
 })
 const bookReviews = computed(() => reviewStore.reviews)
-const currentUserId = computed(() => authStore.user?.id)
+const currentUserId = computed(() => userStore.me?.id)
 const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
-const isBookInLibrary = computed(() => bookStore.isBookInUserLibrary(props.book.id))
+// Use ref instead of computed to avoid reactivity timing issues
+const isBookInLibrary = ref(false)
+
+// Function to update library status
+function updateLibraryStatus() {
+  const bookId = props.book?.id
+  const googleId = props.book?.google_id
+
+  if (!bookId && !googleId) {
+    isBookInLibrary.value = false
+    return
+  }
+
+  const userBooks = userStore.me.books || []
+
+  // Check by id first (if available), then by google_id
+  const result = userBooks.some((book) => {
+    if (bookId && book.id === bookId) return true
+    if (googleId && book.google_id === googleId) return true
+    return false
+  })
+
+  isBookInLibrary.value = result
+}
 const canAddReview = computed(() => !userReview.value && isBookInLibrary.value)
 
 const visibilityOptions = computed(() => [
@@ -261,6 +306,8 @@ watch(
   () => props.modelValue,
   async (newValue) => {
     if (newValue) {
+      // No need for complex store tracking - using userStore.me.books directly
+
       resetReviewForm()
       reviewStore.clearReviews()
       loading.value = true
@@ -268,14 +315,19 @@ watch(
       const pivotReadAt = props.book.pivot?.read_at
       readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
 
-      // Load user's books to check if this book is in their library
-      if (authStore.user && bookStore.books.length === 0) {
+      // Load MY books (logged in user) to check library status
+      if (userStore.me.id) {
+        // Always ensure we have the latest library data for accurate button states
         await bookStore.getUserBooks()
       }
+
+      // Update library status after loading data
+      updateLibraryStatus()
 
       await loadBookReviews()
       loading.value = false
     } else {
+      // Clean up on close
       reviewStore.clearReviews()
       resetReviewForm()
       showDeleteDialog.value = false
@@ -327,7 +379,7 @@ async function confirmDelete() {
   showDeleteDialog.value = false
 
   await reviewStore
-    .deleteReview(reviewToDelete.value)
+    .deleteReviews(reviewToDelete.value)
     .then(() => resetReviewForm())
     .finally(() => {
       loading.value = false
@@ -337,6 +389,53 @@ async function confirmDelete() {
 
 async function toggleVisibility(review: Review) {
   await reviewStore.toggleReviewVisibility(review)
+}
+
+async function addToLibrary() {
+  // Prevent multiple simultaneous calls
+  if (libraryLoading.value) {
+    return
+  }
+
+  libraryLoading.value = true
+
+  await bookStore
+    .postUserBooks(props.book)
+    .then(() => updateLibraryStatus())
+    .finally(() => (libraryLoading.value = false))
+}
+
+async function removeFromLibrary() {
+  // Prevent multiple simultaneous calls
+  if (libraryLoading.value) {
+    return
+  }
+
+  // Find the book ID in user's library (needed for books from search that only have google_id)
+  const bookId = props.book.id
+  const googleId = props.book.google_id
+
+  let bookToRemoveId: string | undefined
+
+  if (bookId) {
+    bookToRemoveId = bookId
+  } else if (googleId) {
+    // Find the book in user's library by google_id to get its system ID
+    const userBooks = userStore.me.books || []
+    const foundBook = userBooks.find((book) => book.google_id === googleId)
+    bookToRemoveId = foundBook?.id
+  }
+
+  if (!bookToRemoveId) {
+    return
+  }
+
+  libraryLoading.value = true
+
+  await bookStore
+    .deleteUserBook(bookToRemoveId)
+    .then(() => updateLibraryStatus())
+    .finally(() => (libraryLoading.value = false))
 }
 
 async function handleSave() {
@@ -364,7 +463,7 @@ async function handleSave() {
         updateData.is_spoiler = reviewForm.value.is_spoiler
       }
 
-      promises.push(reviewStore.putReview(existingReview.id, updateData))
+      promises.push(reviewStore.putReviews(existingReview.id, updateData))
     } else {
       // For create, build the request properly
       const createData: CreateReviewRequest = {
@@ -382,13 +481,13 @@ async function handleSave() {
         createData.is_spoiler = reviewForm.value.is_spoiler
       }
 
-      promises.push(reviewStore.postReview(createData))
+      promises.push(reviewStore.postReviews(createData))
     }
   }
 
   // Save read date separately using the user books endpoint
   if (readDate.value) {
-    promises.push(bookStore.updateBookReadDate(props.book.id, readDate.value))
+    promises.push(bookStore.patchUserBookReadDate(props.book.id, readDate.value))
   }
 
   Promise.all(promises)

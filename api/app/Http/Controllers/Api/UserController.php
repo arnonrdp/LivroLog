@@ -7,7 +7,6 @@ use App\Http\Controllers\Traits\HandlesPagination;
 use App\Http\Resources\PaginatedUserResource;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\UserWithBooksResource;
-use App\Models\Book;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -16,7 +15,56 @@ class UserController extends Controller
     use HandlesPagination;
 
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/users",
+     *     operationId="getUsers",
+     *     tags={"Users"},
+     *     summary="List users",
+     *     description="Returns paginated list of users with followers/following counts",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *
+     *         @OA\Schema(type="integer", example=15, minimum=1, maximum=100)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="filter",
+     *         in="query",
+     *         description="Search filter for name, username, or email",
+     *         required=false,
+     *
+     *         @OA\Schema(type="string", example="john")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Users list",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User")),
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="per_page", type="integer")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function index(Request $request)
     {
@@ -46,7 +94,48 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/users",
+     *     operationId="createUser",
+     *     tags={"Users"},
+     *     summary="Create new user",
+     *     description="Creates a new user account",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="User data",
+     *
+     *         @OA\JsonContent(
+     *             required={"display_name","email","username"},
+     *
+     *             @OA\Property(property="display_name", type="string", example="John Doe", description="User display name"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
+     *             @OA\Property(property="username", type="string", example="john_doe", description="Unique username"),
+     *             @OA\Property(property="shelf_name", type="string", example="John's Library", description="Shelf name (optional)")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=201,
+     *         description="User created successfully",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function store(Request $request)
     {
@@ -63,7 +152,33 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource by ID or username.
+     * @OA\Get(
+     *     path="/users/{identifier}",
+     *     operationId="getUser",
+     *     tags={"Users"},
+     *     summary="Get user by ID or username",
+     *     description="Returns user information with books if profile is public or user is following",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="identifier",
+     *         in="path",
+     *         description="User ID (starts with U-) or username",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="john_doe")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="User information",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function show(Request $request, string $identifier)
     {
@@ -89,7 +204,58 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/users/{id}",
+     *     operationId="updateUser",
+     *     tags={"Users"},
+     *     summary="Update user",
+     *     description="Updates user information",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="U-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="User data to update",
+     *
+     *         @OA\JsonContent(
+     *             required={"display_name","email","username"},
+     *
+     *             @OA\Property(property="display_name", type="string", example="John Doe", description="User display name"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
+     *             @OA\Property(property="username", type="string", example="john_doe", description="Unique username"),
+     *             @OA\Property(property="shelf_name", type="string", example="John's Library", description="Shelf name (optional)")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function update(Request $request, string $id)
     {
@@ -108,7 +274,36 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     *     path="/users/{id}",
+     *     operationId="deleteUser",
+     *     tags={"Users"},
+     *     summary="Delete user",
+     *     description="Deletes a user account",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="U-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="User deleted successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="User deleted successfully")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="User not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function destroy(string $id)
     {
@@ -118,135 +313,7 @@ class UserController extends Controller
         return response()->json(['message' => 'User deleted successfully']);
     }
 
-    /**
-     * Get user's books
-     */
-    public function books(Request $request)
-    {
-        $user = $request->user();
-        $books = $user->books()->withPivot('added_at', 'read_at')->get();
 
-        return response()->json($books);
-    }
 
-    /**
-     * Remove book from user's library
-     */
-    public function removeBook(Request $request, Book $book)
-    {
-        $user = $request->user();
-        $user->books()->detach($book->id);
 
-        return response()->json(['message' => 'Book removed from library']);
-    }
-
-    /**
-     * Update read date for a book
-     */
-    public function updateReadDate(Request $request, Book $book)
-    {
-        $user = $request->user();
-
-        $request->validate([
-            'read_at' => 'nullable|date',
-        ]);
-
-        $user->books()->updateExistingPivot($book->id, [
-            'read_at' => $request->read_at,
-        ]);
-
-        return response()->json(['message' => 'Read date updated']);
-    }
-
-    /**
-     * Update user profile
-     */
-    public function updateProfile(Request $request)
-    {
-        $user = $request->user();
-
-        $request->validate([
-            'display_name' => 'sometimes|string|max:255',
-            'username' => 'sometimes|string|max:100|unique:users,username,'.$user->id,
-            'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
-            'shelf_name' => 'sometimes|string|max:255',
-            'locale' => 'sometimes|string|max:10',
-            'is_private' => 'sometimes|boolean',
-        ]);
-
-        $user->update($request->only(['display_name', 'username', 'email', 'shelf_name', 'locale', 'is_private']));
-
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user->fresh(),
-        ]);
-    }
-
-    /**
-     * Update user account (email and password)
-     */
-    public function updateAccount(Request $request)
-    {
-        $user = $request->user();
-
-        $request->validate([
-            'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
-            'password' => 'sometimes|string|min:8|confirmed',
-        ]);
-
-        $updateData = [];
-
-        if ($request->has('email')) {
-            $updateData['email'] = $request->email;
-        }
-
-        if ($request->has('password')) {
-            $updateData['password'] = bcrypt($request->password);
-        }
-
-        $user->update($updateData);
-
-        return response()->json([
-            'message' => 'Account updated successfully',
-            'user' => $user->fresh(),
-        ]);
-    }
-
-    /**
-     * Delete user account
-     */
-    public function deleteAccount(Request $request)
-    {
-        $user = $request->user();
-
-        // Delete user's tokens
-        $user->tokens()->delete();
-
-        // Delete user
-        $user->delete();
-
-        return response()->json([
-            'message' => 'Account deleted successfully',
-        ]);
-    }
-
-    /**
-     * Check if username is available
-     */
-    public function checkUsername(Request $request)
-    {
-        $request->validate([
-            'username' => 'required|string|max:100',
-        ]);
-
-        $currentUserId = auth()->id();
-        $exists = User::where('username', $request->username)
-            ->where('id', '!=', $currentUserId)
-            ->exists();
-
-        return response()->json([
-            'exists' => $exists,
-            'available' => ! $exists,
-        ]);
-    }
 }

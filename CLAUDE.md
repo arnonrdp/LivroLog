@@ -155,6 +155,13 @@ function fetchBooks() {
 - Actions use `.then()/.catch()` pattern (not async/await)
 - Organize properties alphabetically
 
+Always prefer the pattern that uses "method name" + "summarized endpoint" as the function name. Examples:
+
+- GET `/books` -> async getBooks()
+- GET `/books/{id}` -> async getBook()
+- PUT `/auth/me` -> async putMe()
+- DELETE `/auth/me` -> async deleteMe()
+
 ### TypeScript
 
 - Strict mode enabled - resolve ALL type errors
@@ -199,10 +206,9 @@ function fetchBooks() {
 ### Social Features
 
 - `POST /users/{id}/follow` - Follow user
-- `DELETE /users/{id}/unfollow` - Unfollow user
+- `DELETE /users/{id}/follow` - Unfollow user
 - `GET /users/{id}/followers` - Get followers list
 - `GET /users/{id}/following` - Get following list
-- `GET /users/{id}/follow-status` - Check follow status
 
 ### Reviews
 

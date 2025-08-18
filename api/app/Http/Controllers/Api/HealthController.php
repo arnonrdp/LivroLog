@@ -111,7 +111,7 @@ class HealthController extends Controller
     {
         try {
             $apiKey = config('services.google_books.api_key');
-            
+
             if (empty($apiKey)) {
                 return false;
             }
@@ -136,14 +136,15 @@ class HealthController extends Controller
     {
         try {
             $testFile = storage_path('logs/health_check_test.txt');
-            
-            file_put_contents($testFile, 'health_check_' . time());
-            
+
+            file_put_contents($testFile, 'health_check_'.time());
+
             if (file_exists($testFile)) {
                 unlink($testFile);
+
                 return true;
             }
-            
+
             return false;
         } catch (\Exception $e) {
             return false;
@@ -155,9 +156,9 @@ class HealthController extends Controller
         $startTime = cache()->remember('app_start_time', 3600, function () {
             return now();
         });
-        
+
         $uptimeSeconds = now()->diffInSeconds($startTime);
-        
+
         return [
             'seconds' => $uptimeSeconds,
             'human' => $this->formatUptime($uptimeSeconds),
@@ -172,7 +173,7 @@ class HealthController extends Controller
         $seconds = $seconds % 60;
 
         $parts = [];
-        
+
         if ($days > 0) {
             $parts[] = "{$days}d";
         }

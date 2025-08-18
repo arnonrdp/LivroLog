@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/stores'
+import { useAuthStore, useUserStore } from '@/stores'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
@@ -49,16 +49,21 @@ const router = createRouter({
 
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
+  const userStore = useUserStore()
 
   // Check if we have a token but no user data (page reload scenario)
   const token = localStorage.getItem('auth_token')
   const hasToken = Boolean(token)
-  const hasUser = Boolean(authStore.user.id)
+  const hasUser = Boolean(userStore.me.id)
 
   // If we have a token but no user, try to restore session
   if (hasToken && !hasUser) {
     try {
-      await authStore.getAuthMe()
+      // Get user data including books in one call
+      await authStore.getMe()
+      if (authStore.isAuthenticated) {
+        await userStore.getUser(userStore.me.id)
+      }
     } catch (error) {
       console.error('Failed to restore session:', error)
       // Clear invalid token

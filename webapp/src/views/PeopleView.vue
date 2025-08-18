@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import type { User } from '@/models'
-import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
+import { useFollowStore, useUserStore } from '@/stores'
 import type { QTableColumn, QTableProps } from 'quasar'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -90,9 +90,8 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 document.title = `LivroLog | ${t('people')}`
 
-const userStore = useUserStore()
-const authStore = useAuthStore()
 const followStore = useFollowStore()
+const userStore = useUserStore()
 
 const localFollowStatus = ref<Record<string, boolean>>({})
 const userLoadingStates = ref<Record<string, boolean>>({})
@@ -110,7 +109,7 @@ onMounted(() => {
 })
 
 function isSelf(userId: string): boolean {
-  return authStore.user.id === userId
+  return userStore.me.id === userId
 }
 
 function getFollowingStatus(userId: string, apiStatus?: boolean): boolean {
@@ -137,9 +136,9 @@ async function toggleFollow(userId: string, currentStatus?: boolean) {
 
   try {
     if (wasFollowing) {
-      await followStore.unfollowUser(userId)
+      await followStore.deleteUserFollow(userId)
     } else {
-      await followStore.followUser(userId)
+      await followStore.postUserFollow(userId)
     }
     // Keep the local state updated with the successful result
     localFollowStatus.value[userId] = !wasFollowing

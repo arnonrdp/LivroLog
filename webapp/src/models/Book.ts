@@ -5,6 +5,7 @@ export interface Book {
   created_at?: string
   description?: string
   edition?: string
+  google_id?: string
   id: string
   industry_identifiers?: string | unknown[]
   isbn?: string

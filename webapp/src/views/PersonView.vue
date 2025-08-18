@@ -1,6 +1,6 @@
 <template>
   <q-page class="non-selectable" padding>
-    <div v-if="peopleStore.isLoading" class="text-center q-py-xl">
+    <div v-if="userStore.isLoading" class="text-center q-py-xl">
       <q-spinner color="primary" size="3em" />
       <div class="text-grey q-mt-md">{{ $t('loading') }}</div>
     </div>
@@ -30,7 +30,7 @@
             <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
           </div>
 
-          <TheShelf :books="filteredBooks" @emitAddID="addBook" />
+          <TheShelf :books="filteredBooks" />
         </div>
 
         <!-- Desktop Layout -->
@@ -41,7 +41,7 @@
             <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
           </div>
 
-          <TheShelf :books="filteredBooks" @emitAddID="addBook" />
+          <TheShelf :books="filteredBooks" />
         </div>
       </div>
     </div>
@@ -52,15 +52,14 @@
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
 import type { Book, User } from '@/models'
-import { useBookStore, useFollowStore, usePeopleStore } from '@/stores'
+import { useFollowStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const peopleStore = usePeopleStore()
-const bookStore = useBookStore()
+const userStore = useUserStore()
 const followStore = useFollowStore()
 
 const ascDesc = ref('desc')
@@ -75,15 +74,15 @@ const filteredBooks = computed(() => {
   return sortBooks(filtered, sortKey.value, ascDesc.value)
 })
 
-peopleStore.$subscribe((_mutation, state) => {
-  person.value = state._person
+userStore.$subscribe((_mutation, state) => {
+  person.value = state._currentUser
   document.title = person.value.display_name ? `LivroLog | ${person.value.display_name}` : 'LivroLog'
 })
 
 onMounted(async () => {
   const username = route.params.username as string
   if (username) {
-    await peopleStore.getUserByIdentifier(username)
+    await userStore.getUser(username)
   }
 })
 
@@ -98,17 +97,5 @@ function onSort(label: string | number) {
     sortKey.value = label
     ascDesc.value = 'asc'
   }
-}
-
-async function addBook(book: Book) {
-  // Parse JSON string fields to proper arrays
-  const bookData = {
-    ...book,
-    categories: typeof book.categories === 'string' ? JSON.parse(book.categories) : book.categories,
-    industry_identifiers: typeof book.industry_identifiers === 'string' ? JSON.parse(book.industry_identifiers) : book.industry_identifiers,
-    addedIn: Date.now(),
-    readIn: ''
-  }
-  await bookStore.postBook(bookData)
 }
 </script>

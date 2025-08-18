@@ -7,7 +7,6 @@ use App\Http\Resources\PaginatedResource;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
 use App\Services\MultiSourceBookSearchService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -21,8 +20,8 @@ class BookController extends Controller
      *     path="/books",
      *     operationId="getBooks",
      *     tags={"Books"},
-     *     summary="List books",
-     *     description="Returns paginated list of books",
+     *     summary="List books, search external APIs, or get showcase",
+     *     description="Returns books from global catalog, external search results, or featured books based on parameters",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
@@ -33,10 +32,34 @@ class BookController extends Controller
      *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *
+     *         @OA\Schema(type="integer", example=20)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term for external APIs (Google Books, Open Library)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="string", example="Sidarta")
+     *     ),
+     *     @OA\Parameter(
+     *         name="showcase",
+     *         in="query",
+     *         description="Return featured books (most popular)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Books list",
+     *         description="Books list (catalog/search results/showcase)",
      *
      *         @OA\JsonContent(
      *
@@ -50,23 +73,26 @@ class BookController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function index(Request $request)
+    public function index(Request $request, MultiSourceBookSearchService $multiSearchService)
     {
-        $user = $request->user();
-        if (! $user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        // Handle search parameter - external API search
+        if ($request->has('search')) {
+            $query = $request->input('search');
+            $result = $multiSearchService->search($query, [
+                'maxResults' => 40,
+            ]);
+            return response()->json($result);
         }
 
-        $query = $user->books()->withPivot('added_at', 'read_at');
-
-        // If 'all' parameter is present, return all books without pagination
-        if ($request->has('all') && $request->get('all') === 'true') {
-            $books = $query->get();
-
-            return response()->json(['data' => $books]);
+        // Handle showcase parameter - featured books
+        if ($request->boolean('showcase')) {
+            return $this->getShowcaseBooks();
         }
 
-        // Otherwise, paginate with configurable per_page parameter (default 20)
+        // Default behavior - global catalog
+        $query = Book::query();
+
+        // Paginate with configurable per_page parameter (default 20)
         $perPage = $request->get('per_page', 20);
         $books = $query->paginate($perPage);
 
@@ -74,26 +100,9 @@ class BookController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *     path="/showcase",
-     *     operationId="getShowcase",
-     *     tags={"Books"},
-     *     summary="List featured books for showcase",
-     *     description="Returns 20 most popular books (most present in user libraries) for public display",
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Featured books list",
-     *
-     *         @OA\JsonContent(
-     *             type="array",
-     *
-     *             @OA\Items(ref="#/components/schemas/Book")
-     *         )
-     *     )
-     * )
+     * Get showcase books (featured/most popular books)
      */
-    public function showcase()
+    private function getShowcaseBooks()
     {
         // Returns 20 most popular books (most present in user libraries)
         // Using subquery to avoid GROUP BY issues
@@ -112,13 +121,14 @@ class BookController extends Controller
         return response()->json($showcaseBooks);
     }
 
+
     /**
      * @OA\Post(
      *     path="/books",
      *     operationId="storeBook",
      *     tags={"Books"},
-     *     summary="Create new book with automatic enrichment",
-     *     description="Creates a new book and automatically enriches it with additional information from Google Books API. If book already exists, it will be enriched if needed and associated with the user.",
+     *     summary="Create new book in global catalog",
+     *     description="Creates a new book in the global books table. This is for administrative purposes and does not add the book to any user's library. Use POST /user/books to add books to personal libraries.",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\RequestBody(
@@ -150,7 +160,7 @@ class BookController extends Controller
      *
      *             @OA\Property(property="book", ref="#/components/schemas/Book"),
      *             @OA\Property(property="enriched", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Book created successfully")
+     *             @OA\Property(property="message", type="string", example="Book created in global catalog")
      *         )
      *     ),
      *
@@ -162,7 +172,7 @@ class BookController extends Controller
      *
      *             @OA\Property(property="book", ref="#/components/schemas/Book"),
      *             @OA\Property(property="enriched", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Book found in database")
+     *             @OA\Property(property="message", type="string", example="Book already exists in global catalog")
      *         )
      *     ),
      *
@@ -212,17 +222,52 @@ class BookController extends Controller
             'edition' => 'nullable|string|max:50',
         ]);
 
-        $user = $request->user();
         $isbn = $request->input('isbn');
         $googleId = $request->input('google_id');
 
+        // Check if book already exists
         $book = $this->findExistingBook($isbn, $googleId);
 
         if ($book) {
-            return $this->handleExistingBook($book, $user, $enrichmentService, $googleId);
+            // Book exists, enrich if needed
+            $needsEnrichment = $this->shouldEnrichBook($book);
+
+            if ($needsEnrichment && $googleId) {
+                $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
+                if ($enrichmentResult['success']) {
+                    $book->refresh();
+                }
+            }
+
+            return response()->json([
+                'book' => $book,
+                'enriched' => $needsEnrichment,
+                'message' => 'Book already exists in global catalog',
+            ], 200);
         }
 
-        return $this->handleNewBook($request, $user, $enrichmentService, $googleId);
+        // Create new book
+        $bookData = $request->all();
+        if (! empty($bookData['published_date'])) {
+            $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
+        }
+
+        $book = Book::create($bookData);
+
+        // Enrich book if Google ID is provided
+        $enrichmentResult = null;
+        if ($googleId) {
+            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
+            if ($enrichmentResult['success']) {
+                $book->refresh();
+            }
+        }
+
+        return response()->json([
+            'book' => $book,
+            'enriched' => $enrichmentResult ? $enrichmentResult['success'] : false,
+            'message' => 'Book created in global catalog',
+        ], 201);
     }
 
     /**
@@ -245,65 +290,6 @@ class BookController extends Controller
     }
 
     /**
-     * Handle existing book processing
-     */
-    private function handleExistingBook(Book $book, $user, BookEnrichmentService $enrichmentService, ?string $googleId): JsonResponse
-    {
-        $needsEnrichment = $this->shouldEnrichBook($book);
-
-        if ($needsEnrichment) {
-            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-            if ($enrichmentResult['success']) {
-                $book->refresh();
-            }
-        }
-
-        if (! $user->books()->where('books.id', $book->id)->exists()) {
-            $user->books()->attach($book->id, [
-                'added_at' => now(),
-            ]);
-        }
-
-        return response()->json([
-            'book' => $book,
-            'enriched' => $needsEnrichment,
-            'message' => $needsEnrichment ? 'Book found and enriched' : 'Book found in database',
-        ], 200);
-    }
-
-    /**
-     * Handle new book creation
-     */
-    private function handleNewBook(Request $request, $user, BookEnrichmentService $enrichmentService, ?string $googleId): JsonResponse
-    {
-        $bookData = $request->all();
-
-        if (! empty($bookData['published_date'])) {
-            $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
-        }
-
-        $book = Book::create($bookData);
-
-        $enrichmentResult = null;
-        if ($googleId) {
-            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-            if ($enrichmentResult['success']) {
-                $book->refresh();
-            }
-        }
-
-        $user->books()->attach($book->id, [
-            'added_at' => now(),
-        ]);
-
-        return response()->json([
-            'book' => $book,
-            'enriched' => $enrichmentResult ? $enrichmentResult['success'] : false,
-            'message' => 'Book created successfully',
-        ], 201);
-    }
-
-    /**
      * Determines if a book should be enriched
      */
     private function shouldEnrichBook(Book $book): bool
@@ -318,33 +304,32 @@ class BookController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
      * @OA\Get(
      *     path="/books/{id}",
-     *     operationId="getBookById",
+     *     operationId="getBook",
      *     tags={"Books"},
-     *     summary="Get book details",
-     *     description="Returns a single book by its custom ID.",
+     *     summary="Get book by ID",
+     *     description="Returns detailed information about a specific book",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Book ID (e.g. B-3D6Y-9IO8)",
+     *         description="Book ID",
      *         required=true,
      *
-     *         @OA\Schema(type="string", example="B-3D6Y-9IO8")
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Book details",
+     *         description="Book information",
      *
      *         @OA\JsonContent(ref="#/components/schemas/Book")
      *     ),
      *
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
     public function show(string $id)
@@ -355,7 +340,61 @@ class BookController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/books/{id}",
+     *     operationId="updateBook",
+     *     tags={"Books"},
+     *     summary="Update book information",
+     *     description="Updates an existing book's information",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Book data to update",
+     *
+     *         @OA\JsonContent(
+     *             required={"title"},
+     *
+     *             @OA\Property(property="title", type="string", example="Updated Book Title"),
+     *             @OA\Property(property="isbn", type="string", example="1234567890"),
+     *             @OA\Property(property="authors", type="string", example="Author Name"),
+     *             @OA\Property(property="thumbnail", type="string", format="url"),
+     *             @OA\Property(property="language", type="string", example="en"),
+     *             @OA\Property(property="publisher", type="string", example="Publisher Name"),
+     *             @OA\Property(property="edition", type="string", example="1st Edition")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book updated successfully",
+     *
+     *         @OA\JsonContent(ref="#/components/schemas/Book")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
      */
     public function update(Request $request, string $id)
     {
@@ -377,114 +416,47 @@ class BookController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request, string $id)
-    {
-        $user = $request->user();
-        if (! $user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-        $book = Book::findOrFail($id);
-        $user->books()->detach($book->id);
-
-        return response()->json(['message' => 'Book removed from your library']);
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/books/search",
-     *     operationId="searchBooks",
+     * @OA\Delete(
+     *     path="/books/{id}",
+     *     operationId="deleteBook",
      *     tags={"Books"},
-     *     summary="Search books using multiple sources",
-     *     description="Searches books using multiple APIs (Google Books, Open Library) with intelligent fallback",
+     *     summary="Delete book from global catalog",
+     *     description="Permanently deletes a book from the global books table. This will also remove it from all users' libraries. Use DELETE /user/books/{book} to remove from personal library only.",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
-     *         name="q",
-     *         in="query",
-     *         description="Search term (minimum 3 characters) - can be ISBN, title, or author",
+     *         name="id",
+     *         in="path",
+     *         description="Book ID",
      *         required=true,
      *
-     *         @OA\Schema(type="string", example="9786584956261")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="provider",
-     *         in="query",
-     *         description="Force specific provider (optional) - for debugging",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", enum={"Google Books", "Open Library"})
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Search results",
+     *         description="Book deleted from global catalog",
      *
      *         @OA\JsonContent(
      *
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="provider", type="string", example="Google Books"),
-     *             @OA\Property(property="total_found", type="integer", example=5),
-     *             @OA\Property(property="search_strategy", type="string", example="multi_source"),
-     *             @OA\Property(
-     *                 property="books",
-     *                 type="array",
-     *
-     *                 @OA\Items(
-     *
-     *                     @OA\Property(property="provider", type="string", example="Google Books"),
-     *                     @OA\Property(property="google_id", type="string", example="YvkTEAAAQBAJ"),
-     *                     @OA\Property(property="title", type="string", example="The Hobbit"),
-     *                     @OA\Property(property="authors", type="string", example="J.R.R. Tolkien"),
-     *                     @OA\Property(property="isbn", type="string", example="9788595084988"),
-     *                     @OA\Property(property="thumbnail", type="string", example="https://books.google.com/..."),
-     *                     @OA\Property(property="description", type="string"),
-     *                     @OA\Property(property="publisher", type="string", example="HarperCollins"),
-     *                     @OA\Property(property="language", type="string", example="pt-BR")
-     *                 )
-     *             ),
-     *             @OA\Property(
-     *                 property="providers_tried",
-     *                 type="array",
-     *
-     *                 @OA\Items(
-     *
-     *                     @OA\Property(property="provider", type="string", example="Google Books"),
-     *                     @OA\Property(property="success", type="boolean", example=true),
-     *                     @OA\Property(property="total_found", type="integer", example=5)
-     *                 )
-     *             )
+     *             @OA\Property(property="message", type="string", example="Book deleted from global catalog")
      *         )
      *     ),
      *
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Invalid search term")
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function search(Request $request, MultiSourceBookSearchService $multiSearchService)
+    public function destroy(string $id)
     {
-        $request->validate([
-            'q' => 'required|string|min:3',
-            'provider' => 'nullable|string|in:Google Books,Open Library',
-        ]);
+        $book = Book::findOrFail($id);
 
-        $query = $request->input('q');
-        $forcedProvider = $request->input('provider');
+        // This will also cascade delete from users_books pivot table
+        $book->delete();
 
-        // If specific provider is requested (for debugging)
-        if ($forcedProvider) {
-            $result = $multiSearchService->searchWithSpecificProvider($forcedProvider, $query);
-        } else {
-            // Use multi-source search with fallback
-            $result = $multiSearchService->search($query, [
-                'maxResults' => 40,
-            ]);
-        }
-
-        return response()->json($result);
+        return response()->json(['message' => 'Book deleted from global catalog']);
     }
+
 
     /**
      * Fetch data from Google Books API
@@ -552,17 +524,25 @@ class BookController extends Controller
      *     path="/books/{id}/enrich",
      *     operationId="enrichBook",
      *     tags={"Books"},
-     *     summary="Enrich book information using Google Books API",
-     *     description="Fetches additional information about a book from Google Books API and updates the local record",
+     *     summary="Enrich book(s) information using Google Books API",
+     *     description="Fetches additional information about a book (or multiple books when batch=true) from Google Books API and updates the local record(s)",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Book ID",
-     *         required=true,
+     *         description="Book ID (not used when batch=true)",
+     *         required=false,
      *
      *         @OA\Schema(type="string", example="B-3D6Y-9IO8")
+     *     ),
+     *     @OA\Parameter(
+     *         name="batch",
+     *         in="query",
+     *         description="Enable batch enrichment mode",
+     *         required=false,
+     *
+     *         @OA\Schema(type="boolean", example=true)
      *     ),
      *
      *     @OA\RequestBody(
@@ -570,7 +550,8 @@ class BookController extends Controller
      *
      *         @OA\JsonContent(
      *
-     *             @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", description="Optional Google Books ID to use for enrichment")
+     *             @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", description="Optional Google Books ID to use for enrichment (single book)"),
+     *             @OA\Property(property="book_ids", type="array", @OA\Items(type="string"), description="Array of book IDs for batch enrichment (when batch=true)")
      *         )
      *     ),
      *
@@ -592,8 +573,20 @@ class BookController extends Controller
      *     @OA\Response(response=422, description="Enrichment failed")
      * )
      */
-    public function enrichBook(Request $request, Book $book, BookEnrichmentService $enrichmentService)
+    public function enrichBook(Request $request, Book $book = null, BookEnrichmentService $enrichmentService)
     {
+        // Handle batch enrichment
+        if ($request->boolean('batch')) {
+            $request->validate([
+                'book_ids' => 'nullable|array',
+                'book_ids.*' => 'string|exists:books,id',
+            ]);
+
+            $result = $enrichmentService->enrichBooksInBatch($request->input('book_ids'));
+            return response()->json($result);
+        }
+
+        // Handle single book enrichment
         $request->validate([
             'google_id' => self::VALIDATION_NULLABLE_STRING,
         ]);
@@ -607,108 +600,7 @@ class BookController extends Controller
         }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/books/enrich-batch",
-     *     operationId="enrichBooksInBatch",
-     *     tags={"Books"},
-     *     summary="Enrich multiple books in batch",
-     *     description="Enriches multiple books information using Google Books API",
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\RequestBody(
-     *         required=false,
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="book_ids", type="array", @OA\Items(type="string"), description="Specific book IDs to enrich (optional)")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Batch enrichment completed",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="processed", type="integer", example=10),
-     *             @OA\Property(property="success_count", type="integer", example=8),
-     *             @OA\Property(property="error_count", type="integer", example=2),
-     *             @OA\Property(property="results", type="array", @OA\Items(type="object"))
-     *         )
-     *     ),
-     *
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function enrichBooksInBatch(Request $request, BookEnrichmentService $enrichmentService)
-    {
-        $request->validate([
-            'book_ids' => 'nullable|array',
-            'book_ids.*' => 'string|exists:books,id',
-        ]);
 
-        $result = $enrichmentService->enrichBooksInBatch($request->input('book_ids'));
-
-        return response()->json($result);
-    }
-
-    /**
-     * @OA\Post(
-     *     path="/books/create-enriched",
-     *     operationId="createEnrichedBook",
-     *     tags={"Books"},
-     *     summary="Create new book with enriched information",
-     *     description="Creates a new book directly from Google Books API with all available information",
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", description="Google Books ID"),
-     *             @OA\Property(property="add_to_library", type="boolean", example=true, description="Add book to user's library")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=201,
-     *         description="Book created and enriched successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Book created and enriched successfully"),
-     *             @OA\Property(property="book", ref="#/components/schemas/Book"),
-     *             @OA\Property(property="info_quality", type="string", example="complete")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=422, description="Creation failed")
-     * )
-     */
-    public function createEnrichedBook(Request $request, BookEnrichmentService $enrichmentService)
-    {
-        $request->validate([
-            'google_id' => 'required|string',
-            'add_to_library' => 'boolean',
-        ]);
-
-        $userId = $request->boolean('add_to_library') ? $request->user()->id : null;
-
-        $result = $enrichmentService->createEnrichedBookFromGoogle(
-            $request->input('google_id'),
-            $userId
-        );
-
-        if ($result['success']) {
-            return response()->json($result, 201);
-        } else {
-            return response()->json($result, 422);
-        }
-    }
 
     /**
      * Parse published date from various formats

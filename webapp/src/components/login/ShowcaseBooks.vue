@@ -11,15 +11,15 @@
 
 <script setup lang="ts">
 import type { Book } from '@/models'
-import { useShowcaseStore } from '@/stores/showcase'
+import { useBookStore } from '@/stores'
 import { onMounted, ref } from 'vue'
 
-const showcase = useShowcaseStore()
+const bookStore = useBookStore()
 const shuffledShowcase = ref<Book[]>([])
 
 onMounted(async () => {
-  await showcase.getShowcase()
-  shuffledShowcase.value = shuffleArray(showcase.showcase)
+  const showcaseBooks = await bookStore.getBooks({ showcase: true })
+  shuffledShowcase.value = shuffleArray(showcaseBooks || [])
 })
 
 function shuffleArray(array: Book[]): Book[] {

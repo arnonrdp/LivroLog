@@ -40,23 +40,23 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
-const displayName = ref(authStore.user.display_name)
-const username = ref(authStore.user.username)
-const isPrivate = ref(authStore.user.is_private || false)
+const displayName = ref(userStore.me.display_name)
+const username = ref(userStore.me.username)
+const isPrivate = ref(userStore.me.is_private || false)
 const hostname = window.location.hostname + '/'
 
 document.title = `LivroLog | ${t('profile')}`
 
 function usernameValidator(username: User['username']) {
   const routes = router.options.routes
-  if (username === authStore.user.username) return true
+  if (username === userStore.me.username) return true
   if (routes.some((r) => r.path.substr(1) === username.toLowerCase())) return false
   if (!/\w{3,20}$/.test(username)) return false
   return userStore.getCheckUsername(username.trim()).then((exists: boolean) => !exists)
 }
 
 async function updateProfile() {
-  await userStore.putProfile({
+  await authStore.putMe({
     display_name: displayName.value,
     username: username.value.trim().toLowerCase(),
     is_private: isPrivate.value

@@ -82,7 +82,7 @@ onMounted(() => {
 
 async function resetPassword() {
   await authStore
-    .postResetPassword({
+    .postAuthResetPassword({
       token: token.value,
       email: email.value,
       password: password.value,

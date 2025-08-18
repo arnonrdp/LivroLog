@@ -35,7 +35,7 @@ api.interceptors.response.use(
           const authData = JSON.parse(authStore)
           authData._user = {}
           localStorage.setItem('auth', JSON.stringify(authData))
-        } catch (e) {
+        } catch {
           localStorage.removeItem('auth')
         }
       }

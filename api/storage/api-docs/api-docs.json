@@ -308,6 +308,140 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "put": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Update user profile and account",
+                "description": "Updates the authenticated user's profile and account information",
+                "operationId": "updateUserProfile",
+                "requestBody": {
+                    "description": "Profile and account data to update",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "display_name": {
+                                        "description": "User display name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "username": {
+                                        "description": "Unique username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "email": {
+                                        "description": "User email",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "shelf_name": {
+                                        "description": "Custom shelf name",
+                                        "type": "string",
+                                        "example": "John's Library"
+                                    },
+                                    "locale": {
+                                        "description": "User preferred language",
+                                        "type": "string",
+                                        "example": "en"
+                                    },
+                                    "is_private": {
+                                        "description": "Whether profile is private",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated successfully"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Delete user account",
+                "description": "Permanently deletes the authenticated user's account and all associated data",
+                "operationId": "deleteUserAccount",
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/password": {
@@ -688,6 +822,167 @@
                 }
             }
         },
+        "/auth/password": {
+            "put": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Update user password",
+                "description": "Updates the authenticated user's password",
+                "operationId": "updateUserPassword",
+                "requestBody": {
+                    "description": "Password update data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "description": "Current password",
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password": {
+                                        "description": "New password",
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "description": "New password confirmation",
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/check-username": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Check username availability",
+                "description": "Checks if a username is available for registration or update",
+                "operationId": "checkUsernameAvailability",
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "description": "Username to check",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "john_doe"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Username availability status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "exists": {
+                                            "description": "Whether username already exists",
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "available": {
+                                            "description": "Whether username is available for use",
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/authors/merge": {
             "post": {
                 "tags": [
@@ -761,8 +1056,8 @@
                 "tags": [
                     "Books"
                 ],
-                "summary": "List books",
-                "description": "Returns paginated list of books",
+                "summary": "List books, search external APIs, or get showcase",
+                "description": "Returns books from global catalog, external search results, or featured books based on parameters",
                 "operationId": "getBooks",
                 "parameters": [
                     {
@@ -774,11 +1069,41 @@
                             "type": "integer",
                             "example": 1
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term for external APIs (Google Books, Open Library)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Sidarta"
+                        }
+                    },
+                    {
+                        "name": "showcase",
+                        "in": "query",
+                        "description": "Return featured books (most popular)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Books list",
+                        "description": "Books list (catalog/search results/showcase)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -818,8 +1143,8 @@
                 "tags": [
                     "Books"
                 ],
-                "summary": "Create new book with automatic enrichment",
-                "description": "Creates a new book and automatically enriches it with additional information from Google Books API. If book already exists, it will be enriched if needed and associated with the user.",
+                "summary": "Create new book in global catalog",
+                "description": "Creates a new book in the global books table. This is for administrative purposes and does not add the book to any user's library. Use POST /user/books to add books to personal libraries.",
                 "operationId": "storeBook",
                 "requestBody": {
                     "required": true,
@@ -907,7 +1232,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Book created successfully"
+                                            "example": "Book created in global catalog"
                                         }
                                     },
                                     "type": "object"
@@ -930,7 +1255,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Book found in database"
+                                            "example": "Book already exists in global catalog"
                                         }
                                     },
                                     "type": "object"
@@ -952,54 +1277,29 @@
                 ]
             }
         },
-        "/showcase": {
-            "get": {
-                "tags": [
-                    "Books"
-                ],
-                "summary": "List featured books for showcase",
-                "description": "Returns 20 random books for public display",
-                "operationId": "getShowcase",
-                "responses": {
-                    "200": {
-                        "description": "Featured books list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Book"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/books/{id}": {
             "get": {
                 "tags": [
                     "Books"
                 ],
-                "summary": "Get book details",
-                "description": "Returns a single book by its custom ID.",
-                "operationId": "getBookById",
+                "summary": "Get book by ID",
+                "description": "Returns detailed information about a specific book",
+                "operationId": "getBook",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Book ID (e.g. B-3D6Y-9IO8)",
+                        "description": "Book ID",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "B-3D6Y-9IO8"
+                            "example": "B-1ABC-2DEF"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Book details",
+                        "description": "Book information",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1009,7 +1309,10 @@
                         }
                     },
                     "404": {
-                        "description": "Not found"
+                        "description": "Book not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -1017,126 +1320,93 @@
                         "bearerAuth": []
                     }
                 ]
-            }
-        },
-        "/books/search": {
-            "get": {
+            },
+            "put": {
                 "tags": [
                     "Books"
                 ],
-                "summary": "Search books using multiple sources",
-                "description": "Searches books using multiple APIs (Google Books, Open Library) with intelligent fallback",
-                "operationId": "searchBooks",
+                "summary": "Update book information",
+                "description": "Updates an existing book's information",
+                "operationId": "updateBook",
                 "parameters": [
                     {
-                        "name": "q",
-                        "in": "query",
-                        "description": "Search term (minimum 3 characters) - can be ISBN, title, or author",
+                        "name": "id",
+                        "in": "path",
+                        "description": "Book ID",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "9786584956261"
-                        }
-                    },
-                    {
-                        "name": "provider",
-                        "in": "query",
-                        "description": "Force specific provider (optional) - for debugging",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "Google Books",
-                                "Open Library"
-                            ]
+                            "example": "B-1ABC-2DEF"
                         }
                     }
                 ],
+                "requestBody": {
+                    "description": "Book data to update",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Updated Book Title"
+                                    },
+                                    "isbn": {
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "authors": {
+                                        "type": "string",
+                                        "example": "Author Name"
+                                    },
+                                    "thumbnail": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "language": {
+                                        "type": "string",
+                                        "example": "en"
+                                    },
+                                    "publisher": {
+                                        "type": "string",
+                                        "example": "Publisher Name"
+                                    },
+                                    "edition": {
+                                        "type": "string",
+                                        "example": "1st Edition"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Search results",
+                        "description": "Book updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Book"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "provider": {
+                                        "message": {
                                             "type": "string",
-                                            "example": "Google Books"
+                                            "example": "The given data was invalid."
                                         },
-                                        "total_found": {
-                                            "type": "integer",
-                                            "example": 5
-                                        },
-                                        "search_strategy": {
-                                            "type": "string",
-                                            "example": "multi_source"
-                                        },
-                                        "books": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "provider": {
-                                                        "type": "string",
-                                                        "example": "Google Books"
-                                                    },
-                                                    "google_id": {
-                                                        "type": "string",
-                                                        "example": "YvkTEAAAQBAJ"
-                                                    },
-                                                    "title": {
-                                                        "type": "string",
-                                                        "example": "The Hobbit"
-                                                    },
-                                                    "authors": {
-                                                        "type": "string",
-                                                        "example": "J.R.R. Tolkien"
-                                                    },
-                                                    "isbn": {
-                                                        "type": "string",
-                                                        "example": "9788595084988"
-                                                    },
-                                                    "thumbnail": {
-                                                        "type": "string",
-                                                        "example": "https://books.google.com/..."
-                                                    },
-                                                    "description": {
-                                                        "type": "string"
-                                                    },
-                                                    "publisher": {
-                                                        "type": "string",
-                                                        "example": "HarperCollins"
-                                                    },
-                                                    "language": {
-                                                        "type": "string",
-                                                        "example": "pt-BR"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
-                                        "providers_tried": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "provider": {
-                                                        "type": "string",
-                                                        "example": "Google Books"
-                                                    },
-                                                    "success": {
-                                                        "type": "boolean",
-                                                        "example": true
-                                                    },
-                                                    "total_found": {
-                                                        "type": "integer",
-                                                        "example": 5
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
+                                        "errors": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -1144,11 +1414,60 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Book not found"
+                    },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Delete book from global catalog",
+                "description": "Permanently deletes a book from the global books table. This will also remove it from all users' libraries. Use DELETE /user/books/{book} to remove from personal library only.",
+                "operationId": "deleteBook",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book deleted from global catalog",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book deleted from global catalog"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
-                    "422": {
-                        "description": "Invalid search term"
+                    "404": {
+                        "description": "Book not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -1163,18 +1482,28 @@
                 "tags": [
                     "Books"
                 ],
-                "summary": "Enrich book information using Google Books API",
-                "description": "Fetches additional information about a book from Google Books API and updates the local record",
+                "summary": "Enrich book(s) information using Google Books API",
+                "description": "Fetches additional information about a book (or multiple books when batch=true) from Google Books API and updates the local record(s)",
                 "operationId": "enrichBook",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Book ID",
-                        "required": true,
+                        "description": "Book ID (not used when batch=true)",
+                        "required": false,
                         "schema": {
                             "type": "string",
                             "example": "B-3D6Y-9IO8"
+                        }
+                    },
+                    {
+                        "name": "batch",
+                        "in": "query",
+                        "description": "Enable batch enrichment mode",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
                         }
                     }
                 ],
@@ -1185,9 +1514,16 @@
                             "schema": {
                                 "properties": {
                                     "google_id": {
-                                        "description": "Optional Google Books ID to use for enrichment",
+                                        "description": "Optional Google Books ID to use for enrichment (single book)",
                                         "type": "string",
                                         "example": "8fcQEAAAQBAJ"
+                                    },
+                                    "book_ids": {
+                                        "description": "Array of book IDs for batch enrichment (when batch=true)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -1243,151 +1579,10 @@
                 ]
             }
         },
-        "/books/enrich-batch": {
-            "post": {
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Enrich multiple books in batch",
-                "description": "Enriches multiple books information using Google Books API",
-                "operationId": "enrichBooksInBatch",
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "book_ids": {
-                                        "description": "Specific book IDs to enrich (optional)",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Batch enrichment completed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "processed": {
-                                            "type": "integer",
-                                            "example": 10
-                                        },
-                                        "success_count": {
-                                            "type": "integer",
-                                            "example": 8
-                                        },
-                                        "error_count": {
-                                            "type": "integer",
-                                            "example": 2
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/books/create-enriched": {
-            "post": {
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Create new book with enriched information",
-                "description": "Creates a new book directly from Google Books API with all available information",
-                "operationId": "createEnrichedBook",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "google_id": {
-                                        "description": "Google Books ID",
-                                        "type": "string",
-                                        "example": "8fcQEAAAQBAJ"
-                                    },
-                                    "add_to_library": {
-                                        "description": "Add book to user's library",
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Book created and enriched successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Book created and enriched successfully"
-                                        },
-                                        "book": {
-                                            "$ref": "#/components/schemas/Book"
-                                        },
-                                        "info_quality": {
-                                            "type": "string",
-                                            "example": "complete"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "422": {
-                        "description": "Creation failed"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/users/{id}/follow": {
             "post": {
                 "tags": [
-                    "Follows"
+                    "Social"
                 ],
                 "summary": "Follow a user",
                 "operationId": "6f109447b27b2dcc26dbf7dfeb0ce585",
@@ -1503,15 +1698,13 @@
                         "sanctum": []
                     }
                 ]
-            }
-        },
-        "/users/{id}/unfollow": {
+            },
             "delete": {
                 "tags": [
-                    "Follows"
+                    "Social"
                 ],
                 "summary": "Unfollow a user",
-                "operationId": "a370b6512b85f3dccf6bb694dc770a43",
+                "operationId": "18f3236d9fd1ad558268d2dd074e5425",
                 "parameters": [
                     {
                         "name": "id",
@@ -1595,9 +1788,9 @@
         "/users/{id}/followers": {
             "get": {
                 "tags": [
-                    "Follows"
+                    "Social"
                 ],
-                "summary": "Get user followers",
+                "summary": "Get list of followers for a user",
                 "operationId": "6e630eb56369e97c29b81c98e068fbd1",
                 "parameters": [
                     {
@@ -1608,28 +1801,11 @@
                             "type": "string",
                             "example": "U-ABC1-DEF2"
                         }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "maximum": 50,
-                            "example": 20
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "User followers list",
+                        "description": "List of followers",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1643,30 +1819,15 @@
                                                 "followers": {
                                                     "type": "array",
                                                     "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "string",
-                                                                "example": "U-XYZ3-UVW4"
-                                                            },
-                                                            "display_name": {
-                                                                "type": "string",
-                                                                "example": "John Doe"
-                                                            },
-                                                            "username": {
-                                                                "type": "string",
-                                                                "example": "john_doe"
-                                                            },
-                                                            "avatar": {
-                                                                "type": "string",
-                                                                "example": "https://example.com/avatar.jpg",
-                                                                "nullable": true
-                                                            }
-                                                        },
-                                                        "type": "object"
+                                                        "$ref": "#/components/schemas/User"
                                                     }
                                                 },
                                                 "pagination": {
                                                     "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
                                                         "current_page": {
                                                             "type": "integer",
                                                             "example": 1
@@ -1675,17 +1836,9 @@
                                                             "type": "integer",
                                                             "example": 20
                                                         },
-                                                        "total": {
-                                                            "type": "integer",
-                                                            "example": 45
-                                                        },
                                                         "last_page": {
                                                             "type": "integer",
-                                                            "example": 3
-                                                        },
-                                                        "has_more": {
-                                                            "type": "boolean",
-                                                            "example": true
+                                                            "example": 1
                                                         }
                                                     },
                                                     "type": "object"
@@ -1713,9 +1866,9 @@
         "/users/{id}/following": {
             "get": {
                 "tags": [
-                    "Follows"
+                    "Social"
                 ],
-                "summary": "Get users that a user is following",
+                "summary": "Get list of users that a user is following",
                 "operationId": "2b478d3762ffcd6828796157b9f2529b",
                 "parameters": [
                     {
@@ -1726,28 +1879,11 @@
                             "type": "string",
                             "example": "U-ABC1-DEF2"
                         }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "maximum": 50,
-                            "example": 20
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Users following list",
+                        "description": "List of following users",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1761,30 +1897,15 @@
                                                 "following": {
                                                     "type": "array",
                                                     "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "string",
-                                                                "example": "U-XYZ3-UVW4"
-                                                            },
-                                                            "display_name": {
-                                                                "type": "string",
-                                                                "example": "Jane Smith"
-                                                            },
-                                                            "username": {
-                                                                "type": "string",
-                                                                "example": "jane_smith"
-                                                            },
-                                                            "avatar": {
-                                                                "type": "string",
-                                                                "example": "https://example.com/avatar.jpg",
-                                                                "nullable": true
-                                                            }
-                                                        },
-                                                        "type": "object"
+                                                        "$ref": "#/components/schemas/User"
                                                     }
                                                 },
                                                 "pagination": {
                                                     "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
                                                         "current_page": {
                                                             "type": "integer",
                                                             "example": 1
@@ -1793,77 +1914,15 @@
                                                             "type": "integer",
                                                             "example": 20
                                                         },
-                                                        "total": {
-                                                            "type": "integer",
-                                                            "example": 8
-                                                        },
                                                         "last_page": {
                                                             "type": "integer",
                                                             "example": 1
-                                                        },
-                                                        "has_more": {
-                                                            "type": "boolean",
-                                                            "example": false
                                                         }
                                                     },
                                                     "type": "object"
                                                 }
                                             },
                                             "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/users/{id}/follow-status": {
-            "get": {
-                "tags": [
-                    "Follows"
-                ],
-                "summary": "Get follow status between current user and target user",
-                "operationId": "7a22f304792b3dff5e7a3ec9cd75e7bf",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "U-ABC1-DEF2"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Follow status information",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "is_following": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "is_followed_by": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "mutual_follow": {
-                                            "type": "boolean",
-                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -1930,6 +1989,32 @@
                                                     "description": "Cache connection status",
                                                     "type": "boolean",
                                                     "example": true
+                                                },
+                                                "google_books_api": {
+                                                    "description": "Google Books API connectivity",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "storage": {
+                                                    "description": "File storage write/read capabilities",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "uptime": {
+                                            "description": "Application uptime information",
+                                            "properties": {
+                                                "seconds": {
+                                                    "description": "Uptime in seconds",
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                },
+                                                "human": {
+                                                    "description": "Human readable uptime",
+                                                    "type": "string",
+                                                    "example": "1h"
                                                 }
                                             },
                                             "type": "object"
@@ -1970,6 +2055,678 @@
                         }
                     }
                 }
+            }
+        },
+        "/user/books": {
+            "get": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Get user's personal library",
+                "description": "Returns paginated list of books in the authenticated user's personal library",
+                "operationId": "getUserBooks",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "all",
+                        "in": "query",
+                        "description": "Return all books without pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "true"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User's books library",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Book"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Add book to user's personal library",
+                "description": "Adds a book to the authenticated user's personal library using book identifiers. Priority: book_id > isbn > google_id. If book doesn't exist and google_id provided, creates and enriches automatically.",
+                "operationId": "addBookToLibrary",
+                "requestBody": {
+                    "description": "Book identifiers - provide at least one",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "book_id": {
+                                        "description": "Book ID if already exists in system",
+                                        "type": "string",
+                                        "example": "B-1ABC-2DEF"
+                                    },
+                                    "isbn": {
+                                        "description": "ISBN to search for existing book",
+                                        "type": "string",
+                                        "example": "9781505108293"
+                                    },
+                                    "google_id": {
+                                        "description": "Google Books ID for search/creation and enrichment",
+                                        "type": "string",
+                                        "example": "HuKNDAAAQBAJ"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Book added to library successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        "enriched": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "already_in_library": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book added to your library successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Book already in library",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        "enriched": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "already_in_library": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book is already in your library"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/books/{book}": {
+            "delete": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Remove book from user's library",
+                "description": "Removes a book from the authenticated user's personal library",
+                "operationId": "removeBookFromLibrary",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book removed from library",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Book removed from your library"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/books/{book}/read-date": {
+            "patch": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Update book read date",
+                "description": "Updates the read date for a book in the user's library",
+                "operationId": "updateBookReadDate",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Read date data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "read_at": {
+                                        "description": "Date when the book was read (nullable to mark as unread)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-15"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Read date updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Read date updated successfully"
+                                        },
+                                        "read_at": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2024-01-15"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found in user's library"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List users",
+                "description": "Returns paginated list of users with followers/following counts",
+                "operationId": "getUsers",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "example": 15
+                        }
+                    },
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "description": "Search filter for name, username, or email",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/User"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create new user",
+                "description": "Creates a new user account",
+                "operationId": "createUser",
+                "requestBody": {
+                    "description": "User data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "display_name",
+                                    "email",
+                                    "username"
+                                ],
+                                "properties": {
+                                    "display_name": {
+                                        "description": "User display name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "description": "User email",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "username": {
+                                        "description": "Unique username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "shelf_name": {
+                                        "description": "Shelf name (optional)",
+                                        "type": "string",
+                                        "example": "John's Library"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{identifier}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user by ID or username",
+                "description": "Returns user information with books if profile is public or user is following",
+                "operationId": "getUser",
+                "parameters": [
+                    {
+                        "name": "identifier",
+                        "in": "path",
+                        "description": "User ID (starts with U-) or username",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "john_doe"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{id}": {
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "description": "Updates user information",
+                "operationId": "updateUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "User data to update",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "display_name",
+                                    "email",
+                                    "username"
+                                ],
+                                "properties": {
+                                    "display_name": {
+                                        "description": "User display name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "description": "User email",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "username": {
+                                        "description": "Unique username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "shelf_name": {
+                                        "description": "Shelf name (optional)",
+                                        "type": "string",
+                                        "example": "John's Library"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "description": "Deletes a user account",
+                "operationId": "deleteUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/reviews": {
@@ -2665,6 +3422,29 @@
                 },
                 "type": "object"
             },
+            "Author": {
+                "title": "Author",
+                "description": "Author model",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "A-1ABC-2DEF"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "J.R.R. Tolkien"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Book": {
                 "title": "Book",
                 "description": "Book model with extended information",
@@ -2838,6 +3618,38 @@
                 },
                 "type": "object"
             },
+            "RelatedBook": {
+                "title": "RelatedBook",
+                "description": "Related book relationship model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "book_id": {
+                        "type": "string",
+                        "example": "B-1ABC-2DEF"
+                    },
+                    "related_book_id": {
+                        "type": "string",
+                        "example": "B-3XYZ-4UVW"
+                    },
+                    "relationship_type": {
+                        "description": "Type of relationship between books",
+                        "type": "string",
+                        "example": "similar"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Review": {
                 "title": "Review",
                 "description": "Book review model",
@@ -2971,6 +3783,40 @@
                     }
                 },
                 "type": "object"
+            },
+            "UserBook": {
+                "title": "UserBook",
+                "description": "User book relationship (pivot table model)",
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-1ABC-2DEF"
+                    },
+                    "book_id": {
+                        "type": "string",
+                        "example": "B-3XYZ-4UVW"
+                    },
+                    "added_at": {
+                        "description": "When the book was added to user's library",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "read_at": {
+                        "description": "Date when the book was read",
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -2989,23 +3835,31 @@
         },
         {
             "name": "Books",
-            "description": "Book management"
+            "description": "Book management and search"
         },
         {
             "name": "Health",
             "description": "Health check endpoints"
         },
         {
-            "name": "Follows",
-            "description": "User follow/unfollow operations"
+            "name": "Reviews",
+            "description": "Book reviews and ratings"
+        },
+        {
+            "name": "Social",
+            "description": "Follow system and social features"
+        },
+        {
+            "name": "User Library",
+            "description": "User's personal library management"
+        },
+        {
+            "name": "Users",
+            "description": "User management and profiles"
         },
         {
             "name": "Authors",
             "description": "Authors"
-        },
-        {
-            "name": "Reviews",
-            "description": "Reviews"
         }
     ]
 }

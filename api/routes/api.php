@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
@@ -35,7 +36,6 @@ Route::middleware(['throttle:10,1'])->group(function () {
 });
 
 // Public routes
-Route::get('/showcase', [BookController::class, 'showcase']);
 Route::get('/health', [HealthController::class, 'index']);
 
 // Protected routes (require authentication)
@@ -49,35 +49,32 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::put('/auth/me', [AuthController::class, 'updateMe']);
+    Route::delete('/auth/me', [AuthController::class, 'deleteMe']);
+    Route::get('/auth/check-username', [AuthController::class, 'checkUsername']);
+    Route::put('/auth/password', [AuthController::class, 'updatePassword2']);
 
-    // Profile management
-    Route::put('/profile', [UserController::class, 'updateProfile']);
-    Route::put('/account', [UserController::class, 'updateAccount']);
-    Route::delete('/account', [UserController::class, 'deleteAccount']);
+    // Legacy password endpoint
     Route::put('/password', [AuthController::class, 'updatePassword']);
-    Route::get('/check-username', [UserController::class, 'checkUsername']);
 
     // Users
     Route::apiResource('users', UserController::class);
 
     // Books
-    Route::get('/books/search', [BookController::class, 'search']);
-    Route::post('/books/enrich-batch', [BookController::class, 'enrichBooksInBatch']);
-    Route::post('/books/create-enriched', [BookController::class, 'createEnrichedBook']);
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
     Route::apiResource('books', BookController::class);
 
-    // User's books
-    Route::get('/user/books', [UserController::class, 'books']);
-    Route::delete('/user/books/{book}', [UserController::class, 'removeBook']);
-    Route::patch('/user/books/{book}/read-date', [UserController::class, 'updateReadDate']);
+    // User's books (Personal Library Management)
+    Route::get('/user/books', [UserBookController::class, 'index']);
+    Route::post('/user/books', [UserBookController::class, 'store']);
+    Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
+    Route::patch('/user/books/{book}/read-date', [UserBookController::class, 'updateReadDate']);
 
     // Follow system
     Route::post('/users/{user}/follow', [FollowController::class, 'follow']);
-    Route::delete('/users/{user}/unfollow', [FollowController::class, 'unfollow']);
+    Route::delete('/users/{user}/follow', [FollowController::class, 'unfollow']);
     Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
     Route::get('/users/{user}/following', [FollowController::class, 'following']);
-    Route::get('/users/{user}/follow-status', [FollowController::class, 'followStatus']);
 
     // Reviews (authenticated routes)
     Route::get('/reviews', [ReviewController::class, 'index']);

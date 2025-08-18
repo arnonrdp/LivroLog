@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <TheHeader v-if="authStore.user.id && !['/login', '/reset-password'].includes($route.path)" />
+    <TheHeader v-if="userStore.me.id && !['/login', '/reset-password'].includes($route.path)" />
     <q-page-container>
       <RouterView v-slot="{ Component }">
         <Transition name="fade">
@@ -16,9 +16,9 @@ import TheHeader from '@/components/TheHeader.vue'
 import { useMeta } from 'quasar'
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from './stores'
+import { useUserStore } from './stores'
 
-const authStore = useAuthStore()
+const userStore = useUserStore()
 const { locale, t } = useI18n({ useScope: 'global' })
 
 useMeta(() => ({
@@ -47,8 +47,8 @@ useMeta(() => ({
 }))
 
 onMounted(() => {
-  if (typeof authStore.user.locale === 'string') {
-    locale.value = authStore.user.locale
+  if (typeof userStore.me.locale === 'string') {
+    locale.value = userStore.me.locale
   } else {
     locale.value = navigator.language
   }

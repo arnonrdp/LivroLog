@@ -101,7 +101,6 @@ class FollowService
         return $follower->isFollowing($following);
     }
 
-
     /**
      * Get follow status between current user and target user.
      */

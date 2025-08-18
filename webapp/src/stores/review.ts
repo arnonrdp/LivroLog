@@ -11,12 +11,11 @@ export const useReviewStore = defineStore('review', {
   }),
 
   getters: {
-    isLoading: (state) => state._isLoading,
     reviews: (state) => state._reviews
   },
 
   actions: {
-    async getReview(id: Review['id']) {
+    async getReviews(id: Review['id']) {
       this._isLoading = true
       return await api
         .get(`/reviews/${id}`)
@@ -40,7 +39,7 @@ export const useReviewStore = defineStore('review', {
         .finally(() => (this._isLoading = false))
     },
 
-    async postReview(reviewData: CreateReviewRequest) {
+    async postReviews(reviewData: CreateReviewRequest) {
       this._isLoading = true
       return await api
         .post('/reviews', reviewData)
@@ -52,7 +51,7 @@ export const useReviewStore = defineStore('review', {
         .finally(() => (this._isLoading = false))
     },
 
-    async putReview(id: Review['id'], reviewData: UpdateReviewRequest) {
+    async putReviews(id: Review['id'], reviewData: UpdateReviewRequest) {
       this._isLoading = true
       return await api
         .put(`/reviews/${id}`, reviewData)
@@ -64,7 +63,7 @@ export const useReviewStore = defineStore('review', {
         .finally(() => (this._isLoading = false))
     },
 
-    async deleteReview(id: Review['id']) {
+    async deleteReviews(id: Review['id']) {
       this._isLoading = true
       return await api
         .delete(`/reviews/${id}`)
@@ -93,7 +92,7 @@ export const useReviewStore = defineStore('review', {
           break
       }
 
-      return await this.putReview(review.id, { visibility_level: newVisibility }).then((result) => {
+      return await this.putReviews(review.id, { visibility_level: newVisibility }).then(() => {
         const reviewIndex = this._reviews.findIndex((r) => r.id === review.id)
         if (reviewIndex !== -1 && this._reviews[reviewIndex]) {
           this._reviews[reviewIndex]!.visibility_level = newVisibility
@@ -102,7 +101,7 @@ export const useReviewStore = defineStore('review', {
       })
     },
 
-    async postReviewHelpful(reviewId: Review['id']) {
+    async postReviewsHelpful(reviewId: Review['id']) {
       this._isLoading = true
       return await api
         .post(`/reviews/${reviewId}/helpful`)

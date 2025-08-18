@@ -8,12 +8,6 @@ use App\Services\FollowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Tag(
- *     name="Follows",
- *     description="User follow/unfollow operations"
- * )
- */
 class FollowController extends Controller
 {
     protected FollowService $followService;
@@ -27,7 +21,7 @@ class FollowController extends Controller
      * @OA\Post(
      *     path="/users/{id}/follow",
      *     summary="Follow a user",
-     *     tags={"Follows"},
+     *     tags={"Social"},
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(
@@ -99,9 +93,9 @@ class FollowController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/users/{id}/unfollow",
+     *     path="/users/{id}/follow",
      *     summary="Unfollow a user",
-     *     tags={"Follows"},
+     *     tags={"Social"},
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(
@@ -160,50 +154,9 @@ class FollowController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/users/{id}/follow-status",
-     *     summary="Get follow status between current user and target user",
-     *     tags={"Follows"},
-     *     security={{"sanctum":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *
-     *         @OA\Schema(type="string", example="U-ABC1-DEF2")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Follow status information",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="is_following", type="boolean", example=true),
-     *             @OA\Property(property="is_followed_by", type="boolean", example=false),
-     *             @OA\Property(property="mutual_follow", type="boolean", example=false)
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=404,
-     *         description="User not found"
-     *     )
-     * )
-     */
-    public function followStatus(Request $request, User $user): JsonResponse
-    {
-        $currentUser = $request->user();
-        $status = $this->followService->getFollowStatus($currentUser, $user);
-
-        return response()->json($status);
-    }
-
-    /**
-     * @OA\Get(
      *     path="/users/{id}/followers",
      *     summary="Get list of followers for a user",
-     *     tags={"Follows"},
+     *     tags={"Social"},
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(
@@ -227,8 +180,10 @@ class FollowController extends Controller
      *                 @OA\Property(
      *                     property="followers",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/User")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="pagination",
      *                     type="object",
@@ -270,7 +225,7 @@ class FollowController extends Controller
      * @OA\Get(
      *     path="/users/{id}/following",
      *     summary="Get list of users that a user is following",
-     *     tags={"Follows"},
+     *     tags={"Social"},
      *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(
@@ -294,8 +249,10 @@ class FollowController extends Controller
      *                 @OA\Property(
      *                     property="following",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/User")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="pagination",
      *                     type="object",

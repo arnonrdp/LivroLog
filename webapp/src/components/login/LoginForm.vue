@@ -96,7 +96,7 @@
 import { useAuthStore } from '@/stores'
 import { GoogleAuth } from '@/utils/google-auth'
 import { useQuasar } from 'quasar'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const authStore = useAuthStore()
@@ -108,8 +108,8 @@ const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const tab = ref('signin')
-const googleButtonRef = ref<HTMLElement>()
-let googleButtonElement: HTMLElement | null = null
+const googleButtonRef = ref()
+let googleButtonElement: { click: () => void } | null = null
 
 onMounted(async () => {
   try {
@@ -122,10 +122,8 @@ onMounted(async () => {
         shape: 'rectangular'
       })
 
-      // Store reference to avoid querySelector
-      setTimeout(() => {
-        googleButtonElement = googleButtonRef.value?.querySelector('[role="button"]') as HTMLElement
-      }, 100)
+      await nextTick()
+      googleButtonElement = googleButtonRef.value?.querySelector('[role="button"]')
     }
   } catch (error) {
     console.error('Failed to initialize Google Auth:', error)
@@ -145,7 +143,7 @@ function submit() {
 async function handleGoogleCredential(idToken: string) {
   if (authStore.isGoogleLoading) return
 
-  await authStore.postGoogleSignIn(idToken)
+  await authStore.postAuthGoogle(idToken)
 }
 
 function googleSignIn() {
@@ -176,7 +174,7 @@ function signup() {
 }
 
 function resetPassword() {
-  authStore.postForgotPassword(email.value).then(() => $q.notify({ message: t('password-reset'), type: 'positive' }))
+  authStore.postAuthForgotPassword(email.value).then(() => $q.notify({ message: t('password-reset'), type: 'positive' }))
 }
 
 function onReset() {
