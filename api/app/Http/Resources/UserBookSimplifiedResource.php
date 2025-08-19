@@ -16,8 +16,10 @@ class UserBookSimplifiedResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'isbn' => $this->isbn,
             'title' => $this->title,
             'authors' => $this->authors,
+            'description' => $this->description,
             'thumbnail' => $this->thumbnail,
             'pivot' => [
                 'read_at' => $this->pivot->read_at,
