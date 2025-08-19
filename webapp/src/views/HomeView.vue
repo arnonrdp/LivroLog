@@ -19,19 +19,16 @@ import { computed, ref } from 'vue'
 const userStore = useUserStore()
 
 const ascDesc = ref('desc')
-const sortKey = ref<string | number>('readIn')
 const filter = ref('')
-
-const books = computed(() => userStore.currentUser.books || [])
+const sortKey = ref<string | number>('readIn')
 
 const filteredBooks = computed(() => {
-  const filtered = books.value.filter(
-    (book) => book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.toLowerCase().includes(filter.value.toLowerCase())
-  )
+  const filtered =
+    userStore.me.books?.filter(
+      (book) => book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.toLowerCase().includes(filter.value.toLowerCase())
+    ) || []
   return sortBooks(filtered, sortKey.value, ascDesc.value)
 })
-
-// Router already loads user data with books via getUser() - no need for onMounted
 
 function onSort(label: string | number) {
   if (sortKey.value === label) {

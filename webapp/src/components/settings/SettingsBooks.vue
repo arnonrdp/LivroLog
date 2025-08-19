@@ -14,12 +14,12 @@
     <tbody>
       <tr v-for="book in books" :key="book.id">
         <td class="text-left">{{ book.title }}</td>
-        <td class="input-date">
-          <q-input v-model="book.readIn" dense mask="####-##-##" :rules="[(val) => /^\d{4}-\d{2}-\d{2}$/.test(val) || 'YYYY-MM-DD']">
-            <template v-slot:prepend>
+        <td>
+          <q-input class="q-ml-xs" dense mask="####-##-##" :model-value="readDates[book.id]" readonly>
+            <template v-slot:append>
               <q-icon class="cursor-pointer" name="event">
-                <q-popup-proxy ref="qDateProxy" cover transition-hide="scale" transition-show="scale">
-                  <q-date v-model="book.readIn" mask="YYYY-MM-DD" minimal />
+                <q-popup-proxy ref="qDateProxy">
+                  <q-date v-model="readDates[book.id]" mask="YYYY-MM-DD" minimal />
                 </q-popup-proxy>
               </q-icon>
             </template>
@@ -28,56 +28,67 @@
       </tr>
     </tbody>
   </table>
-  <br />
-  <div class="text-center">
-    <q-btn color="primary" icon="save" :label="$t('save')" :loading="bookStore.isLoading" @click="updateReadDates(books)" />
-  </div>
 </template>
 
 <script setup lang="ts">
-import type { Book } from '@/models'
-import { useBookStore } from '@/stores'
-import { useQuasar } from 'quasar'
-import { onMounted, ref } from 'vue'
+import { useBookStore, useUserStore } from '@/stores'
+import { sortBooks } from '@/utils'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const $q = useQuasar()
 const { t } = useI18n()
 
 const bookStore = useBookStore()
-
-const books = ref([] as Book[])
+const userStore = useUserStore()
 
 document.title = `LivroLog | ${t('books')}`
 
-onMounted(() => {
-  // Use the user's library instead of global books catalog
-  bookStore.getUserBooks().then(() => {
-    books.value = bookStore.books.map((book) => ({
-      ...book,
-      readIn: book.readIn || book.pivot?.read_at || ''
-    }))
-  })
+const readDates = ref<Record<string, string>>({})
+const originalDates = ref<Record<string, string>>({})
+const isUpdating = ref<Record<string, boolean>>({})
+
+const books = computed(() => {
+  const filtered = userStore.me.books?.filter((book) => book) || []
+  return sortBooks(filtered, 'read_at', 'desc')
 })
 
-async function updateReadDates(updatedBooks: Book[]) {
-  const promises = []
-  for (const book of updatedBooks) {
-    if (book.readIn) {
-      promises.push(bookStore.patchUserBookReadDate(book.id, String(book.readIn)))
+watch(
+  () => userStore.me.books,
+  () => {
+    const dates: Record<string, string> = {}
+    const originals: Record<string, string> = {}
+    books.value.forEach((book) => {
+      const existingDate = book.pivot?.read_at || ''
+      const dateOnly = existingDate ? existingDate.substring(0, 10) : ''
+      dates[book.id] = dateOnly
+      originals[book.id] = dateOnly
+    })
+    readDates.value = dates
+    originalDates.value = originals
+  },
+  { immediate: true, deep: true }
+)
+
+watch(
+  readDates,
+  async (newDates) => {
+    for (const bookId in newDates) {
+      const newDate = newDates[bookId]
+      const originalDate = originalDates.value[bookId] || ''
+
+      // Only update if date actually changed and we're not already updating this book
+      if (newDate !== originalDate && !isUpdating.value[bookId]) {
+        const dateOnly = newDate ? newDate.substring(0, 10) : ''
+
+        isUpdating.value[bookId] = true
+        await bookStore
+          .patchUserBookReadDate(bookId, dateOnly)
+          .then(() => (originalDates.value[bookId] = dateOnly))
+          .catch(() => (readDates.value[bookId] = originalDate))
+          .finally(() => (isUpdating.value[bookId] = false))
+      }
     }
-  }
-
-  Promise.all(promises)
-    .then(() => $q.notify({ message: t('read-dates-updated'), type: 'positive' }))
-    .catch(() => $q.notify({ message: t('error-occurred'), type: 'negative' }))
-}
+  },
+  { deep: true }
+)
 </script>
-
-<style scoped>
-.input-date,
-.input-date > label {
-  min-width: 70px;
-  padding-bottom: 0;
-}
-</style>

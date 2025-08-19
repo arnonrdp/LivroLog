@@ -98,9 +98,9 @@ export const useBookStore = defineStore('book', {
             userStore.updateMe({ books: updatedBooks })
 
             // Also update currentUser if it's the same user
-            if (userStore.currentUser.id === userStore.me.id) {
+            if (userStore.user.id === userStore.me.id) {
               userStore.$patch((state) => {
-                state._currentUser.books = updatedBooks
+                state._user.books = updatedBooks
               })
             }
           }
@@ -125,9 +125,9 @@ export const useBookStore = defineStore('book', {
           userStore.updateMe({ books: updatedBooks })
 
           // Also update currentUser if it's the same user
-          if (userStore.currentUser.id === userStore.me.id) {
+          if (userStore.user.id === userStore.me.id) {
             userStore.$patch((state) => {
-              state._currentUser.books = updatedBooks
+              state._user.books = updatedBooks
             })
           }
 

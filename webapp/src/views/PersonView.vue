@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
-import type { Book, User } from '@/models'
+import type { User } from '@/models'
 import { useFollowStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
@@ -63,19 +63,20 @@ const userStore = useUserStore()
 const followStore = useFollowStore()
 
 const ascDesc = ref('desc')
-const sortKey = ref<string | number>('readIn')
 const filter = ref('')
 const person = ref({} as User)
+const sortKey = ref<string | number>('readIn')
 
 const filteredBooks = computed(() => {
-  const filtered = (person.value.books || []).filter(
-    (book: Book) => book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.toLowerCase().includes(filter.value.toLowerCase())
-  )
+  const filtered =
+    userStore.user.books?.filter(
+      (book) => book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.toLowerCase().includes(filter.value.toLowerCase())
+    ) || []
   return sortBooks(filtered, sortKey.value, ascDesc.value)
 })
 
 userStore.$subscribe((_mutation, state) => {
-  person.value = state._currentUser
+  person.value = state._user
   document.title = person.value.display_name ? `LivroLog | ${person.value.display_name}` : 'LivroLog'
 })
 

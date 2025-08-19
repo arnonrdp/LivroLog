@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserWithBooksResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -318,9 +319,13 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        $user = $request->user()->loadCount(['followers', 'following']);
+        $user = $request->user()
+            ->loadCount(['followers', 'following'])
+            ->load(['books' => function ($query) {
+                $query->orderBy('pivot_added_at', 'desc');
+            }]);
 
-        return response()->json($user);
+        return new UserWithBooksResource($user);
     }
 
     /**

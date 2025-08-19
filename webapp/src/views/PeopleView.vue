@@ -14,7 +14,7 @@
       grid
       :no-results-label="$t('no-one-found')"
       row-key="id"
-      :rows="userStore.people"
+      :rows="userStore.users"
       @request="getUsers"
     >
       <template v-slot:item="props">

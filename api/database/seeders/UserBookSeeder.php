@@ -33,20 +33,22 @@ class UserBookSeeder extends Seeder
                 $readAt = null;
 
                 if ($hasReadDate) {
-                    // Data de leitura aleatória nos últimos 2 anos
-                    $readAt = now()->subDays(random_int(1, 730));
+                    // Data de leitura aleatória nos últimos 2 anos (apenas data, sem hora)
+                    $readAt = now()->subDays(random_int(1, 730))->format('Y-m-d');
                 }
 
                 // Data de adição à biblioteca (sempre anterior à data de leitura)
-                $addedAt = $readAt ? $readAt->copy()->subDays(random_int(1, 30)) : now()->subDays(random_int(1, 365));
+                $addedAtDate = $readAt 
+                    ? \Carbon\Carbon::parse($readAt)->subDays(random_int(1, 30)) 
+                    : now()->subDays(random_int(1, 365));
 
                 DB::table('users_books')->insert([
                     'user_id' => $user->id,
                     'book_id' => $book->id,
-                    'added_at' => $addedAt,
-                    'read_at' => $readAt,
-                    'created_at' => $addedAt,
-                    'updated_at' => $readAt ?? $addedAt,
+                    'added_at' => $addedAtDate,
+                    'read_at' => $readAt, // Já está no formato Y-m-d ou null
+                    'created_at' => $addedAtDate,
+                    'updated_at' => $readAt ? \Carbon\Carbon::parse($readAt) : $addedAtDate,
                 ]);
             }
         }
