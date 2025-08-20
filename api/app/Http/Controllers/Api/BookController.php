@@ -102,21 +102,38 @@ class BookController extends Controller
      */
     private function getShowcaseBooks()
     {
-        // Returns 20 most popular books (most present in user libraries)
-        // Using subquery to avoid GROUP BY issues
-        $showcaseBooks = DB::table('books')
-            ->selectRaw('books.*, COALESCE(book_counts.library_count, 0) as library_count')
-            ->leftJoin(
-                DB::raw('(SELECT book_id, COUNT(*) as library_count FROM users_books GROUP BY book_id) as book_counts'),
-                'books.id',
-                '=',
-                'book_counts.book_id'
-            )
-            ->orderByDesc('library_count')
-            ->limit(20)
-            ->get();
+        try {
+            // Returns 20 most popular books (most present in user libraries)
+            // Using subquery to avoid GROUP BY issues
+            $showcaseBooks = DB::table('books')
+                ->selectRaw('books.*, COALESCE(book_counts.library_count, 0) as library_count')
+                ->leftJoin(
+                    DB::raw('(SELECT book_id, COUNT(*) as library_count FROM users_books GROUP BY book_id) as book_counts'),
+                    'books.id',
+                    '=',
+                    'book_counts.book_id'
+                )
+                ->orderByDesc('library_count')
+                ->limit(20)
+                ->get();
 
-        return response()->json($showcaseBooks);
+            return response()->json($showcaseBooks);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Showcase books query failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            // Fallback: return recent books if the showcase query fails
+            $fallbackBooks = DB::table('books')
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get();
+
+            return response()->json($fallbackBooks);
+        }
     }
 
 
