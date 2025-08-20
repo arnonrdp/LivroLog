@@ -9,6 +9,7 @@ use App\Services\BookEnrichmentService;
 use App\Services\MultiSourceBookSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BookController extends Controller
 {
@@ -103,19 +104,37 @@ class BookController extends Controller
     private function getShowcaseBooks()
     {
         try {
-            // Returns 20 most popular books (most present in user libraries)
-            // Using subquery to avoid GROUP BY issues
-            $showcaseBooks = DB::table('books')
-                ->selectRaw('books.*, COALESCE(book_counts.library_count, 0) as library_count')
-                ->leftJoin(
-                    DB::raw('(SELECT book_id, COUNT(*) as library_count FROM users_books GROUP BY book_id) as book_counts'),
-                    'books.id',
-                    '=',
-                    'book_counts.book_id'
-                )
+            // Check if users_books table exists first
+            if (!Schema::hasTable('users_books')) {
+                // If table doesn't exist, fallback to recent books
+                $fallbackBooks = DB::table('books')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(20)
+                    ->get();
+                
+                return response()->json($fallbackBooks);
+            }
+
+            // Try a simpler approach first - get books with counts using Eloquent
+            $showcaseBooks = Book::withCount(['users as library_count'])
                 ->orderByDesc('library_count')
                 ->limit(20)
                 ->get();
+
+            // If the Eloquent approach fails, fall back to raw SQL
+            if ($showcaseBooks->isEmpty()) {
+                $showcaseBooks = DB::table('books')
+                    ->selectRaw('books.*, COALESCE(book_counts.library_count, 0) as library_count')
+                    ->leftJoin(
+                        DB::raw('(SELECT book_id, COUNT(*) as library_count FROM users_books WHERE book_id IS NOT NULL GROUP BY book_id) as book_counts'),
+                        'books.id',
+                        '=',
+                        'book_counts.book_id'
+                    )
+                    ->orderByDesc('library_count')
+                    ->limit(20)
+                    ->get();
+            }
 
             return response()->json($showcaseBooks);
         } catch (\Exception $e) {
