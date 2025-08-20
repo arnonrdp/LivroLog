@@ -5,32 +5,32 @@
     <q-card>
       <q-card-section class="column q-gutter-y-sm q-pb-none text-center">
         <!-- User Info Section -->
-        <div v-if="currentUser" class="q-mb-md">
+        <div v-if="user" class="q-mb-md">
           <!-- Avatar -->
           <q-avatar class="q-mb-sm" size="60px">
-            <img v-if="currentUser.avatar" :alt="currentUser.display_name" :src="currentUser.avatar" />
+            <img v-if="user.avatar" :alt="user.display_name" :src="user.avatar" />
             <q-icon v-else name="person" size="30px" />
           </q-avatar>
 
           <!-- User Name -->
-          <div class="text-h6 text-weight-medium">{{ currentUser.display_name }}</div>
-          <div class="text-body2 text-grey q-mb-sm">@{{ currentUser.username }}</div>
+          <div class="text-h6 text-weight-medium">{{ user.display_name }}</div>
+          <div class="text-body2 text-grey q-mb-sm">@{{ user.username }}</div>
 
           <!-- Stats Row -->
           <div class="row q-gutter-md justify-center q-mb-sm">
             <!-- Books -->
             <div class="text-center">
-              <div class="text-weight-bold">{{ currentUser.books?.length || 0 }}</div>
-              <div class="text-caption text-grey">{{ $t('books', { count: currentUser.books?.length || 0 }) }}</div>
+              <div class="text-weight-bold">{{ user.books?.length || 0 }}</div>
+              <div class="text-caption text-grey">{{ $t('books', { count: user.books?.length || 0 }) }}</div>
             </div>
             <!-- Followers -->
             <div class="text-center">
-              <div class="text-weight-bold">{{ currentUser.followers_count }}</div>
-              <div class="text-caption text-grey">{{ $t('follower', { count: currentUser.followers_count }) }}</div>
+              <div class="text-weight-bold">{{ user.followers_count }}</div>
+              <div class="text-caption text-grey">{{ $t('follower', { count: user.followers_count }) }}</div>
             </div>
             <!-- Following -->
             <div class="text-center">
-              <div class="text-weight-bold">{{ currentUser.following_count }}</div>
+              <div class="text-weight-bold">{{ user.following_count }}</div>
               <div class="text-caption text-grey">{{ $t('following') }}</div>
             </div>
           </div>
@@ -104,32 +104,32 @@ const bookLabels = {
 }
 const shelfMenu = ref(false)
 
-const currentUser = computed(() => {
+const user = computed(() => {
   // When we're on the home page, show logged-in user
   if (router.currentRoute.value.path === '/') {
     return userStore.me
   }
-  // When on other user's page, show that user (from userStore.currentUser)
-  return userStore.currentUser
+  // When on other user's page, show that user (from userStore.user)
+  return userStore.user
 })
 
 const sortKeyComputed = computed(() => props.sortKey)
 const ascDescComputed = computed(() => props.ascDesc)
 const isAbleToFollow = computed(() => {
-  return router.currentRoute.value.path !== '/' && authStore.isAuthenticated && userStore.currentUser.id !== userStore.me.id
+  return router.currentRoute.value.path !== '/' && authStore.isAuthenticated && userStore.user.id !== userStore.me.id
 })
 const isFollowingPerson = computed(() => {
-  if (!userStore.currentUser?.id) return false
-  return followStore.isFollowing(userStore.currentUser.id)
+  if (!userStore.user?.id) return false
+  return followStore.isFollowing(userStore.user.id)
 })
 
 async function followOrUnfollow() {
-  if (!userStore.currentUser?.id) return
+  if (!userStore.user?.id) return
 
   if (isFollowingPerson.value) {
-    await followStore.deleteUserFollow(userStore.currentUser.id)
+    await followStore.deleteUserFollow(userStore.user.id)
   } else {
-    await followStore.postUserFollow(userStore.currentUser.id)
+    await followStore.postUserFollow(userStore.user.id)
   }
 
   await authStore.refreshUser()

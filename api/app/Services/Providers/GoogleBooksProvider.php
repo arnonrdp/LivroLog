@@ -4,7 +4,6 @@ namespace App\Services\Providers;
 
 use App\Contracts\BookSearchProvider;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class GoogleBooksProvider implements BookSearchProvider
 {
@@ -17,11 +16,6 @@ class GoogleBooksProvider implements BookSearchProvider
         try {
             $searchQuery = $this->buildSearchQuery($query, $options);
 
-            Log::info('GoogleBooksProvider: Searching', [
-                'original_query' => $query,
-                'search_query' => $searchQuery,
-                'options' => $options,
-            ]);
 
             $response = Http::timeout(10)->get(self::API_BASE_URL, [
                 'q' => $searchQuery,
@@ -33,12 +27,7 @@ class GoogleBooksProvider implements BookSearchProvider
             $result = $this->processApiResponse($response, $searchQuery, $query);
 
         } catch (\Exception $e) {
-            Log::error('GoogleBooksProvider: Search error', [
-                'query' => $query,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
+            // Search error - continue to next provider
             $result = $this->buildErrorResponse($e->getMessage());
         }
 
@@ -51,22 +40,12 @@ class GoogleBooksProvider implements BookSearchProvider
     private function processApiResponse($response, string $searchQuery, string $originalQuery): array
     {
         if (! $response->successful()) {
-            Log::warning('GoogleBooksProvider: API request failed', [
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
-
             return $this->buildErrorResponse('API request failed');
         }
 
         $data = $response->json();
         $books = $this->processResults($data);
 
-        Log::info('GoogleBooksProvider: Search completed', [
-            'query' => $searchQuery,
-            'total_items' => $data['totalItems'] ?? 0,
-            'returned_items' => count($books),
-        ]);
 
         if (count($books) > 0) {
             return $this->buildSuccessResponse($books, count($books));

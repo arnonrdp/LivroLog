@@ -3,7 +3,6 @@ import type { Book } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
-import { useUserStore } from './user'
 
 export const useBookStore = defineStore('book', {
   state: () => ({
@@ -46,130 +45,40 @@ export const useBookStore = defineStore('book', {
         .finally(() => (this._isLoading = false))
     },
 
-    async getUserBooks() {
+    async postBook(payload: object) {
       this._isLoading = true
-      const userStore = useUserStore()
-      return await api
-        .get('/user/books', { params: { all: 'true' } })
-        .then((response) => {
-          // Handle different response formats
-          const books = response.data.data || response.data.books || response.data || []
-          const validBooks = Array.isArray(books) ? books : []
-
-          // Update userStore.me.books
-          userStore.updateMe({ books: validBooks })
-          return validBooks
+      await api
+        .post('/books', payload)
+        .then(async () => {
+          Notify.create({ message: i18n.global.t('added-to-shelf'), type: 'positive' })
+          await this.getBooks()
         })
-        .catch((error) => {
-          // Clear books on error
-          userStore.updateMe({ books: [] })
-          Notify.create({ message: error.response?.data?.message, type: 'negative' })
-          return []
-        })
+        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
-    async postUserBooks(book: Book) {
+    async putBook(bookId: Book['id'], payload: object) {
       this._isLoading = true
-      const userStore = useUserStore()
-
-      // Send only identifiers - backend handles the rest
-      const bookData: { book_id?: string; isbn?: string; google_id?: string } = {}
-
-      if (book.id) {
-        bookData.book_id = book.id
-      } else if (book.isbn) {
-        bookData.isbn = book.isbn
-        if (book.google_id) {
-          bookData.google_id = book.google_id
-        }
-      } else if (book.google_id) {
-        bookData.google_id = book.google_id
-      }
-
-      return await api
-        .post('/user/books', bookData)
-        .then((response) => {
-          // Use the book data from the response instead of making another GET request
-          const addedBook = response.data.book
-          if (addedBook) {
-            const currentBooks = userStore.me.books || []
-            const updatedBooks = [addedBook, ...currentBooks]
-            userStore.updateMe({ books: updatedBooks })
-
-            // Also update currentUser if it's the same user
-            if (userStore.currentUser.id === userStore.me.id) {
-              userStore.$patch((state) => {
-                state._currentUser.books = updatedBooks
-              })
-            }
-          }
-          Notify.create({ message: i18n.global.t('book-added-to-library'), type: 'positive' })
-          return true
-        })
-        .catch((error) => {
-          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
-          throw error
-        })
-        .finally(() => (this._isLoading = false))
-    },
-
-    async deleteUserBook(bookId: Book['id']) {
-      this._isLoading = true
-      const userStore = useUserStore()
-      return await api
-        .delete(`/user/books/${bookId}`)
-        .then(() => {
-          const currentBooks = userStore.me.books || []
-          const updatedBooks = currentBooks.filter((book) => book.id !== bookId)
-          userStore.updateMe({ books: updatedBooks })
-
-          // Also update currentUser if it's the same user
-          if (userStore.currentUser.id === userStore.me.id) {
-            userStore.$patch((state) => {
-              state._currentUser.books = updatedBooks
-            })
-          }
-
-          Notify.create({ message: i18n.global.t('book-removed-from-library'), type: 'positive' })
-          return true
-        })
-        .catch((error) => {
-          Notify.create({ message: error.response?.data?.message || i18n.global.t('removed-error'), type: 'negative' })
-          throw error
-        })
-        .finally(() => (this._isLoading = false))
-    },
-
-    async patchUserBookReadDate(bookId: Book['id'], readDate: string) {
-      this._isLoading = true
-      const userStore = useUserStore()
       return api
-        .patch(`/user/books/${bookId}/read-date`, {
-          read_at: readDate
-        })
+        .put(`/books/${bookId}`, payload)
         .then((response) => {
-          const currentBooks = userStore.me.books || []
-          const updatedBooks = currentBooks.map((book) =>
-            book.id === bookId && book.pivot ? { ...book, pivot: { ...book.pivot, read_at: readDate } } : book
-          )
-          userStore.updateMe({ books: updatedBooks })
-          Notify.create({ message: i18n.global.t('read-date-saved'), type: 'positive' })
+          this._books = this._books.map((book) => (book.id === bookId ? { ...book, ...payload } : book))
           return response.data
         })
-        .catch((error) => {
-          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
-          throw error
-        })
+        .catch((error) => Notify.create({ message: error.response?.data?.message, type: 'negative' }))
         .finally(() => (this._isLoading = false))
     },
 
-    setCurrentBook(book: Book | null) {
-      this._book = book
-    },
-
-    clearCurrentBook() {
-      this._book = null
+    async deleteBook(bookId: Book['id']) {
+      this._isLoading = true
+      await api
+        .delete(`/books/${bookId}`)
+        .then(() => {
+          this._books = this._books.filter((book) => book.id !== bookId)
+          Notify.create({ message: i18n.global.t('deleted-successfully'), type: 'positive' })
+        })
+        .catch(() => Notify.create({ message: i18n.global.t('removed-error'), type: 'negative' }))
+        .finally(() => (this._isLoading = false))
     }
   }
 })

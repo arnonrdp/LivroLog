@@ -7,7 +7,6 @@ use App\Services\Providers\AmazonBooksProvider;
 use App\Services\Providers\GoogleBooksProvider;
 use App\Services\Providers\OpenLibraryProvider;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class MultiSourceBookSearchService
 {
@@ -36,21 +35,10 @@ class MultiSourceBookSearchService
 
         // Check cache first
         if ($cachedResult = Cache::get($cacheKey)) {
-            Log::info('MultiSourceBookSearchService: Cache hit', [
-                'query' => $query,
-                'cache_key' => $cacheKey,
-                'cached_provider' => $cachedResult['provider'] ?? 'unknown',
-            ]);
-
             return $cachedResult;
         }
 
-        Log::info('MultiSourceBookSearchService: Starting search', [
-            'original_query' => $query,
-            'normalized_query' => $normalizedQuery,
-            'options' => $options,
-            'active_providers' => count($this->getActiveProviders()),
-        ]);
+        // Starting search with multiple providers
 
         $lastResult = null;
         $providerResults = [];
@@ -71,11 +59,7 @@ class MultiSourceBookSearchService
                     $finalResult = $this->buildFinalResult($result, $query, $providerResults);
                     Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
 
-                    Log::info('MultiSourceBookSearchService: Search successful', [
-                        'query' => $query,
-                        'successful_provider' => $provider->getName(),
-                        'total_found' => $result['total_found'],
-                    ]);
+                    // Search successful
 
                     return $finalResult;
                 }
@@ -83,12 +67,7 @@ class MultiSourceBookSearchService
                 $lastResult = $result;
 
             } catch (\Exception $e) {
-                Log::error('MultiSourceBookSearchService: Provider error', [
-                    'provider' => $provider->getName(),
-                    'query' => $query,
-                    'error' => $e->getMessage(),
-                ]);
-
+                // Provider error - continue to next provider
                 $providerResults[] = [
                     'provider' => $provider->getName(),
                     'success' => false,
@@ -102,11 +81,7 @@ class MultiSourceBookSearchService
         $failureResult = $this->buildFailureResult($query, $providerResults);
         Cache::put($cacheKey, $failureResult, self::CACHE_TTL_FAILURE);
 
-        Log::warning('MultiSourceBookSearchService: No results found', [
-            'query' => $query,
-            'providers_tried' => count($providerResults),
-            'provider_results' => $providerResults,
-        ]);
+        // No results found in any provider
 
         return $failureResult;
     }
@@ -166,7 +141,7 @@ class MultiSourceBookSearchService
     {
         // This is a simple implementation - in production you might want
         // to use cache tags for more sophisticated cache management
-        Log::info('MultiSourceBookSearchService: Cache cleared');
+        // Cache cleared
     }
 
     /**
@@ -182,10 +157,7 @@ class MultiSourceBookSearchService
             // new ISBNdbProvider(),
         ];
 
-        Log::debug('MultiSourceBookSearchService: Providers initialized', [
-            'total_providers' => count($this->providers),
-            'enabled_providers' => count($this->getActiveProviders()),
-        ]);
+        // Providers initialized
     }
 
     /**
@@ -230,13 +202,7 @@ class MultiSourceBookSearchService
 
         $duration = round((microtime(true) - $startTime) * 1000, 2);
 
-        Log::info('MultiSourceBookSearchService: Provider search completed', [
-            'provider' => $provider->getName(),
-            'query' => $query,
-            'success' => $result['success'],
-            'total_found' => $result['total_found'],
-            'duration_ms' => $duration,
-        ]);
+        // Provider search completed
 
         return $result;
     }

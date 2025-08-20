@@ -35,13 +35,14 @@
 import TheLoading from '@/components/add/TheLoading.vue'
 import BookDialog from '@/components/home/BookDialog.vue'
 import type { Book } from '@/models'
-import { useBookStore, useUserStore } from '@/stores'
+import { useBookStore, useUserBookStore, useUserStore } from '@/stores'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
 const bookStore = useBookStore()
+const userBookStore = useUserBookStore()
 const userStore = useUserStore()
 
 const books = ref<Book[]>([])
@@ -66,7 +67,7 @@ async function search() {
 }
 
 async function addBook(book: Book) {
-  await bookStore.postUserBooks(book)
+  await userBookStore.postUserBooks(book)
 }
 
 function clearSearch() {

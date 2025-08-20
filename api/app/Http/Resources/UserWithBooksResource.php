@@ -25,7 +25,8 @@ class UserWithBooksResource extends JsonResource
             'following_count' => $this->following_count,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'books' => $this->when($this->relationLoaded('books'), $this->books),
+            'books' => $this->when($this->relationLoaded('books'), 
+                UserBookSimplifiedResource::collection($this->books)),
         ];
     }
 }

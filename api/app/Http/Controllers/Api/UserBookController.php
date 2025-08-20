@@ -265,14 +265,14 @@ class UserBookController extends Controller
             return response()->json(['error' => 'Book not found in your library'], 404);
         }
 
-        // Update the read_at date in the pivot table
+        // Update the read_at date in the pivot table - ensure only date part is saved
         $user->books()->updateExistingPivot($book->id, [
-            'read_at' => $readAt ? \Carbon\Carbon::parse($readAt) : null,
+            'read_at' => $readAt ? \Carbon\Carbon::parse($readAt)->format('Y-m-d') : null,
         ]);
 
         return response()->json([
             'message' => 'Read date updated successfully',
-            'read_at' => $readAt,
+            'read_at' => $readAt ? \Carbon\Carbon::parse($readAt)->format('Y-m-d') : null,
         ]);
     }
 

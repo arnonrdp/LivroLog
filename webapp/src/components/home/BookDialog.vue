@@ -27,7 +27,18 @@
         <div class="col-9">
           <div class="text-subtitle1 text-grey-8 q-mb-xs">{{ book.authors }}</div>
           <div v-if="book.description" class="text-body2 text-grey-7">
-            {{ book.description?.substring(0, 200) }}{{ book.description?.length > 200 ? '...' : '' }}
+            <span v-if="!showFullDescription && book.description.length > 350">{{ book.description.substring(0, 350) }}...</span>
+            <span v-else>{{ book.description }}</span>
+            <q-btn
+              v-if="book.description.length > 350"
+              class="q-ml-xs"
+              color="primary"
+              dense
+              flat
+              :label="showFullDescription ? $t('see-less') : $t('see-more')"
+              size="sm"
+              @click="showFullDescription = !showFullDescription"
+            />
           </div>
         </div>
       </q-card-section>
@@ -225,7 +236,7 @@
 
 <script setup lang="ts">
 import type { Book, CreateReviewRequest, Review, UpdateReviewRequest } from '@/models'
-import { useBookStore, useReviewStore, useUserStore } from '@/stores'
+import { useReviewStore, useUserBookStore, useUserStore } from '@/stores'
 import { useQuasar } from 'quasar'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -243,8 +254,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const $q = useQuasar()
 
-const bookStore = useBookStore()
 const reviewStore = useReviewStore()
+const userBookStore = useUserBookStore()
 const userStore = useUserStore()
 
 const loading = ref(false)
@@ -254,6 +265,7 @@ const showSpoiler = ref<Record<string, boolean>>({})
 const editingReview = ref<Review | null>(null)
 const showDeleteDialog = ref(false)
 const reviewToDelete = ref<string | null>(null)
+const showFullDescription = ref(false)
 const reviewForm = ref<CreateReviewRequest>({
   book_id: props.book.id,
   title: '',
@@ -315,13 +327,7 @@ watch(
       const pivotReadAt = props.book.pivot?.read_at
       readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
 
-      // Load MY books (logged in user) to check library status
-      if (userStore.me.id) {
-        // Always ensure we have the latest library data for accurate button states
-        await bookStore.getUserBooks()
-      }
-
-      // Update library status after loading data
+      // Update library status using existing userStore.me.books data
       updateLibraryStatus()
 
       await loadBookReviews()
@@ -332,6 +338,7 @@ watch(
       resetReviewForm()
       showDeleteDialog.value = false
       reviewToDelete.value = null
+      showFullDescription.value = false
     }
   },
   { immediate: true }
@@ -399,7 +406,7 @@ async function addToLibrary() {
 
   libraryLoading.value = true
 
-  await bookStore
+  await userBookStore
     .postUserBooks(props.book)
     .then(() => updateLibraryStatus())
     .finally(() => (libraryLoading.value = false))
@@ -432,7 +439,7 @@ async function removeFromLibrary() {
 
   libraryLoading.value = true
 
-  await bookStore
+  await userBookStore
     .deleteUserBook(bookToRemoveId)
     .then(() => updateLibraryStatus())
     .finally(() => (libraryLoading.value = false))
@@ -487,7 +494,7 @@ async function handleSave() {
 
   // Save read date separately using the user books endpoint
   if (readDate.value) {
-    promises.push(bookStore.patchUserBookReadDate(props.book.id, readDate.value))
+    promises.push(userBookStore.patchUserBookReadDate(props.book.id, readDate.value))
   }
 
   Promise.all(promises)

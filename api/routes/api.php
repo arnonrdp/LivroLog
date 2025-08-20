@@ -37,6 +37,7 @@ Route::middleware(['throttle:10,1'])->group(function () {
 
 // Public routes
 Route::get('/health', [HealthController::class, 'index']);
+Route::get('/books', [BookController::class, 'index']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
@@ -62,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Books
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
-    Route::apiResource('books', BookController::class);
+    Route::apiResource('books', BookController::class)->except(['index']);
 
     // User's books (Personal Library Management)
     Route::get('/user/books', [UserBookController::class, 'index']);
