@@ -177,8 +177,14 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $user = $user
+            ->loadCount(['followers', 'following'])
+            ->load(['books' => function ($query) {
+                $query->orderBy('pivot_added_at', 'desc');
+            }]);
+
         return response()->json([
-            'user' => $user,
+            'user' => new UserWithBooksResource($user),
             'access_token' => $token,
             'token_type' => 'Bearer',
         ], 201);
@@ -241,11 +247,15 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = Auth::user();
+        $user = Auth::user()
+            ->loadCount(['followers', 'following'])
+            ->load(['books' => function ($query) {
+                $query->orderBy('pivot_added_at', 'desc');
+            }]);
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserWithBooksResource($user),
             'access_token' => $token,
             'token_type' => 'Bearer',
         ]);
@@ -620,10 +630,15 @@ class AuthController extends Controller
                 }
             }
 
+            $user = $user
+                ->loadCount(['followers', 'following'])
+                ->load(['books' => function ($query) {
+                    $query->orderBy('pivot_added_at', 'desc');
+                }]);
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'user' => $user,
+                'user' => new UserWithBooksResource($user),
                 'access_token' => $token,
                 'token_type' => 'Bearer',
             ]);
@@ -732,10 +747,15 @@ class AuthController extends Controller
                 }
             }
 
+            $user = $user
+                ->loadCount(['followers', 'following'])
+                ->load(['books' => function ($query) {
+                    $query->orderBy('pivot_added_at', 'desc');
+                }]);
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'user' => $user,
+                'user' => new UserWithBooksResource($user),
                 'access_token' => $token,
                 'token_type' => 'Bearer',
             ]);

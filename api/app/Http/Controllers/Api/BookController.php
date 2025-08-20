@@ -22,7 +22,6 @@ class BookController extends Controller
      *     tags={"Books"},
      *     summary="List books, search external APIs, or get showcase",
      *     description="Returns books from global catalog, external search results, or featured books based on parameters",
-     *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
      *         name="page",
@@ -68,9 +67,7 @@ class BookController extends Controller
      *             @OA\Property(property="total", type="integer"),
      *             @OA\Property(property="per_page", type="integer")
      *         )
-     *     ),
-     *
-     *     @OA\Response(response=401, description="Unauthenticated")
+     *     )
      * )
      */
     public function index(Request $request, MultiSourceBookSearchService $multiSearchService)

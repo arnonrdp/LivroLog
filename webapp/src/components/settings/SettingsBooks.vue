@@ -31,14 +31,14 @@
 </template>
 
 <script setup lang="ts">
-import { useBookStore, useUserStore } from '@/stores'
+import { useUserBookStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-const bookStore = useBookStore()
+const userBookStore = useUserBookStore()
 const userStore = useUserStore()
 
 document.title = `LivroLog | ${t('books')}`
@@ -81,7 +81,7 @@ watch(
         const dateOnly = newDate ? newDate.substring(0, 10) : ''
 
         isUpdating.value[bookId] = true
-        await bookStore
+        await userBookStore
           .patchUserBookReadDate(bookId, dateOnly)
           .then(() => (originalDates.value[bookId] = dateOnly))
           .catch(() => (readDates.value[bookId] = originalDate))

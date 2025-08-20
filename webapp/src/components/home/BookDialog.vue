@@ -236,7 +236,7 @@
 
 <script setup lang="ts">
 import type { Book, CreateReviewRequest, Review, UpdateReviewRequest } from '@/models'
-import { useBookStore, useReviewStore, useUserStore } from '@/stores'
+import { useReviewStore, useUserBookStore, useUserStore } from '@/stores'
 import { useQuasar } from 'quasar'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -254,8 +254,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const $q = useQuasar()
 
-const bookStore = useBookStore()
 const reviewStore = useReviewStore()
+const userBookStore = useUserBookStore()
 const userStore = useUserStore()
 
 const loading = ref(false)
@@ -406,7 +406,7 @@ async function addToLibrary() {
 
   libraryLoading.value = true
 
-  await bookStore
+  await userBookStore
     .postUserBooks(props.book)
     .then(() => updateLibraryStatus())
     .finally(() => (libraryLoading.value = false))
@@ -439,7 +439,7 @@ async function removeFromLibrary() {
 
   libraryLoading.value = true
 
-  await bookStore
+  await userBookStore
     .deleteUserBook(bookToRemoveId)
     .then(() => updateLibraryStatus())
     .finally(() => (libraryLoading.value = false))
@@ -494,7 +494,7 @@ async function handleSave() {
 
   // Save read date separately using the user books endpoint
   if (readDate.value) {
-    promises.push(bookStore.patchUserBookReadDate(props.book.id, readDate.value))
+    promises.push(userBookStore.patchUserBookReadDate(props.book.id, readDate.value))
   }
 
   Promise.all(promises)
