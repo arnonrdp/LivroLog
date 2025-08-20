@@ -138,14 +138,8 @@ class BookController extends Controller
 
             return response()->json($showcaseBooks);
         } catch (\Exception $e) {
-            // Log the error for debugging
-            \Log::error('Showcase books query failed', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-
             // Fallback: return recent books if the showcase query fails
+            // Don't log to avoid permission issues in production
             $fallbackBooks = DB::table('books')
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
