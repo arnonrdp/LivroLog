@@ -5,6 +5,7 @@
   "add-review": "レビューを追加します",
   "add-to-library": "ライブラリに追加",
   "add-to-library-to-review": "この本をライブラリに追加して確認してください",
+  "added-to-shelf": "棚に追加された本",
   "addlabel": "タイトル、著者、発行元、リリース、ISBNで検索...",
   "book-added-to-library": "本がライブラリに正常に追加されました！",
   "book-removed-from-library": "本がライブラリから正常に削除されました！",

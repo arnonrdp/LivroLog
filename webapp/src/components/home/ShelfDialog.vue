@@ -109,7 +109,7 @@ const user = computed(() => {
   if (router.currentRoute.value.path === '/') {
     return userStore.me
   }
-  // When on other user's page, show that user (from userStore.currentUser)
+  // When on other user's page, show that user (from userStore.user)
   return userStore.user
 })
 
