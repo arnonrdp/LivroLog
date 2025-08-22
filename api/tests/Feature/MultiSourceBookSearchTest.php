@@ -50,10 +50,10 @@ class MultiSourceBookSearchTest extends TestCase
 
         $this->assertSuccessfulGoogleBooksResult($result);
 
-        $this->assertArrayHasKey('books', $result);
-        $this->assertNotEmpty($result['books']);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertNotEmpty($result['data']);
 
-        $book = $result['books'][0];
+        $book = $result['data'][0];
         $this->assertEquals('Test Book', $book['title']);
         $this->assertEquals(self::TEST_AUTHOR, $book['authors']);
         $this->assertEquals(self::TEST_ISBN, $book['isbn']);
@@ -79,13 +79,13 @@ class MultiSourceBookSearchTest extends TestCase
 
         $result = $this->searchService->search(self::TEST_ISBN);
 
-        $this->assertTrue($result['success']);
-        $this->assertEquals('Open Library', $result['provider']);
-        $this->assertGreaterThan(0, $result['total_found']);
-        $this->assertNotEmpty($result['books']);
+        $this->assertArrayHasKey('search_info', $result);
+        $this->assertEquals('Open Library', $result['search_info']['provider']);
+        $this->assertGreaterThan(0, $result['meta']['total']);
+        $this->assertNotEmpty($result['data']);
 
-        $this->assertArrayHasKey('books', $result);
-        $book = $result['books'][0];
+        $this->assertArrayHasKey('data', $result);
+        $book = $result['data'][0];
         $this->assertEquals('Test Book from Open Library', $book['title']);
         $this->assertEquals(self::TEST_AUTHOR, $book['authors']);
         $this->assertEquals(self::TEST_ISBN, $book['isbn']);
@@ -106,17 +106,15 @@ class MultiSourceBookSearchTest extends TestCase
         $result = $this->searchService->search($testQuery);
 
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('success', $result);
-        $this->assertArrayHasKey('provider', $result);
-        $this->assertArrayHasKey('total_found', $result);
-        $this->assertArrayHasKey('books', $result);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('meta', $result);
+        $this->assertArrayHasKey('search_info', $result);
 
-        $this->assertFalse($result['success']);
-        $this->assertEquals('Multi-Source', $result['provider']);
-        $this->assertEquals(0, $result['total_found']);
-        $this->assertEmpty($result['books']);
-        $this->assertArrayHasKey('suggestions', $result);
-        $this->assertArrayHasKey('providers_tried', $result);
+        $this->assertEquals('Multi-Source', $result['search_info']['provider']);
+        $this->assertEquals(0, $result['meta']['total']);
+        $this->assertEmpty($result['data']);
+        $this->assertArrayHasKey('suggestions', $result['search_info']);
+        $this->assertArrayHasKey('providers_tried', $result['search_info']);
     }
 
     public function test_search_with_specific_provider(): void
@@ -173,8 +171,8 @@ class MultiSourceBookSearchTest extends TestCase
         $result = $this->searchService->search($hyphenatedIsbn);
 
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('success', $result);
-        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('search_info', $result);
+        $this->assertArrayHasKey('provider', $result['search_info']);
 
         Http::assertSent(function ($request) use ($normalizedIsbn) {
             $url = $request->url();
@@ -205,20 +203,20 @@ class MultiSourceBookSearchTest extends TestCase
         $result1 = $this->searchService->search($testQuery);
 
         $this->assertIsArray($result1);
-        $this->assertArrayHasKey('success', $result1);
-        $this->assertTrue($result1['success']);
+        $this->assertArrayHasKey('data', $result1);
+        $this->assertNotEmpty($result1['data']);
 
         Http::assertSentCount(1);
 
         $result2 = $this->searchService->search($testQuery);
 
         $this->assertIsArray($result2);
-        $this->assertArrayHasKey('success', $result2);
-        $this->assertTrue($result2['success']);
+        $this->assertArrayHasKey('data', $result2);
+        $this->assertNotEmpty($result2['data']);
 
-        $this->assertArrayHasKey('books', $result1);
-        $this->assertArrayHasKey('books', $result2);
-        $this->assertEquals($result1['books'], $result2['books']);
+        $this->assertArrayHasKey('data', $result1);
+        $this->assertArrayHasKey('data', $result2);
+        $this->assertEquals($result1['data'], $result2['data']);
     }
 
     private function getGoogleBooksResponse(): array
@@ -261,9 +259,9 @@ class MultiSourceBookSearchTest extends TestCase
 
     private function assertSuccessfulGoogleBooksResult(array $result): void
     {
-        $this->assertTrue($result['success']);
-        $this->assertEquals(self::GOOGLE_BOOKS_PROVIDER, $result['provider']);
-        $this->assertGreaterThan(0, $result['total_found']);
-        $this->assertNotEmpty($result['books']);
+        $this->assertArrayHasKey('search_info', $result);
+        $this->assertEquals(self::GOOGLE_BOOKS_PROVIDER, $result['search_info']['provider']);
+        $this->assertGreaterThan(0, $result['meta']['total']);
+        $this->assertNotEmpty($result['data']);
     }
 }
