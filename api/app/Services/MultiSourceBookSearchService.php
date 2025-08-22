@@ -267,7 +267,6 @@ class MultiSourceBookSearchService
         // Structure response with pagination meta similar to database queries
         return [
             'data' => $result['books'] ?? [],
-            'books' => $result['books'] ?? [], // For backward compatibility with tests
             'meta' => [
                 'current_page' => 1, // External API always returns page 1
                 'from' => 1,
@@ -276,13 +275,13 @@ class MultiSourceBookSearchService
                 'to' => count($result['books'] ?? []),
                 'total' => $totalFound,
             ],
-            'success' => $result['success'],
-            'provider' => $result['provider'],
-            'total_found' => $totalFound, // For backward compatibility with tests
-            'original_query' => $originalQuery,
-            'search_strategy' => 'multi_source',
-            'providers_tried' => $providerResults,
-            'cached_at' => now()->toISOString(),
+            'search_info' => [
+                'provider' => $result['provider'],
+                'original_query' => $originalQuery,
+                'search_strategy' => 'multi_source',
+                'providers_tried' => $providerResults,
+                'cached_at' => now()->toISOString(),
+            ],
         ];
     }
 
@@ -293,7 +292,6 @@ class MultiSourceBookSearchService
     {
         return [
             'data' => [],
-            'books' => [], // For backward compatibility with tests
             'meta' => [
                 'current_page' => 1,
                 'from' => null,
@@ -302,14 +300,14 @@ class MultiSourceBookSearchService
                 'to' => null,
                 'total' => 0,
             ],
-            'success' => false,
-            'provider' => 'Multi-Source',
-            'total_found' => 0, // For backward compatibility with tests
-            'original_query' => $query,
-            'search_strategy' => 'multi_source',
-            'providers_tried' => $providerResults,
-            'cached_at' => now()->toISOString(),
-            'suggestions' => $this->buildSearchSuggestions($query),
+            'search_info' => [
+                'provider' => 'Multi-Source',
+                'original_query' => $query,
+                'search_strategy' => 'multi_source',
+                'providers_tried' => $providerResults,
+                'cached_at' => now()->toISOString(),
+                'suggestions' => $this->buildSearchSuggestions($query),
+            ],
         ];
     }
 

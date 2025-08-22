@@ -16,7 +16,7 @@ class GoogleBooksProvider implements BookSearchProvider
     {
         try {
             $searchQuery = $this->buildSearchQuery($query, $options);
-
+            
             $response = Http::timeout(10)->get(self::API_BASE_URL, [
                 'q' => $searchQuery,
                 'maxResults' => $options['maxResults'] ?? 20, // Reduced default from 40 to 20
@@ -142,7 +142,7 @@ class GoogleBooksProvider implements BookSearchProvider
             'publisher' => $volumeInfo['publisher'] ?? null,
             'published_date' => $volumeInfo['publishedDate'] ?? null,
             'page_count' => $volumeInfo['pageCount'] ?? null,
-            'language' => $volumeInfo['language'] ?? 'pt-BR',
+            'language' => $volumeInfo['language'] ?? null, // Let API determine language
             'categories' => $volumeInfo['categories'] ?? null,
             'maturity_rating' => $volumeInfo['maturityRating'] ?? null,
             'preview_link' => $volumeInfo['previewLink'] ?? null,

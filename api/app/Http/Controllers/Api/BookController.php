@@ -533,7 +533,7 @@ class BookController extends Controller
             'publisher' => $volumeInfo['publisher'] ?? '',
             'published_date' => $volumeInfo['publishedDate'] ?? null,
             'page_count' => $volumeInfo['pageCount'] ?? null,
-            'language' => $volumeInfo['language'] ?? 'pt-BR',
+            'language' => $volumeInfo['language'] ?? null, // Let API determine language
             'categories' => $volumeInfo['categories'] ?? null,
         ];
     }

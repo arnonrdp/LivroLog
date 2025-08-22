@@ -48,8 +48,9 @@ export const useAuthStore = defineStore('auth', {
     async postAuthLogin(email: string, password: string) {
       this._isLoading = true
       const userStore = useUserStore()
+      const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/login', { email, password })
+        .post('/auth/login', { email, password, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -68,8 +69,9 @@ export const useAuthStore = defineStore('auth', {
     async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
       this._isLoading = true
       const userStore = useUserStore()
+      const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/register', data)
+        .post('/auth/register', { ...data, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -141,8 +143,9 @@ export const useAuthStore = defineStore('auth', {
     async postAuthGoogle(idToken: string) {
       this._isGoogleLoading = true
       const userStore = useUserStore()
+      const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/google', { id_token: idToken })
+        .post('/auth/google', { id_token: idToken, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)

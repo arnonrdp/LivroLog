@@ -410,7 +410,7 @@ class OpenLibraryProvider implements BookSearchProvider
     private function formatLanguages(array $languages): ?string
     {
         if (empty($languages)) {
-            return 'pt-BR'; // Default
+            return null; // No default language
         }
 
         foreach ($languages as $lang) {
@@ -421,7 +421,7 @@ class OpenLibraryProvider implements BookSearchProvider
             }
         }
 
-        return 'pt-BR';
+        return null; // No fallback language
     }
 
     /**
@@ -429,7 +429,7 @@ class OpenLibraryProvider implements BookSearchProvider
      */
     private function formatLanguageNames(array $languages): ?string
     {
-        return empty($languages) ? 'pt-BR' : $languages[0];
+        return empty($languages) ? null : $languages[0];
     }
 
     /**

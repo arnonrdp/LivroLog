@@ -517,7 +517,7 @@ class BookEnrichmentService
             $bookData = array_merge([
                 'title' => $volumeInfo['title'] ?? 'Untitled',
                 'authors' => isset($volumeInfo['authors']) ? implode(', ', $volumeInfo['authors']) : null,
-                'language' => $volumeInfo['language'] ?? 'pt-BR',
+                'language' => $volumeInfo['language'] ?? null, // Let API determine language
                 'thumbnail' => isset($volumeInfo['imageLinks']['thumbnail'])
                     ? str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail'])
                     : null,

@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="authors", type="string", example="J.R.R. Tolkien"),
  *     @OA\Property(property="description", type="string", nullable=true),
  *     @OA\Property(property="thumbnail", type="string", format="url", nullable=true),
- *     @OA\Property(property="language", type="string", example="pt-BR"),
+ *     @OA\Property(property="language", type="string", example="en", nullable=true),
  *     @OA\Property(property="publisher", type="string", example="HarperCollins", nullable=true),
  *     @OA\Property(property="published_date", type="string", format="date", nullable=true),
  *     @OA\Property(property="page_count", type="integer", example=423, nullable=true),

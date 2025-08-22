@@ -165,6 +165,7 @@ class AuthController extends Controller
                 'not_regex:/^(admin|api|www|root|support|help|about|contact|terms|privacy|settings|profile|user|users|book|books)$/i', // Reserved usernames
             ],
             'password' => self::VALIDATION_PASSWORD_RULES,
+            'locale' => 'nullable|string|max:10', // Accept locale from frontend
         ]);
 
         $user = User::create([
@@ -173,6 +174,7 @@ class AuthController extends Controller
             'username' => $request->username,
             'password' => Hash::make($request->password),
             'shelf_name' => $request->shelf_name ?? $request->display_name.self::LIBRARY_SUFFIX,
+            'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -239,6 +241,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => self::VALIDATION_REQUIRED_EMAIL,
             'password' => 'required',
+            'locale' => 'nullable|string|max:10', // Accept locale from frontend
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'))) {
@@ -247,7 +250,15 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = Auth::user()
+        $user = Auth::user();
+        
+        // Set locale if not already set
+        if (is_null($user->locale) && $request->has('locale')) {
+            $user->locale = $this->normalizeLocale($request->input('locale'));
+            $user->save();
+        }
+        
+        $user = $user
             ->loadCount(['followers', 'following'])
             ->load(['books' => function ($query) {
                 $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
@@ -701,6 +712,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'id_token' => self::VALIDATION_REQUIRED_STRING,
+            'locale' => 'nullable|string|max:10', // Accept locale from frontend
         ]);
 
         try {
@@ -727,12 +739,19 @@ class AuthController extends Controller
 
                 if ($user) {
                     // Update existing user with Google data
-                    $user->update([
+                    $updateData = [
                         'google_id' => $googleId,
                         'avatar' => $avatar,
                         'email_verified' => $emailVerified,
                         'email_verified_at' => $emailVerified ? now() : null,
-                    ]);
+                    ];
+                    
+                    // Set locale if not already set
+                    if (is_null($user->locale) && $request->has('locale')) {
+                        $updateData['locale'] = $this->normalizeLocale($request->input('locale'));
+                    }
+                    
+                    $user->update($updateData);
                 } else {
                     // Create new user
                     $username = $this->generateUniqueUsername($name, $email);
@@ -747,6 +766,7 @@ class AuthController extends Controller
                         'shelf_name' => $name.self::LIBRARY_SUFFIX,
                         'email_verified' => $emailVerified,
                         'email_verified_at' => $emailVerified ? now() : null,
+                        'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
                     ]);
                 }
             }
@@ -801,6 +821,41 @@ class AuthController extends Controller
         }
 
         return $username;
+    }
+
+    /**
+     * Normalize locale to supported language codes
+     * Converts browser locales (pt-BR, en-US) to language codes (pt, en)
+     */
+    private function normalizeLocale(?string $locale): string
+    {
+        if (!$locale) {
+            return 'en'; // Default to English (most universal)
+        }
+
+        // Extract language code from locale (e.g., pt-BR -> pt)
+        $languageCode = strtolower(explode('-', $locale)[0]);
+        
+        // Map common language codes to Google Books supported codes
+        $supportedLocales = [
+            'pt' => 'pt',     // Portuguese
+            'en' => 'en',     // English
+            'es' => 'es',     // Spanish
+            'fr' => 'fr',     // French
+            'de' => 'de',     // German
+            'it' => 'it',     // Italian
+            'ja' => 'ja',     // Japanese
+            'ko' => 'ko',     // Korean
+            'zh' => 'zh',     // Chinese
+            'ru' => 'ru',     // Russian
+            'ar' => 'ar',     // Arabic
+            'hi' => 'hi',     // Hindi
+            'nl' => 'nl',     // Dutch
+            'pl' => 'pl',     // Polish
+            'tr' => 'tr',     // Turkish
+        ];
+
+        return $supportedLocales[$languageCode] ?? 'en';
     }
 
     /**
