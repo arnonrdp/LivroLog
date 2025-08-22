@@ -13,10 +13,30 @@ use Illuminate\Database\Eloquent\Model;
  *     description="User follow relationship model",
  *
  *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="follower_id", type="string", example="U-ABC1-DEF2"),
- *     @OA\Property(property="following_id", type="string", example="U-XYZ3-UVW4"),
+ *     @OA\Property(property="follower_id", type="string", example="U-ABC1-DEF2", description="User ID of the person following"),
+ *     @OA\Property(property="followed_id", type="string", example="U-XYZ3-UVW4", description="User ID of the person being followed"),
+ *     @OA\Property(property="status", type="string", enum={"pending", "accepted"}, example="accepted", description="Status of the follow relationship"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="FollowRequest",
+ *     type="object",
+ *     title="Follow Request",
+ *     description="Follow request with user details",
+ *
+ *     @OA\Property(property="id", type="integer", example=1, description="Follow request ID"),
+ *     @OA\Property(
+ *         property="follower",
+ *         type="object",
+ *         description="User who sent the follow request",
+ *         @OA\Property(property="id", type="string", example="U-ABC1-DEF2"),
+ *         @OA\Property(property="display_name", type="string", example="John Doe"),
+ *         @OA\Property(property="username", type="string", example="john_doe"),
+ *         @OA\Property(property="avatar", type="string", example="https://example.com/avatar.jpg", nullable=true)
+ *     ),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="When the follow request was created")
  * )
  */
 class Follow extends Model

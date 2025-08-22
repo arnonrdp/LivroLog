@@ -179,9 +179,19 @@ class UserController extends Controller
      *
      *     @OA\Response(
      *         response=200,
-     *         description="User information",
+     *         description="User information with privacy-aware book visibility",
      *
      *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=403,
+     *         description="Profile is private and user is not following",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="This profile is private")
+     *         )
      *     ),
      *
      *     @OA\Response(response=404, description="User not found"),

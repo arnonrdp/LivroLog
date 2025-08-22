@@ -36,6 +36,12 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="info_quality", type="string", enum={"basic", "enhanced", "complete"}, example="enhanced"),
  *     @OA\Property(property="enriched_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="edition", type="string", nullable=true),
+ *     @OA\Property(property="pivot", type="object", nullable=true, description="User-specific book data (when fetched from user's library)",
+ *         @OA\Property(property="added_at", type="string", format="date-time", description="When the book was added to user's library"),
+ *         @OA\Property(property="read_at", type="string", format="date", nullable=true, description="Date when the book was read"),
+ *         @OA\Property(property="is_private", type="boolean", description="Whether this book is private in the user's library"),
+ *         @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, description="Current reading status")
+ *     ),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )

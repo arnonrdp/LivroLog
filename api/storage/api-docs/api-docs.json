@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "LivroLog API",
-        "description": "Personal library management system with Google Books API integration",
+        "description": "Personal library management system with Google Books API integration, social features, privacy controls, and comprehensive follow system with request management",
         "contact": {
             "email": "support@livrolog.com"
         },
@@ -822,94 +822,6 @@
                 }
             }
         },
-        "/auth/password": {
-            "put": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Update user password",
-                "description": "Updates the authenticated user's password",
-                "operationId": "updateUserPassword",
-                "requestBody": {
-                    "description": "Password update data",
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "current_password",
-                                    "password",
-                                    "password_confirmation"
-                                ],
-                                "properties": {
-                                    "current_password": {
-                                        "description": "Current password",
-                                        "type": "string",
-                                        "format": "password"
-                                    },
-                                    "password": {
-                                        "description": "New password",
-                                        "type": "string",
-                                        "format": "password"
-                                    },
-                                    "password_confirmation": {
-                                        "description": "New password confirmation",
-                                        "type": "string",
-                                        "format": "password"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Password updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Password updated successfully"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/auth/check-username": {
             "get": {
                 "tags": [
@@ -1073,7 +985,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Items per page",
+                        "description": "Items per page (max 100 for catalog, max 40 for search)",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -1088,6 +1000,31 @@
                         "schema": {
                             "type": "string",
                             "example": "Sidarta"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort order for catalog results (not applicable for search)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "recent",
+                                "rating",
+                                "popular"
+                            ],
+                            "example": "recent"
+                        }
+                    },
+                    {
+                        "name": "with",
+                        "in": "query",
+                        "description": "Include additional fields in response (comma-separated)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "details,users,reviews"
                         }
                     },
                     {
@@ -1114,23 +1051,40 @@
                                                 "$ref": "#/components/schemas/Book"
                                             }
                                         },
-                                        "current_page": {
-                                            "type": "integer"
-                                        },
-                                        "total": {
-                                            "type": "integer"
-                                        },
-                                        "per_page": {
-                                            "type": "integer"
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -1801,6 +1755,16 @@
                             "type": "string",
                             "example": "U-ABC1-DEF2"
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default 20)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
                     }
                 ],
                 "responses": {
@@ -1879,6 +1843,16 @@
                             "type": "string",
                             "example": "U-ABC1-DEF2"
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default 20)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
                     }
                 ],
                 "responses": {
@@ -1932,6 +1906,190 @@
                     },
                     "404": {
                         "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/follow-requests": {
+            "get": {
+                "tags": [
+                    "Social"
+                ],
+                "summary": "Get pending follow requests for authenticated user",
+                "operationId": "600e2047d73b6643e5f2539c0ddf934a",
+                "responses": {
+                    "200": {
+                        "description": "List of pending follow requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FollowRequest"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/follow-requests/{followId}": {
+            "post": {
+                "tags": [
+                    "Social"
+                ],
+                "summary": "Accept a follow request",
+                "operationId": "56916fdc3292c27b3907163a025f6251",
+                "parameters": [
+                    {
+                        "name": "followId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Follow request accepted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Follow request accepted"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "follow_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "follower": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "U-ABC1-DEF2"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "username": {
+                                                            "type": "string",
+                                                            "example": "john_doe"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Follow request not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Social"
+                ],
+                "summary": "Reject a follow request",
+                "operationId": "1aba9892ed977a7bc0ea8fb8edde41b3",
+                "parameters": [
+                    {
+                        "name": "followId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Follow request rejected successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Follow request rejected"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "follower": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "U-ABC1-DEF2"
+                                                        },
+                                                        "display_name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "username": {
+                                                            "type": "string",
+                                                            "example": "john_doe"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Follow request not found"
                     }
                 },
                 "security": [
@@ -2163,6 +2321,24 @@
                                         "description": "Google Books ID for search/creation and enrichment",
                                         "type": "string",
                                         "example": "HuKNDAAAQBAJ"
+                                    },
+                                    "is_private": {
+                                        "description": "Whether to mark this book as private in user's library",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "reading_status": {
+                                        "description": "Reading status for this book",
+                                        "type": "string",
+                                        "enum": [
+                                            "want_to_read",
+                                            "reading",
+                                            "read",
+                                            "abandoned",
+                                            "on_hold",
+                                            "re_reading"
+                                        ],
+                                        "example": "read"
                                     }
                                 },
                                 "type": "object"
@@ -2246,7 +2422,7 @@
                 ],
                 "summary": "Remove book from user's library",
                 "description": "Removes a book from the authenticated user's personal library",
-                "operationId": "removeBookFromLibrary",
+                "operationId": "bRemoveBookFromLibrary",
                 "parameters": [
                     {
                         "name": "book",
@@ -2288,16 +2464,14 @@
                         "bearerAuth": []
                     }
                 ]
-            }
-        },
-        "/user/books/{book}/read-date": {
+            },
             "patch": {
                 "tags": [
                     "User Library"
                 ],
-                "summary": "Update book read date",
-                "description": "Updates the read date for a book in the user's library",
-                "operationId": "updateBookReadDate",
+                "summary": "Update book in user's library",
+                "description": "Updates book properties in the authenticated user's library (read date, privacy, etc.)",
+                "operationId": "aUpdateUserBook",
                 "parameters": [
                     {
                         "name": "book",
@@ -2311,7 +2485,7 @@
                     }
                 ],
                 "requestBody": {
-                    "description": "Read date data",
+                    "description": "Book update data (provide any combination of fields)",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -2322,6 +2496,24 @@
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-01-15"
+                                    },
+                                    "is_private": {
+                                        "description": "Whether the book should be private",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "reading_status": {
+                                        "description": "Reading status for this book",
+                                        "type": "string",
+                                        "enum": [
+                                            "want_to_read",
+                                            "reading",
+                                            "read",
+                                            "abandoned",
+                                            "on_hold",
+                                            "re_reading"
+                                        ],
+                                        "example": "reading"
                                     }
                                 },
                                 "type": "object"
@@ -2331,19 +2523,27 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Read date updated successfully",
+                        "description": "Book updated successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Read date updated successfully"
+                                            "example": "Book updated successfully"
                                         },
                                         "read_at": {
                                             "type": "string",
                                             "format": "date",
                                             "example": "2024-01-15"
+                                        },
+                                        "is_private": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "reading_status": {
+                                            "type": "string",
+                                            "example": "reading"
                                         }
                                     },
                                     "type": "object"
@@ -2554,11 +2754,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "User information",
+                        "description": "User information with privacy-aware book visibility",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Profile is private and user is not following",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This profile is private"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -3580,6 +3796,40 @@
                         "type": "string",
                         "nullable": true
                     },
+                    "pivot": {
+                        "description": "User-specific book data (when fetched from user's library)",
+                        "properties": {
+                            "added_at": {
+                                "description": "When the book was added to user's library",
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "read_at": {
+                                "description": "Date when the book was read",
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                            },
+                            "is_private": {
+                                "description": "Whether this book is private in the user's library",
+                                "type": "boolean"
+                            },
+                            "reading_status": {
+                                "description": "Current reading status",
+                                "type": "string",
+                                "enum": [
+                                    "want_to_read",
+                                    "reading",
+                                    "read",
+                                    "abandoned",
+                                    "on_hold",
+                                    "re_reading"
+                                ]
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time"
@@ -3600,18 +3850,69 @@
                         "example": 1
                     },
                     "follower_id": {
+                        "description": "User ID of the person following",
                         "type": "string",
                         "example": "U-ABC1-DEF2"
                     },
-                    "following_id": {
+                    "followed_id": {
+                        "description": "User ID of the person being followed",
                         "type": "string",
                         "example": "U-XYZ3-UVW4"
+                    },
+                    "status": {
+                        "description": "Status of the follow relationship",
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "accepted"
+                        ],
+                        "example": "accepted"
                     },
                     "created_at": {
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "FollowRequest": {
+                "title": "Follow Request",
+                "description": "Follow request with user details",
+                "properties": {
+                    "id": {
+                        "description": "Follow request ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "follower": {
+                        "description": "User who sent the follow request",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "example": "U-ABC1-DEF2"
+                            },
+                            "display_name": {
+                                "type": "string",
+                                "example": "John Doe"
+                            },
+                            "username": {
+                                "type": "string",
+                                "example": "john_doe"
+                            },
+                            "avatar": {
+                                "type": "string",
+                                "example": "https://example.com/avatar.jpg",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "description": "When the follow request was created",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -3761,8 +4062,24 @@
                         "example": 8
                     },
                     "is_private": {
+                        "description": "Whether the user's profile and library are private",
                         "type": "boolean",
                         "example": false
+                    },
+                    "is_following": {
+                        "description": "Whether the current user is following this user (only included when authenticated)",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "has_pending_follow_request": {
+                        "description": "Whether the current user has a pending follow request to this user (only included when authenticated)",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "pending_follow_requests_count": {
+                        "description": "Number of pending follow requests for this user (only for private accounts)",
+                        "type": "integer",
+                        "example": 3
                     },
                     "email_verified": {
                         "type": "boolean",
@@ -3806,6 +4123,24 @@
                         "type": "string",
                         "format": "date",
                         "nullable": true
+                    },
+                    "is_private": {
+                        "description": "Whether this book is private in the user's library",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "reading_status": {
+                        "description": "User's reading status for this book",
+                        "type": "string",
+                        "enum": [
+                            "want_to_read",
+                            "reading",
+                            "read",
+                            "abandoned",
+                            "on_hold",
+                            "re_reading"
+                        ],
+                        "example": "read"
                     },
                     "created_at": {
                         "type": "string",

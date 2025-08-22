@@ -175,49 +175,9 @@ class UserBookController extends Controller
     }
 
     /**
-     * @OA\Delete(
-     *     path="/user/books/{book}",
-     *     operationId="removeBookFromLibrary",
-     *     tags={"User Library"},
-     *     summary="Remove book from user's library",
-     *     description="Removes a book from the authenticated user's personal library",
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="book",
-     *         in="path",
-     *         description="Book ID",
-     *         required=true,
-     *
-     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Book removed from library",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Book removed from your library")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(response=404, description="Book not found"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function destroy(Request $request, Book $book)
-    {
-        $user = $request->user();
-        $user->books()->detach($book->id);
-
-        return response()->json(['message' => 'Book removed from your library']);
-    }
-
-    /**
      * @OA\Patch(
      *     path="/user/books/{book}",
-     *     operationId="updateUserBook",
+     *     operationId="aUpdateUserBook",
      *     tags={"User Library"},
      *     summary="Update book in user's library",
      *     description="Updates book properties in the authenticated user's library (read date, privacy, etc.)",
@@ -313,6 +273,46 @@ class UserBookController extends Controller
         }
 
         return response()->json($responseData);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/user/books/{book}",
+     *     operationId="bRemoveBookFromLibrary",
+     *     tags={"User Library"},
+     *     summary="Remove book from user's library",
+     *     description="Removes a book from the authenticated user's personal library",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book removed from library",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Book removed from your library")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function destroy(Request $request, Book $book)
+    {
+        $user = $request->user();
+        $user->books()->detach($book->id);
+
+        return response()->json(['message' => 'Book removed from your library']);
     }
 
     /**

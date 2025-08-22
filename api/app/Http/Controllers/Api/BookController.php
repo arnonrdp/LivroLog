@@ -35,7 +35,7 @@ class BookController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Items per page",
+     *         description="Items per page (max 100 for catalog, max 40 for search)",
      *         required=false,
      *
      *         @OA\Schema(type="integer", example=20)
@@ -48,6 +48,24 @@ class BookController extends Controller
      *         required=false,
      *
      *         @OA\Schema(type="string", example="Sidarta")
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Sort order for catalog results (not applicable for search)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="string", enum={"recent", "rating", "popular"}, example="recent")
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="with",
+     *         in="query",
+     *         description="Include additional fields in response (comma-separated)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="string", example="details,users,reviews")
      *     ),
      *
      *     @OA\Parameter(
@@ -66,9 +84,16 @@ class BookController extends Controller
      *         @OA\JsonContent(
      *
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Book")),
-     *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="total", type="integer"),
-     *             @OA\Property(property="per_page", type="integer")
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="last_page", type="integer", example=5),
+     *                 @OA\Property(property="per_page", type="integer", example=20),
+     *                 @OA\Property(property="to", type="integer", example=20),
+     *                 @OA\Property(property="total", type="integer", example=100)
+     *             )
      *         )
      *     )
      * )

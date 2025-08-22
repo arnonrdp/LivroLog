@@ -166,6 +166,15 @@ class FollowController extends Controller
      *         @OA\Schema(type="string", example="U-ABC1-DEF2")
      *     ),
      *
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page (default 20)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="integer", example=20)
+     *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="List of followers",
@@ -244,6 +253,15 @@ class FollowController extends Controller
      *         required=true,
      *
      *         @OA\Schema(type="string", example="U-ABC1-DEF2")
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page (default 20)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="integer", example=20)
      *     ),
      *
      *     @OA\Response(
@@ -330,20 +348,7 @@ class FollowController extends Controller
      *                 property="data",
      *                 type="array",
      *
-     *                 @OA\Items(
-     *                     type="object",
-     *
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(
-     *                         property="follower",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="string", example="U-ABC1-DEF2"),
-     *                         @OA\Property(property="display_name", type="string", example="John Doe"),
-     *                         @OA\Property(property="username", type="string", example="john_doe"),
-     *                         @OA\Property(property="avatar", type="string", example="https://example.com/avatar.jpg")
-     *                     ),
-     *                     @OA\Property(property="created_at", type="string", format="date-time")
-     *                 )
+     *                 @OA\Items(ref="#/components/schemas/FollowRequest")
      *             )
      *         )
      *     )
