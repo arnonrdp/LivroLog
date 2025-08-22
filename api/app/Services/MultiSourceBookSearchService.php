@@ -267,6 +267,7 @@ class MultiSourceBookSearchService
         // Structure response with pagination meta similar to database queries
         return [
             'data' => $result['books'] ?? [],
+            'books' => $result['books'] ?? [], // For backward compatibility with tests
             'meta' => [
                 'current_page' => 1, // External API always returns page 1
                 'from' => 1,
@@ -277,6 +278,7 @@ class MultiSourceBookSearchService
             ],
             'success' => $result['success'],
             'provider' => $result['provider'],
+            'total_found' => $totalFound, // For backward compatibility with tests
             'original_query' => $originalQuery,
             'search_strategy' => 'multi_source',
             'providers_tried' => $providerResults,
@@ -291,6 +293,7 @@ class MultiSourceBookSearchService
     {
         return [
             'data' => [],
+            'books' => [], // For backward compatibility with tests
             'meta' => [
                 'current_page' => 1,
                 'from' => null,
@@ -301,6 +304,7 @@ class MultiSourceBookSearchService
             ],
             'success' => false,
             'provider' => 'Multi-Source',
+            'total_found' => 0, // For backward compatibility with tests
             'original_query' => $query,
             'search_strategy' => 'multi_source',
             'providers_tried' => $providerResults,
