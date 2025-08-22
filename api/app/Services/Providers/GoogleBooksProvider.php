@@ -37,6 +37,19 @@ class GoogleBooksProvider implements BookSearchProvider
             $response = Http::timeout(10)->get(self::API_BASE_URL, $params);
 
             $result = $this->processApiResponse($response, $searchQuery, $query);
+            
+            // Temporary debugging - add request info to response
+            if (in_array($query, ['TestDebugDev', 'Quarta Asa'])) {
+                $result['debug_info'] = [
+                    'request_url' => self::API_BASE_URL . '?' . http_build_query($params),
+                    'api_key_used' => substr($params['key'] ?? 'none', 0, 10) . '...',
+                    'search_query_sent' => $searchQuery,
+                    'original_query' => $query,
+                    'response_status' => $response->status(),
+                    'response_items_count' => isset($response->json()['items']) ? count($response->json()['items']) : 0,
+                    'first_result_title' => $response->json()['items'][0]['volumeInfo']['title'] ?? 'N/A'
+                ];
+            }
 
         } catch (\Exception $e) {
             // Search error - continue to next provider

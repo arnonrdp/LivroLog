@@ -65,6 +65,12 @@ class MultiSourceBookSearchService
 
                     // Success! Cache and return with pagination meta
                     $finalResult = $this->buildFinalResult($result, $query, $providerResults, $options);
+                    
+                    // Temporary debugging - pass through debug info
+                    if (isset($result['debug_info'])) {
+                        $finalResult['debug_info'] = $result['debug_info'];
+                    }
+                    
                     Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
 
                     return $finalResult;
