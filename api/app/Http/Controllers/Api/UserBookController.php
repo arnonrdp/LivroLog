@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaginatedResource;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
+use App\Services\AmazonLinkEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -66,7 +67,7 @@ class UserBookController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function index(Request $request)
+    public function index(Request $request, AmazonLinkEnrichmentService $amazonService)
     {
         $user = $request->user();
         if (! $user) {
@@ -77,16 +78,30 @@ class UserBookController extends Controller
 
         // If 'all' parameter is present, return all books without pagination
         if ($request->has('all') && $request->get('all') === 'true') {
-            $books = $query->get();
+            $books = $query->get()->toArray();
+            
+            // Enrich with Amazon links
+            $books = $amazonService->enrichBooksWithAmazonLinks($books, [
+                'locale' => $request->header('Accept-Language', 'en-US')
+            ]);
 
             return response()->json(['data' => $books]);
         }
 
         // Otherwise, paginate with configurable per_page parameter (default 20)
         $perPage = $request->get('per_page', 20);
-        $books = $query->paginate($perPage);
+        $booksPage = $query->paginate($perPage);
+        
+        // Enrich paginated data with Amazon links
+        $enrichedBooks = $amazonService->enrichBooksWithAmazonLinks(
+            $booksPage->items(),
+            ['locale' => $request->header('Accept-Language', 'en-US')]
+        );
+        
+        // Replace items with enriched data
+        $booksPage->setCollection(collect($enrichedBooks));
 
-        return new PaginatedResource($books);
+        return new PaginatedResource($booksPage);
     }
 
     /**

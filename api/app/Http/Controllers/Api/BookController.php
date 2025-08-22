@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
+use App\Services\HybridBookSearchService;
 use App\Services\MultiSourceBookSearchService;
 use App\Transformers\BookTransformer;
 use Illuminate\Http\Request;
@@ -98,18 +99,18 @@ class BookController extends Controller
      *     )
      * )
      */
-    public function index(Request $request, MultiSourceBookSearchService $multiSearchService)
+    public function index(Request $request, HybridBookSearchService $hybridSearchService)
     {
         // Parse 'with' parameter for field inclusion
         $includes = BookTransformer::parseIncludes($request->input('with'));
         $transformer = new BookTransformer;
 
-        // Handle search parameter - external API search
+        // Handle search parameter - hybrid search (local + external)
         if ($request->has('search')) {
             $searchQuery = $request->input('search');
             $perPage = min($request->get('per_page', 20), 40); // Max 40 for search
 
-            $result = $multiSearchService->search($searchQuery, [
+            $result = $hybridSearchService->search($searchQuery, [
                 'maxResults' => $perPage,
                 'includes' => $includes,
             ]);

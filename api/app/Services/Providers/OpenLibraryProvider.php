@@ -14,7 +14,7 @@ class OpenLibraryProvider implements BookSearchProvider
 
     private const COVERS_API_URL = 'https://covers.openlibrary.org/b';
 
-    private const PRIORITY = 2; // Second priority (free, good coverage)
+    private const PRIORITY = 3; // Third priority (free, good coverage, after Amazon Books)
 
     public function search(string $query, array $options = []): array
     {

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Contracts\BookSearchProvider;
-use App\Services\Providers\AmazonBooksProvider;
 use App\Services\Providers\GoogleBooksProvider;
 use App\Services\Providers\OpenLibraryProvider;
 use App\Transformers\BookTransformer;
@@ -13,9 +12,9 @@ class MultiSourceBookSearchService
 {
     private array $providers = [];
 
-    private const CACHE_TTL_SUCCESS = 86400; // 24 hours for successful results
+    private const CACHE_TTL_SUCCESS = 604800; // 7 days for successful results (more stable)
 
-    private const CACHE_TTL_FAILURE = 3600;  // 1 hour for failed results
+    private const CACHE_TTL_FAILURE = 86400;  // 24 hours for failed results
 
     public function __construct()
     {
@@ -161,9 +160,9 @@ class MultiSourceBookSearchService
     {
         $this->providers = [
             new GoogleBooksProvider,
-            new AmazonBooksProvider, // Phase 2 - disabled by default
             new OpenLibraryProvider,
             // Future providers:
+            // new AmazonBooksProvider, // PA-API - when approved
             // new ISBNdbProvider(),
         ];
 

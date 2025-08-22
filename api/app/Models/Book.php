@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
  *
  *     @OA\Property(property="id", type="string", example="B-3D6Y-9IO8"),
  *     @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", nullable=true),
+ *     @OA\Property(property="amazon_asin", type="string", example="B08LPMFDQC", nullable=true),
  *     @OA\Property(property="isbn", type="string", example="9788533613379", nullable=true),
  *     @OA\Property(property="title", type="string", example="The Lord of the Rings"),
  *     @OA\Property(property="subtitle", type="string", example="The Fellowship of the Ring", nullable=true),
@@ -61,6 +62,7 @@ class Book extends Model
         'id',
         'isbn',
         'google_id',
+        'amazon_asin',
         'title',
         'subtitle',
         'authors',

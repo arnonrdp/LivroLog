@@ -5,6 +5,9 @@
       <q-card-section class="row items-center q-pb-sm">
         <div class="text-h6">{{ book.title }}</div>
         <q-space />
+        <q-btn v-if="amazonBuyLink" class="q-mr-sm" dense flat :href="amazonBuyLink" icon="shopping_cart" round target="_blank">
+          <q-tooltip>{{ getAmazonTooltipText() }}</q-tooltip>
+        </q-btn>
         <q-btn v-close-popup dense flat icon="close" round />
       </q-card-section>
 
@@ -338,6 +341,76 @@ const currentUserId = computed(() => userStore.me?.id)
 const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
 // Use ref instead of computed to avoid reactivity timing issues
 const isBookInLibrary = ref(false)
+
+// Computed property for Amazon buy link
+const amazonBuyLink = computed(() => {
+  // If the book already has an amazon_buy_link, use it
+  if (props.book.amazon_buy_link) {
+    return props.book.amazon_buy_link
+  }
+
+  const locale = t('locale') || 'en-US'
+  const { domain, tag } = getAmazonRegionConfig(locale)
+
+  // If the book has an amazon_asin, generate direct link
+  if (props.book.amazon_asin) {
+    return `https://www.${domain}/dp/${props.book.amazon_asin}?tag=${tag}`
+  }
+
+  // Fallback: generate search link with smart search strategy
+  let searchTerm = ''
+
+  // Strategy 1: Try title + author (most reliable for finding correct edition)
+  if (props.book.title && props.book.authors) {
+    searchTerm = `${props.book.title} ${props.book.authors}`
+  }
+  // Strategy 2: Try just title if no author
+  else if (props.book.title) {
+    searchTerm = props.book.title
+  }
+  // Strategy 3: Try ISBN as last resort (might not exist in this region)
+  else if (props.book.isbn) {
+    searchTerm = props.book.isbn
+  }
+
+  if (searchTerm) {
+    const searchUrl = getAmazonSearchUrl(domain)
+    const encodedTerm = encodeURIComponent(searchTerm)
+    return `${searchUrl}?k=${encodedTerm}&i=stripbooks&tag=${tag}&ref=nb_sb_noss&linkCode=ur2&camp=1789&creative=9325`
+  }
+
+  return null
+})
+
+// Amazon region configuration
+function getAmazonRegionConfig(locale: string) {
+  const lowerLocale = locale.toLowerCase()
+
+  if (lowerLocale.startsWith('pt-br') || lowerLocale.startsWith('pt_br')) {
+    return { domain: 'amazon.com.br', tag: 'livrolog-20' }
+  } else if (lowerLocale.startsWith('en-gb') || lowerLocale.startsWith('en_gb')) {
+    return { domain: 'amazon.co.uk', tag: 'livrolog-20' }
+  } else if (lowerLocale.startsWith('en-ca') || lowerLocale.startsWith('en_ca')) {
+    return { domain: 'amazon.ca', tag: 'livrolog-20' }
+  }
+
+  // Default to US
+  return { domain: 'amazon.com', tag: 'livrolog-20' }
+}
+
+// Get Amazon search URL for region
+function getAmazonSearchUrl(domain: string) {
+  return `https://www.${domain}/s`
+}
+
+// Get tooltip text based on link type
+function getAmazonTooltipText() {
+  if (props.book.amazon_asin) {
+    return t('buy-on-amazon')
+  } else {
+    return t('search-on-amazon', 'Buscar na Amazon')
+  }
+}
 
 // Function to update library status
 function updateLibraryStatus() {

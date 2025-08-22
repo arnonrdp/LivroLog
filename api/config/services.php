@@ -49,12 +49,13 @@ return [
         'enabled' => env('OPEN_LIBRARY_ENABLED', true),
     ],
 
-    // Future Amazon integration
+    // Amazon integration
     'amazon' => [
         'pa_api_key' => env('AMAZON_PA_API_KEY'),
         'pa_secret_key' => env('AMAZON_PA_SECRET_KEY'),
         'associate_tag' => env('AMAZON_ASSOCIATE_TAG'),
         'enabled' => env('AMAZON_PA_API_ENABLED', false),
+        'sitestripe_enabled' => env('AMAZON_SITESTRIPE_ENABLED', false),
     ],
 
 ];

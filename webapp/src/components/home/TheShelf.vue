@@ -12,6 +12,23 @@
       <div class="book-cover" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
+        
+        <!-- Amazon buy button overlay -->
+        <div v-if="book.amazon_buy_link" class="amazon-buy-overlay">
+          <q-btn
+            color="orange"
+            icon="shopping_cart"
+            round
+            size="sm"
+            :href="book.amazon_buy_link"
+            target="_blank"
+            @click.stop
+          >
+            <q-tooltip anchor="top middle" self="bottom middle">
+              {{ $t('buy-on-amazon') }}
+            </q-tooltip>
+          </q-btn>
+        </div>
       </div>
 
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">
@@ -80,9 +97,20 @@ section figure
 
 .book-cover
   cursor: pointer
+  position: relative
   transition: transform 0.2s ease
   &:hover
     transform: scale(1.05)
+    .amazon-buy-overlay
+      opacity: 1
+
+.amazon-buy-overlay
+  position: absolute
+  top: 0.5rem
+  right: 0.5rem
+  opacity: 0
+  transition: opacity 0.2s ease
+  z-index: 2
 
 img
   height: 115px

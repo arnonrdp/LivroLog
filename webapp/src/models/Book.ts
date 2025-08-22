@@ -2,6 +2,9 @@ export type ReadingStatus = 'want_to_read' | 'reading' | 'read' | 'abandoned' | 
 
 export interface Book {
   addedIn?: Date | string | number
+  amazon_asin?: string
+  amazon_buy_link?: string
+  amazon_region?: string
   authors?: string
   categories?: string | string[]
   created_at?: string

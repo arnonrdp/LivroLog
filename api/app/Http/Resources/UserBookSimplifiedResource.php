@@ -17,6 +17,7 @@ class UserBookSimplifiedResource extends JsonResource
         return [
             'id' => $this->id,
             'isbn' => $this->isbn,
+            'amazon_asin' => $this->amazon_asin,
             'title' => $this->title,
             'authors' => $this->authors,
             'description' => $this->description,
