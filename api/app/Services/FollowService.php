@@ -27,7 +27,7 @@ class FollowService
         $existingFollow = Follow::where('follower_id', $follower->id)
             ->where('followed_id', $following->id)
             ->first();
-            
+
         if ($existingFollow && $existingFollow->status === 'accepted') {
             return [
                 'success' => false,
@@ -35,7 +35,7 @@ class FollowService
                 'code' => 'ALREADY_FOLLOWING',
             ];
         }
-        
+
         // If there's already a pending request, return the existing status
         if ($existingFollow && $existingFollow->status === 'pending') {
             return [
@@ -54,7 +54,7 @@ class FollowService
         DB::transaction(function () use ($follower, $following) {
             // Determine status based on whether the followed user is private
             $status = $following->is_private ? 'pending' : 'accepted';
-            
+
             // Create follow relationship
             Follow::create([
                 'follower_id' => $follower->id,
@@ -69,10 +69,10 @@ class FollowService
             }
         });
 
-        $message = $following->is_private ? 
-            'Follow request sent' : 
+        $message = $following->is_private ?
+            'Follow request sent' :
             'Successfully followed user';
-            
+
         return [
             'success' => true,
             'message' => $message,
@@ -95,8 +95,8 @@ class FollowService
         $existingFollow = Follow::where('follower_id', $follower->id)
             ->where('followed_id', $following->id)
             ->first();
-            
-        if (!$existingFollow) {
+
+        if (! $existingFollow) {
             return [
                 'success' => false,
                 'message' => 'Not following this user',
@@ -105,7 +105,7 @@ class FollowService
         }
 
         $wasPending = $existingFollow->status === 'pending';
-        
+
         DB::transaction(function () use ($follower, $following, $existingFollow) {
             // Remove follow relationship
             $existingFollow->delete();
@@ -203,7 +203,7 @@ class FollowService
             ->where('status', 'pending')
             ->first();
 
-        if (!$followRequest) {
+        if (! $followRequest) {
             return [
                 'success' => false,
                 'message' => 'Follow request not found',
@@ -218,7 +218,7 @@ class FollowService
             // Update counters
             $follower = User::find($followRequest->follower_id);
             $following = User::find($followRequest->followed_id);
-            
+
             $follower->increment('following_count');
             $following->increment('followers_count');
         });
@@ -243,7 +243,7 @@ class FollowService
             ->where('status', 'pending')
             ->first();
 
-        if (!$followRequest) {
+        if (! $followRequest) {
             return [
                 'success' => false,
                 'message' => 'Follow request not found',

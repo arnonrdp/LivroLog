@@ -74,15 +74,15 @@ class UserController extends Controller
         if ($authUser = $request->user()) {
             $query->withExists(['followers as is_following' => function ($q) use ($authUser) {
                 $q->where('follower_id', $authUser->id)
-                  ->where('status', 'accepted');
+                    ->where('status', 'accepted');
             }])
-            ->addSelect(['has_pending_follow_request' => function ($subQuery) use ($authUser) {
-                $subQuery->selectRaw('CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END')
-                    ->from('follows')
-                    ->where('follower_id', $authUser->id)
-                    ->where('status', 'pending')
-                    ->whereColumn('followed_id', 'users.id');
-            }]);
+                ->addSelect(['has_pending_follow_request' => function ($subQuery) use ($authUser) {
+                    $subQuery->selectRaw('CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END')
+                        ->from('follows')
+                        ->where('follower_id', $authUser->id)
+                        ->where('status', 'pending')
+                        ->whereColumn('followed_id', 'users.id');
+                }]);
         }
 
         // Global filter
@@ -209,7 +209,6 @@ class UserController extends Controller
 
         }
 
-
         // Load books only if profile is public, user is owner, or user is following
         if (! $user->is_private || $isOwner || $isFollowing) {
             $user->load(['books' => function ($query) use ($isOwner) {
@@ -227,7 +226,7 @@ class UserController extends Controller
         // Add follow status and request status if user is authenticated
         if ($currentUser && $currentUser->id !== $user->id) {
             $userData['is_following'] = $isFollowing;
-            
+
             $hasPendingRequest = $currentUser->followingRelationships()
                 ->where('followed_id', $user->id)
                 ->where('status', 'pending')

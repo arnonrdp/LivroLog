@@ -108,7 +108,7 @@ class UserBookController extends Controller
      *             @OA\Property(property="isbn", type="string", example="9781505108293", description="ISBN to search for existing book"),
      *             @OA\Property(property="google_id", type="string", example="HuKNDAAAQBAJ", description="Google Books ID for search/creation and enrichment"),
      *             @OA\Property(property="is_private", type="boolean", example=false, description="Whether to mark this book as private in user's library"),
- *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="read", description="Reading status for this book")
+     *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="read", description="Reading status for this book")
      *         )
      *     ),
      *
@@ -240,7 +240,7 @@ class UserBookController extends Controller
      *
      *             @OA\Property(property="read_at", type="string", format="date", example="2024-01-15", description="Date when the book was read (nullable to mark as unread)"),
      *             @OA\Property(property="is_private", type="boolean", example=true, description="Whether the book should be private"),
- *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="reading", description="Reading status for this book")
+     *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="reading", description="Reading status for this book")
      *         )
      *     ),
      *
@@ -253,7 +253,7 @@ class UserBookController extends Controller
      *             @OA\Property(property="message", type="string", example="Book updated successfully"),
      *             @OA\Property(property="read_at", type="string", format="date", example="2024-01-15"),
      *             @OA\Property(property="is_private", type="boolean", example=true),
- *             @OA\Property(property="reading_status", type="string", example="reading")
+     *             @OA\Property(property="reading_status", type="string", example="reading")
      *         )
      *     ),
      *
@@ -296,11 +296,11 @@ class UserBookController extends Controller
             $readingStatus = $request->input('reading_status');
             $updateData['reading_status'] = $readingStatus;
             $responseData['reading_status'] = $readingStatus;
-            
+
             // Auto-set read_at when status changes to 'read' and no read_at exists
-            if ($readingStatus === 'read' && !$request->has('read_at')) {
+            if ($readingStatus === 'read' && ! $request->has('read_at')) {
                 $currentPivot = $user->books()->where('books.id', $book->id)->first()?->pivot;
-                if ($currentPivot && !$currentPivot->read_at) {
+                if ($currentPivot && ! $currentPivot->read_at) {
                     $updateData['read_at'] = now()->format('Y-m-d');
                     $responseData['read_at'] = $updateData['read_at'];
                 }
@@ -371,12 +371,12 @@ class UserBookController extends Controller
             'is_private' => $isPrivate,
             'reading_status' => $readingStatus,
         ];
-        
+
         // Auto-set read_at when status is 'read'
         if ($readingStatus === 'read') {
             $attachData['read_at'] = now()->format('Y-m-d');
         }
-        
+
         $user->books()->attach($book->id, $attachData);
 
         // Reload book with pivot data

@@ -880,7 +880,6 @@ class AuthController extends Controller
         ]);
     }
 
-
     /**
      * @OA\Delete(
      *     path="/auth/me",

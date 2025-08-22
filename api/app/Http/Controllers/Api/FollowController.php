@@ -332,6 +332,7 @@ class FollowController extends Controller
      *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(
      *                         property="follower",

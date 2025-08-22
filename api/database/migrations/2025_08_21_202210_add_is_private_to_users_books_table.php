@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::table('users_books', function (Blueprint $table) {
             $table->boolean('is_private')->default(false)->after('read_at');
             $table->enum('reading_status', ['want_to_read', 'reading', 'read', 'abandoned', 'on_hold', 're_reading'])
-                  ->default('read')
-                  ->after('is_private');
+                ->default('read')
+                ->after('is_private');
         });
 
         Schema::table('follows', function (Blueprint $table) {

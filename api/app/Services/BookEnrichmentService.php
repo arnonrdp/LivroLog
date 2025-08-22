@@ -532,12 +532,12 @@ class BookEnrichmentService
                     'is_private' => $isPrivate,
                     'reading_status' => $readingStatus,
                 ];
-                
+
                 // Auto-set read_at when status is 'read'
                 if ($readingStatus === 'read') {
                     $attachData['read_at'] = now()->format('Y-m-d');
                 }
-                
+
                 $book->users()->attach($userId, $attachData);
             }
 

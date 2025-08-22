@@ -198,7 +198,7 @@ class User extends Authenticatable
      */
     public function getPendingFollowRequestsCountAttribute(): int
     {
-        if (!$this->is_private) {
+        if (! $this->is_private) {
             return 0;
         }
 
