@@ -874,9 +874,15 @@ class AuthController extends Controller
             'is_private',
         ]));
 
+        $user = $user->fresh()
+            ->loadCount(['followers', 'following'])
+            ->load(['books' => function ($query) {
+                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
+            }]);
+
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user->fresh()->loadCount(['followers', 'following']),
+            'user' => new UserWithBooksResource($user),
         ]);
     }
 
