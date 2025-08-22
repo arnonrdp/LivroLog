@@ -17,13 +17,24 @@ class GoogleBooksProvider implements BookSearchProvider
         try {
             $searchQuery = $this->buildSearchQuery($query, $options);
             
-            $response = Http::timeout(10)->get(self::API_BASE_URL, [
+            $params = [
                 'q' => $searchQuery,
                 'maxResults' => $options['maxResults'] ?? 20, // Reduced default from 40 to 20
                 'printType' => 'books',
                 'orderBy' => 'relevance', // Ensure consistent ordering
                 'key' => config('services.google_books.api_key'),
+            ];
+            
+            // Temporary debugging - log the actual request
+            \Log::info('Google Books API Request', [
+                'url' => self::API_BASE_URL,
+                'params' => $params,
+                'has_api_key' => !empty($params['key']),
+                'original_query' => $query,
+                'search_query' => $searchQuery,
             ]);
+            
+            $response = Http::timeout(10)->get(self::API_BASE_URL, $params);
 
             $result = $this->processApiResponse($response, $searchQuery, $query);
 
