@@ -175,8 +175,8 @@ jobs:
 
             echo "✅ Application setup completed"
 
-      - name: Run migrations (Production only)
-        if: env.ENVIRONMENT == 'Production' && (needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch')
+      - name: Run migrations
+        if: needs.detect-changes.outputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
