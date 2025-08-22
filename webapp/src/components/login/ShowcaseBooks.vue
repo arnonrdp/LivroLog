@@ -18,7 +18,7 @@ const bookStore = useBookStore()
 const shuffledShowcase = ref<Book[]>([])
 
 onMounted(async () => {
-  const showcaseBooks = await bookStore.getBooks({ showcase: true })
+  const showcaseBooks = await bookStore.getBooks({ sort_by: 'popular' })
   shuffledShowcase.value = shuffleArray(showcaseBooks || [])
 })
 
@@ -38,7 +38,6 @@ function secureRandom(): number {
   window.crypto.getRandomValues(buffer)
   return buffer[0]! / 255
 }
-
 </script>
 
 <style scoped>

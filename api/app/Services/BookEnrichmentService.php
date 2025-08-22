@@ -498,7 +498,7 @@ class BookEnrichmentService
     /**
      * Creates a new enriched book directly from Google Books
      */
-    public function createEnrichedBookFromGoogle(string $googleId, ?string $userId = null): array
+    public function createEnrichedBookFromGoogle(string $googleId, ?string $userId = null, bool $isPrivate = false, string $readingStatus = 'read'): array
     {
         try {
             $googleBookData = $this->fetchBookFromGoogle($googleId);
@@ -527,7 +527,18 @@ class BookEnrichmentService
 
             // If a user was specified, adds the book to their library
             if ($userId) {
-                $book->users()->attach($userId, ['added_at' => now()]);
+                $attachData = [
+                    'added_at' => now(),
+                    'is_private' => $isPrivate,
+                    'reading_status' => $readingStatus,
+                ];
+                
+                // Auto-set read_at when status is 'read'
+                if ($readingStatus === 'read') {
+                    $attachData['read_at'] = now()->format('Y-m-d');
+                }
+                
+                $book->users()->attach($userId, $attachData);
             }
 
             return [

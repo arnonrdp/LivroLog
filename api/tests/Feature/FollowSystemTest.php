@@ -140,11 +140,8 @@ class FollowSystemTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'success' => true,
-                'data' => [
-                    'pagination' => [
-                        'total' => 2,
-                    ],
+                'meta' => [
+                    'total' => 2,
                 ],
             ]);
     }
@@ -163,11 +160,8 @@ class FollowSystemTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'success' => true,
-                'data' => [
-                    'pagination' => [
-                        'total' => 2,
-                    ],
+                'meta' => [
+                    'total' => 2,
                 ],
             ]);
     }

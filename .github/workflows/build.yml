@@ -15,10 +15,10 @@ on:
     outputs:
       api-artifact:
         description: 'API build artifact name'
-        value: ${{ jobs.api.outputs.artifact }}
+        value: api-build-${{ github.sha }}
       webapp-artifact:
         description: 'Webapp build artifact name'
-        value: ${{ jobs.webapp.outputs.artifact }}
+        value: webapp-build-${{ github.sha }}
 
 env:
   PHP_VERSION: '8.3'

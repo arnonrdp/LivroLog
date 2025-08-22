@@ -1,6 +1,13 @@
 <template>
   <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
+      <!-- Private book indicator -->
+      <div v-if="book.pivot?.is_private" class="private-indicator">
+        <q-icon name="lock" size="14px">
+          <q-tooltip anchor="top middle" class="bg-black" self="center middle">{{ $t('book-private-viewed-by-you') }}</q-tooltip>
+        </q-icon>
+      </div>
+
       <!-- Make the book image clickable -->
       <div class="book-cover" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
@@ -42,38 +49,41 @@ function openBookDialog(book: Book) {
 }
 </script>
 
-<style scoped>
-section {
-  background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg');
-  background-repeat: repeat-y, repeat-y, repeat;
-  background-position:
-    top left,
-    top right,
-    240px 0;
-  border-radius: 6px;
-  min-height: 302px;
-  padding: 0 3rem 1rem;
-}
+<style scoped lang="sass">
+section
+  background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg')
+  background-repeat: repeat-y, repeat-y, repeat
+  background-position: top left, top right, 240px 0
+  border-radius: 6px
+  min-height: 302px
+  padding: 0 3rem 1rem
 
-section figure {
-  align-items: flex-end;
-  display: flex;
-  height: 143.5px;
-  margin: 0 1.5rem;
-  max-width: 80px;
-  position: relative;
-}
+section figure
+  align-items: flex-end
+  display: flex
+  height: 143.5px
+  margin: 0 1.5rem
+  position: relative
 
-.book-cover {
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
+  & .private-indicator
+    align-items: center
+    background: rgba(0, 0, 0, 0.7)
+    border-radius: 50%
+    color: red
+    display: flex
+    justify-content: center
+    padding: 0.25rem
+    position: absolute
+    right: -0.5rem
+    top: 1rem
+    z-index: 1
 
-.book-cover:hover {
-  transform: scale(1.05);
-}
+.book-cover
+  cursor: pointer
+  transition: transform 0.2s ease
+  &:hover
+    transform: scale(1.05)
 
-img {
-  height: 115px;
-}
+img
+  height: 115px
 </style>

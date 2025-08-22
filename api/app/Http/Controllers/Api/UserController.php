@@ -70,10 +70,18 @@ class UserController extends Controller
     {
         $query = User::withCount(['books', 'followers', 'following']);
 
-        // Add is_following status for authenticated users
+        // Add is_following and has_pending_follow_request status for authenticated users
         if ($authUser = $request->user()) {
             $query->withExists(['followers as is_following' => function ($q) use ($authUser) {
-                $q->where('follower_id', $authUser->id);
+                $q->where('follower_id', $authUser->id)
+                  ->where('status', 'accepted');
+            }])
+            ->addSelect(['has_pending_follow_request' => function ($subQuery) use ($authUser) {
+                $subQuery->selectRaw('CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END')
+                    ->from('follows')
+                    ->where('follower_id', $authUser->id)
+                    ->where('status', 'pending')
+                    ->whereColumn('followed_id', 'users.id');
             }]);
         }
 
@@ -191,16 +199,43 @@ class UserController extends Controller
 
         // Check if profile is private and user is not the owner or following
         $isOwner = $currentUser && $currentUser->id === $user->id;
-        $isFollowing = $currentUser && $currentUser->following()->where('followed_id', $user->id)->exists();
+        // Only consider as following if the follow status is 'accepted'
+        $isFollowing = false;
+        if ($currentUser) {
+            $isFollowing = $currentUser->followingRelationships()
+                ->where('followed_id', $user->id)
+                ->where('status', 'accepted')
+                ->exists();
+
+        }
+
 
         // Load books only if profile is public, user is owner, or user is following
         if (! $user->is_private || $isOwner || $isFollowing) {
-            $user->load(['books' => function ($query) {
-                $query->orderBy('pivot_added_at', 'desc');
+            $user->load(['books' => function ($query) use ($isOwner) {
+                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
+                // Only show private books to the owner
+                if (! $isOwner) {
+                    $query->wherePivot('is_private', false);
+                }
             }]);
         }
 
-        return new UserWithBooksResource($user);
+        $resource = new UserWithBooksResource($user);
+        $userData = $resource->toArray(request());
+
+        // Add follow status and request status if user is authenticated
+        if ($currentUser && $currentUser->id !== $user->id) {
+            $userData['is_following'] = $isFollowing;
+            
+            $hasPendingRequest = $currentUser->followingRelationships()
+                ->where('followed_id', $user->id)
+                ->where('status', 'pending')
+                ->exists();
+            $userData['has_pending_follow_request'] = $hasPendingRequest;
+        }
+
+        return response()->json($userData);
     }
 
     /**
@@ -312,8 +347,4 @@ class UserController extends Controller
 
         return response()->json(['message' => 'User deleted successfully']);
     }
-
-
-
-
 }

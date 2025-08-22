@@ -105,7 +105,7 @@ class User extends Authenticatable
     public function books()
     {
         return $this->belongsToMany(Book::class, 'users_books')
-            ->withPivot('added_at', 'read_at')
+            ->withPivot('added_at', 'read_at', 'is_private')
             ->withTimestamps();
     }
 
@@ -179,6 +179,7 @@ class User extends Authenticatable
     private function buildFollowRelationship(string $foreignKey, string $relatedKey)
     {
         return $this->belongsToMany(User::class, 'follows', $foreignKey, $relatedKey)
+            ->wherePivot('status', 'accepted')
             ->withTimestamps();
     }
 
@@ -190,5 +191,19 @@ class User extends Authenticatable
         $column = $relationshipType === 'following' ? 'followed_id' : 'follower_id';
 
         return $this->$relationshipType()->where($column, $user->id)->exists();
+    }
+
+    /**
+     * Get the count of pending follow requests for this user.
+     */
+    public function getPendingFollowRequestsCountAttribute(): int
+    {
+        if (!$this->is_private) {
+            return 0;
+        }
+
+        return Follow::where('followed_id', $this->id)
+            ->where('status', 'pending')
+            ->count();
     }
 }

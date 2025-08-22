@@ -38,8 +38,8 @@ class UserBookSeeder extends Seeder
                 }
 
                 // Data de adição à biblioteca (sempre anterior à data de leitura)
-                $addedAtDate = $readAt 
-                    ? \Carbon\Carbon::parse($readAt)->subDays(random_int(1, 30)) 
+                $addedAtDate = $readAt
+                    ? \Carbon\Carbon::parse($readAt)->subDays(random_int(1, 30))
                     : now()->subDays(random_int(1, 365));
 
                 DB::table('users_books')->insert([

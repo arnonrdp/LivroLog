@@ -35,15 +35,14 @@
 import TheLoading from '@/components/add/TheLoading.vue'
 import BookDialog from '@/components/home/BookDialog.vue'
 import type { Book } from '@/models'
-import { useBookStore, useUserBookStore, useUserStore } from '@/stores'
-import { onMounted, ref } from 'vue'
+import { useBookStore, useUserBookStore } from '@/stores'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
 const bookStore = useBookStore()
 const userBookStore = useUserBookStore()
-const userStore = useUserStore()
 
 const books = ref<Book[]>([])
 const seek = ref('')
@@ -52,13 +51,6 @@ const isSearching = ref(false)
 const selectedBook = ref<Book | null>(null)
 
 document.title = `LivroLog | ${t('add')}`
-
-onMounted(async () => {
-  // Load user's library to enable proper button states in BookDialog
-  if (userStore.me.id) {
-    await userStore.getUser(userStore.me.id)
-  }
-})
 
 async function search() {
   books.value = []

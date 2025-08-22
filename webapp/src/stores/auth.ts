@@ -23,7 +23,6 @@ export const useAuthStore = defineStore('auth', {
     isGoogleLoading: (state) => state._isGoogleLoading
   },
   actions: {
-
     setUser(user: User) {
       const userStore = useUserStore()
       userStore.setMe(user)
@@ -36,9 +35,6 @@ export const useAuthStore = defineStore('auth', {
         .get('/auth/me')
         .then((response) => {
           userStore.setMe(response.data)
-          if (this.isAuthenticated) {
-            router.push('/')
-          }
           return response.data
         })
         .catch((error) => {

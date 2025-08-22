@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PaginatedResource;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
 use App\Services\MultiSourceBookSearchService;
+use App\Transformers\BookTransformer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class BookController extends Controller
 {
@@ -33,6 +31,7 @@ class BookController extends Controller
      *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
@@ -41,6 +40,7 @@ class BookController extends Controller
      *
      *         @OA\Schema(type="integer", example=20)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
@@ -49,6 +49,7 @@ class BookController extends Controller
      *
      *         @OA\Schema(type="string", example="Sidarta")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="showcase",
      *         in="query",
@@ -74,81 +75,70 @@ class BookController extends Controller
      */
     public function index(Request $request, MultiSourceBookSearchService $multiSearchService)
     {
+        // Parse 'with' parameter for field inclusion
+        $includes = BookTransformer::parseIncludes($request->input('with'));
+        $transformer = new BookTransformer;
+
         // Handle search parameter - external API search
         if ($request->has('search')) {
-            $query = $request->input('search');
-            $result = $multiSearchService->search($query, [
-                'maxResults' => 40,
+            $searchQuery = $request->input('search');
+            $perPage = min($request->get('per_page', 20), 40); // Max 40 for search
+
+            $result = $multiSearchService->search($searchQuery, [
+                'maxResults' => $perPage,
+                'includes' => $includes,
             ]);
+
             return response()->json($result);
         }
 
-        // Handle showcase parameter - featured books
-        if ($request->boolean('showcase')) {
-            return $this->getShowcaseBooks();
-        }
-
-        // Default behavior - global catalog
+        // Default behavior - global catalog with sorting
         $query = Book::query();
 
-        // Paginate with configurable per_page parameter (default 20)
-        $perPage = $request->get('per_page', 20);
-        $books = $query->paginate($perPage);
+        // Handle sorting
+        $sortBy = $request->get('sort_by', 'recent');
+        switch ($sortBy) {
+            case 'rating':
+                // Sort by average rating (requires reviews relationship)
+                $query->withAvg('reviews', 'rating')
+                    ->orderByDesc('reviews_avg_rating')
+                    ->orderByDesc('created_at');
+                break;
 
-        return new PaginatedResource($books);
-    }
-
-    /**
-     * Get showcase books (featured/most popular books)
-     */
-    private function getShowcaseBooks()
-    {
-        try {
-            // Check if users_books table exists first
-            if (!Schema::hasTable('users_books')) {
-                // If table doesn't exist, fallback to recent books
-                $fallbackBooks = DB::table('books')
-                    ->orderBy('created_at', 'desc')
-                    ->limit(20)
-                    ->get();
-                
-                return response()->json($fallbackBooks);
-            }
-
-            // Try a simpler approach first - get books with counts using Eloquent
-            $showcaseBooks = Book::withCount(['users as library_count'])
-                ->orderByDesc('library_count')
-                ->limit(20)
-                ->get();
-
-            // If the Eloquent approach fails, fall back to raw SQL
-            if ($showcaseBooks->isEmpty()) {
-                $showcaseBooks = DB::table('books')
-                    ->selectRaw('books.*, COALESCE(book_counts.library_count, 0) as library_count')
-                    ->leftJoin(
-                        DB::raw('(SELECT book_id, COUNT(*) as library_count FROM users_books WHERE book_id IS NOT NULL GROUP BY book_id) as book_counts'),
-                        'books.id',
-                        '=',
-                        'book_counts.book_id'
-                    )
+            case 'popular':
+                // Sort by library count (how many users have this book)
+                $query->withCount('users as library_count')
                     ->orderByDesc('library_count')
-                    ->limit(20)
-                    ->get();
-            }
+                    ->orderByDesc('created_at');
+                break;
 
-            return response()->json($showcaseBooks);
-        } catch (\Exception $e) {
-            // Fallback: return recent books if the showcase query fails
-            // Don't log to avoid permission issues in production
-            $fallbackBooks = DB::table('books')
-                ->orderBy('created_at', 'desc')
-                ->limit(20)
-                ->get();
-
-            return response()->json($fallbackBooks);
+            case 'recent':
+            default:
+                // Sort by recently added
+                $query->orderByDesc('created_at');
+                break;
         }
-    }
 
+        // Paginate with configurable per_page parameter (default 20, max 100)
+        $perPage = min($request->get('per_page', 20), 100);
+        $paginated = $query->paginate($perPage);
+
+        // Transform the books data
+        $transformedBooks = $transformer->transform($paginated->items(), $includes);
+
+        // Build response with meta
+        return response()->json([
+            'data' => $transformedBooks,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'from' => $paginated->firstItem(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'to' => $paginated->lastItem(),
+                'total' => $paginated->total(),
+            ],
+        ]);
+    }
 
     /**
      * @OA\Post(
@@ -360,11 +350,21 @@ class BookController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
+        $includes = BookTransformer::parseIncludes($request->input('with'));
+        $transformer = new BookTransformer;
+
         $book = Book::with(['users', 'relatedBooks'])->findOrFail($id);
 
-        return response()->json($book);
+        // Always include details for single book view
+        if (! in_array('details', $includes)) {
+            $includes[] = 'details';
+        }
+
+        $transformedBook = $transformer->transform($book, $includes);
+
+        return response()->json($transformedBook);
     }
 
     /**
@@ -485,7 +485,6 @@ class BookController extends Controller
         return response()->json(['message' => 'Book deleted from global catalog']);
     }
 
-
     /**
      * Fetch data from Google Books API
      */
@@ -564,6 +563,7 @@ class BookController extends Controller
      *
      *         @OA\Schema(type="string", example="B-3D6Y-9IO8")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="batch",
      *         in="query",
@@ -601,7 +601,7 @@ class BookController extends Controller
      *     @OA\Response(response=422, description="Enrichment failed")
      * )
      */
-    public function enrichBook(Request $request, Book $book = null, BookEnrichmentService $enrichmentService)
+    public function enrichBook(Request $request, ?Book $book, BookEnrichmentService $enrichmentService)
     {
         // Handle batch enrichment
         if ($request->boolean('batch')) {
@@ -611,6 +611,7 @@ class BookController extends Controller
             ]);
 
             $result = $enrichmentService->enrichBooksInBatch($request->input('book_ids'));
+
             return response()->json($result);
         }
 
@@ -627,8 +628,6 @@ class BookController extends Controller
             return response()->json($result, 422);
         }
     }
-
-
 
     /**
      * Parse published date from various formats

@@ -1,3 +1,5 @@
+export type ReadingStatus = 'want_to_read' | 'reading' | 'read' | 'abandoned' | 'on_hold' | 're_reading'
+
 export interface Book {
   addedIn?: Date | string | number
   authors?: string
@@ -15,11 +17,13 @@ export interface Book {
   pivot?: {
     book_id: string
     created_at?: string
+    is_private?: boolean
     rating?: number
     read_at?: string
     read_in?: string
+    reading_status?: ReadingStatus
     review?: string
-    status: 'to_read' | 'reading' | 'read'
+    status?: 'to_read' | 'reading' | 'read' // Legacy field
     updated_at?: string
     user_id: string
   }

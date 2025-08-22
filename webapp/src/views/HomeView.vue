@@ -3,6 +3,7 @@
     <div class="flex items-center">
       <h1 class="text-primary text-left q-my-none">{{ userStore.me.display_name }}</h1>
       <q-space />
+      <FollowRequestsIndicator class="q-mr-md" />
       <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
     </div>
     <TheShelf :books="filteredBooks" @readDateUpdated="handleReadDateUpdated" />
@@ -12,10 +13,12 @@
 <script setup lang="ts">
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
-import { useUserStore } from '@/stores'
+import FollowRequestsIndicator from '@/components/social/FollowRequestsIndicator.vue'
+import { useAuthStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, ref } from 'vue'
 
+const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const ascDesc = ref('desc')
@@ -40,8 +43,7 @@ function onSort(label: string | number) {
 }
 
 async function handleReadDateUpdated() {
-  if (userStore.me.id) {
-    await userStore.getUser(userStore.me.id)
-  }
+  // Refresh the current user data to get updated books
+  await authStore.refreshUser()
 }
 </script>

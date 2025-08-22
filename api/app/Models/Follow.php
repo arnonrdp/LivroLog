@@ -26,6 +26,7 @@ class Follow extends Model
     protected $fillable = [
         'follower_id',
         'followed_id',
+        'status',
     ];
 
     /**
@@ -67,5 +68,21 @@ class Follow extends Model
     {
         return $query->where('follower_id', $followerId)
             ->where('followed_id', $followedId);
+    }
+
+    /**
+     * Scope to get only accepted follows.
+     */
+    public function scopeAccepted($query)
+    {
+        return $query->where('status', 'accepted');
+    }
+
+    /**
+     * Scope to get only pending follows.
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
     }
 }

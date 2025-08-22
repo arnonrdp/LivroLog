@@ -180,7 +180,7 @@ class AuthController extends Controller
         $user = $user
             ->loadCount(['followers', 'following'])
             ->load(['books' => function ($query) {
-                $query->orderBy('pivot_added_at', 'desc');
+                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
             }]);
 
         return response()->json([
@@ -250,7 +250,7 @@ class AuthController extends Controller
         $user = Auth::user()
             ->loadCount(['followers', 'following'])
             ->load(['books' => function ($query) {
-                $query->orderBy('pivot_added_at', 'desc');
+                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
             }]);
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -332,10 +332,14 @@ class AuthController extends Controller
         $user = $request->user()
             ->loadCount(['followers', 'following'])
             ->load(['books' => function ($query) {
-                $query->orderBy('pivot_added_at', 'desc');
+                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
             }]);
 
-        return new UserWithBooksResource($user);
+        $resource = new UserWithBooksResource($user);
+        $userData = $resource->toArray(request());
+        $userData['pending_follow_requests_count'] = $user->pending_follow_requests_count;
+
+        return response()->json($userData);
     }
 
     /**
@@ -633,7 +637,7 @@ class AuthController extends Controller
             $user = $user
                 ->loadCount(['followers', 'following'])
                 ->load(['books' => function ($query) {
-                    $query->orderBy('pivot_added_at', 'desc');
+                    $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
                 }]);
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -750,7 +754,7 @@ class AuthController extends Controller
             $user = $user
                 ->loadCount(['followers', 'following'])
                 ->load(['books' => function ($query) {
-                    $query->orderBy('pivot_added_at', 'desc');
+                    $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
                 }]);
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -876,56 +880,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Put(
-     *     path="/auth/password",
-     *     operationId="updateUserPassword",
-     *     tags={"Authentication"},
-     *     summary="Update user password",
-     *     description="Updates the authenticated user's password",
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Password update data",
-     *
-     *         @OA\JsonContent(
-     *             required={"current_password","password","password_confirmation"},
-     *
-     *             @OA\Property(property="current_password", type="string", format="password", description="Current password"),
-     *             @OA\Property(property="password", type="string", format="password", description="New password"),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", description="New password confirmation")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Password updated successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Password updated successfully")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
-     *             @OA\Property(property="errors", type="object")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function updatePassword2(Request $request)
-    {
-        return $this->updatePassword($request);
-    }
 
     /**
      * @OA\Delete(

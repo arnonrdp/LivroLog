@@ -26,6 +26,7 @@ class UserResource extends JsonResource
             'followers_count' => $this->when(isset($this->followers_count), $this->followers_count),
             'following_count' => $this->when(isset($this->following_count), $this->following_count),
             'is_following' => $this->when(isset($this->is_following), (bool) $this->is_following),
+            'has_pending_follow_request' => $this->when(isset($this->has_pending_follow_request), (bool) $this->has_pending_follow_request),
         ];
     }
 }

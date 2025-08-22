@@ -23,35 +23,65 @@ class FollowService
             ];
         }
 
-        // Check if already following
-        if ($follower->isFollowing($following)) {
+        // Check if already following (but allow pending requests to be sent again)
+        $existingFollow = Follow::where('follower_id', $follower->id)
+            ->where('followed_id', $following->id)
+            ->first();
+            
+        if ($existingFollow && $existingFollow->status === 'accepted') {
             return [
                 'success' => false,
                 'message' => 'Already following this user',
                 'code' => 'ALREADY_FOLLOWING',
             ];
         }
+        
+        // If there's already a pending request, return the existing status
+        if ($existingFollow && $existingFollow->status === 'pending') {
+            return [
+                'success' => true,
+                'message' => 'Follow request already sent',
+                'data' => [
+                    'follower' => $follower->only(['id', 'display_name', 'username']),
+                    'following' => $following->only(['id', 'display_name', 'username']),
+                    'following_count' => $follower->following_count,
+                    'followers_count' => $following->followers_count,
+                    'status' => 'pending',
+                ],
+            ];
+        }
 
         DB::transaction(function () use ($follower, $following) {
+            // Determine status based on whether the followed user is private
+            $status = $following->is_private ? 'pending' : 'accepted';
+            
             // Create follow relationship
             Follow::create([
                 'follower_id' => $follower->id,
                 'followed_id' => $following->id,
+                'status' => $status,
             ]);
 
-            // Update counters
-            $follower->increment('following_count');
-            $following->increment('followers_count');
+            // Only update counters if the follow is accepted immediately (public profile)
+            if ($status === 'accepted') {
+                $follower->increment('following_count');
+                $following->increment('followers_count');
+            }
         });
 
+        $message = $following->is_private ? 
+            'Follow request sent' : 
+            'Successfully followed user';
+            
         return [
             'success' => true,
-            'message' => 'Successfully followed user',
+            'message' => $message,
             'data' => [
                 'follower' => $follower->only(['id', 'display_name', 'username']),
                 'following' => $following->only(['id', 'display_name', 'username']),
                 'following_count' => $follower->fresh()->following_count,
                 'followers_count' => $following->fresh()->followers_count,
+                'status' => $following->is_private ? 'pending' : 'accepted',
             ],
         ];
     }
@@ -62,7 +92,11 @@ class FollowService
     public function unfollow(User $follower, User $following): array
     {
         // Check if not following
-        if (! $follower->isFollowing($following)) {
+        $existingFollow = Follow::where('follower_id', $follower->id)
+            ->where('followed_id', $following->id)
+            ->first();
+            
+        if (!$existingFollow) {
             return [
                 'success' => false,
                 'message' => 'Not following this user',
@@ -70,25 +104,30 @@ class FollowService
             ];
         }
 
-        DB::transaction(function () use ($follower, $following) {
+        $wasPending = $existingFollow->status === 'pending';
+        
+        DB::transaction(function () use ($follower, $following, $existingFollow) {
             // Remove follow relationship
-            Follow::where('follower_id', $follower->id)
-                ->where('followed_id', $following->id)
-                ->delete();
+            $existingFollow->delete();
 
-            // Update counters
-            $follower->decrement('following_count');
-            $following->decrement('followers_count');
+            // Only update counters if it was an accepted follow
+            if ($existingFollow->status === 'accepted') {
+                $follower->decrement('following_count');
+                $following->decrement('followers_count');
+            }
         });
+
+        $message = $wasPending ? 'Follow request removed' : 'Successfully unfollowed user';
 
         return [
             'success' => true,
-            'message' => 'Successfully unfollowed user',
+            'message' => $message,
             'data' => [
                 'follower' => $follower->only(['id', 'display_name', 'username']),
                 'following' => $following->only(['id', 'display_name', 'username']),
                 'following_count' => $follower->fresh()->following_count,
                 'followers_count' => $following->fresh()->followers_count,
+                'was_pending' => $wasPending,
             ],
         ];
     }
@@ -151,6 +190,88 @@ class FollowService
             ->select(['id', 'display_name', 'username', 'avatar', 'followers_count'])
             ->orderByDesc('followers_count')
             ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Accept a follow request.
+     */
+    public function acceptFollowRequest(int $followId, User $user): array
+    {
+        $followRequest = Follow::where('id', $followId)
+            ->where('followed_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$followRequest) {
+            return [
+                'success' => false,
+                'message' => 'Follow request not found',
+                'code' => 'REQUEST_NOT_FOUND',
+            ];
+        }
+
+        DB::transaction(function () use ($followRequest) {
+            // Update status to accepted
+            $followRequest->update(['status' => 'accepted']);
+
+            // Update counters
+            $follower = User::find($followRequest->follower_id);
+            $following = User::find($followRequest->followed_id);
+            
+            $follower->increment('following_count');
+            $following->increment('followers_count');
+        });
+
+        return [
+            'success' => true,
+            'message' => 'Follow request accepted',
+            'data' => [
+                'follow_id' => $followRequest->id,
+                'follower' => $followRequest->follower->only(['id', 'display_name', 'username']),
+            ],
+        ];
+    }
+
+    /**
+     * Reject a follow request.
+     */
+    public function rejectFollowRequest(int $followId, User $user): array
+    {
+        $followRequest = Follow::where('id', $followId)
+            ->where('followed_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$followRequest) {
+            return [
+                'success' => false,
+                'message' => 'Follow request not found',
+                'code' => 'REQUEST_NOT_FOUND',
+            ];
+        }
+
+        $followerData = $followRequest->follower->only(['id', 'display_name', 'username']);
+        $followRequest->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Follow request rejected',
+            'data' => [
+                'follower' => $followerData,
+            ],
+        ];
+    }
+
+    /**
+     * Get pending follow requests for a user.
+     */
+    public function getPendingFollowRequests(User $user): Collection
+    {
+        return Follow::where('followed_id', $user->id)
+            ->where('status', 'pending')
+            ->with('follower:id,display_name,username,avatar')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 

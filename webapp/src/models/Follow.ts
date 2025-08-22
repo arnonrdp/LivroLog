@@ -16,10 +16,11 @@ export interface FollowResponse {
     following: Pick<User, 'id' | 'display_name' | 'username'>
     following_count: number
     followers_count: number
+    status?: string
+    was_pending?: boolean
   }
   code?: string
 }
-
 
 export interface FollowStatus {
   is_following: boolean

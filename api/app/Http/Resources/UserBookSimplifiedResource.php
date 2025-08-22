@@ -22,7 +22,14 @@ class UserBookSimplifiedResource extends JsonResource
             'description' => $this->description,
             'thumbnail' => $this->thumbnail,
             'pivot' => [
+                'user_id' => $this->pivot->user_id,
+                'book_id' => $this->pivot->book_id,
+                'added_at' => $this->pivot->added_at,
                 'read_at' => $this->pivot->read_at,
+                'is_private' => (bool) $this->pivot->is_private,
+                'reading_status' => $this->pivot->reading_status,
+                'created_at' => $this->pivot->created_at,
+                'updated_at' => $this->pivot->updated_at,
             ],
         ];
     }

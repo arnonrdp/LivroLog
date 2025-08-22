@@ -3,6 +3,7 @@
 namespace App\Services\Providers;
 
 use App\Contracts\BookSearchProvider;
+use App\Models\Book;
 use Illuminate\Support\Facades\Http;
 
 class GoogleBooksProvider implements BookSearchProvider
@@ -16,11 +17,11 @@ class GoogleBooksProvider implements BookSearchProvider
         try {
             $searchQuery = $this->buildSearchQuery($query, $options);
 
-
             $response = Http::timeout(10)->get(self::API_BASE_URL, [
                 'q' => $searchQuery,
-                'maxResults' => $options['maxResults'] ?? 40,
+                'maxResults' => $options['maxResults'] ?? 20, // Reduced default from 40 to 20
                 'printType' => 'books',
+                'orderBy' => 'relevance', // Ensure consistent ordering
                 'key' => config('services.google_books.api_key'),
             ]);
 
@@ -45,7 +46,6 @@ class GoogleBooksProvider implements BookSearchProvider
 
         $data = $response->json();
         $books = $this->processResults($data);
-
 
         if (count($books) > 0) {
             return $this->buildSuccessResponse($books, count($books));
@@ -123,14 +123,18 @@ class GoogleBooksProvider implements BookSearchProvider
         }
 
         $isbn = $this->extractIsbnFromItem($volumeInfo);
+        $googleId = $item['id'];
 
-        return [
+        // Check if this book already exists in our database
+        $existingBook = Book::where('google_id', $googleId)->first();
+
+        $bookData = [
             'provider' => $this->getName(),
-            'google_id' => $item['id'],
+            'google_id' => $googleId,
             'title' => $volumeInfo['title'] ?? '',
             'subtitle' => $volumeInfo['subtitle'] ?? null,
             'authors' => isset($volumeInfo['authors']) ? implode(', ', $volumeInfo['authors']) : null,
-            'isbn' => $isbn ?: $item['id'],
+            'isbn' => $isbn ?: $googleId,
             'isbn_10' => $this->extractSpecificIsbn($volumeInfo, 'ISBN_10'),
             'isbn_13' => $this->extractSpecificIsbn($volumeInfo, 'ISBN_13'),
             'thumbnail' => $this->getSecureThumbnailUrl($volumeInfo),
@@ -144,6 +148,14 @@ class GoogleBooksProvider implements BookSearchProvider
             'preview_link' => $volumeInfo['previewLink'] ?? null,
             'info_link' => $volumeInfo['infoLink'] ?? null,
         ];
+
+        // If book exists in our database, include the internal ID
+        if ($existingBook) {
+            $bookData['id'] = $existingBook->id;
+        }
+        // If not, 'id' field will be absent and BookTransformer will handle it as null
+
+        return $bookData;
     }
 
     /**

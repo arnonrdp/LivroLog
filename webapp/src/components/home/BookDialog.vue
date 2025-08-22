@@ -47,13 +47,29 @@
 
       <!-- Scrollable Content -->
       <q-scroll-area style="height: 400px">
-        <!-- Read Date Section (only for books in user's library) -->
+        <!-- Read Date and Status Section (only for books in user's library) -->
         <q-card-section v-if="isBookInLibrary">
           <div class="text-subtitle1 q-mb-md row items-center">
-            <q-icon class="q-mr-sm" name="event" />
-            {{ $t('read-date') }}
+            <q-icon class="q-mr-sm" name="auto_stories" />
+            {{ $t('reading-details') }}
           </div>
-          <q-input v-model="readDate" class="q-mb-md" dense :label="$t('read-date')" outlined type="date" />
+          <div class="row q-col-gutter-md">
+            <div class="col-6">
+              <q-input v-model="readDate" dense :label="$t('read-date')" outlined type="date" @blur="updateReadDate" />
+            </div>
+            <div class="col-6">
+              <q-select
+                v-model="readingStatus"
+                dense
+                emit-value
+                :label="$t('reading-status')"
+                map-options
+                :options="readingStatusOptions"
+                outlined
+                @update:model-value="updateReadingStatus"
+              />
+            </div>
+          </div>
         </q-card-section>
 
         <q-separator v-if="isBookInLibrary" />
@@ -149,10 +165,31 @@
             {{ $t('add-review') }}
           </div>
 
-          <!-- Rating -->
-          <div class="q-mb-md">
-            <div class="text-body2 q-mb-sm">{{ $t('rating') }}</div>
-            <q-rating v-model="reviewForm.rating" color="amber" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+          <!-- Rating, Visibility and Spoiler Row -->
+          <div class="row items-center q-col-gutter-md q-mb-md">
+            <!-- Rating -->
+            <div class="col-4">
+              <div class="text-body2">{{ $t('rating') }}</div>
+              <q-rating v-model="reviewForm.rating" color="amber" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+            </div>
+
+            <!-- Spoiler -->
+            <div class="col-4">
+              <q-checkbox v-model="reviewForm.is_spoiler" :label="$t('contains-spoilers')" />
+            </div>
+
+            <!-- Visibility -->
+            <div class="col-4">
+              <q-select
+                v-model="reviewForm.visibility_level"
+                dense
+                emit-value
+                :label="$t('visibility')"
+                map-options
+                :options="visibilityOptions"
+                outlined
+              />
+            </div>
           </div>
 
           <!-- Title -->
@@ -161,7 +198,8 @@
           <!-- Content -->
           <q-input
             v-model="reviewForm.content"
-            class="q-mb-md"
+            class="q-mb-xs"
+            counter
             :label="$t('content')"
             :maxlength="2000"
             outlined
@@ -169,26 +207,21 @@
             :rules="[(val) => !!val || $t('content-required')]"
             type="textarea"
           />
-
-          <!-- Options Row -->
-          <div class="row q-col-gutter-md q-mb-md">
-            <!-- Visibility -->
-            <div class="col-6">
-              <div class="text-body2 q-mb-sm">{{ $t('visibility') }}</div>
-              <q-select v-model="reviewForm.visibility_level" dense emit-value map-options :options="visibilityOptions" outlined />
-            </div>
-
-            <!-- Spoiler -->
-            <div class="col-6 flex items-end">
-              <q-checkbox v-model="reviewForm.is_spoiler" :label="$t('contains-spoilers')" />
-            </div>
-          </div>
+          <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
         </q-card-section>
       </q-scroll-area>
 
       <!-- Footer Actions -->
       <q-separator />
-      <q-card-actions align="right" class="q-pa-md">
+      <q-card-actions class="q-pa-md">
+        <!-- Private Book Checkbox -->
+        <div class="row items-center">
+          <q-checkbox v-model="isPrivateBook" :label="$t('private-book')" />
+          <q-icon class="q-ml-xs cursor-pointer" name="help_outline" size="sm">
+            <q-tooltip>{{ $t('private-book-tooltip') }}</q-tooltip>
+          </q-icon>
+        </div>
+        <q-space />
         <q-btn v-close-popup flat :label="$t('close')" />
 
         <!-- Add/Remove from Library Button -->
@@ -209,8 +242,6 @@
           outline
           @click="removeFromLibrary"
         />
-
-        <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -235,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Book, CreateReviewRequest, Review, UpdateReviewRequest } from '@/models'
+import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useReviewStore, useUserBookStore, useUserStore } from '@/stores'
 import { useQuasar } from 'quasar'
 import { computed, ref, watch } from 'vue'
@@ -258,16 +289,39 @@ const reviewStore = useReviewStore()
 const userBookStore = useUserBookStore()
 const userStore = useUserStore()
 
+// Helper function to get the correct book_id for API calls
+function getBookId(): string | null {
+  // If book.id exists and starts with 'B-', it's already an internal book ID
+  if (props.book.id && props.book.id.startsWith('B-')) {
+    return props.book.id
+  }
+
+  // For external books (book.id is null or not internal), we MUST find the internal ID from user's library
+  // Never use google_id for API calls that expect book_id
+  const userBooks = userStore.me.books || []
+  const internalBook = userBooks.find((book) => book.google_id === props.book.google_id)
+
+  // Only return internal book_id if found
+  if (internalBook && internalBook.id.startsWith('B-')) {
+    return internalBook.id
+  }
+
+  // Return null if no internal book found - this prevents wrong API calls
+  return null
+}
+
 const loading = ref(false)
 const libraryLoading = ref(false)
 const readDate = ref('')
+const readingStatus = ref<ReadingStatus>('read')
 const showSpoiler = ref<Record<string, boolean>>({})
 const editingReview = ref<Review | null>(null)
 const showDeleteDialog = ref(false)
 const reviewToDelete = ref<string | null>(null)
 const showFullDescription = ref(false)
+const isPrivateBook = ref(false)
 const reviewForm = ref<CreateReviewRequest>({
-  book_id: props.book.id,
+  book_id: getBookId() || '',
   title: '',
   content: '',
   rating: 5,
@@ -306,12 +360,20 @@ function updateLibraryStatus() {
 
   isBookInLibrary.value = result
 }
-const canAddReview = computed(() => !userReview.value && isBookInLibrary.value)
+const canAddReview = computed(() => !userReview.value && isBookInLibrary.value && getBookId() !== null)
 
 const visibilityOptions = computed(() => [
   { label: t('private'), value: 'private' },
   { label: t('friends'), value: 'friends' },
   { label: t('public'), value: 'public' }
+])
+const readingStatusOptions = computed(() => [
+  { label: t('want-to-read'), value: 'want_to_read' },
+  { label: t('reading'), value: 'reading' },
+  { label: t('read'), value: 'read' },
+  { label: t('abandoned'), value: 'abandoned' },
+  { label: t('on-hold'), value: 'on_hold' },
+  { label: t('re-reading'), value: 're_reading' }
 ])
 
 watch(
@@ -326,9 +388,23 @@ watch(
 
       const pivotReadAt = props.book.pivot?.read_at
       readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
+      readingStatus.value = props.book.pivot?.reading_status || 'read'
 
       // Update library status using existing userStore.me.books data
       updateLibraryStatus()
+
+      // Initialize private book status if book is in library
+      if (isBookInLibrary.value) {
+        const userBooks = userStore.me.books || []
+        const bookInLibrary = userBooks.find((book) => {
+          if (props.book.id && book.id === props.book.id) return true
+          if (props.book.google_id && book.google_id === props.book.google_id) return true
+          return false
+        })
+        isPrivateBook.value = Boolean(bookInLibrary?.pivot?.is_private)
+      } else {
+        isPrivateBook.value = false
+      }
 
       await loadBookReviews()
       loading.value = false
@@ -344,13 +420,54 @@ watch(
   { immediate: true }
 )
 
+// Watch for changes in private book status when book is in library
+watch(isPrivateBook, async (newValue, oldValue) => {
+  // Only update if book is in library and value actually changed
+  if (isBookInLibrary.value && newValue !== oldValue && oldValue !== undefined) {
+    await updateBookPrivacy(newValue)
+  }
+})
+
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString()
 }
 
+async function updateBookPrivacy(isPrivate: boolean) {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for privacy update')
+    return
+  }
+
+  await userBookStore.patchUserBookPrivacy(bookId, isPrivate)
+  // Update local state to reflect the change
+  updateLibraryStatus()
+}
+
+async function updateReadDate() {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for read date update')
+    return
+  }
+
+  await userBookStore.patchUserBookReadDate(bookId, readDate.value)
+  emit('readDateUpdated')
+}
+
+async function updateReadingStatus() {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for reading status update')
+    return
+  }
+  await userBookStore.patchUserBookStatus(bookId, readingStatus.value)
+  emit('readDateUpdated')
+}
+
 function resetReviewForm() {
   reviewForm.value = {
-    book_id: props.book.id,
+    book_id: getBookId() || '',
     title: '',
     content: '',
     rating: 5,
@@ -376,7 +493,13 @@ function deleteReview(reviewId: string) {
 }
 
 async function loadBookReviews() {
-  await reviewStore.getReviewsByBook(props.book.id)
+  const bookId = getBookId()
+  if (bookId) {
+    await reviewStore.getReviewsByBook(bookId)
+  } else {
+    // Clear reviews if no valid book_id - prevents loading reviews with google_id
+    reviewStore.clearReviews()
+  }
 }
 
 async function confirmDelete() {
@@ -407,7 +530,7 @@ async function addToLibrary() {
   libraryLoading.value = true
 
   await userBookStore
-    .postUserBooks(props.book)
+    .postUserBooks(props.book, isPrivateBook.value)
     .then(() => updateLibraryStatus())
     .finally(() => (libraryLoading.value = false))
 }
@@ -473,8 +596,14 @@ async function handleSave() {
       promises.push(reviewStore.putReviews(existingReview.id, updateData))
     } else {
       // For create, build the request properly
+      const bookId = getBookId()
+      if (!bookId) {
+        loading.value = false
+        return
+      }
+
       const createData: CreateReviewRequest = {
-        book_id: props.book.id,
+        book_id: bookId,
         content: reviewForm.value.content,
         rating: reviewForm.value.rating,
         visibility_level: reviewForm.value.visibility_level
@@ -492,18 +621,12 @@ async function handleSave() {
     }
   }
 
-  // Save read date separately using the user books endpoint
-  if (readDate.value) {
-    promises.push(userBookStore.patchUserBookReadDate(props.book.id, readDate.value))
-  }
-
   Promise.all(promises)
     .then(async () => {
       if (reviewForm.value.content.trim()) {
         await loadBookReviews()
       }
       resetReviewForm()
-      emit('readDateUpdated')
     })
     .catch(() => $q.notify({ message: t('error-occurred'), type: 'negative' }))
     .finally(() => (loading.value = false))
