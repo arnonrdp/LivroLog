@@ -1,4 +1,4 @@
-import { i18n } from '@/locales'
+import { i18n, type SupportedLocale } from '@/locales'
 import type { AuthResponse, User } from '@/models'
 import router from '@/router'
 import api from '@/utils/axios'
@@ -201,6 +201,10 @@ export const useAuthStore = defineStore('auth', {
         .put('/auth/me', data)
         .then((response) => {
           this.setUser(response.data.user)
+          LocalStorage.set('user', response.data.user)
+          if (data.locale) {
+            i18n.global.locale.value = data.locale as SupportedLocale
+          }
           Notify.create({ message: i18n.global.t('profile-updated'), type: 'positive' })
           return response.data
         })

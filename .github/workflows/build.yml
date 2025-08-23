@@ -3,12 +3,6 @@ name: Build
 on:
   workflow_call:
     inputs:
-      api-changed:
-        type: string
-        required: true
-      webapp-changed:
-        type: string
-        required: true
       environment:
         type: string
         required: true
@@ -28,7 +22,6 @@ jobs:
   api:
     name: api
     runs-on: ubuntu-latest
-    if: inputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
     environment: ${{ inputs.environment }}
     outputs:
       artifact: api-build-${{ github.sha }}
@@ -96,7 +89,6 @@ jobs:
   webapp:
     name: webapp
     runs-on: ubuntu-latest
-    if: inputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
     environment: ${{ inputs.environment }}
     outputs:
       artifact: webapp-build-${{ github.sha }}

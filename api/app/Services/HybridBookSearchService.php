@@ -89,19 +89,15 @@ class HybridBookSearchService
      */
     private function mergeAndDeduplicateResults(array $localBooks, array $externalBooks): array
     {
-        $seenIsbns = [];
+        $seenIdentifiers = [];
         $combinedBooks = [];
 
         // Add local books first (they have priority)
         foreach ($localBooks as $book) {
-            $isbn = $this->extractPrimaryIsbn($book);
+            $identifier = $this->createBookIdentifier($book);
             
-            if ($isbn && !in_array($isbn, $seenIsbns)) {
-                $seenIsbns[] = $isbn;
-                $book['source'] = 'local';
-                $combinedBooks[] = $book;
-            } elseif (!$isbn) {
-                // Books without ISBN are always added (can't deduplicate)
+            if (!in_array($identifier, $seenIdentifiers)) {
+                $seenIdentifiers[] = $identifier;
                 $book['source'] = 'local';
                 $combinedBooks[] = $book;
             }
@@ -109,20 +105,41 @@ class HybridBookSearchService
 
         // Add external books, skipping duplicates
         foreach ($externalBooks as $book) {
-            $isbn = $this->extractPrimaryIsbn($book);
+            $identifier = $this->createBookIdentifier($book);
             
-            if ($isbn && !in_array($isbn, $seenIsbns)) {
-                $seenIsbns[] = $isbn;
-                $book['source'] = 'external';
-                $combinedBooks[] = $book;
-            } elseif (!$isbn) {
-                // Books without ISBN are always added
+            if (!in_array($identifier, $seenIdentifiers)) {
+                $seenIdentifiers[] = $identifier;
                 $book['source'] = 'external';
                 $combinedBooks[] = $book;
             }
         }
 
         return $combinedBooks;
+    }
+
+    /**
+     * Create unique identifier for book deduplication
+     * Uses multiple strategies: ISBN, Google ID, and title+author combination
+     */
+    private function createBookIdentifier(array $book): string
+    {
+        // Strategy 1: Use Google ID if available (most reliable for external books)
+        if (!empty($book['google_id'])) {
+            return 'google:' . $book['google_id'];
+        }
+        
+        // Strategy 2: Use ISBN if available
+        $isbn = $this->extractPrimaryIsbn($book);
+        if ($isbn) {
+            return 'isbn:' . $isbn;
+        }
+        
+        // Strategy 3: Use normalized title + first author
+        $normalizedTitle = $this->normalizeForComparison($book['title'] ?? '');
+        $firstAuthor = $this->extractFirstAuthor($book['authors'] ?? '');
+        $normalizedAuthor = $this->normalizeForComparison($firstAuthor);
+        
+        return 'title_author:' . $normalizedTitle . '|' . $normalizedAuthor;
     }
 
     /**
@@ -201,5 +218,25 @@ class HybridBookSearchService
                 'cached_at' => now()->toISOString(),
             ],
         ];
+    }
+
+    /**
+     * Normalize string for comparison (remove special chars, lowercase, trim)
+     */
+    private function normalizeForComparison(string $text): string
+    {
+        // Remove special characters, convert to lowercase, remove extra spaces
+        $normalized = preg_replace('/[^\w\s]/', '', mb_strtolower(trim($text)));
+        return preg_replace('/\s+/', ' ', $normalized);
+    }
+
+    /**
+     * Extract first author from authors string
+     */
+    private function extractFirstAuthor(string $authors): string
+    {
+        // Split by common delimiters and get first author
+        $authorList = preg_split('/[,;&]/', $authors);
+        return trim($authorList[0] ?? '');
     }
 }

@@ -271,6 +271,7 @@
 <script setup lang="ts">
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useReviewStore, useUserBookStore, useUserStore } from '@/stores'
+import { getAmazonRegionConfig, getAmazonSearchUrl } from '@/config/amazon'
 import { useQuasar } from 'quasar'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -352,7 +353,7 @@ const amazonBuyLink = computed(() => {
   const locale = t('locale') || 'en-US'
   const { domain, tag } = getAmazonRegionConfig(locale)
 
-  // If the book has an amazon_asin, generate direct link
+  // If the book has an amazon_asin, generate direct link with proper affiliate format
   if (props.book.amazon_asin) {
     return `https://www.${domain}/dp/${props.book.amazon_asin}?tag=${tag}`
   }
@@ -381,27 +382,6 @@ const amazonBuyLink = computed(() => {
 
   return null
 })
-
-// Amazon region configuration
-function getAmazonRegionConfig(locale: string) {
-  const lowerLocale = locale.toLowerCase()
-
-  if (lowerLocale.startsWith('pt-br') || lowerLocale.startsWith('pt_br')) {
-    return { domain: 'amazon.com.br', tag: 'livrolog-20' }
-  } else if (lowerLocale.startsWith('en-gb') || lowerLocale.startsWith('en_gb')) {
-    return { domain: 'amazon.co.uk', tag: 'livrolog-20' }
-  } else if (lowerLocale.startsWith('en-ca') || lowerLocale.startsWith('en_ca')) {
-    return { domain: 'amazon.ca', tag: 'livrolog-20' }
-  }
-
-  // Default to US
-  return { domain: 'amazon.com', tag: 'livrolog-20' }
-}
-
-// Get Amazon search URL for region
-function getAmazonSearchUrl(domain: string) {
-  return `https://www.${domain}/s`
-}
 
 // Get tooltip text based on link type
 function getAmazonTooltipText() {

@@ -13,6 +13,7 @@ class BookTransformer
         'title',
         'authors',
         'isbn',
+        'amazon_asin',
         'thumbnail',
         'description',
     ];

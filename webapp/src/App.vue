@@ -16,9 +16,10 @@ import TheHeader from '@/components/TheHeader.vue'
 import { useMeta } from 'quasar'
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useUserStore } from './stores'
+import { useAuthStore, useUserStore } from './stores'
 
 const userStore = useUserStore()
+const authStore = useAuthStore()
 const { locale, t } = useI18n({ useScope: 'global' })
 
 useMeta(() => ({
@@ -47,7 +48,10 @@ useMeta(() => ({
 }))
 
 onMounted(() => {
-  if (typeof userStore.me.locale === 'string') {
+  // Restore session first to get user data
+  authStore.restoreSession()
+
+  if (typeof userStore.me.locale === 'string' && userStore.me.locale) {
     locale.value = userStore.me.locale
   } else {
     locale.value = navigator.language
