@@ -68,13 +68,13 @@ async function acceptRequest(followId: number) {
   await followStore.acceptFollowRequest(followId)
   await loadPendingRequests()
   // Refresh user data to update count
-  await authStore.refreshUser()
+  await authStore.getMe()
 }
 
 async function rejectRequest(followId: number) {
   await followStore.rejectFollowRequest(followId)
   await loadPendingRequests()
   // Refresh user data to update count
-  await authStore.refreshUser()
+  await authStore.getMe()
 }
 </script>

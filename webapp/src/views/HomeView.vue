@@ -16,7 +16,7 @@ import TheShelf from '@/components/home/TheShelf.vue'
 import FollowRequestsIndicator from '@/components/social/FollowRequestsIndicator.vue'
 import { useAuthStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -33,6 +33,10 @@ const filteredBooks = computed(() => {
   return sortBooks(filtered, sortKey.value, ascDesc.value)
 })
 
+onMounted(() => {
+  authStore.getMe()
+})
+
 function onSort(label: string | number) {
   if (sortKey.value === label) {
     ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
@@ -44,6 +48,6 @@ function onSort(label: string | number) {
 
 async function handleReadDateUpdated() {
   // Refresh the current user data to get updated books
-  await authStore.refreshUser()
+  await authStore.getMe()
 }
 </script>

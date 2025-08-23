@@ -35,6 +35,7 @@ export const useAuthStore = defineStore('auth', {
         .get('/auth/me')
         .then((response) => {
           userStore.setMe(response.data)
+          LocalStorage.set('user', response.data)
           return response.data
         })
         .catch((error) => {
@@ -179,21 +180,6 @@ export const useAuthStore = defineStore('auth', {
       return false
     },
 
-    async refreshUser() {
-      this._isLoading = true
-      const userStore = useUserStore()
-      return await api
-        .get('/auth/me')
-        .then((response) => {
-          userStore.setMe(response.data)
-          LocalStorage.set('user', response.data)
-          return response.data
-        })
-        .catch((error) => {
-          throw error
-        })
-        .finally(() => (this._isLoading = false))
-    },
 
     async putMe(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
       this._isLoading = true

@@ -160,7 +160,7 @@ async function followOrUnfollow() {
     if (response.success && userStore.user.username) {
       await userStore.getUser(userStore.user.username)
     }
-    await authStore.refreshUser()
+    await authStore.getMe()
   }
 }
 
@@ -174,7 +174,7 @@ async function confirmUnfollow() {
   if (response.success && userStore.user.username) {
     await userStore.getUser(userStore.user.username)
   }
-  await authStore.refreshUser()
+  await authStore.getMe()
 }
 
 function openFollowersDialog(tab: 'followers' | 'following') {
