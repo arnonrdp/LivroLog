@@ -20,12 +20,13 @@ class UserWithBooksResource extends JsonResource
             'username' => $this->username,
             'avatar' => $this->avatar,
             'shelf_name' => $this->shelf_name,
+            'locale' => $this->locale,
             'is_private' => $this->is_private,
             'followers_count' => $this->followers_count,
             'following_count' => $this->following_count,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'books' => $this->when($this->relationLoaded('books'), 
+            'books' => $this->when($this->relationLoaded('books'),
                 UserBookSimplifiedResource::collection($this->books)),
         ];
     }

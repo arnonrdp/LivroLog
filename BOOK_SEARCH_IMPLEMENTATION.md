@@ -158,7 +158,6 @@ OPEN_LIBRARY_ENABLED=true
 # Fase 2 (futuro)
 AMAZON_PA_API_KEY=your_key_here
 AMAZON_PA_SECRET_KEY=your_secret_here
-AMAZON_ASSOCIATE_TAG=your_tag_here
 AMAZON_PA_API_ENABLED=false
 ```
 

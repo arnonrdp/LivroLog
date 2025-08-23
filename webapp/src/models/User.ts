@@ -13,14 +13,24 @@ export interface User {
   following?: User[]
   following_count?: number
   google_id?: string | null
+  has_pending_follow_request?: boolean
   id: string
   is_private?: boolean
+  is_following?: boolean
+  is_follower?: boolean
   locale?: object | string
   modified_at?: string
+  pending_follow_requests_count?: number
   role?: 'admin' | 'user'
   shelf_name?: string
   updated_at?: string
   username: string
+}
+
+export interface FollowRequest {
+  id: number
+  follower: User
+  created_at: string
 }
 
 export interface AuthResponse {

@@ -3,22 +3,16 @@ name: Build
 on:
   workflow_call:
     inputs:
-      api-changed:
-        type: string
-        required: true
-      webapp-changed:
-        type: string
-        required: true
       environment:
         type: string
         required: true
     outputs:
       api-artifact:
         description: 'API build artifact name'
-        value: ${{ jobs.api.outputs.artifact }}
+        value: api-build-${{ github.sha }}
       webapp-artifact:
         description: 'Webapp build artifact name'
-        value: ${{ jobs.webapp.outputs.artifact }}
+        value: webapp-build-${{ github.sha }}
 
 env:
   PHP_VERSION: '8.3'
@@ -28,7 +22,6 @@ jobs:
   api:
     name: api
     runs-on: ubuntu-latest
-    if: inputs.api-changed == 'true' || github.event_name == 'workflow_dispatch'
     environment: ${{ inputs.environment }}
     outputs:
       artifact: api-build-${{ github.sha }}
@@ -96,7 +89,6 @@ jobs:
   webapp:
     name: webapp
     runs-on: ubuntu-latest
-    if: inputs.webapp-changed == 'true' || github.event_name == 'workflow_dispatch'
     environment: ${{ inputs.environment }}
     outputs:
       artifact: webapp-build-${{ github.sha }}

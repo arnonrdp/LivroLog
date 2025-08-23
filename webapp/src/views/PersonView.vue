@@ -12,10 +12,22 @@
 
     <div v-else>
       <!-- Private Profile Message -->
-      <div v-if="person.is_private && !person.books" class="text-center q-py-xl">
+      <div v-if="isPrivateAndNotAccessible" class="text-center q-py-xl">
         <q-icon class="q-mb-md" color="grey" name="lock" size="6em" />
         <div class="text-h5 q-mb-md">{{ $t('private-profile') }}</div>
         <div class="text-body1 text-grey q-mb-lg">{{ $t('private-profile-message') }}</div>
+
+        <!-- Follow Button for Private Profile -->
+        <q-btn
+          v-if="showFollowButton"
+          class="q-mt-md"
+          :color="getButtonColor()"
+          :icon="getButtonIcon()"
+          :label="getButtonLabel()"
+          no-caps
+          :outline="hasPendingRequest || isFollowing"
+          @click="handleFollowAction()"
+        />
       </div>
 
       <!-- Public Profile or Following -->
@@ -45,45 +57,159 @@
         </div>
       </div>
     </div>
+
+    <q-dialog v-model="showUnfollowDialog" persistent>
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">{{ $t('confirm') }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          {{ $t('unfollow-confirmation', { name: person?.display_name }) }}
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn color="primary" flat :label="$t('cancel')" @click="showUnfollowDialog = false" />
+          <q-btn color="negative" flat :label="$t('confirm')" @click="confirmUnfollow" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
-import type { User } from '@/models'
-import { useFollowStore, useUserStore } from '@/stores'
+import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
-const route = useRoute()
+// Accept username prop from router but we don't use it (use route.params instead)
+defineProps<{
+  username?: string
+}>()
 
+const route = useRoute()
+const { t } = useI18n()
+
+const authStore = useAuthStore()
 const userStore = useUserStore()
 const followStore = useFollowStore()
 
 const ascDesc = ref('desc')
 const filter = ref('')
-const person = ref({} as User)
+const showUnfollowDialog = ref(false)
+const person = computed(() => {
+  const username = route.params.username as string
+  // If viewing own profile, use userStore.me, otherwise use userStore.user
+  // Use case-insensitive comparison for usernames
+  if (username?.toLowerCase() === userStore.me?.username?.toLowerCase()) {
+    return userStore.me
+  }
+  return userStore.user
+})
 const sortKey = ref<string | number>('readIn')
 
 const filteredBooks = computed(() => {
-  const filtered =
-    userStore.user.books?.filter(
-      (book) => book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.toLowerCase().includes(filter.value.toLowerCase())
-    ) || []
+  // Ensure books is an array before filtering
+  const books = Array.isArray(person.value?.books) ? person.value.books : []
+  const filtered = books.filter(
+    (book) => book.title.toLowerCase().includes(filter.value.toLowerCase()) || book.authors?.toLowerCase().includes(filter.value.toLowerCase())
+  )
   return sortBooks(filtered, sortKey.value, ascDesc.value)
 })
 
-userStore.$subscribe((_mutation, state) => {
-  person.value = state._user
-  document.title = person.value.display_name ? `LivroLog | ${person.value.display_name}` : 'LivroLog'
+const isPrivateAndNotAccessible = computed(() => {
+  // Show private profile message if:
+  // 1. User is private AND
+  // 2. No books are loaded (meaning the current user doesn't have access)
+  const books = person.value?.books
+  return person.value?.is_private && (!Array.isArray(books) || books.length === 0)
 })
+
+const canSendFollowRequest = computed(() => {
+  return authStore.isAuthenticated && person.value?.id && userStore.me?.id !== person.value.id && !followStore.isFollowing(person.value.id)
+})
+
+const hasPendingRequest = computed(() => {
+  return person.value?.has_pending_follow_request || false
+})
+
+const isFollowing = computed(() => {
+  return person.value?.is_following || followStore.isFollowing(person.value?.id || '')
+})
+
+const showFollowButton = computed(() => {
+  return (
+    authStore.isAuthenticated &&
+    person.value?.id &&
+    userStore.me?.id !== person.value.id &&
+    (canSendFollowRequest.value || hasPendingRequest.value || isFollowing.value)
+  )
+})
+
+function getButtonColor() {
+  if (hasPendingRequest.value) return 'orange'
+  if (isFollowing.value) return 'grey'
+  return 'primary'
+}
+
+function getButtonIcon() {
+  if (hasPendingRequest.value) return 'schedule'
+  if (isFollowing.value) return 'person_remove'
+  return 'person_add'
+}
+
+function getButtonLabel() {
+  if (hasPendingRequest.value) return t('remove-follow-request')
+  if (isFollowing.value) return t('unfollow')
+  return t('send-follow-request')
+}
+
+function handleFollowAction() {
+  if (isFollowing.value) {
+    unfollowUser()
+  } else if (hasPendingRequest.value) {
+    removeFollowRequest()
+  } else {
+    sendFollowRequest()
+  }
+}
+
+// Update document title when person changes
+watch(
+  person,
+  (newPerson) => {
+    document.title = newPerson?.display_name ? `LivroLog | ${newPerson.display_name}` : 'LivroLog'
+  },
+  { immediate: true }
+)
+
+// Watch for route changes to load different user profiles
+watch(
+  () => route.params.username,
+  async (newUsername) => {
+    if (newUsername && typeof newUsername === 'string') {
+      if (newUsername.toLowerCase() !== userStore.me?.username?.toLowerCase()) {
+        // Clear previous user data and load new user
+        userStore.$patch({ _user: {} })
+        await userStore.getUser(newUsername)
+      }
+    }
+  }
+)
 
 onMounted(async () => {
   const username = route.params.username as string
   if (username) {
-    await userStore.getUser(username)
+    // If viewing own profile, don't need to call getUser as we already have userStore.me
+    if (username.toLowerCase() !== userStore.me?.username?.toLowerCase()) {
+      // Clear previous user data to avoid showing stale data
+      userStore.$patch({ _user: {} })
+      await userStore.getUser(username)
+    }
   }
 })
 
@@ -97,6 +223,49 @@ function onSort(label: string | number) {
   } else {
     sortKey.value = label
     ascDesc.value = 'asc'
+  }
+}
+
+async function sendFollowRequest() {
+  if (!person.value?.id) return
+
+  const response = await followStore.postUserFollow(person.value.id)
+
+  // Always refresh user data to get updated status
+  if (response.success && person.value.username !== userStore.me?.username) {
+    await userStore.getUser(person.value.username)
+  }
+}
+
+async function removeFollowRequest() {
+  if (!person.value?.id) return
+
+  // Use the same unfollow endpoint to remove the pending request
+  await followStore.deleteUserFollow(person.value.id)
+
+  // Refresh user data to get updated request status
+  if (person.value.username !== userStore.me?.username) {
+    await userStore.getUser(person.value.username)
+  }
+}
+
+async function unfollowUser() {
+  if (!person.value?.id) return
+
+  // Show confirmation dialog for unfollow
+  showUnfollowDialog.value = true
+}
+
+async function confirmUnfollow() {
+  if (!person.value?.id) return
+
+  showUnfollowDialog.value = false
+
+  await followStore.deleteUserFollow(person.value.id)
+
+  // Refresh user data to get updated follow status
+  if (person.value.username !== userStore.me?.username) {
+    await userStore.getUser(person.value.username)
   }
 }
 </script>

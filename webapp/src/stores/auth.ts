@@ -1,4 +1,4 @@
-import { i18n } from '@/locales'
+import { i18n, type SupportedLocale } from '@/locales'
 import type { AuthResponse, User } from '@/models'
 import router from '@/router'
 import api from '@/utils/axios'
@@ -23,7 +23,6 @@ export const useAuthStore = defineStore('auth', {
     isGoogleLoading: (state) => state._isGoogleLoading
   },
   actions: {
-
     setUser(user: User) {
       const userStore = useUserStore()
       userStore.setMe(user)
@@ -36,9 +35,7 @@ export const useAuthStore = defineStore('auth', {
         .get('/auth/me')
         .then((response) => {
           userStore.setMe(response.data)
-          if (this.isAuthenticated) {
-            router.push('/')
-          }
+          LocalStorage.set('user', response.data)
           return response.data
         })
         .catch((error) => {
@@ -52,8 +49,9 @@ export const useAuthStore = defineStore('auth', {
     async postAuthLogin(email: string, password: string) {
       this._isLoading = true
       const userStore = useUserStore()
+      const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/login', { email, password })
+        .post('/auth/login', { email, password, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -72,8 +70,9 @@ export const useAuthStore = defineStore('auth', {
     async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
       this._isLoading = true
       const userStore = useUserStore()
+      const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/register', data)
+        .post('/auth/register', { ...data, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -145,8 +144,9 @@ export const useAuthStore = defineStore('auth', {
     async postAuthGoogle(idToken: string) {
       this._isGoogleLoading = true
       const userStore = useUserStore()
+      const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/google', { id_token: idToken })
+        .post('/auth/google', { id_token: idToken, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -180,21 +180,6 @@ export const useAuthStore = defineStore('auth', {
       return false
     },
 
-    async refreshUser() {
-      this._isLoading = true
-      const userStore = useUserStore()
-      return await api
-        .get('/auth/me')
-        .then((response) => {
-          userStore.setMe(response.data)
-          LocalStorage.set('user', response.data)
-          return response.data
-        })
-        .catch((error) => {
-          throw error
-        })
-        .finally(() => (this._isLoading = false))
-    },
 
     async putMe(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
       this._isLoading = true
@@ -202,6 +187,10 @@ export const useAuthStore = defineStore('auth', {
         .put('/auth/me', data)
         .then((response) => {
           this.setUser(response.data.user)
+          LocalStorage.set('user', response.data.user)
+          if (data.locale) {
+            i18n.global.locale.value = data.locale as SupportedLocale
+          }
           Notify.create({ message: i18n.global.t('profile-updated'), type: 'positive' })
           return response.data
         })

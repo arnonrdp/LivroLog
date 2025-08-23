@@ -23,14 +23,12 @@
               <div class="text-weight-bold">{{ user.books?.length || 0 }}</div>
               <div class="text-caption text-grey">{{ $t('books', { count: user.books?.length || 0 }) }}</div>
             </div>
-            <!-- Followers -->
-            <div class="text-center">
-              <div class="text-weight-bold">{{ user.followers_count }}</div>
+            <div :class="['text-center', { 'cursor-pointer': isOwnProfile }]" @click="isOwnProfile && openFollowersDialog('followers')">
+              <div :class="['text-weight-bold', { 'text-primary': isOwnProfile, 'text-grey': !isOwnProfile }]">{{ user.followers_count }}</div>
               <div class="text-caption text-grey">{{ $t('follower', { count: user.followers_count }) }}</div>
             </div>
-            <!-- Following -->
-            <div class="text-center">
-              <div class="text-weight-bold">{{ user.following_count }}</div>
+            <div :class="['text-center', { 'cursor-pointer': isOwnProfile }]" @click="isOwnProfile && openFollowersDialog('following')">
+              <div :class="['text-weight-bold', { 'text-primary': isOwnProfile, 'text-grey': !isOwnProfile }]">{{ user.following_count }}</div>
               <div class="text-caption text-grey">{{ $t('following') }}</div>
             </div>
           </div>
@@ -74,9 +72,30 @@
       </q-card-section>
     </q-card>
   </q-dialog>
+
+  <FollowersDialog v-model="showFollowersDialog" :initial-tab="followersDialogTab" :user="user" />
+
+  <!-- Unfollow Confirmation Dialog -->
+  <q-dialog v-model="showUnfollowDialog" persistent>
+    <q-card>
+      <q-card-section>
+        <div class="text-h6">{{ $t('confirm') }}</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        {{ $t('unfollow-confirmation', { name: userStore.user?.display_name }) }}
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn color="primary" flat :label="$t('cancel')" @click="showUnfollowDialog = false" />
+        <q-btn color="negative" flat :label="$t('confirm')" @click="confirmUnfollow" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
+import FollowersDialog from '@/components/social/FollowersDialog.vue'
 import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -103,13 +122,14 @@ const bookLabels = {
   title: t('order-by-title')
 }
 const shelfMenu = ref(false)
+const showFollowersDialog = ref(false)
+const showUnfollowDialog = ref(false)
+const followersDialogTab = ref<'followers' | 'following'>('followers')
 
 const user = computed(() => {
-  // When we're on the home page, show logged-in user
   if (router.currentRoute.value.path === '/') {
     return userStore.me
   }
-  // When on other user's page, show that user (from userStore.user)
   return userStore.user
 })
 
@@ -120,18 +140,47 @@ const isAbleToFollow = computed(() => {
 })
 const isFollowingPerson = computed(() => {
   if (!userStore.user?.id) return false
-  return followStore.isFollowing(userStore.user.id)
+  // Use backend data as source of truth, fallback to store state
+  return userStore.user.is_following ?? followStore.isFollowing(userStore.user.id)
+})
+
+const isOwnProfile = computed(() => {
+  return user.value?.id === userStore.me?.id
 })
 
 async function followOrUnfollow() {
   if (!userStore.user?.id) return
 
   if (isFollowingPerson.value) {
-    await followStore.deleteUserFollow(userStore.user.id)
+    // Show confirmation dialog for unfollow
+    showUnfollowDialog.value = true
   } else {
-    await followStore.postUserFollow(userStore.user.id)
+    const response = await followStore.postUserFollow(userStore.user.id)
+    // Refresh user data to get updated follow status
+    if (response.success && userStore.user.username) {
+      await userStore.getUser(userStore.user.username)
+    }
+    await authStore.getMe()
   }
+}
 
-  await authStore.refreshUser()
+async function confirmUnfollow() {
+  if (!userStore.user?.id) return
+
+  showUnfollowDialog.value = false
+
+  const response = await followStore.deleteUserFollow(userStore.user.id)
+  // Refresh user data to get updated follow status
+  if (response.success && userStore.user.username) {
+    await userStore.getUser(userStore.user.username)
+  }
+  await authStore.getMe()
+}
+
+function openFollowersDialog(tab: 'followers' | 'following') {
+  if (!isOwnProfile.value) return
+
+  followersDialogTab.value = tab
+  showFollowersDialog.value = true
 }
 </script>

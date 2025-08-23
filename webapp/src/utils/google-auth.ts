@@ -93,11 +93,11 @@ export class GoogleAuth {
       text: options.text || 'continue_with',
       shape: options.shape || 'rectangular'
     }
-    
+
     if (options.width) {
       buttonConfig.width = options.width
     }
-    
+
     window.google.accounts.id.renderButton(element, buttonConfig)
   }
 

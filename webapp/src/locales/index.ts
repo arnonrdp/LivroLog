@@ -9,14 +9,18 @@ export const localeOptions = [
   { value: 'ja', label: '日本語' },
   { value: 'pt', label: 'Português' },
   { value: 'tr', label: 'Türkçe' }
-]
+] as const
+
+export type SupportedLocale = (typeof localeOptions)[number]['value']
 
 export const i18n = createI18n({
   allowComposition: true,
   fallbackLocale: ['en', 'pt', 'ja', 'tr'],
   fallbackWarn: false,
   legacy: false,
-  locale: localeOptions.map((locale) => locale.value).includes(navigator.language) ? navigator.language : 'en',
+  locale: localeOptions.map((locale) => locale.value).includes(navigator.language as SupportedLocale)
+    ? (navigator.language as SupportedLocale)
+    : 'en',
   messages: { en, pt, ja, tr },
   missingWarn: false
 })

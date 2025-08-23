@@ -56,14 +56,14 @@
               <q-btn
                 v-if="!isSelf(props.row.id)"
                 class="follow-btn"
-                :color="getFollowingStatus(props.row.id, props.row.is_following) ? 'grey-7' : 'primary'"
+                :color="getButtonColor(props.row)"
                 dense
-                :icon="getFollowingStatus(props.row.id, props.row.is_following) ? 'person_remove' : 'person_add'"
-                :label="getFollowingStatus(props.row.id, props.row.is_following) ? $t('unfollow') : $t('follow')"
+                :icon="getButtonIcon(props.row)"
+                :label="getButtonLabel(props.row)"
                 :loading="userLoadingStates[props.row.id] || false"
-                :outline="getFollowingStatus(props.row.id, props.row.is_following)"
-                :unelevated="!getFollowingStatus(props.row.id, props.row.is_following)"
-                @click.stop="toggleFollow(props.row.id, props.row.is_following)"
+                :outline="getFollowingStatus(props.row.id, props.row.is_following) || props.row.has_pending_follow_request"
+                :unelevated="!getFollowingStatus(props.row.id, props.row.is_following) && !props.row.has_pending_follow_request"
+                @click.stop="toggleFollow(props.row.id, props.row.is_following, props.row.has_pending_follow_request)"
               >
                 <q-tooltip v-if="followStore.isMutualFollow(props.row.id)">
                   {{ $t('mutual-follow') }}
@@ -123,7 +123,28 @@ function getFollowingStatus(userId: string, apiStatus?: boolean): boolean {
   return followStore.isFollowing(userId)
 }
 
-async function toggleFollow(userId: string, currentStatus?: boolean) {
+function getButtonColor(user: User): string {
+  if (user.has_pending_follow_request) {
+    return 'orange'
+  }
+  return getFollowingStatus(user.id, user.is_following) ? 'grey-7' : 'primary'
+}
+
+function getButtonIcon(user: User): string {
+  if (user.has_pending_follow_request) {
+    return 'schedule'
+  }
+  return getFollowingStatus(user.id, user.is_following) ? 'person_remove' : 'person_add'
+}
+
+function getButtonLabel(user: User): string {
+  if (user.has_pending_follow_request) {
+    return t('remove-follow-request')
+  }
+  return getFollowingStatus(user.id, user.is_following) ? t('unfollow') : t('follow')
+}
+
+async function toggleFollow(userId: string, currentStatus?: boolean, hasPendingRequest?: boolean) {
   if (userLoadingStates.value[userId]) return
 
   const wasFollowing = getFollowingStatus(userId, currentStatus)
@@ -131,17 +152,20 @@ async function toggleFollow(userId: string, currentStatus?: boolean) {
   // Set loading state for this specific user
   userLoadingStates.value[userId] = true
 
-  // Optimistic update
-  localFollowStatus.value[userId] = !wasFollowing
-
   try {
-    if (wasFollowing) {
+    if (wasFollowing || hasPendingRequest) {
+      // Unfollow or remove pending request
       await followStore.deleteUserFollow(userId)
+      localFollowStatus.value[userId] = false
     } else {
-      await followStore.postUserFollow(userId)
+      // Follow or send request
+      const response = await followStore.postUserFollow(userId)
+      // For private profiles, the request might be pending
+      localFollowStatus.value[userId] = response?.data?.status === 'accepted'
     }
-    // Keep the local state updated with the successful result
-    localFollowStatus.value[userId] = !wasFollowing
+
+    // Refresh the users list to get updated status
+    await getUsers({ pagination: pagination.value })
   } catch (error) {
     // Revert on error
     localFollowStatus.value[userId] = wasFollowing

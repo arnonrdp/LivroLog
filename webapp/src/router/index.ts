@@ -61,9 +61,7 @@ router.beforeEach(async (to, _from, next) => {
     try {
       // Get user data including books in one call
       await authStore.getMe()
-      if (authStore.isAuthenticated) {
-        await userStore.getUser(userStore.me.id)
-      }
+      // userStore.me is already populated by authStore.getMe(), no need for additional call
     } catch (error) {
       console.error('Failed to restore session:', error)
       // Clear invalid token

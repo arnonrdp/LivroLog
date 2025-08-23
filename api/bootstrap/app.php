@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Add security headers to all requests
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        // Daily database backup at 3:00 AM
+        $schedule->command('backup:database')->dailyAt('03:00');
+        
+        // Run queue worker every minute to process jobs
+        $schedule->command('queue:work --tries=3 --timeout=60 --sleep=3 --max-jobs=10 --stop-when-empty')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->runInBackground();
     })
     ->withExceptions(function (): void {
         //

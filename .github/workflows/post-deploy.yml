@@ -71,6 +71,7 @@ jobs:
             # Clear caches
             cd /var/www/livrolog/current/api
             php artisan cache:clear
+            php artisan books:cache-clear
             php artisan config:clear
             
       - name: Configure Development Environment
@@ -128,6 +129,7 @@ jobs:
             # Clear caches
             cd /var/www/livrolog-dev/current/api
             php artisan cache:clear
+            php artisan books:cache-clear
             php artisan config:clear
             
       - name: Restart Apache

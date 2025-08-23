@@ -20,7 +20,7 @@ export const useBookStore = defineStore('book', {
   },
 
   actions: {
-    async getBooks(params: { search?: string; showcase?: boolean; all?: boolean } = {}) {
+    async getBooks(params: { search?: string; all?: boolean; sort_by?: string } = {}) {
       this._isLoading = true
       return await api
         .get('/books', { params })

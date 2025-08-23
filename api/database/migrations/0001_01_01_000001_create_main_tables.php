@@ -36,6 +36,7 @@ return new class extends Migration
             $table->id();
             $table->string('follower_id', 16);
             $table->string('followed_id', 16);
+            $table->enum('status', ['pending', 'accepted'])->default('accepted');
             $table->timestamps();
             $table->foreign('follower_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('followed_id')->references('id')->on('users')->onDelete('cascade');

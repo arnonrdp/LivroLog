@@ -3,18 +3,18 @@
 namespace App\Services;
 
 use App\Contracts\BookSearchProvider;
-use App\Services\Providers\AmazonBooksProvider;
 use App\Services\Providers\GoogleBooksProvider;
 use App\Services\Providers\OpenLibraryProvider;
+use App\Transformers\BookTransformer;
 use Illuminate\Support\Facades\Cache;
 
 class MultiSourceBookSearchService
 {
     private array $providers = [];
 
-    private const CACHE_TTL_SUCCESS = 86400; // 24 hours for successful results
+    private const CACHE_TTL_SUCCESS = 604800; // 7 days for successful results (more stable)
 
-    private const CACHE_TTL_FAILURE = 3600;  // 1 hour for failed results
+    private const CACHE_TTL_FAILURE = 86400;  // 24 hours for failed results
 
     public function __construct()
     {
@@ -38,7 +38,9 @@ class MultiSourceBookSearchService
             return $cachedResult;
         }
 
-        // Starting search with multiple providers
+        // Extract includes from options
+        $includes = $options['includes'] ?? [];
+        $transformer = new BookTransformer;
 
         $lastResult = null;
         $providerResults = [];
@@ -55,11 +57,20 @@ class MultiSourceBookSearchService
                 ];
 
                 if ($result['success'] && $result['total_found'] > 0) {
-                    // Success! Cache and return
-                    $finalResult = $this->buildFinalResult($result, $query, $providerResults);
-                    Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
+                    // Transform books based on requested fields
+                    if (isset($result['books'])) {
+                        $result['books'] = $transformer->transform($result['books'], $includes);
+                    }
 
-                    // Search successful
+                    // Success! Cache and return with pagination meta
+                    $finalResult = $this->buildFinalResult($result, $query, $providerResults, $options);
+                    
+                    // Temporary debugging - pass through debug info
+                    if (isset($result['debug_info'])) {
+                        $finalResult['debug_info'] = $result['debug_info'];
+                    }
+                    
+                    Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
 
                     return $finalResult;
                 }
@@ -80,8 +91,6 @@ class MultiSourceBookSearchService
         // No provider found results - build failure response
         $failureResult = $this->buildFailureResult($query, $providerResults);
         Cache::put($cacheKey, $failureResult, self::CACHE_TTL_FAILURE);
-
-        // No results found in any provider
 
         return $failureResult;
     }
@@ -151,9 +160,9 @@ class MultiSourceBookSearchService
     {
         $this->providers = [
             new GoogleBooksProvider,
-            new AmazonBooksProvider, // Phase 2 - disabled by default
             new OpenLibraryProvider,
             // Future providers:
+            // new AmazonBooksProvider, // PA-API - when approved
             // new ISBNdbProvider(),
         ];
 
@@ -255,14 +264,30 @@ class MultiSourceBookSearchService
     /**
      * Build final successful result
      */
-    private function buildFinalResult(array $result, string $originalQuery, array $providerResults): array
+    private function buildFinalResult(array $result, string $originalQuery, array $providerResults, array $options = []): array
     {
-        return array_merge($result, [
-            'original_query' => $originalQuery,
-            'search_strategy' => 'multi_source',
-            'providers_tried' => $providerResults,
-            'cached_at' => now()->toISOString(),
-        ]);
+        $perPage = $options['maxResults'] ?? 20;
+        $totalFound = $result['total_found'];
+
+        // Structure response with pagination meta similar to database queries
+        return [
+            'data' => $result['books'] ?? [],
+            'meta' => [
+                'current_page' => 1, // External API always returns page 1
+                'from' => 1,
+                'last_page' => 1, // External search is single page
+                'per_page' => $perPage,
+                'to' => count($result['books'] ?? []),
+                'total' => $totalFound,
+            ],
+            'search_info' => [
+                'provider' => $result['provider'],
+                'original_query' => $originalQuery,
+                'search_strategy' => 'multi_source',
+                'providers_tried' => $providerResults,
+                'cached_at' => now()->toISOString(),
+            ],
+        ];
     }
 
     /**
@@ -271,16 +296,23 @@ class MultiSourceBookSearchService
     private function buildFailureResult(string $query, array $providerResults): array
     {
         return [
-            'success' => false,
-            'provider' => 'Multi-Source',
-            'books' => [],
-            'total_found' => 0,
-            'message' => 'No books found in any source',
-            'original_query' => $query,
-            'search_strategy' => 'multi_source',
-            'providers_tried' => $providerResults,
-            'cached_at' => now()->toISOString(),
-            'suggestions' => $this->buildSearchSuggestions($query),
+            'data' => [],
+            'meta' => [
+                'current_page' => 1,
+                'from' => null,
+                'last_page' => 1,
+                'per_page' => 20,
+                'to' => null,
+                'total' => 0,
+            ],
+            'search_info' => [
+                'provider' => 'Multi-Source',
+                'original_query' => $query,
+                'search_strategy' => 'multi_source',
+                'providers_tried' => $providerResults,
+                'cached_at' => now()->toISOString(),
+                'suggestions' => $this->buildSearchSuggestions($query),
+            ],
         ];
     }
 

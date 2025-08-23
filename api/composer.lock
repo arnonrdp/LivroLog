@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7885f58163ed0ad4583515fff49bde3d",
+    "content-hash": "420579babcff531b8f9e789b1e9594ff",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -6800,6 +6800,72 @@
                 }
             ],
             "time": "2025-06-03T06:57:57+00:00"
+        },
+        {
+            "name": "thewirecutter/paapi5-php-sdk",
+            "version": "v1.2.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thewirecutter/paapi5-php-sdk.git",
+                "reference": "a5ada3d9f708d97a42705d2c15865e722917c354"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thewirecutter/paapi5-php-sdk/zipball/a5ada3d9f708d97a42705d2c15865e722917c354",
+                "reference": "a5ada3d9f708d97a42705d2c15865e722917c354",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "guzzlehttp/guzzle": "^6.2|^7.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "~2.12",
+                "phpunit/phpunit": "^9.0",
+                "squizlabs/php_codesniffer": "^3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Amazon\\ProductAdvertisingAPI\\v1\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Product Advertising API Team",
+                    "homepage": "https://webservices.amazon.com/paapi5/documentation/index.html"
+                },
+                {
+                    "name": "Justin Yost",
+                    "email": "justin.yost@wirecutter.com"
+                }
+            ],
+            "description": "ProductAdvertisingAPI 5.0 PHP SDK",
+            "homepage": "https://webservices.amazon.com/paapi5/documentation/index.html",
+            "keywords": [
+                "ProductAdvertisingAPI",
+                "amazon",
+                "getbrowsenodes",
+                "getitems",
+                "getvariations",
+                "pa-api",
+                "paapi",
+                "paapi5",
+                "paapi5-php-sdk",
+                "paapi5.0",
+                "searchitems"
+            ],
+            "support": {
+                "source": "https://github.com/thewirecutter/paapi5-php-sdk/tree/v1.2.2"
+            },
+            "time": "2025-02-21T17:33:02+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",

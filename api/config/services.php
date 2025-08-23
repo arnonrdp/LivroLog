@@ -49,12 +49,64 @@ return [
         'enabled' => env('OPEN_LIBRARY_ENABLED', true),
     ],
 
-    // Future Amazon integration
+    // Amazon integration
     'amazon' => [
         'pa_api_key' => env('AMAZON_PA_API_KEY'),
         'pa_secret_key' => env('AMAZON_PA_SECRET_KEY'),
-        'associate_tag' => env('AMAZON_ASSOCIATE_TAG'),
         'enabled' => env('AMAZON_PA_API_ENABLED', false),
+        'sitestripe_enabled' => env('AMAZON_SITESTRIPE_ENABLED', false),
+        
+        // Regional configurations with hardcoded associate tags
+        'regions' => [
+            'BR' => [
+                'domain' => 'amazon.com.br',
+                'search_url' => 'https://www.amazon.com.br/s',
+                'host' => 'webservices.amazon.com.br',
+                'marketplace' => 'www.amazon.com.br',
+                'tag' => 'livrolog01-20', // Official Brazil Associates tag
+                'language' => 'pt-BR',
+            ],
+            'US' => [
+                'domain' => 'amazon.com',
+                'search_url' => 'https://www.amazon.com/s',
+                'host' => 'webservices.amazon.com',
+                'marketplace' => 'www.amazon.com',
+                'tag' => 'livrolog-20', // US Associates tag
+                'language' => 'en-US',
+            ],
+            'UK' => [
+                'domain' => 'amazon.co.uk',
+                'search_url' => 'https://www.amazon.co.uk/s',
+                'host' => 'webservices.amazon.co.uk',
+                'marketplace' => 'www.amazon.co.uk',
+                'tag' => 'livrolog-20', // Use existing tag until regional one is created
+                'language' => 'en-GB',
+            ],
+            'DE' => [
+                'domain' => 'amazon.de',
+                'search_url' => 'https://www.amazon.de/s',
+                'host' => 'webservices.amazon.de',
+                'marketplace' => 'www.amazon.de',
+                'tag' => 'livrolog-20', // Use existing tag until regional one is created
+                'language' => 'de-DE',
+            ],
+            'CA' => [
+                'domain' => 'amazon.ca',
+                'search_url' => 'https://www.amazon.ca/s',
+                'host' => 'webservices.amazon.ca',
+                'marketplace' => 'www.amazon.ca',
+                'tag' => 'livrolog-20', // Use existing tag until regional one is created
+                'language' => 'en-CA',
+            ],
+            'FR' => [
+                'domain' => 'amazon.fr',
+                'search_url' => 'https://www.amazon.fr/s',
+                'host' => 'webservices.amazon.fr',
+                'marketplace' => 'www.amazon.fr',
+                'tag' => 'livrolog-20', // Use existing tag until regional one is created
+                'language' => 'fr-FR',
+            ],
+        ],
     ],
 
 ];

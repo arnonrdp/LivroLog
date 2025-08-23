@@ -5,6 +5,22 @@
       <q-card-section class="row items-center q-pb-sm">
         <div class="text-h6">{{ book.title }}</div>
         <q-space />
+        <!-- Smart Amazon button -->
+        <q-btn
+          v-if="shouldShowAmazonButton"
+          class="q-mr-sm"
+          :color="amazonButtonColor"
+          dense
+          :disable="amazonButtonDisabled"
+          flat
+          :href="amazonButtonHref || undefined"
+          :icon="amazonButtonIcon"
+          :loading="book.asin_status === 'processing'"
+          round
+          :target="amazonButtonHref ? '_blank' : undefined"
+        >
+          <q-tooltip>{{ amazonTooltipText }}</q-tooltip>
+        </q-btn>
         <q-btn v-close-popup dense flat icon="close" round />
       </q-card-section>
 
@@ -47,13 +63,29 @@
 
       <!-- Scrollable Content -->
       <q-scroll-area style="height: 400px">
-        <!-- Read Date Section (only for books in user's library) -->
+        <!-- Read Date and Status Section (only for books in user's library) -->
         <q-card-section v-if="isBookInLibrary">
           <div class="text-subtitle1 q-mb-md row items-center">
-            <q-icon class="q-mr-sm" name="event" />
-            {{ $t('read-date') }}
+            <q-icon class="q-mr-sm" name="auto_stories" />
+            {{ $t('reading-details') }}
           </div>
-          <q-input v-model="readDate" class="q-mb-md" dense :label="$t('read-date')" outlined type="date" />
+          <div class="row q-col-gutter-md">
+            <div class="col-6">
+              <q-input v-model="readDate" dense :label="$t('read-date')" outlined type="date" @blur="updateReadDate" />
+            </div>
+            <div class="col-6">
+              <q-select
+                v-model="readingStatus"
+                dense
+                emit-value
+                :label="$t('reading-status')"
+                map-options
+                :options="readingStatusOptions"
+                outlined
+                @update:model-value="updateReadingStatus"
+              />
+            </div>
+          </div>
         </q-card-section>
 
         <q-separator v-if="isBookInLibrary" />
@@ -149,10 +181,31 @@
             {{ $t('add-review') }}
           </div>
 
-          <!-- Rating -->
-          <div class="q-mb-md">
-            <div class="text-body2 q-mb-sm">{{ $t('rating') }}</div>
-            <q-rating v-model="reviewForm.rating" color="amber" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+          <!-- Rating, Visibility and Spoiler Row -->
+          <div class="row items-center q-col-gutter-md q-mb-md">
+            <!-- Rating -->
+            <div class="col-4">
+              <div class="text-body2">{{ $t('rating') }}</div>
+              <q-rating v-model="reviewForm.rating" color="amber" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+            </div>
+
+            <!-- Spoiler -->
+            <div class="col-4">
+              <q-checkbox v-model="reviewForm.is_spoiler" :label="$t('contains-spoilers')" />
+            </div>
+
+            <!-- Visibility -->
+            <div class="col-4">
+              <q-select
+                v-model="reviewForm.visibility_level"
+                dense
+                emit-value
+                :label="$t('visibility')"
+                map-options
+                :options="visibilityOptions"
+                outlined
+              />
+            </div>
           </div>
 
           <!-- Title -->
@@ -161,7 +214,8 @@
           <!-- Content -->
           <q-input
             v-model="reviewForm.content"
-            class="q-mb-md"
+            class="q-mb-xs"
+            counter
             :label="$t('content')"
             :maxlength="2000"
             outlined
@@ -169,26 +223,21 @@
             :rules="[(val) => !!val || $t('content-required')]"
             type="textarea"
           />
-
-          <!-- Options Row -->
-          <div class="row q-col-gutter-md q-mb-md">
-            <!-- Visibility -->
-            <div class="col-6">
-              <div class="text-body2 q-mb-sm">{{ $t('visibility') }}</div>
-              <q-select v-model="reviewForm.visibility_level" dense emit-value map-options :options="visibilityOptions" outlined />
-            </div>
-
-            <!-- Spoiler -->
-            <div class="col-6 flex items-end">
-              <q-checkbox v-model="reviewForm.is_spoiler" :label="$t('contains-spoilers')" />
-            </div>
-          </div>
+          <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
         </q-card-section>
       </q-scroll-area>
 
       <!-- Footer Actions -->
       <q-separator />
-      <q-card-actions align="right" class="q-pa-md">
+      <q-card-actions class="q-pa-md">
+        <!-- Private Book Checkbox -->
+        <div class="row items-center">
+          <q-checkbox v-model="isPrivateBook" :label="$t('private-book')" />
+          <q-icon class="q-ml-xs cursor-pointer" name="help_outline" size="sm">
+            <q-tooltip>{{ $t('private-book-tooltip') }}</q-tooltip>
+          </q-icon>
+        </div>
+        <q-space />
         <q-btn v-close-popup flat :label="$t('close')" />
 
         <!-- Add/Remove from Library Button -->
@@ -209,8 +258,6 @@
           outline
           @click="removeFromLibrary"
         />
-
-        <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -235,10 +282,11 @@
 </template>
 
 <script setup lang="ts">
-import type { Book, CreateReviewRequest, Review, UpdateReviewRequest } from '@/models'
+import { getAmazonRegionConfig, getAmazonSearchUrl } from '@/config/amazon'
+import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useReviewStore, useUserBookStore, useUserStore } from '@/stores'
 import { useQuasar } from 'quasar'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -253,7 +301,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const $q = useQuasar()
-
 const reviewStore = useReviewStore()
 const userBookStore = useUserBookStore()
 const userStore = useUserStore()
@@ -261,31 +308,245 @@ const userStore = useUserStore()
 const loading = ref(false)
 const libraryLoading = ref(false)
 const readDate = ref('')
+const readingStatus = ref<ReadingStatus>('read')
 const showSpoiler = ref<Record<string, boolean>>({})
 const editingReview = ref<Review | null>(null)
 const showDeleteDialog = ref(false)
 const reviewToDelete = ref<string | null>(null)
 const showFullDescription = ref(false)
+const isPrivateBook = ref(false)
 const reviewForm = ref<CreateReviewRequest>({
-  book_id: props.book.id,
+  book_id: getBookId() || '',
   title: '',
   content: '',
   rating: 5,
   visibility_level: 'public',
   is_spoiler: false
 })
+const pollingInterval = ref<number | null>(null)
+const pollingStartTime = ref<Date | null>(null)
+const isBookInLibrary = ref(false)
+const MAX_POLLING_TIME = 60000
 
 const showDialog = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
-const bookReviews = computed(() => reviewStore.reviews)
-const currentUserId = computed(() => userStore.me?.id)
-const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
-// Use ref instead of computed to avoid reactivity timing issues
-const isBookInLibrary = ref(false)
 
-// Function to update library status
+const bookReviews = computed(() => reviewStore.reviews)
+
+const currentUserId = computed(() => userStore.me?.id)
+
+const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
+
+const amazonBuyLink = computed(() => {
+  if (props.book.amazon_buy_link) {
+    return props.book.amazon_buy_link
+  }
+
+  const locale = t('locale') || 'en-US'
+  const { domain, tag } = getAmazonRegionConfig(locale)
+
+  if (props.book.amazon_asin) {
+    return `https://www.${domain}/dp/${props.book.amazon_asin}?tag=${tag}`
+  }
+
+  let searchTerm = ''
+
+  if (props.book.title && props.book.authors) {
+    searchTerm = `${props.book.title} ${props.book.authors}`
+  } else if (props.book.title) {
+    searchTerm = props.book.title
+  } else if (props.book.isbn) {
+    searchTerm = props.book.isbn
+  }
+
+  if (searchTerm) {
+    const searchUrl = getAmazonSearchUrl(domain)
+    const encodedTerm = encodeURIComponent(searchTerm)
+    return `${searchUrl}?k=${encodedTerm}&i=stripbooks&tag=${tag}&ref=nb_sb_noss&linkCode=ur2&camp=1789&creative=9325`
+  }
+
+  return null
+})
+
+const shouldShowAmazonButton = computed(() => {
+  return (
+    !!props.book.amazon_asin ||
+    props.book.asin_status === 'pending' ||
+    props.book.asin_status === 'processing' ||
+    props.book.asin_status === 'completed' ||
+    props.book.asin_status === 'failed'
+  )
+})
+
+const amazonButtonColor = computed(() => {
+  if (props.book.amazon_asin) return 'orange'
+  if (props.book.asin_status === 'processing') return 'grey-6'
+  if (props.book.asin_status === 'pending') return 'grey-5'
+  if (props.book.asin_status === 'failed') return 'grey-4'
+  return 'grey-6'
+})
+
+const amazonButtonDisabled = computed(() => {
+  return props.book.asin_status === 'failed'
+})
+
+const amazonButtonHref = computed(() => {
+  return props.book.amazon_asin ? amazonBuyLink.value : null
+})
+
+const amazonButtonIcon = computed(() => {
+  return 'shopping_cart'
+})
+
+const amazonTooltipText = computed(() => {
+  if (props.book.amazon_asin) {
+    return t('buy-on-amazon')
+  }
+  if (props.book.asin_status === 'processing') {
+    return t('searching-amazon-link')
+  }
+  if (props.book.asin_status === 'pending') {
+    return t('searching-amazon-link')
+  }
+  if (props.book.asin_status === 'failed') {
+    return t('amazon-link-not-found')
+  }
+  return t('buy-on-amazon')
+})
+
+const canAddReview = computed(() => !userReview.value && isBookInLibrary.value && getBookId() !== null)
+
+const visibilityOptions = computed(() => [
+  { label: t('private'), value: 'private' },
+  { label: t('friends'), value: 'friends' },
+  { label: t('public'), value: 'public' }
+])
+
+const readingStatusOptions = computed(() => [
+  { label: t('want-to-read'), value: 'want_to_read' },
+  { label: t('reading'), value: 'reading' },
+  { label: t('read'), value: 'read' },
+  { label: t('abandoned'), value: 'abandoned' },
+  { label: t('on-hold'), value: 'on_hold' },
+  { label: t('re-reading'), value: 're_reading' }
+])
+
+onMounted(() => {
+  if (props.book.asin_status === 'processing') {
+    startPolling()
+  }
+})
+
+onUnmounted(() => {
+  stopPolling()
+})
+
+watch(
+  () => props.modelValue,
+  async (newValue) => {
+    if (newValue) {
+      resetReviewForm()
+      reviewStore.clearReviews()
+      loading.value = true
+
+      const pivotReadAt = props.book.pivot?.read_at
+      readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
+      readingStatus.value = props.book.pivot?.reading_status || 'read'
+
+      updateLibraryStatus()
+
+      if (isBookInLibrary.value) {
+        const userBooks = userStore.me.books || []
+        const bookInLibrary = userBooks.find((book) => {
+          if (props.book.id && book.id === props.book.id) return true
+          if (props.book.google_id && book.google_id === props.book.google_id) return true
+          return false
+        })
+        isPrivateBook.value = Boolean(bookInLibrary?.pivot?.is_private)
+      } else {
+        isPrivateBook.value = false
+      }
+
+      await loadBookReviews()
+      loading.value = false
+    } else {
+      reviewStore.clearReviews()
+      resetReviewForm()
+      showDeleteDialog.value = false
+      reviewToDelete.value = null
+      showFullDescription.value = false
+    }
+  },
+  { immediate: true }
+)
+
+watch(isPrivateBook, async (newValue, oldValue) => {
+  if (isBookInLibrary.value && newValue !== oldValue && oldValue !== undefined) {
+    await updateBookPrivacy(newValue)
+  }
+})
+
+watch(showDialog, (newValue) => {
+  if (newValue && props.book.asin_status === 'processing') {
+    startPolling()
+  } else if (!newValue) {
+    stopPolling()
+  }
+})
+
+function getBookId(): string | null {
+  if (props.book.id && props.book.id.startsWith('B-')) {
+    return props.book.id
+  }
+
+  const userBooks = userStore.me.books || []
+  const internalBook = userBooks.find((book) => book.google_id === props.book.google_id)
+
+  if (internalBook && internalBook.id.startsWith('B-')) {
+    return internalBook.id
+  }
+
+  return null
+}
+
+function startPolling() {
+  if (props.book.asin_status !== 'processing') return
+
+  pollingStartTime.value = new Date()
+
+  pollingInterval.value = window.setInterval(async () => {
+    if (pollingStartTime.value && new Date().getTime() - pollingStartTime.value.getTime() > MAX_POLLING_TIME) {
+      stopPolling()
+      return
+    }
+
+    try {
+      const response = await window.fetch(`/api/books/${props.book.id}`)
+      if (response.ok) {
+        const updatedBook = await response.json()
+
+        Object.assign(props.book, updatedBook)
+
+        if (updatedBook.asin_status !== 'processing') {
+          stopPolling()
+        }
+      }
+    } catch (error) {
+      console.error('Error polling for ASIN updates:', error)
+    }
+  }, 3000)
+}
+
+function stopPolling() {
+  if (pollingInterval.value) {
+    window.clearInterval(pollingInterval.value)
+    pollingInterval.value = null
+    pollingStartTime.value = null
+  }
+}
+
 function updateLibraryStatus() {
   const bookId = props.book?.id
   const googleId = props.book?.google_id
@@ -297,7 +558,6 @@ function updateLibraryStatus() {
 
   const userBooks = userStore.me.books || []
 
-  // Check by id first (if available), then by google_id
   const result = userBooks.some((book) => {
     if (bookId && book.id === bookId) return true
     if (googleId && book.google_id === googleId) return true
@@ -306,43 +566,6 @@ function updateLibraryStatus() {
 
   isBookInLibrary.value = result
 }
-const canAddReview = computed(() => !userReview.value && isBookInLibrary.value)
-
-const visibilityOptions = computed(() => [
-  { label: t('private'), value: 'private' },
-  { label: t('friends'), value: 'friends' },
-  { label: t('public'), value: 'public' }
-])
-
-watch(
-  () => props.modelValue,
-  async (newValue) => {
-    if (newValue) {
-      // No need for complex store tracking - using userStore.me.books directly
-
-      resetReviewForm()
-      reviewStore.clearReviews()
-      loading.value = true
-
-      const pivotReadAt = props.book.pivot?.read_at
-      readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
-
-      // Update library status using existing userStore.me.books data
-      updateLibraryStatus()
-
-      await loadBookReviews()
-      loading.value = false
-    } else {
-      // Clean up on close
-      reviewStore.clearReviews()
-      resetReviewForm()
-      showDeleteDialog.value = false
-      reviewToDelete.value = null
-      showFullDescription.value = false
-    }
-  },
-  { immediate: true }
-)
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString()
@@ -350,7 +573,7 @@ function formatDate(dateString: string) {
 
 function resetReviewForm() {
   reviewForm.value = {
-    book_id: props.book.id,
+    book_id: getBookId() || '',
     title: '',
     content: '',
     rating: 5,
@@ -375,8 +598,45 @@ function deleteReview(reviewId: string) {
   showDeleteDialog.value = true
 }
 
+async function updateBookPrivacy(isPrivate: boolean) {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for privacy update')
+    return
+  }
+
+  await userBookStore.patchUserBookPrivacy(bookId, isPrivate)
+  updateLibraryStatus()
+}
+
+async function updateReadDate() {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for read date update')
+    return
+  }
+
+  await userBookStore.patchUserBookReadDate(bookId, readDate.value)
+  emit('readDateUpdated')
+}
+
+async function updateReadingStatus() {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for reading status update')
+    return
+  }
+  await userBookStore.patchUserBookStatus(bookId, readingStatus.value)
+  emit('readDateUpdated')
+}
+
 async function loadBookReviews() {
-  await reviewStore.getReviewsByBook(props.book.id)
+  const bookId = getBookId()
+  if (bookId) {
+    await reviewStore.getReviewsByBook(bookId)
+  } else {
+    reviewStore.clearReviews()
+  }
 }
 
 async function confirmDelete() {
@@ -399,7 +659,6 @@ async function toggleVisibility(review: Review) {
 }
 
 async function addToLibrary() {
-  // Prevent multiple simultaneous calls
   if (libraryLoading.value) {
     return
   }
@@ -407,18 +666,16 @@ async function addToLibrary() {
   libraryLoading.value = true
 
   await userBookStore
-    .postUserBooks(props.book)
+    .postUserBooks(props.book, isPrivateBook.value)
     .then(() => updateLibraryStatus())
     .finally(() => (libraryLoading.value = false))
 }
 
 async function removeFromLibrary() {
-  // Prevent multiple simultaneous calls
   if (libraryLoading.value) {
     return
   }
 
-  // Find the book ID in user's library (needed for books from search that only have google_id)
   const bookId = props.book.id
   const googleId = props.book.google_id
 
@@ -427,7 +684,6 @@ async function removeFromLibrary() {
   if (bookId) {
     bookToRemoveId = bookId
   } else if (googleId) {
-    // Find the book in user's library by google_id to get its system ID
     const userBooks = userStore.me.books || []
     const foundBook = userBooks.find((book) => book.google_id === googleId)
     bookToRemoveId = foundBook?.id
@@ -450,19 +706,16 @@ async function handleSave() {
 
   const promises = []
 
-  // Save review if content is provided
   if (reviewForm.value.content.trim()) {
     const existingReview = userReview.value
 
     if (existingReview) {
-      // For update, only include fields that have values
       const updateData: UpdateReviewRequest = {
         content: reviewForm.value.content,
         rating: reviewForm.value.rating,
         visibility_level: reviewForm.value.visibility_level
       }
 
-      // Only add optional fields if they have values
       if (reviewForm.value.title) {
         updateData.title = reviewForm.value.title
       }
@@ -472,15 +725,19 @@ async function handleSave() {
 
       promises.push(reviewStore.putReviews(existingReview.id, updateData))
     } else {
-      // For create, build the request properly
+      const bookId = getBookId()
+      if (!bookId) {
+        loading.value = false
+        return
+      }
+
       const createData: CreateReviewRequest = {
-        book_id: props.book.id,
+        book_id: bookId,
         content: reviewForm.value.content,
         rating: reviewForm.value.rating,
         visibility_level: reviewForm.value.visibility_level
       }
 
-      // Only add optional fields if they have values
       if (reviewForm.value.title) {
         createData.title = reviewForm.value.title
       }
@@ -492,18 +749,12 @@ async function handleSave() {
     }
   }
 
-  // Save read date separately using the user books endpoint
-  if (readDate.value) {
-    promises.push(userBookStore.patchUserBookReadDate(props.book.id, readDate.value))
-  }
-
   Promise.all(promises)
     .then(async () => {
       if (reviewForm.value.content.trim()) {
         await loadBookReviews()
       }
       resetReviewForm()
-      emit('readDateUpdated')
     })
     .catch(() => $q.notify({ message: t('error-occurred'), type: 'negative' }))
     .finally(() => (loading.value = false))

@@ -1,5 +1,5 @@
 import { i18n } from '@/locales'
-import type { Book } from '@/models'
+import type { Book, ReadingStatus } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
@@ -40,15 +40,46 @@ export const useUserBookStore = defineStore('userbook', {
         .finally(() => (this._isLoading = false))
     },
 
-    async postUserBooks(book: Book) {
+    async postUserBooks(book: Book, isPrivate: boolean = false, readingStatus: ReadingStatus = 'read') {
       this._isLoading = true
       const userStore = useUserStore()
 
-      // Send only identifiers - backend handles the rest
-      const bookData: { book_id?: string; isbn?: string; google_id?: string } = {}
+      // Check if book is already in user's library BEFORE making API call
+      const userBooks = userStore.me.books || []
+      const isAlreadyInLibrary = userBooks.some((userBook) => {
+        // Check by internal ID (if book.id exists and is internal)
+        if (book.id && book.id.startsWith('B-') && userBook.id === book.id) {
+          return true
+        }
+        // Check by google_id (most reliable for external books)
+        if (book.google_id && userBook.google_id === book.google_id) {
+          return true
+        }
+        // Legacy check: if book.id is actually a google_id (shouldn't happen now but keep for safety)
+        if (book.id && !book.id.startsWith('B-') && userBook.google_id === book.id) {
+          return true
+        }
+        return false
+      })
 
-      if (book.id) {
+      if (isAlreadyInLibrary) {
+        this._isLoading = false
+        return false
+      }
+
+      // Send only identifiers - backend handles the rest
+      const bookData: { book_id?: string; isbn?: string; google_id?: string; is_private?: boolean; reading_status?: ReadingStatus } = {
+        is_private: isPrivate,
+        reading_status: readingStatus
+      }
+
+      // Check if book.id is an internal book ID (starts with 'B-') or external (Google ID)
+      if (book.id && book.id.startsWith('B-')) {
+        // Internal book - use book_id
         bookData.book_id = book.id
+      } else if (book.id && !book.id.startsWith('B-')) {
+        // External book - book.id is actually a google_id
+        bookData.google_id = book.id
       } else if (book.isbn) {
         bookData.isbn = book.isbn
         if (book.google_id) {
@@ -85,20 +116,36 @@ export const useUserBookStore = defineStore('userbook', {
         .finally(() => (this._isLoading = false))
     },
 
-    async patchUserBookReadDate(bookId: Book['id'], readDate: string) {
+    async patchUserBook(bookId: Book['id'], updates: { read_at?: string; is_private?: boolean; reading_status?: ReadingStatus }) {
       this._isLoading = true
       const userStore = useUserStore()
       return api
-        .patch(`/user/books/${bookId}/read-date`, {
-          read_at: readDate
-        })
+        .patch(`/user/books/${bookId}`, updates)
         .then((response) => {
           const currentBooks = userStore.me.books || []
-          const updatedBooks = currentBooks.map((book) =>
-            book.id === bookId && book.pivot ? { ...book, pivot: { ...book.pivot, read_at: readDate } } : book
-          )
+          const updatedBooks = currentBooks.map((book) => {
+            if (book.id === bookId && book.pivot) {
+              const updatedPivot = { ...book.pivot }
+              if (updates.read_at !== undefined) updatedPivot.read_at = updates.read_at
+              if (updates.is_private !== undefined) updatedPivot.is_private = updates.is_private
+              if (updates.reading_status !== undefined) updatedPivot.reading_status = updates.reading_status
+              return { ...book, pivot: updatedPivot }
+            }
+            return book
+          })
           userStore.updateMe({ books: updatedBooks })
-          Notify.create({ message: i18n.global.t('read-date-saved'), type: 'positive' })
+
+          // Show appropriate success message
+          if (Object.keys(updates).length > 1) {
+            Notify.create({ message: i18n.global.t('book-updated'), type: 'positive' })
+          } else if (updates.read_at !== undefined) {
+            Notify.create({ message: i18n.global.t('read-date-saved'), type: 'positive' })
+          } else if (updates.is_private !== undefined) {
+            Notify.create({ message: i18n.global.t('privacy-updated'), type: 'positive' })
+          } else if (updates.reading_status !== undefined) {
+            Notify.create({ message: i18n.global.t('reading-status-updated'), type: 'positive' })
+          }
+
           return response.data
         })
         .catch((error) => {
@@ -106,6 +153,19 @@ export const useUserBookStore = defineStore('userbook', {
           throw error
         })
         .finally(() => (this._isLoading = false))
+    },
+
+    // Backward compatibility methods
+    async patchUserBookReadDate(bookId: Book['id'], readDate: string) {
+      return this.patchUserBook(bookId, { read_at: readDate })
+    },
+
+    async patchUserBookPrivacy(bookId: Book['id'], isPrivate: boolean) {
+      return this.patchUserBook(bookId, { is_private: isPrivate })
+    },
+
+    async patchUserBookStatus(bookId: Book['id'], readingStatus: ReadingStatus) {
+      return this.patchUserBook(bookId, { reading_status: readingStatus })
     },
 
     async deleteUserBook(bookId: Book['id']) {

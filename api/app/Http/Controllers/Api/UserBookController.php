@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaginatedResource;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
+use App\Services\AmazonLinkEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -66,27 +67,41 @@ class UserBookController extends Controller
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function index(Request $request)
+    public function index(Request $request, AmazonLinkEnrichmentService $amazonService)
     {
         $user = $request->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $query = $user->books()->withPivot('added_at', 'read_at');
+        $query = $user->books()->withPivot('added_at', 'read_at', 'is_private', 'reading_status');
 
         // If 'all' parameter is present, return all books without pagination
         if ($request->has('all') && $request->get('all') === 'true') {
-            $books = $query->get();
+            $books = $query->get()->toArray();
+            
+            // Enrich with Amazon links
+            $books = $amazonService->enrichBooksWithAmazonLinks($books, [
+                'locale' => $request->header('Accept-Language', 'en-US')
+            ]);
 
             return response()->json(['data' => $books]);
         }
 
         // Otherwise, paginate with configurable per_page parameter (default 20)
         $perPage = $request->get('per_page', 20);
-        $books = $query->paginate($perPage);
+        $booksPage = $query->paginate($perPage);
+        
+        // Enrich paginated data with Amazon links
+        $enrichedBooks = $amazonService->enrichBooksWithAmazonLinks(
+            $booksPage->items(),
+            ['locale' => $request->header('Accept-Language', 'en-US')]
+        );
+        
+        // Replace items with enriched data
+        $booksPage->setCollection(collect($enrichedBooks));
 
-        return new PaginatedResource($books);
+        return new PaginatedResource($booksPage);
     }
 
     /**
@@ -106,7 +121,9 @@ class UserBookController extends Controller
      *
      *             @OA\Property(property="book_id", type="string", example="B-1ABC-2DEF", description="Book ID if already exists in system"),
      *             @OA\Property(property="isbn", type="string", example="9781505108293", description="ISBN to search for existing book"),
-     *             @OA\Property(property="google_id", type="string", example="HuKNDAAAQBAJ", description="Google Books ID for search/creation and enrichment")
+     *             @OA\Property(property="google_id", type="string", example="HuKNDAAAQBAJ", description="Google Books ID for search/creation and enrichment"),
+     *             @OA\Property(property="is_private", type="boolean", example=false, description="Whether to mark this book as private in user's library"),
+     *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="read", description="Reading status for this book")
      *         )
      *     ),
      *
@@ -146,32 +163,137 @@ class UserBookController extends Controller
             'book_id' => 'nullable|string|exists:books,id',
             'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'google_id' => self::VALIDATION_NULLABLE_STRING,
+            'is_private' => 'boolean',
+            'reading_status' => 'nullable|string|in:want_to_read,reading,read,abandoned,on_hold,re_reading',
         ]);
 
         $user = $request->user();
         $bookId = $request->input('book_id');
         $isbn = $request->input('isbn');
         $googleId = $request->input('google_id');
+        $isPrivate = $request->boolean('is_private', false);
+        $readingStatus = $request->input('reading_status', 'read');
 
         // Try to find existing book by different identifiers
         $book = $this->findBookByIdentifiers($bookId, $isbn, $googleId);
 
         if ($book) {
-            return $this->addBookToUserLibrary($book, $user, $enrichmentService, $googleId);
+            return $this->addBookToUserLibrary($book, $user, $enrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
         // If no book found and we have google_id, create new book
         if ($googleId) {
-            return $this->createBookAndAddToLibrary($user, $enrichmentService, $googleId);
+            return $this->createBookAndAddToLibrary($user, $enrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
         return response()->json(['message' => 'Book not found. Please provide book_id, isbn, or google_id.'], 404);
     }
 
     /**
+     * @OA\Patch(
+     *     path="/user/books/{book}",
+     *     operationId="aUpdateUserBook",
+     *     tags={"User Library"},
+     *     summary="Update book in user's library",
+     *     description="Updates book properties in the authenticated user's library (read date, privacy, etc.)",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Book update data (provide any combination of fields)",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="read_at", type="string", format="date", example="2024-01-15", description="Date when the book was read (nullable to mark as unread)"),
+     *             @OA\Property(property="is_private", type="boolean", example=true, description="Whether the book should be private"),
+     *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="reading", description="Reading status for this book")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book updated successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Book updated successfully"),
+     *             @OA\Property(property="read_at", type="string", format="date", example="2024-01-15"),
+     *             @OA\Property(property="is_private", type="boolean", example=true),
+     *             @OA\Property(property="reading_status", type="string", example="reading")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found in user's library"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function update(Request $request, Book $book)
+    {
+        $request->validate([
+            'read_at' => 'nullable|date',
+            'is_private' => 'nullable|boolean',
+            'reading_status' => 'nullable|string|in:want_to_read,reading,read,abandoned,on_hold,re_reading',
+        ]);
+
+        $user = $request->user();
+
+        // Check if book is in user's library
+        if (! $user->books()->where('books.id', $book->id)->exists()) {
+            return response()->json(['error' => 'Book not found in your library'], 404);
+        }
+
+        // Build update data based on provided fields
+        $updateData = [];
+        $responseData = ['message' => 'Book updated successfully'];
+
+        if ($request->has('read_at')) {
+            $readAt = $request->input('read_at');
+            $updateData['read_at'] = $readAt ? \Carbon\Carbon::parse($readAt)->format('Y-m-d') : null;
+            $responseData['read_at'] = $updateData['read_at'];
+        }
+
+        if ($request->has('is_private')) {
+            $isPrivate = $request->boolean('is_private');
+            $updateData['is_private'] = $isPrivate;
+            $responseData['is_private'] = $isPrivate;
+        }
+
+        if ($request->has('reading_status')) {
+            $readingStatus = $request->input('reading_status');
+            $updateData['reading_status'] = $readingStatus;
+            $responseData['reading_status'] = $readingStatus;
+
+            // Auto-set read_at when status changes to 'read' and no read_at exists
+            if ($readingStatus === 'read' && ! $request->has('read_at')) {
+                $currentPivot = $user->books()->where('books.id', $book->id)->first()?->pivot;
+                if ($currentPivot && ! $currentPivot->read_at) {
+                    $updateData['read_at'] = now()->format('Y-m-d');
+                    $responseData['read_at'] = $updateData['read_at'];
+                }
+            }
+        }
+
+        // Update the pivot table with provided data
+        if (! empty($updateData)) {
+            $user->books()->updateExistingPivot($book->id, $updateData);
+        }
+
+        return response()->json($responseData);
+    }
+
+    /**
      * @OA\Delete(
      *     path="/user/books/{book}",
-     *     operationId="removeBookFromLibrary",
+     *     operationId="bRemoveBookFromLibrary",
      *     tags={"User Library"},
      *     summary="Remove book from user's library",
      *     description="Removes a book from the authenticated user's personal library",
@@ -209,74 +331,6 @@ class UserBookController extends Controller
     }
 
     /**
-     * @OA\Patch(
-     *     path="/user/books/{book}/read-date",
-     *     operationId="updateBookReadDate",
-     *     tags={"User Library"},
-     *     summary="Update book read date",
-     *     description="Updates the read date for a book in the user's library",
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="book",
-     *         in="path",
-     *         description="Book ID",
-     *         required=true,
-     *
-     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
-     *     ),
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Read date data",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="read_at", type="string", format="date", example="2024-01-15", description="Date when the book was read (nullable to mark as unread)")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Read date updated successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="message", type="string", example="Read date updated successfully"),
-     *             @OA\Property(property="read_at", type="string", format="date", example="2024-01-15")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(response=404, description="Book not found in user's library"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
-    public function updateReadDate(Request $request, Book $book)
-    {
-        $request->validate([
-            'read_at' => 'nullable|date',
-        ]);
-
-        $user = $request->user();
-        $readAt = $request->input('read_at');
-
-        // Check if book is in user's library
-        if (! $user->books()->where('books.id', $book->id)->exists()) {
-            return response()->json(['error' => 'Book not found in your library'], 404);
-        }
-
-        // Update the read_at date in the pivot table - ensure only date part is saved
-        $user->books()->updateExistingPivot($book->id, [
-            'read_at' => $readAt ? \Carbon\Carbon::parse($readAt)->format('Y-m-d') : null,
-        ]);
-
-        return response()->json([
-            'message' => 'Read date updated successfully',
-            'read_at' => $readAt ? \Carbon\Carbon::parse($readAt)->format('Y-m-d') : null,
-        ]);
-    }
-
-    /**
      * Find existing book by different identifiers
      */
     private function findBookByIdentifiers(?string $bookId, ?string $isbn, ?string $googleId): ?Book
@@ -305,7 +359,7 @@ class UserBookController extends Controller
     /**
      * Add existing book to user's library
      */
-    private function addBookToUserLibrary(Book $book, $user, BookEnrichmentService $enrichmentService, ?string $googleId): JsonResponse
+    private function addBookToUserLibrary(Book $book, $user, BookEnrichmentService $enrichmentService, ?string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
         // Check if book is already in user's library
         if ($user->books()->where('books.id', $book->id)->exists()) {
@@ -327,9 +381,18 @@ class UserBookController extends Controller
         }
 
         // Add book to user's library
-        $user->books()->attach($book->id, [
+        $attachData = [
             'added_at' => now(),
-        ]);
+            'is_private' => $isPrivate,
+            'reading_status' => $readingStatus,
+        ];
+
+        // Auto-set read_at when status is 'read'
+        if ($readingStatus === 'read') {
+            $attachData['read_at'] = now()->format('Y-m-d');
+        }
+
+        $user->books()->attach($book->id, $attachData);
 
         // Reload book with pivot data
         $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
@@ -345,19 +408,19 @@ class UserBookController extends Controller
     /**
      * Create new book and add to user's library
      */
-    private function createBookAndAddToLibrary($user, BookEnrichmentService $enrichmentService, string $googleId): JsonResponse
+    private function createBookAndAddToLibrary($user, BookEnrichmentService $enrichmentService, string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
         // Create and enrich book from Google Books in one step
-        $enrichmentResult = $enrichmentService->createEnrichedBookFromGoogle($googleId, $user->id);
-        
-        if (!$enrichmentResult['success']) {
+        $enrichmentResult = $enrichmentService->createEnrichedBookFromGoogle($googleId, $user->id, $isPrivate, $readingStatus);
+
+        if (! $enrichmentResult['success']) {
             return response()->json([
                 'message' => $enrichmentResult['message'] ?? 'Failed to create book from Google Books',
             ], 422);
         }
 
         $book = $enrichmentResult['book'];
-        
+
         // Reload book with pivot data
         $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
 

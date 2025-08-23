@@ -25,7 +25,10 @@ use Laravel\Sanctum\HasApiTokens;
  *     @OA\Property(property="role", type="string", enum={"admin", "user"}, example="user"),
  *     @OA\Property(property="followers_count", type="integer", example=15),
  *     @OA\Property(property="following_count", type="integer", example=8),
- *     @OA\Property(property="is_private", type="boolean", example=false),
+ *     @OA\Property(property="is_private", type="boolean", example=false, description="Whether the user's profile and library are private"),
+ *     @OA\Property(property="is_following", type="boolean", example=false, description="Whether the current user is following this user (only included when authenticated)"),
+ *     @OA\Property(property="has_pending_follow_request", type="boolean", example=false, description="Whether the current user has a pending follow request to this user (only included when authenticated)"),
+ *     @OA\Property(property="pending_follow_requests_count", type="integer", example=3, description="Number of pending follow requests for this user (only for private accounts)"),
  *     @OA\Property(property="email_verified", type="boolean", example=false),
  *     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
@@ -105,7 +108,7 @@ class User extends Authenticatable
     public function books()
     {
         return $this->belongsToMany(Book::class, 'users_books')
-            ->withPivot('added_at', 'read_at')
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
             ->withTimestamps();
     }
 
@@ -179,6 +182,7 @@ class User extends Authenticatable
     private function buildFollowRelationship(string $foreignKey, string $relatedKey)
     {
         return $this->belongsToMany(User::class, 'follows', $foreignKey, $relatedKey)
+            ->wherePivot('status', 'accepted')
             ->withTimestamps();
     }
 
@@ -190,5 +194,19 @@ class User extends Authenticatable
         $column = $relationshipType === 'following' ? 'followed_id' : 'follower_id';
 
         return $this->$relationshipType()->where($column, $user->id)->exists();
+    }
+
+    /**
+     * Get the count of pending follow requests for this user.
+     */
+    public function getPendingFollowRequestsCountAttribute(): int
+    {
+        if (! $this->is_private) {
+            return 0;
+        }
+
+        return Follow::where('followed_id', $this->id)
+            ->where('status', 'pending')
+            ->count();
     }
 }

@@ -53,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/auth/me', [AuthController::class, 'updateMe']);
     Route::delete('/auth/me', [AuthController::class, 'deleteMe']);
     Route::get('/auth/check-username', [AuthController::class, 'checkUsername']);
-    Route::put('/auth/password', [AuthController::class, 'updatePassword2']);
+    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
 
     // Legacy password endpoint
     Route::put('/password', [AuthController::class, 'updatePassword']);
@@ -68,14 +68,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // User's books (Personal Library Management)
     Route::get('/user/books', [UserBookController::class, 'index']);
     Route::post('/user/books', [UserBookController::class, 'store']);
+    Route::patch('/user/books/{book}', [UserBookController::class, 'update']);
     Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
-    Route::patch('/user/books/{book}/read-date', [UserBookController::class, 'updateReadDate']);
 
     // Follow system
     Route::post('/users/{user}/follow', [FollowController::class, 'follow']);
     Route::delete('/users/{user}/follow', [FollowController::class, 'unfollow']);
     Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
     Route::get('/users/{user}/following', [FollowController::class, 'following']);
+
+    // Follow requests
+    Route::get('/follow-requests', [FollowController::class, 'getFollowRequests']);
+    Route::post('/follow-requests/{followId}', [FollowController::class, 'acceptFollowRequest']);
+    Route::delete('/follow-requests/{followId}', [FollowController::class, 'rejectFollowRequest']);
 
     // Reviews (authenticated routes)
     Route::get('/reviews', [ReviewController::class, 'index']);

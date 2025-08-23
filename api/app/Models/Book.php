@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Events\BookCreated;
 
 /**
  * @OA\Schema(
@@ -15,13 +16,16 @@ use Illuminate\Support\Str;
  *
  *     @OA\Property(property="id", type="string", example="B-3D6Y-9IO8"),
  *     @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", nullable=true),
+ *     @OA\Property(property="amazon_asin", type="string", example="B08LPMFDQC", nullable=true),
+ *     @OA\Property(property="asin_status", type="string", enum={"pending", "processing", "completed", "failed"}, example="completed"),
+ *     @OA\Property(property="asin_processed_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="isbn", type="string", example="9788533613379", nullable=true),
  *     @OA\Property(property="title", type="string", example="The Lord of the Rings"),
  *     @OA\Property(property="subtitle", type="string", example="The Fellowship of the Ring", nullable=true),
  *     @OA\Property(property="authors", type="string", example="J.R.R. Tolkien"),
  *     @OA\Property(property="description", type="string", nullable=true),
  *     @OA\Property(property="thumbnail", type="string", format="url", nullable=true),
- *     @OA\Property(property="language", type="string", example="pt-BR"),
+ *     @OA\Property(property="language", type="string", example="en", nullable=true),
  *     @OA\Property(property="publisher", type="string", example="HarperCollins", nullable=true),
  *     @OA\Property(property="published_date", type="string", format="date", nullable=true),
  *     @OA\Property(property="page_count", type="integer", example=423, nullable=true),
@@ -36,6 +40,12 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="info_quality", type="string", enum={"basic", "enhanced", "complete"}, example="enhanced"),
  *     @OA\Property(property="enriched_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="edition", type="string", nullable=true),
+ *     @OA\Property(property="pivot", type="object", nullable=true, description="User-specific book data (when fetched from user's library)",
+ *         @OA\Property(property="added_at", type="string", format="date-time", description="When the book was added to user's library"),
+ *         @OA\Property(property="read_at", type="string", format="date", nullable=true, description="Date when the book was read"),
+ *         @OA\Property(property="is_private", type="boolean", description="Whether this book is private in the user's library"),
+ *         @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, description="Current reading status")
+ *     ),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
@@ -55,6 +65,9 @@ class Book extends Model
         'id',
         'isbn',
         'google_id',
+        'amazon_asin',
+        'asin_status',
+        'asin_processed_at',
         'title',
         'subtitle',
         'authors',
@@ -82,6 +95,7 @@ class Book extends Model
         'industry_identifiers' => 'array',
         'published_date' => 'date',
         'enriched_at' => 'datetime',
+        'asin_processed_at' => 'datetime',
         'height' => self::DECIMAL_PRECISION,
         'width' => self::DECIMAL_PRECISION,
         'thickness' => self::DECIMAL_PRECISION,
@@ -90,10 +104,16 @@ class Book extends Model
     protected static function boot()
     {
         parent::boot();
+        
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = 'B-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
             }
+        });
+
+        static::created(function ($model) {
+            // Dispatch BookCreated event after a book is successfully created
+            BookCreated::dispatch($model);
         });
     }
 
