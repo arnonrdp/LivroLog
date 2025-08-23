@@ -15,41 +15,24 @@ jobs:
   required-checks:
     uses: ./.github/workflows/required-checks.yml
 
-  set-environment:
-    needs: required-checks
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.env.outputs.environment }}
-
-    steps:
-      - name: Set environment
-        id: env
-        run: |
-          # Determine environment from the current branch
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=Production" >> $GITHUB_OUTPUT
-          else
-            echo "environment=Development" >> $GITHUB_OUTPUT
-          fi
-
   build:
-    needs: set-environment
+    needs: required-checks
     uses: ./.github/workflows/build.yml
     with:
-      environment: ${{ needs.set-environment.outputs.environment }}
+      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     secrets: inherit
 
   deploy:
     name: deploy
     runs-on: ubuntu-latest
-    needs: [set-environment, build]
+    needs: [required-checks, build]
     if: always() && needs.build.result == 'success'
 
     env:
       TIMESTAMP: ${{ github.run_number }}-${{ github.sha }}
-      ENVIRONMENT: ${{ needs.set-environment.outputs.environment }}
-      DEPLOY_PATH: ${{ needs.set-environment.outputs.environment == 'Production' && '/var/www/livrolog' || '/var/www/livrolog-dev' }}
-      SHARED_ENV: ${{ needs.set-environment.outputs.environment == 'Production' && '.env' || '.env.dev' }}
+      ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
+      DEPLOY_PATH: ${{ github.ref == 'refs/heads/main' && '/var/www/livrolog' || '/var/www/livrolog-dev' }}
+      SHARED_ENV: ${{ github.ref == 'refs/heads/main' && '.env' || '.env.dev' }}
 
     steps:
       - name: Set environment variables
@@ -210,17 +193,17 @@ jobs:
 
   post-deploy:
     name: post-deploy
-    needs: [set-environment, deploy]
+    needs: [deploy]
     uses: ./.github/workflows/post-deploy.yml
     with:
-      environment: ${{ needs.set-environment.outputs.environment }}
+      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     secrets: inherit
 
   rollback:
     name: rollback
     runs-on: ubuntu-latest
     if: failure() && github.event_name != 'workflow_dispatch'
-    needs: [set-environment, deploy]
+    needs: [deploy]
 
     steps:
       - name: Automatic rollback
@@ -233,15 +216,11 @@ jobs:
             set -e
             echo "🔄 Performing automatic rollback due to deployment failure..."
 
-            # Determine environment from branch or output
-            ENVIRONMENT="${{ needs.set-environment.outputs.environment }}"
-            if [[ -z "$ENVIRONMENT" ]]; then
-              # Fallback: detect from branch
-              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-                ENVIRONMENT="Production"
-              else
-                ENVIRONMENT="Development"
-              fi
+            # Determine environment from branch
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              ENVIRONMENT="Production"
+            else
+              ENVIRONMENT="Development"
             fi
 
             if [[ "$ENVIRONMENT" == "Production" ]]; then
