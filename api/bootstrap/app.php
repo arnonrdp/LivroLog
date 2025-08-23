@@ -23,6 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         // Daily database backup at 3:00 AM
         $schedule->command('backup:database')->dailyAt('03:00');
+        
+        // Run queue worker every minute to process jobs
+        $schedule->command('queue:work --tries=3 --timeout=60 --sleep=3 --max-jobs=10 --stop-when-empty')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->runInBackground();
     })
     ->withExceptions(function (): void {
         //

@@ -14,6 +14,8 @@ class BookTransformer
         'authors',
         'isbn',
         'amazon_asin',
+        'asin_status',
+        'asin_processed_at',
         'thumbnail',
         'description',
     ];

@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,5 +31,11 @@ class AppServiceProvider extends ServiceProvider
                 .'/reset-password?token='.$token
                 .'&email='.urlencode($user->email);
         });
+
+        // Register event listeners
+        Event::listen(
+            \App\Events\BookCreated::class,
+            \App\Listeners\EnrichBookWithAmazon::class,
+        );
     }
 }

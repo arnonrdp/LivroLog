@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Events\BookCreated;
 
 /**
  * @OA\Schema(
@@ -16,6 +17,8 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="id", type="string", example="B-3D6Y-9IO8"),
  *     @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", nullable=true),
  *     @OA\Property(property="amazon_asin", type="string", example="B08LPMFDQC", nullable=true),
+ *     @OA\Property(property="asin_status", type="string", enum={"pending", "processing", "completed", "failed"}, example="completed"),
+ *     @OA\Property(property="asin_processed_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="isbn", type="string", example="9788533613379", nullable=true),
  *     @OA\Property(property="title", type="string", example="The Lord of the Rings"),
  *     @OA\Property(property="subtitle", type="string", example="The Fellowship of the Ring", nullable=true),
@@ -63,6 +66,8 @@ class Book extends Model
         'isbn',
         'google_id',
         'amazon_asin',
+        'asin_status',
+        'asin_processed_at',
         'title',
         'subtitle',
         'authors',
@@ -90,6 +95,7 @@ class Book extends Model
         'industry_identifiers' => 'array',
         'published_date' => 'date',
         'enriched_at' => 'datetime',
+        'asin_processed_at' => 'datetime',
         'height' => self::DECIMAL_PRECISION,
         'width' => self::DECIMAL_PRECISION,
         'thickness' => self::DECIMAL_PRECISION,
@@ -98,10 +104,16 @@ class Book extends Model
     protected static function boot()
     {
         parent::boot();
+        
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = 'B-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
             }
+        });
+
+        static::created(function ($model) {
+            // Dispatch BookCreated event after a book is successfully created
+            BookCreated::dispatch($model);
         });
     }
 

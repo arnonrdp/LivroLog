@@ -12,15 +12,6 @@
       <div class="book-cover" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
-
-        <!-- Amazon buy button overlay -->
-        <div v-if="book.amazon_buy_link" class="amazon-buy-overlay">
-          <q-btn color="orange" :href="book.amazon_buy_link" icon="shopping_cart" round size="sm" target="_blank" @click.stop>
-            <q-tooltip anchor="top middle" self="bottom middle">
-              {{ $t('buy-on-amazon') }}
-            </q-tooltip>
-          </q-btn>
-        </div>
       </div>
 
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">

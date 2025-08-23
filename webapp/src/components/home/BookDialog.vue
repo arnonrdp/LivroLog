@@ -5,8 +5,21 @@
       <q-card-section class="row items-center q-pb-sm">
         <div class="text-h6">{{ book.title }}</div>
         <q-space />
-        <q-btn v-if="amazonBuyLink" class="q-mr-sm" dense flat :href="amazonBuyLink" icon="shopping_cart" round target="_blank">
-          <q-tooltip>{{ getAmazonTooltipText() }}</q-tooltip>
+        <!-- Smart Amazon button -->
+        <q-btn
+          v-if="shouldShowAmazonButton"
+          class="q-mr-sm"
+          :color="amazonButtonColor"
+          dense
+          :disable="amazonButtonDisabled"
+          flat
+          :href="amazonButtonHref || undefined"
+          :icon="amazonButtonIcon"
+          :loading="book.asin_status === 'processing'"
+          round
+          :target="amazonButtonHref ? '_blank' : undefined"
+        >
+          <q-tooltip>{{ amazonTooltipText }}</q-tooltip>
         </q-btn>
         <q-btn v-close-popup dense flat icon="close" round />
       </q-card-section>
@@ -269,11 +282,11 @@
 </template>
 
 <script setup lang="ts">
+import { getAmazonRegionConfig, getAmazonSearchUrl } from '@/config/amazon'
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useReviewStore, useUserBookStore, useUserStore } from '@/stores'
-import { getAmazonRegionConfig, getAmazonSearchUrl } from '@/config/amazon'
 import { useQuasar } from 'quasar'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -288,31 +301,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const $q = useQuasar()
-
 const reviewStore = useReviewStore()
 const userBookStore = useUserBookStore()
 const userStore = useUserStore()
-
-// Helper function to get the correct book_id for API calls
-function getBookId(): string | null {
-  // If book.id exists and starts with 'B-', it's already an internal book ID
-  if (props.book.id && props.book.id.startsWith('B-')) {
-    return props.book.id
-  }
-
-  // For external books (book.id is null or not internal), we MUST find the internal ID from user's library
-  // Never use google_id for API calls that expect book_id
-  const userBooks = userStore.me.books || []
-  const internalBook = userBooks.find((book) => book.google_id === props.book.google_id)
-
-  // Only return internal book_id if found
-  if (internalBook && internalBook.id.startsWith('B-')) {
-    return internalBook.id
-  }
-
-  // Return null if no internal book found - this prevents wrong API calls
-  return null
-}
 
 const loading = ref(false)
 const libraryLoading = ref(false)
@@ -332,20 +323,23 @@ const reviewForm = ref<CreateReviewRequest>({
   visibility_level: 'public',
   is_spoiler: false
 })
+const pollingInterval = ref<number | null>(null)
+const pollingStartTime = ref<Date | null>(null)
+const isBookInLibrary = ref(false)
+const MAX_POLLING_TIME = 60000
 
 const showDialog = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
-const bookReviews = computed(() => reviewStore.reviews)
-const currentUserId = computed(() => userStore.me?.id)
-const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
-// Use ref instead of computed to avoid reactivity timing issues
-const isBookInLibrary = ref(false)
 
-// Computed property for Amazon buy link
+const bookReviews = computed(() => reviewStore.reviews)
+
+const currentUserId = computed(() => userStore.me?.id)
+
+const userReview = computed(() => bookReviews.value.find((review) => review.user_id === currentUserId.value))
+
 const amazonBuyLink = computed(() => {
-  // If the book already has an amazon_buy_link, use it
   if (props.book.amazon_buy_link) {
     return props.book.amazon_buy_link
   }
@@ -353,24 +347,17 @@ const amazonBuyLink = computed(() => {
   const locale = t('locale') || 'en-US'
   const { domain, tag } = getAmazonRegionConfig(locale)
 
-  // If the book has an amazon_asin, generate direct link with proper affiliate format
   if (props.book.amazon_asin) {
     return `https://www.${domain}/dp/${props.book.amazon_asin}?tag=${tag}`
   }
 
-  // Fallback: generate search link with smart search strategy
   let searchTerm = ''
 
-  // Strategy 1: Try title + author (most reliable for finding correct edition)
   if (props.book.title && props.book.authors) {
     searchTerm = `${props.book.title} ${props.book.authors}`
-  }
-  // Strategy 2: Try just title if no author
-  else if (props.book.title) {
+  } else if (props.book.title) {
     searchTerm = props.book.title
-  }
-  // Strategy 3: Try ISBN as last resort (might not exist in this region)
-  else if (props.book.isbn) {
+  } else if (props.book.isbn) {
     searchTerm = props.book.isbn
   }
 
@@ -383,36 +370,52 @@ const amazonBuyLink = computed(() => {
   return null
 })
 
-// Get tooltip text based on link type
-function getAmazonTooltipText() {
+const shouldShowAmazonButton = computed(() => {
+  return (
+    !!props.book.amazon_asin ||
+    props.book.asin_status === 'pending' ||
+    props.book.asin_status === 'processing' ||
+    props.book.asin_status === 'completed' ||
+    props.book.asin_status === 'failed'
+  )
+})
+
+const amazonButtonColor = computed(() => {
+  if (props.book.amazon_asin) return 'orange'
+  if (props.book.asin_status === 'processing') return 'grey-6'
+  if (props.book.asin_status === 'pending') return 'grey-5'
+  if (props.book.asin_status === 'failed') return 'grey-4'
+  return 'grey-6'
+})
+
+const amazonButtonDisabled = computed(() => {
+  return props.book.asin_status === 'failed'
+})
+
+const amazonButtonHref = computed(() => {
+  return props.book.amazon_asin ? amazonBuyLink.value : null
+})
+
+const amazonButtonIcon = computed(() => {
+  return 'shopping_cart'
+})
+
+const amazonTooltipText = computed(() => {
   if (props.book.amazon_asin) {
     return t('buy-on-amazon')
-  } else {
-    return t('search-on-amazon', 'Buscar na Amazon')
   }
-}
-
-// Function to update library status
-function updateLibraryStatus() {
-  const bookId = props.book?.id
-  const googleId = props.book?.google_id
-
-  if (!bookId && !googleId) {
-    isBookInLibrary.value = false
-    return
+  if (props.book.asin_status === 'processing') {
+    return t('searching-amazon-link')
   }
+  if (props.book.asin_status === 'pending') {
+    return t('searching-amazon-link')
+  }
+  if (props.book.asin_status === 'failed') {
+    return t('amazon-link-not-found')
+  }
+  return t('buy-on-amazon')
+})
 
-  const userBooks = userStore.me.books || []
-
-  // Check by id first (if available), then by google_id
-  const result = userBooks.some((book) => {
-    if (bookId && book.id === bookId) return true
-    if (googleId && book.google_id === googleId) return true
-    return false
-  })
-
-  isBookInLibrary.value = result
-}
 const canAddReview = computed(() => !userReview.value && isBookInLibrary.value && getBookId() !== null)
 
 const visibilityOptions = computed(() => [
@@ -420,6 +423,7 @@ const visibilityOptions = computed(() => [
   { label: t('friends'), value: 'friends' },
   { label: t('public'), value: 'public' }
 ])
+
 const readingStatusOptions = computed(() => [
   { label: t('want-to-read'), value: 'want_to_read' },
   { label: t('reading'), value: 'reading' },
@@ -429,12 +433,20 @@ const readingStatusOptions = computed(() => [
   { label: t('re-reading'), value: 're_reading' }
 ])
 
+onMounted(() => {
+  if (props.book.asin_status === 'processing') {
+    startPolling()
+  }
+})
+
+onUnmounted(() => {
+  stopPolling()
+})
+
 watch(
   () => props.modelValue,
   async (newValue) => {
     if (newValue) {
-      // No need for complex store tracking - using userStore.me.books directly
-
       resetReviewForm()
       reviewStore.clearReviews()
       loading.value = true
@@ -443,10 +455,8 @@ watch(
       readDate.value = pivotReadAt ? new Date(pivotReadAt).toISOString().split('T')[0] || '' : ''
       readingStatus.value = props.book.pivot?.reading_status || 'read'
 
-      // Update library status using existing userStore.me.books data
       updateLibraryStatus()
 
-      // Initialize private book status if book is in library
       if (isBookInLibrary.value) {
         const userBooks = userStore.me.books || []
         const bookInLibrary = userBooks.find((book) => {
@@ -462,7 +472,6 @@ watch(
       await loadBookReviews()
       loading.value = false
     } else {
-      // Clean up on close
       reviewStore.clearReviews()
       resetReviewForm()
       showDeleteDialog.value = false
@@ -473,49 +482,93 @@ watch(
   { immediate: true }
 )
 
-// Watch for changes in private book status when book is in library
 watch(isPrivateBook, async (newValue, oldValue) => {
-  // Only update if book is in library and value actually changed
   if (isBookInLibrary.value && newValue !== oldValue && oldValue !== undefined) {
     await updateBookPrivacy(newValue)
   }
 })
 
+watch(showDialog, (newValue) => {
+  if (newValue && props.book.asin_status === 'processing') {
+    startPolling()
+  } else if (!newValue) {
+    stopPolling()
+  }
+})
+
+function getBookId(): string | null {
+  if (props.book.id && props.book.id.startsWith('B-')) {
+    return props.book.id
+  }
+
+  const userBooks = userStore.me.books || []
+  const internalBook = userBooks.find((book) => book.google_id === props.book.google_id)
+
+  if (internalBook && internalBook.id.startsWith('B-')) {
+    return internalBook.id
+  }
+
+  return null
+}
+
+function startPolling() {
+  if (props.book.asin_status !== 'processing') return
+
+  pollingStartTime.value = new Date()
+
+  pollingInterval.value = window.setInterval(async () => {
+    if (pollingStartTime.value && new Date().getTime() - pollingStartTime.value.getTime() > MAX_POLLING_TIME) {
+      stopPolling()
+      return
+    }
+
+    try {
+      const response = await window.fetch(`/api/books/${props.book.id}`)
+      if (response.ok) {
+        const updatedBook = await response.json()
+
+        Object.assign(props.book, updatedBook)
+
+        if (updatedBook.asin_status !== 'processing') {
+          stopPolling()
+        }
+      }
+    } catch (error) {
+      console.error('Error polling for ASIN updates:', error)
+    }
+  }, 3000)
+}
+
+function stopPolling() {
+  if (pollingInterval.value) {
+    window.clearInterval(pollingInterval.value)
+    pollingInterval.value = null
+    pollingStartTime.value = null
+  }
+}
+
+function updateLibraryStatus() {
+  const bookId = props.book?.id
+  const googleId = props.book?.google_id
+
+  if (!bookId && !googleId) {
+    isBookInLibrary.value = false
+    return
+  }
+
+  const userBooks = userStore.me.books || []
+
+  const result = userBooks.some((book) => {
+    if (bookId && book.id === bookId) return true
+    if (googleId && book.google_id === googleId) return true
+    return false
+  })
+
+  isBookInLibrary.value = result
+}
+
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString()
-}
-
-async function updateBookPrivacy(isPrivate: boolean) {
-  const bookId = getBookId()
-  if (!bookId) {
-    console.error('No book ID available for privacy update')
-    return
-  }
-
-  await userBookStore.patchUserBookPrivacy(bookId, isPrivate)
-  // Update local state to reflect the change
-  updateLibraryStatus()
-}
-
-async function updateReadDate() {
-  const bookId = getBookId()
-  if (!bookId) {
-    console.error('No book ID available for read date update')
-    return
-  }
-
-  await userBookStore.patchUserBookReadDate(bookId, readDate.value)
-  emit('readDateUpdated')
-}
-
-async function updateReadingStatus() {
-  const bookId = getBookId()
-  if (!bookId) {
-    console.error('No book ID available for reading status update')
-    return
-  }
-  await userBookStore.patchUserBookStatus(bookId, readingStatus.value)
-  emit('readDateUpdated')
 }
 
 function resetReviewForm() {
@@ -545,12 +598,43 @@ function deleteReview(reviewId: string) {
   showDeleteDialog.value = true
 }
 
+async function updateBookPrivacy(isPrivate: boolean) {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for privacy update')
+    return
+  }
+
+  await userBookStore.patchUserBookPrivacy(bookId, isPrivate)
+  updateLibraryStatus()
+}
+
+async function updateReadDate() {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for read date update')
+    return
+  }
+
+  await userBookStore.patchUserBookReadDate(bookId, readDate.value)
+  emit('readDateUpdated')
+}
+
+async function updateReadingStatus() {
+  const bookId = getBookId()
+  if (!bookId) {
+    console.error('No book ID available for reading status update')
+    return
+  }
+  await userBookStore.patchUserBookStatus(bookId, readingStatus.value)
+  emit('readDateUpdated')
+}
+
 async function loadBookReviews() {
   const bookId = getBookId()
   if (bookId) {
     await reviewStore.getReviewsByBook(bookId)
   } else {
-    // Clear reviews if no valid book_id - prevents loading reviews with google_id
     reviewStore.clearReviews()
   }
 }
@@ -575,7 +659,6 @@ async function toggleVisibility(review: Review) {
 }
 
 async function addToLibrary() {
-  // Prevent multiple simultaneous calls
   if (libraryLoading.value) {
     return
   }
@@ -589,12 +672,10 @@ async function addToLibrary() {
 }
 
 async function removeFromLibrary() {
-  // Prevent multiple simultaneous calls
   if (libraryLoading.value) {
     return
   }
 
-  // Find the book ID in user's library (needed for books from search that only have google_id)
   const bookId = props.book.id
   const googleId = props.book.google_id
 
@@ -603,7 +684,6 @@ async function removeFromLibrary() {
   if (bookId) {
     bookToRemoveId = bookId
   } else if (googleId) {
-    // Find the book in user's library by google_id to get its system ID
     const userBooks = userStore.me.books || []
     const foundBook = userBooks.find((book) => book.google_id === googleId)
     bookToRemoveId = foundBook?.id
@@ -626,19 +706,16 @@ async function handleSave() {
 
   const promises = []
 
-  // Save review if content is provided
   if (reviewForm.value.content.trim()) {
     const existingReview = userReview.value
 
     if (existingReview) {
-      // For update, only include fields that have values
       const updateData: UpdateReviewRequest = {
         content: reviewForm.value.content,
         rating: reviewForm.value.rating,
         visibility_level: reviewForm.value.visibility_level
       }
 
-      // Only add optional fields if they have values
       if (reviewForm.value.title) {
         updateData.title = reviewForm.value.title
       }
@@ -648,7 +725,6 @@ async function handleSave() {
 
       promises.push(reviewStore.putReviews(existingReview.id, updateData))
     } else {
-      // For create, build the request properly
       const bookId = getBookId()
       if (!bookId) {
         loading.value = false
@@ -662,7 +738,6 @@ async function handleSave() {
         visibility_level: reviewForm.value.visibility_level
       }
 
-      // Only add optional fields if they have values
       if (reviewForm.value.title) {
         createData.title = reviewForm.value.title
       }

@@ -1,10 +1,13 @@
 export type ReadingStatus = 'want_to_read' | 'reading' | 'read' | 'abandoned' | 'on_hold' | 're_reading'
+export type AsinStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
 export interface Book {
   addedIn?: Date | string | number
   amazon_asin?: string
   amazon_buy_link?: string
   amazon_region?: string
+  asin_processed_at?: string
+  asin_status?: AsinStatus
   authors?: string
   categories?: string | string[]
   created_at?: string
