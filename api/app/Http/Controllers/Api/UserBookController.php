@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaginatedResource;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
+use App\Services\UnifiedBookEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -79,7 +80,7 @@ class UserBookController extends Controller
         // If 'all' parameter is present, return all books without pagination
         if ($request->has('all') && $request->get('all') === 'true') {
             $books = $query->get()->toArray();
-            
+
             // Enrich with Amazon links
             $books = $amazonService->enrichBooksWithAmazonLinks($books, [
                 'locale' => $request->header('Accept-Language', 'en-US')
@@ -91,13 +92,13 @@ class UserBookController extends Controller
         // Otherwise, paginate with configurable per_page parameter (default 20)
         $perPage = $request->get('per_page', 20);
         $booksPage = $query->paginate($perPage);
-        
+
         // Enrich paginated data with Amazon links
         $enrichedBooks = $amazonService->enrichBooksWithAmazonLinks(
             $booksPage->items(),
             ['locale' => $request->header('Accept-Language', 'en-US')]
         );
-        
+
         // Replace items with enriched data
         $booksPage->setCollection(collect($enrichedBooks));
 
@@ -157,7 +158,7 @@ class UserBookController extends Controller
      *     @OA\Response(response=422, description="Validation error")
      * )
      */
-    public function store(Request $request, BookEnrichmentService $enrichmentService)
+    public function store(Request $request, UnifiedBookEnrichmentService $unifiedEnrichmentService)
     {
         $request->validate([
             'book_id' => 'nullable|string|exists:books,id',
@@ -178,12 +179,12 @@ class UserBookController extends Controller
         $book = $this->findBookByIdentifiers($bookId, $isbn, $googleId);
 
         if ($book) {
-            return $this->addBookToUserLibrary($book, $user, $enrichmentService, $googleId, $isPrivate, $readingStatus);
+            return $this->addBookToUserLibrary($book, $user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
         // If no book found and we have google_id, create new book
         if ($googleId) {
-            return $this->createBookAndAddToLibrary($user, $enrichmentService, $googleId, $isPrivate, $readingStatus);
+            return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
         return response()->json(['message' => 'Book not found. Please provide book_id, isbn, or google_id.'], 404);
@@ -359,7 +360,7 @@ class UserBookController extends Controller
     /**
      * Add existing book to user's library
      */
-    private function addBookToUserLibrary(Book $book, $user, BookEnrichmentService $enrichmentService, ?string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
+    private function addBookToUserLibrary(Book $book, $user, UnifiedBookEnrichmentService $unifiedEnrichmentService, ?string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
         // Check if book is already in user's library
         if ($user->books()->where('books.id', $book->id)->exists()) {
@@ -374,8 +375,8 @@ class UserBookController extends Controller
         $needsEnrichment = $this->shouldEnrichBook($book);
 
         if ($needsEnrichment) {
-            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-            if ($enrichmentResult['success']) {
+            $enrichmentResult = $unifiedEnrichmentService->enrichBook($book, $googleId);
+            if ($enrichmentResult['google_success']) {
                 $book->refresh();
             }
         }
@@ -408,10 +409,10 @@ class UserBookController extends Controller
     /**
      * Create new book and add to user's library
      */
-    private function createBookAndAddToLibrary($user, BookEnrichmentService $enrichmentService, string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
+    private function createBookAndAddToLibrary($user, UnifiedBookEnrichmentService $unifiedEnrichmentService, string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
         // Create and enrich book from Google Books in one step
-        $enrichmentResult = $enrichmentService->createEnrichedBookFromGoogle($googleId, $user->id, $isPrivate, $readingStatus);
+        $enrichmentResult = $unifiedEnrichmentService->createEnrichedBookFromGoogle($googleId, $user->id, $isPrivate, $readingStatus);
 
         if (! $enrichmentResult['success']) {
             return response()->json([

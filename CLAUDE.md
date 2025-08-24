@@ -40,24 +40,38 @@ LivroLog/
 
 ### Book System
 
-- **Book**: Core book entity with Google Books integration
+- **Book**: Core book entity with Google Books integration and Amazon enrichment
 - **UserBook**: Many-to-many pivot tracking user's personal library
 - **Author**: Book authors with merge capability for duplicates
 - **RelatedBook**: Book recommendations and relationships
 - **Showcase**: Featured books for public display
+
+### Book Enrichment System
+
+- **UnifiedBookEnrichmentService**: Coordinates Google Books (sync) + Amazon (async) enrichment
+- **EnrichBookWithAmazonJob**: Background job for Amazon ASIN discovery and affiliate link generation
+- **AmazonLinkEnrichmentService**: Generates Amazon affiliate links (direct product or search links)
+- **Google Books API**: Primary source for book metadata (synchronous)
+- **Amazon Search**: Secondary source for ASINs and affiliate monetization (asynchronous)
 
 ## Database Schema
 
 ```sql
 Main Tables:
 - users (authentication and profiles)
-- books (book catalog with enriched data)
+- books (book catalog with enriched data + Amazon integration)
 - user_books (personal library - many-to-many)
 - authors (book authors)
 - follows (user following system)
 - reviews (book reviews and ratings)
 - showcase (featured books)
 - related_books (book recommendations)
+- jobs (background job queue for Amazon enrichment)
+
+Amazon Integration Fields in books table:
+- amazon_asin (Amazon product identifier)
+- asin_status (pending/processing/completed/failed)
+- asin_processed_at (timestamp of last Amazon processing)
 ```
 
 ## Development Commands
@@ -88,6 +102,16 @@ docker exec livrolog-api php artisan queue:work
 docker exec livrolog-api php artisan books:enrich
 docker exec livrolog-api php artisan books:enrich --book-id=B-3D6Y-9IO8
 docker exec livrolog-api php artisan books:enrich --dry-run
+
+# Amazon ASIN enrichment (automatic background processing)
+# Jobs are dispatched automatically when books are created
+# Manual reprocessing for failed books:
+docker exec livrolog-api php artisan tinker --execute="
+use App\Models\Book; use App\Jobs\EnrichBookWithAmazonJob;
+\$book = Book::find('BOOK-ID-HERE');
+\$book->update(['asin_status' => 'pending']);
+EnrichBookWithAmazonJob::dispatch(\$book);
+"
 ```
 
 ### Frontend (Vue.js)
@@ -109,6 +133,52 @@ yarn format
 # Build
 yarn build
 yarn preview
+```
+
+## Book Enrichment Flow
+
+### Unified Book Enrichment Process
+
+When a user adds a book to their library:
+
+1. **Immediate Google Books Enrichment** (Synchronous)
+   - Fetches complete book metadata (title, description, thumbnail, etc.)
+   - User receives immediate response with full book data
+   - Book stored with `enriched_at` timestamp
+
+2. **Background Amazon Enrichment** (Asynchronous)
+   - `EnrichBookWithAmazonJob` dispatched automatically
+   - Status: `pending` → `processing` → `completed/failed`
+   - Searches Amazon by ISBN first, then title + author
+   - If ASIN found: generates direct product link
+   - If not found: generates search link with affiliate tags
+
+3. **Frontend Real-time Updates**
+   - BookDialog polls for Amazon status changes every 5 seconds
+   - Shows spinner during processing, active button when completed
+   - Semantic button text: "Buy on Amazon" vs "Search on Amazon"
+   - Auto-stops polling after 2 minutes or completion
+
+### Amazon ASIN Discovery
+
+The system uses a multi-layered approach:
+
+1. **Primary**: Amazon Product Advertising API (when configured)
+2. **Fallback**: HTML parsing of Amazon search results
+3. **Graceful degradation**: Search links when ASIN not found
+
+### Status Flow
+
+```
+Book Creation → asin_status: null
+↓
+Amazon Job Dispatched → asin_status: 'pending'
+↓
+Job Processing → asin_status: 'processing' 
+↓
+Success: asin_status: 'completed' + amazon_asin: 'B123456789'
+Failure: asin_status: 'completed' + amazon_asin: null (fallback link)
+Error: asin_status: 'failed'
 ```
 
 ## Frontend Development Standards

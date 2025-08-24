@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Services\BookEnrichmentService;
+use App\Services\UnifiedBookEnrichmentService;
 use App\Services\HybridBookSearchService;
 use App\Services\MultiSourceBookSearchService;
 use App\Transformers\BookTransformer;
@@ -225,7 +226,7 @@ class BookController extends Controller
      * )
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, BookEnrichmentService $enrichmentService)
+    public function store(Request $request, UnifiedBookEnrichmentService $unifiedEnrichmentService)
     {
         $request->validate([
             'google_id' => self::VALIDATION_NULLABLE_STRING,
@@ -277,8 +278,8 @@ class BookController extends Controller
             $needsEnrichment = $this->shouldEnrichBook($book);
 
             if ($needsEnrichment && $googleId) {
-                $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-                if ($enrichmentResult['success']) {
+                $enrichmentResult = $unifiedEnrichmentService->enrichBook($book, $googleId);
+                if ($enrichmentResult['google_success']) {
                     $book->refresh();
                 }
             }
@@ -301,15 +302,15 @@ class BookController extends Controller
         // Enrich book if Google ID is provided
         $enrichmentResult = null;
         if ($googleId) {
-            $enrichmentResult = $enrichmentService->enrichBook($book, $googleId);
-            if ($enrichmentResult['success']) {
+            $enrichmentResult = $unifiedEnrichmentService->enrichBook($book, $googleId);
+            if ($enrichmentResult['google_success']) {
                 $book->refresh();
             }
         }
 
         return response()->json([
             'book' => $book,
-            'enriched' => $enrichmentResult ? $enrichmentResult['success'] : false,
+            'enriched' => $enrichmentResult ? $enrichmentResult['google_success'] : false,
             'message' => 'Book created in global catalog',
         ], 201);
     }
@@ -381,7 +382,7 @@ class BookController extends Controller
         $includes = BookTransformer::parseIncludes($request->input('with'));
         $transformer = new BookTransformer;
 
-        $book = Book::with(['users', 'relatedBooks'])->findOrFail($id);
+        $book = Book::with(['users', 'relatedBooks', 'reviews.user'])->findOrFail($id);
 
         // Always include details for single book view
         if (! in_array('details', $includes)) {
@@ -389,6 +390,9 @@ class BookController extends Controller
         }
 
         $transformedBook = $transformer->transform($book, $includes);
+
+        // Include reviews in the response
+        $transformedBook['reviews'] = $this->transformReviews($book->reviews);
 
         return response()->json($transformedBook);
     }
@@ -627,7 +631,7 @@ class BookController extends Controller
      *     @OA\Response(response=422, description="Enrichment failed")
      * )
      */
-    public function enrichBook(Request $request, ?Book $book, BookEnrichmentService $enrichmentService)
+    public function enrichBook(Request $request, ?Book $book, UnifiedBookEnrichmentService $unifiedEnrichmentService)
     {
         // Handle batch enrichment
         if ($request->boolean('batch')) {
@@ -636,7 +640,7 @@ class BookController extends Controller
                 'book_ids.*' => 'string|exists:books,id',
             ]);
 
-            $result = $enrichmentService->enrichBooksInBatch($request->input('book_ids'));
+            $result = $unifiedEnrichmentService->enrichBooksInBatch($request->input('book_ids'));
 
             return response()->json($result);
         }
@@ -646,13 +650,37 @@ class BookController extends Controller
             'google_id' => self::VALIDATION_NULLABLE_STRING,
         ]);
 
-        $result = $enrichmentService->enrichBook($book, $request->input('google_id'));
+        $result = $unifiedEnrichmentService->enrichBook($book, $request->input('google_id'));
 
-        if ($result['success']) {
+        if ($result['google_success']) {
             return response()->json($result);
         } else {
             return response()->json($result, 422);
         }
+    }
+
+    /**
+     * Transform reviews data for API response
+     */
+    private function transformReviews($reviews): array
+    {
+        return $reviews->map(function ($review) {
+            return [
+                'id' => $review->id,
+                'user_id' => $review->user_id,
+                'rating' => $review->rating,
+                'content' => $review->content,
+                'helpful_count' => $review->helpful_count ?? 0,
+                'created_at' => $review->created_at?->toISOString(),
+                'updated_at' => $review->updated_at?->toISOString(),
+                'user' => [
+                    'id' => $review->user->id,
+                    'display_name' => $review->user->display_name,
+                    'username' => $review->user->username,
+                    'avatar' => $review->user->avatar,
+                ],
+            ];
+        })->toArray();
     }
 
     /**

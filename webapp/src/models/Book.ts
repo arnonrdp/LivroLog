@@ -1,3 +1,5 @@
+import type { Review } from './Review'
+
 export type ReadingStatus = 'want_to_read' | 'reading' | 'read' | 'abandoned' | 'on_hold' | 're_reading'
 export type AsinStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
@@ -35,6 +37,7 @@ export interface Book {
   }
   publisher?: string
   readIn?: string | number
+  reviews?: Review[]
   thumbnail?: string | null
   title: string
   updated_at?: string

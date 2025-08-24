@@ -393,9 +393,19 @@ class ReviewController extends Controller
         ]);
 
         $review->update($validated);
-        $review->load([self::USER_RELATION_FIELDS, self::BOOK_RELATION_FIELDS]);
-
-        return response()->json($review);
+        
+        // Return only the essential fields for UI updates
+        return response()->json([
+            'id' => $review->id,
+            'user_id' => $review->user_id,
+            'rating' => $review->rating,
+            'content' => $review->content,
+            'title' => $review->title,
+            'visibility_level' => $review->visibility_level,
+            'is_spoiler' => $review->is_spoiler,
+            'helpful_count' => $review->helpful_count,
+            'updated_at' => $review->updated_at?->toISOString(),
+        ]);
     }
 
     /**

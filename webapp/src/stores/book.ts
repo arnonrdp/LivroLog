@@ -45,6 +45,21 @@ export const useBookStore = defineStore('book', {
         .finally(() => (this._isLoading = false))
     },
 
+    async getBook(bookId: Book['id']) {
+      this._isLoading = true
+      return await api
+        .get(`/books/${bookId}`)
+        .then((response) => {
+          this._book = response.data
+          return response.data
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
     async postBook(payload: object) {
       this._isLoading = true
       await api
