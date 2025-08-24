@@ -294,7 +294,9 @@ class EnrichBookWithAmazonJob implements ShouldQueue
      */
     private function isValidAsin(string $asin): bool
     {
-        return preg_match('/^[A-Z0-9]{10}$/', $asin) && ! preg_match('/^[0-9]{10}$/', $asin);
+        // Accept both traditional ASINs (B123456789) and numeric ISBNs (1234567890)
+        // Amazon Brazil often uses ISBNs directly as ASINs for books
+        return preg_match('/^[A-Z0-9]{10}$/', $asin);
     }
 
     /**
