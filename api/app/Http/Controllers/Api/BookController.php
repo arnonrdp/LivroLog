@@ -382,7 +382,13 @@ class BookController extends Controller
         $includes = BookTransformer::parseIncludes($request->input('with'));
         $transformer = new BookTransformer;
 
-        $book = Book::with(['users', 'relatedBooks', 'reviews.user'])->findOrFail($id);
+        $book = Book::with([
+            'users',
+            'relatedBooks',
+            'reviews' => function ($query) {
+                $query->with('user')->latest()->limit(20);
+            }
+        ])->findOrFail($id);
 
         // Always include details for single book view
         if (! in_array('details', $includes)) {

@@ -631,11 +631,13 @@ async function confirmDelete() {
 
   const reviewId = reviewToDelete.value
 
-  bookReviewsFromApi.value = bookReviewsFromApi.value.filter((review) => review.id !== reviewId)
-
   reviewStore
     .deleteReviews(reviewId)
-    .then(() => resetReviewForm())
+    .then(() => {
+      bookReviewsFromApi.value = bookReviewsFromApi.value.filter((review) => review.id !== reviewId)
+      resetReviewForm()
+    })
+    .catch((error) => console.error('Failed to delete review:', error))
     .finally(() => {
       loading.value = false
       reviewToDelete.value = null
@@ -644,6 +646,8 @@ async function confirmDelete() {
 
 async function toggleVisibility(review: Review) {
   let newVisibility: 'private' | 'friends' | 'public'
+  const oldVisibility = review.visibility_level
+
   switch (review.visibility_level) {
     case 'public':
       newVisibility = 'friends'
@@ -662,7 +666,13 @@ async function toggleVisibility(review: Review) {
     bookReviewsFromApi.value[reviewIndex]!.visibility_level = newVisibility
   }
 
-  reviewStore.putReviews(review.id, { visibility_level: newVisibility })
+  reviewStore.putReviews(review.id, { visibility_level: newVisibility }).catch((error) => {
+    console.error('Failed to update review visibility:', error)
+
+    if (reviewIndex !== -1 && bookReviewsFromApi.value[reviewIndex]) {
+      bookReviewsFromApi.value[reviewIndex]!.visibility_level = oldVisibility
+    }
+  })
 }
 
 async function addToLibrary() {

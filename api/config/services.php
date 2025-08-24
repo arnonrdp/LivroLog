@@ -43,6 +43,7 @@ return [
 
     'google_books' => [
         'api_key' => env('GOOGLE_BOOKS_API_KEY'),
+        'location_ip' => env('GOOGLE_BOOKS_LOCATION_IP', '177.37.0.0'),
     ],
 
     'open_library' => [
@@ -55,7 +56,7 @@ return [
         'pa_secret_key' => env('AMAZON_PA_SECRET_KEY'),
         'enabled' => env('AMAZON_PA_API_ENABLED', false),
         'sitestripe_enabled' => env('AMAZON_SITESTRIPE_ENABLED', false),
-        
+
         // Regional configurations with hardcoded associate tags
         'regions' => [
             'BR' => [
