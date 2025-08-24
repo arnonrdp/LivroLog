@@ -93,6 +93,8 @@ class AuthController extends Controller
 
     private const VALIDATION_REQUIRED_EMAIL = 'required|email';
 
+    private const VALIDATION_LOCALE = 'nullable|string|max:10';
+
     private const LIBRARY_SUFFIX = "'s Library";
 
     // Password validation rules
@@ -165,7 +167,7 @@ class AuthController extends Controller
                 'not_regex:/^(admin|api|www|root|support|help|about|contact|terms|privacy|settings|profile|user|users|book|books)$/i', // Reserved usernames
             ],
             'password' => self::VALIDATION_PASSWORD_RULES,
-            'locale' => 'nullable|string|max:10', // Accept locale from frontend
+            'locale' => self::VALIDATION_LOCALE, // Accept locale from frontend
         ]);
 
         $user = User::create([
@@ -241,7 +243,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => self::VALIDATION_REQUIRED_EMAIL,
             'password' => 'required',
-            'locale' => 'nullable|string|max:10', // Accept locale from frontend
+            'locale' => self::VALIDATION_LOCALE, // Accept locale from frontend
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'))) {
@@ -251,13 +253,13 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        
+
         // Set locale if not already set
         if (is_null($user->locale) && $request->has('locale')) {
             $user->locale = $this->normalizeLocale($request->input('locale'));
             $user->save();
         }
-        
+
         $user = $user
             ->loadCount(['followers', 'following'])
             ->load(['books' => function ($query) {
@@ -712,7 +714,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'id_token' => self::VALIDATION_REQUIRED_STRING,
-            'locale' => 'nullable|string|max:10', // Accept locale from frontend
+            'locale' => self::VALIDATION_LOCALE, // Accept locale from frontend
         ]);
 
         try {
@@ -745,12 +747,12 @@ class AuthController extends Controller
                         'email_verified' => $emailVerified,
                         'email_verified_at' => $emailVerified ? now() : null,
                     ];
-                    
+
                     // Set locale if not already set
                     if (is_null($user->locale) && $request->has('locale')) {
                         $updateData['locale'] = $this->normalizeLocale($request->input('locale'));
                     }
-                    
+
                     $user->update($updateData);
                 } else {
                     // Create new user
@@ -829,13 +831,13 @@ class AuthController extends Controller
      */
     private function normalizeLocale(?string $locale): string
     {
-        if (!$locale) {
+        if (! $locale) {
             return 'en'; // Default to English (most universal)
         }
 
         // Extract language code from locale (e.g., pt-BR -> pt)
         $languageCode = strtolower(explode('-', $locale)[0]);
-        
+
         // Map common language codes to Google Books supported codes
         $supportedLocales = [
             'pt' => 'pt',     // Portuguese
