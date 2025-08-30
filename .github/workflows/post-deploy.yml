@@ -157,19 +157,32 @@ jobs:
             # Start production worker
             if [ -d "/var/www/livrolog/current/api" ]; then
                 cd /var/www/livrolog/current/api
-                screen -dmS queue-worker php artisan queue:work --verbose --tries=3 --timeout=60
-                echo "Production queue worker started in screen session"
+                
+                # Try screen first, fallback to nohup
+                if command -v screen >/dev/null 2>&1; then
+                    screen -dmS queue-worker php artisan queue:work --verbose --tries=3 --timeout=60
+                    echo "Production queue worker started in screen session"
+                else
+                    nohup php artisan queue:work --verbose --tries=3 --timeout=60 > storage/logs/queue-worker.log 2>&1 &
+                    echo "Production queue worker started with nohup"
+                fi
             fi
             
             # Start dev worker  
             if [ -d "/var/www/livrolog-dev/current/api" ]; then
                 cd /var/www/livrolog-dev/current/api
-                screen -dmS queue-worker-dev php artisan queue:work --verbose --tries=3 --timeout=60
-                echo "Dev queue worker started in screen session"
+                
+                # Try screen first, fallback to nohup
+                if command -v screen >/dev/null 2>&1; then
+                    screen -dmS queue-worker-dev php artisan queue:work --verbose --tries=3 --timeout=60
+                    echo "Dev queue worker started in screen session"
+                else
+                    nohup php artisan queue:work --verbose --tries=3 --timeout=60 > storage/logs/queue-worker.log 2>&1 &
+                    echo "Dev queue worker started with nohup"
+                fi
             fi
             
-            # Quick verification
-            screen -ls | grep queue || echo "No screen sessions found"
+            echo "Queue workers started successfully"
 
       - name: Restart Apache
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
