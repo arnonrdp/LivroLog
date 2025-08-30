@@ -86,22 +86,34 @@ class SocialMediaCrawlerMiddleware
      */
     private function renderHomePage(Request $request): \Illuminate\Http\Response
     {
-        $currentUrl = $request->fullUrl();
-        $imageUrl = config('app.url') . '/screenshot-web.jpg';
+        $frontend = config('app.frontend_url');
+        $currentUrl = $frontend; // canonical to frontend
+        $imageUrl = rtrim($frontend, '/') . '/screenshot-web.jpg';
+
+        // Basic i18n based on Accept-Language
+        $lang = strtolower($request->header('Accept-Language', ''));
+        $isPt = str_contains($lang, 'pt');
+        $title = 'LivroLog';
+        $description = $isPt
+            ? 'O lugar perfeito para catalogar seus livros. Adicione sua estante e veja o que seus amigos estão lendo.'
+            : "A place for you to organize everything you've read. Add your books and see what your friends are reading.";
         
         $html = $this->generateHtmlWithMetaTags([
-            'title' => 'LivroLog',
-            'description' => 'A place for you to organize everything you\'ve read. Add your books and see what your friends are reading.',
+            'title' => $title,
+            'description' => $description,
             'og:type' => 'website',
             'og:url' => $currentUrl,
-            'og:title' => 'LivroLog',
-            'og:description' => 'A place for you to organize everything you\'ve read. Add your books and see what your friends are reading.',
+            'og:title' => $title,
+            'og:description' => $description,
             'og:image' => $imageUrl,
             'og:image:alt' => 'Homepage of the LivroLog website with a bookcase with several book covers',
             'og:site_name' => 'LivroLog',
+            'og:locale' => $isPt ? 'pt_BR' : 'en_US',
+            'og:image:width' => '1200',
+            'og:image:height' => '630',
             'twitter:card' => 'summary_large_image',
-            'twitter:title' => 'LivroLog',
-            'twitter:description' => 'A place for you to organize everything you\'ve read. Add your books and see what your friends are reading.',
+            'twitter:title' => $title,
+            'twitter:description' => $description,
             'twitter:image' => $imageUrl,
         ]);
         
@@ -124,13 +136,23 @@ class SocialMediaCrawlerMiddleware
         }]);
         
         $booksCount = $user->books->count();
-        $shelfName = $user->shelf_name ?: $user->display_name;
-        $currentUrl = $request->fullUrl();
-        $imageUrl = config('app.url') . "/api/users/{$user->id}/shelf-image";
+        // Sanitize user-controlled fields to prevent XSS in reflected HTML
+        $rawShelfName = $user->shelf_name ?: $user->display_name;
+        $shelfName = trim(strip_tags((string) $rawShelfName));
+        $safeDisplayName = trim(strip_tags((string) $user->display_name));
+        // Canonical URL to frontend profile
+        $frontend = rtrim(config('app.frontend_url'), '/');
+        $currentUrl = $frontend . '/' . rawurlencode($user->username);
+        // Image served by API without /api prefix
+        $imageUrl = rtrim(config('app.url'), '/') . "/users/{$user->id}/shelf-image";
+
+        // i18n based on Accept-Language
+        $lang = strtolower($request->header('Accept-Language', ''));
+        $isPt = str_contains($lang, 'pt');
         
         $description = $booksCount > 0 
-            ? "Veja os {$booksCount} livros favoritos do {$user->display_name}" 
-            : "Biblioteca do {$user->display_name} no LivroLog";
+            ? ($isPt ? "Veja os {$booksCount} livros favoritos de {$safeDisplayName}" : "See {$safeDisplayName}'s top {$booksCount} books")
+            : ($isPt ? "Estante de {$safeDisplayName} no LivroLog" : "{$safeDisplayName}'s bookshelf on LivroLog");
         
         $title = "{$shelfName} - LivroLog";
         
@@ -142,13 +164,16 @@ class SocialMediaCrawlerMiddleware
             'og:title' => $title,
             'og:description' => $description,
             'og:image' => $imageUrl,
-            'og:image:alt' => "Estante de livros do {$user->display_name} no LivroLog",
+            'og:image:alt' => $isPt ? "Estante de livros de {$safeDisplayName} no LivroLog" : "{$safeDisplayName}'s bookshelf on LivroLog",
             'og:site_name' => 'LivroLog',
+            'og:locale' => $isPt ? 'pt_BR' : 'en_US',
+            'og:image:width' => '1200',
+            'og:image:height' => '630',
             'twitter:card' => 'summary_large_image',
             'twitter:title' => $title,
             'twitter:description' => $description,
             'twitter:image' => $imageUrl,
-            'profile:first_name' => $user->display_name,
+            'profile:first_name' => $safeDisplayName,
             'profile:username' => $user->username,
         ]);
         
@@ -167,7 +192,7 @@ class SocialMediaCrawlerMiddleware
         
         foreach ($metaData as $property => $content) {
             if ($property === 'title') {
-                $metaTags .= "<title>{$content}</title>\n    ";
+                $metaTags .= '<title>' . htmlspecialchars($content) . '</title>' . "\n    ";
                 continue;
             }
             

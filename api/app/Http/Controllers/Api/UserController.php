@@ -395,18 +395,34 @@ class UserController extends Controller
         // Get user's books with covers - limit to 20 for display
         $books = $user->books()
             ->whereNotNull('thumbnail')
-            ->orderBy('pivot_read_in', 'desc')
+            ->orderBy('pivot_added_at', 'desc')
             ->limit(20)
             ->get();
 
-        // Generate the shelf image
-        $image = $this->generateShelfImage($user, $books);
+        // If GD is unavailable, gracefully fall back to a static OG image
+        if (!function_exists('imagecreatetruecolor')) {
+            $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
+            return redirect()->away($fallback, 302, [
+                'Cache-Control' => 'public, max-age=1800',
+            ]);
+        }
 
-        return response($image, 200, [
-            'Content-Type' => 'image/jpeg',
-            'Cache-Control' => 'public, max-age=3600', // Cache for 1 hour
-            'Last-Modified' => now()->toRfc7231String(),
-        ]);
+        try {
+            // Generate the shelf image
+            $image = $this->generateShelfImage($user, $books);
+
+            return response($image, 200, [
+                'Content-Type' => 'image/jpeg',
+                'Cache-Control' => 'public, max-age=3600', // Cache for 1 hour
+                'Last-Modified' => now()->toRfc7231String(),
+            ]);
+        } catch (\Throwable $e) {
+            // On any error, fall back to static OG image to avoid blank previews
+            $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
+            return redirect()->away($fallback, 302, [
+                'Cache-Control' => 'public, max-age=1800',
+            ]);
+        }
     }
 
     /**
