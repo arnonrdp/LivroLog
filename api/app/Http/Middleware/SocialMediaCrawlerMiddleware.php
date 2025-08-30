@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SocialMediaCrawlerMiddleware
 {
@@ -17,8 +18,8 @@ class SocialMediaCrawlerMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // Detect social media crawlers
-        if ($this->isSocialMediaCrawler($request)) {
+        // Detect social media crawlers or forced OG via query (?og=1)
+        if ($request->boolean('og') || $this->isSocialMediaCrawler($request)) {
             $path = $request->path();
             
             // Handle homepage
@@ -56,20 +57,24 @@ class SocialMediaCrawlerMiddleware
         $userAgent = strtolower($request->header('User-Agent', ''));
         
         $crawlers = [
-            'facebookexternalhit',
+            'facebookexternalhit', 'facebookcatalog',
             'twitterbot',
             'linkedinbot',
             'whatsapp',
-            'telegrambot',
-            'slackbot',
+            'telegrambot', 'telegram',
+            'slackbot', 'slack-imgproxy', 'slackbot-linkexpanding',
             'discordbot',
             'skypeuripreview',
             'applebot',
-            'googlebot',
+            'googlebot', 'google-inspectiontool', 'apis-google',
             'bingbot',
             'yahoo',
-            'pinterest',
+            'pinterestbot', 'pinterest',
             'redditbot',
+            'embedly', 'iframely', 'opengraph',
+            'vkshare', 'qwantify', 'bitlybot', 'bufferbot',
+            'duckduckbot', 'baiduspider', 'yandexbot',
+            'lighthouse', 'pagespeed'
         ];
         
         foreach ($crawlers as $crawler) {
@@ -143,8 +148,13 @@ class SocialMediaCrawlerMiddleware
         // Canonical URL to frontend profile
         $frontend = rtrim(config('app.frontend_url'), '/');
         $currentUrl = $frontend . '/' . rawurlencode($user->username);
-        // Image served by API without /api prefix
-        $imageUrl = rtrim(config('app.url'), '/') . "/users/{$user->id}/shelf-image";
+        // Version for cache-busting
+        $versionTs = DB::table('users_books')
+            ->where('user_id', $user->id)
+            ->max('updated_at');
+        $version = $versionTs ? (is_string($versionTs) ? (string) strtotime($versionTs) : (string) strtotime((string) $versionTs)) : (string) time();
+        // Image served by API without /api prefix, with version
+        $imageUrl = rtrim(config('app.url'), '/') . "/users/{$user->id}/shelf-image?v={$version}";
 
         // i18n based on Accept-Language
         $lang = strtolower($request->header('Accept-Language', ''));

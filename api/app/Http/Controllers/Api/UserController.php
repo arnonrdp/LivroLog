@@ -8,6 +8,8 @@ use App\Http\Resources\PaginatedUserResource;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\UserWithBooksResource;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -399,6 +401,19 @@ class UserController extends Controller
             ->limit(20)
             ->get();
 
+        // Compute a version for cache-busting based on last change in user's shelf
+        $version = $this->getShelfVersion($user);
+
+        // Serve from on-disk cache if available
+        $cachePath = storage_path("app/public/og/shelf-{$user->id}-{$version}.jpg");
+        if (is_file($cachePath)) {
+            return response()->file($cachePath, [
+                'Content-Type' => 'image/jpeg',
+                'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
+                'Last-Modified' => gmdate('D, d M Y H:i:s', filemtime($cachePath)) . ' GMT',
+            ]);
+        }
+
         // If GD is unavailable, gracefully fall back to a static OG image
         if (!function_exists('imagecreatetruecolor')) {
             $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
@@ -411,9 +426,13 @@ class UserController extends Controller
             // Generate the shelf image
             $image = $this->generateShelfImage($user, $books);
 
+            // Ensure directory exists and save to disk cache
+            Storage::makeDirectory('public/og');
+            file_put_contents($cachePath, $image);
+
             return response($image, 200, [
                 'Content-Type' => 'image/jpeg',
-                'Cache-Control' => 'public, max-age=3600', // Cache for 1 hour
+                'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
                 'Last-Modified' => now()->toRfc7231String(),
             ]);
         } catch (\Throwable $e) {
@@ -423,6 +442,20 @@ class UserController extends Controller
                 'Cache-Control' => 'public, max-age=1800',
             ]);
         }
+    }
+
+    /**
+     * Compute a stable version for the user's shelf, used for cache busting
+     */
+    private function getShelfVersion(User $user): string
+    {
+        $ts = DB::table('users_books')
+            ->where('user_id', $user->id)
+            ->max('updated_at');
+        if (!$ts) {
+            $ts = $user->updated_at ?: now();
+        }
+        return is_string($ts) ? (string) strtotime($ts) : (string) strtotime((string) $ts);
     }
 
     /**
@@ -437,20 +470,64 @@ class UserController extends Controller
         // Create canvas
         $image = imagecreatetruecolor($width, $height);
 
-        // Colors
-        $backgroundColor = imagecolorallocate($image, 14, 165, 233); // #0ea5e9 (theme color)
-        $whiteColor = imagecolorallocate($image, 255, 255, 255);
-        $textColor = imagecolorallocate($image, 255, 255, 255);
+        // Base background (light grey)
+        $bgColor = imagecolorallocate($image, 245, 245, 245);
+        imagefill($image, 0, 0, $bgColor);
 
-        // Fill background with gradient-like effect
-        imagefill($image, 0, 0, $backgroundColor);
+        // Try to use the same wooden shelf textures used by the frontend
+        $frontend = rtrim(config('app.frontend_url'), '/');
+        $leftUrl = $frontend . '/assets/shelfleft-LBalqrtB.jpg';
+        $rightUrl = $frontend . '/assets/shelfright-BniE6HMr.jpg';
+        $centerUrl = $frontend . '/assets/shelfcenter-BJQyKgxt.jpg';
 
-        // Add semi-transparent overlay for better text readability
-        $overlayColor = imagecolorallocatealpha($image, 0, 0, 0, 40);
-        imagefilledrectangle($image, 0, 0, $width, $height, $overlayColor);
+        $leftImg = $this->loadImageFromUrl($leftUrl);
+        $rightImg = $this->loadImageFromUrl($rightUrl);
+        $centerImg = $this->loadImageFromUrl($centerUrl);
+
+        $paddingTop = 70;   // space for title
+        $paddingBottom = 40; // space for branding
+        $shelfAreaHeight = $height - $paddingTop - $paddingBottom;
+        $rows = max(1, min(4, (int) ceil(count($books) / 10)));
+        $rowHeight = (int) floor($shelfAreaHeight / $rows);
+
+        // Draw rows with wood textures
+        if ($centerImg) {
+            $leftWidth = $leftImg ? imagesx($leftImg) : 60;
+            $rightWidth = $rightImg ? imagesx($rightImg) : 60;
+
+            for ($r = 0; $r < $rows; $r++) {
+                $y1 = $paddingTop + ($r * $rowHeight);
+                $y2 = $y1 + $rowHeight;
+
+                // Left
+                if ($leftImg) {
+                    imagecopyresampled($image, $leftImg, 0, $y1, 0, 0, $leftWidth, $rowHeight, imagesx($leftImg), imagesy($leftImg));
+                }
+
+                // Right
+                if ($rightImg) {
+                    imagecopyresampled($image, $rightImg, $width - $rightWidth, $y1, 0, 0, $rightWidth, $rowHeight, imagesx($rightImg), imagesy($rightImg));
+                }
+
+                // Center tile across remaining width
+                $centerStartX = $leftWidth;
+                $centerWidthAvail = $width - $leftWidth - $rightWidth;
+                $tileW = imagesx($centerImg);
+                $tileH = imagesy($centerImg);
+                $x = $centerStartX;
+                while ($x < $centerStartX + $centerWidthAvail) {
+                    $w = min($tileW, ($centerStartX + $centerWidthAvail) - $x);
+                    imagecopyresampled($image, $centerImg, $x, $y1, 0, 0, $w, $rowHeight, $tileW, $tileH);
+                    $x += $w;
+                }
+            }
+        }
+
+        // Text color
+        $textColor = imagecolorallocate($image, 20, 20, 20);
 
         // Add title text
-        $fontSize = 32;
+        $fontSize = 34;
         $shelfName = $user->shelf_name ?: $user->display_name;
         $titleText = $shelfName . ' - LivroLog';
 
@@ -461,18 +538,14 @@ class UserController extends Controller
             $textBox = imagettfbbox($fontSize, 0, $fontPath, $titleText);
             $textWidth = $textBox[2] - $textBox[0];
             $textX = ($width - $textWidth) / 2;
-            $textY = 80;
-
-            // Add text with shadow effect
-            imagettftext($image, $fontSize, 0, $textX + 2, $textY + 2, imagecolorallocate($image, 0, 0, 0), $fontPath, $titleText);
+            $textY = 56;
             imagettftext($image, $fontSize, 0, $textX, $textY, $textColor, $fontPath, $titleText);
         } else {
             // Use built-in font
             $textWidth = strlen($titleText) * 10; // Approximate width
             $textX = ($width - $textWidth) / 2;
-            $textY = 80;
+            $textY = 56;
 
-            imagestring($image, 5, $textX + 1, $textY + 1, $titleText, imagecolorallocate($image, 0, 0, 0));
             imagestring($image, 5, $textX, $textY, $titleText, $textColor);
         }
 
@@ -485,23 +558,20 @@ class UserController extends Controller
                 $subtitleBox = imagettfbbox($subtitleSize, 0, $fontPath, $subtitleText);
                 $subtitleWidth = $subtitleBox[2] - $subtitleBox[0];
                 $subtitleX = ($width - $subtitleWidth) / 2;
-                $subtitleY = 120;
-
-                imagettftext($image, $subtitleSize, 0, $subtitleX + 1, $subtitleY + 1, imagecolorallocate($image, 0, 0, 0), $fontPath, $subtitleText);
+                $subtitleY = 86;
                 imagettftext($image, $subtitleSize, 0, $subtitleX, $subtitleY, $textColor, $fontPath, $subtitleText);
             } else {
                 $subtitleWidth = strlen($subtitleText) * 8;
                 $subtitleX = ($width - $subtitleWidth) / 2;
-                $subtitleY = 120;
+                $subtitleY = 86;
 
-                imagestring($image, 3, $subtitleX + 1, $subtitleY + 1, $subtitleText, imagecolorallocate($image, 0, 0, 0));
                 imagestring($image, 3, $subtitleX, $subtitleY, $subtitleText, $textColor);
             }
         }
 
-        // Add book covers in a grid
+        // Add book covers in a grid aligned to the wooden rows
         if ($booksCount > 0) {
-            $this->addBookCoversToImage($image, $books, $width, $height);
+            $this->addBookCoversToImage($image, $books, $width, $height, $paddingTop, $paddingBottom, $rows);
         }
 
         // Add LivroLog logo/branding (bottom right)
@@ -539,54 +609,38 @@ class UserController extends Controller
     /**
      * Add book covers to the image in a grid layout
      */
-    private function addBookCoversToImage($image, $books, $width, $height)
+    private function addBookCoversToImage($image, $books, $width, $height, $paddingTop = 70, $paddingBottom = 40, $rows = 4)
     {
-        $coverWidth = 60;
-        $coverHeight = 90;
-        $spacing = 10;
-        $startY = 200;
+        $availableHeight = $height - $paddingTop - $paddingBottom;
+        $rowHeight = (int) floor($availableHeight / $rows);
+        $verticalMargin = (int) round($rowHeight * 0.1);
+        $coverHeight = $rowHeight - (2 * $verticalMargin);
+        $coverWidth = (int) round($coverHeight * 0.66);
+        $horizontalPadding = 60; // keep away from wood sides
+        $spacing = 12;
 
-        // Calculate grid layout
-        $coversPerRow = min(8, count($books));
-        $totalWidth = ($coversPerRow * $coverWidth) + (($coversPerRow - 1) * $spacing);
-        $startX = ($width - $totalWidth) / 2;
-
-        $rows = ceil(count($books) / $coversPerRow);
-        $maxRows = min(3, $rows); // Maximum 3 rows
+        $usableWidth = $width - (2 * $horizontalPadding);
+        $coversPerRow = max(3, (int) floor(($usableWidth + $spacing) / ($coverWidth + $spacing)));
+        $totalGridWidth = ($coversPerRow * $coverWidth) + (($coversPerRow - 1) * $spacing);
+        $startX = (int) (($width - $totalGridWidth) / 2);
 
         $bookIndex = 0;
-        for ($row = 0; $row < $maxRows && $bookIndex < count($books); $row++) {
-            $y = $startY + ($row * ($coverHeight + $spacing));
-
+        for ($row = 0; $row < $rows && $bookIndex < count($books); $row++) {
+            $y = $paddingTop + ($row * $rowHeight) + $verticalMargin;
             for ($col = 0; $col < $coversPerRow && $bookIndex < count($books); $col++) {
                 $x = $startX + ($col * ($coverWidth + $spacing));
                 $book = $books[$bookIndex];
 
-                // Try to load book cover
                 if ($book->thumbnail && $coverImage = $this->loadImageFromUrl($book->thumbnail)) {
-                    // Resize and add cover
                     $resizedCover = imagecreatetruecolor($coverWidth, $coverHeight);
                     imagecopyresampled($resizedCover, $coverImage, 0, 0, 0, 0, $coverWidth, $coverHeight, imagesx($coverImage), imagesy($coverImage));
-
-                    // Add border
-                    $borderColor = imagecolorallocate($image, 200, 200, 200);
+                    // subtle border
+                    $borderColor = imagecolorallocate($image, 220, 220, 220);
                     imagerectangle($image, $x - 1, $y - 1, $x + $coverWidth, $y + $coverHeight, $borderColor);
-
-                    // Copy to main image
                     imagecopy($image, $resizedCover, $x, $y, 0, 0, $coverWidth, $coverHeight);
-
                     imagedestroy($resizedCover);
                     imagedestroy($coverImage);
-                } else {
-                    // Draw placeholder rectangle
-                    $placeholderColor = imagecolorallocate($image, 100, 100, 100);
-                    imagefilledrectangle($image, $x, $y, $x + $coverWidth, $y + $coverHeight, $placeholderColor);
-
-                    // Add book icon or text
-                    $placeholderText = 'BOOK';
-                    imagestring($image, 3, $x + 10, $y + 35, $placeholderText, imagecolorallocate($image, 255, 255, 255));
                 }
-
                 $bookIndex++;
             }
         }
@@ -598,10 +652,24 @@ class UserController extends Controller
     private function loadImageFromUrl($url)
     {
         try {
-            $imageData = @file_get_contents($url);
-            if ($imageData === false) {
-                return null;
+            // Local cache for remote covers (TTL 7 days)
+            $cacheDir = storage_path('app/cache/covers');
+            if (!is_dir($cacheDir)) {
+                @mkdir($cacheDir, 0775, true);
             }
+            $hash = sha1($url);
+            $cacheFile = $cacheDir . '/' . $hash . '.jpg';
+            $ttl = 60 * 60 * 24 * 7; // 7 days
+
+            if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $ttl) {
+                $imageData = @file_get_contents($cacheFile);
+            } else {
+                $imageData = @file_get_contents($url);
+                if ($imageData !== false) {
+                    @file_put_contents($cacheFile, $imageData);
+                }
+            }
+            if ($imageData === false) return null;
 
             $image = @imagecreatefromstring($imageData);
             return $image ?: null;

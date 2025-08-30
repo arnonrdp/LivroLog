@@ -3,19 +3,30 @@ server {
     index index.php index.html;
     root /var/www/html/public;
 
-    # Handle specific user profile routes for crawlers
-    location /arnon {
-        if ($http_user_agent ~* "facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot") {
+    # Ensure API user assets are not captured by crawler rule below
+    # Specific shelf-image endpoint
+    location ~ ^/users/[^/]+/shelf-image(\?.*)?$ {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ^~ /users/ {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Generic user profile route handler for crawlers (any single path segment)
+    location ~ ^/(?!assets|users|api|login|register|reset-password|documentation|privacy|terms|sitemap\.xml|robots\.txt)([A-Za-z0-9_\-\.]+)/?$ {
+        if ($http_user_agent ~* "facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|whatsapp|telegram(bot)?|slack(-imgproxy|-bot|bot)?|discordbot|skypeuripreview|applebot|google(bot|-inspectiontool)|bingbot|yahoo!|pinterest(bot)?|reddit(bot)?|embedly|vkshare|qwantify|bitlybot|bufferbot|iframely|opengraph|lighthouse|pagespeed|duckduckbot|baiduspider|yandex(bot)?") {
             rewrite ^(.*)$ /index.php last;
         }
         return 302 ${APP_FRONTEND_URL}$request_uri;
     }
-    
-    location /wanderson {
-        if ($http_user_agent ~* "facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot") {
+
+    # Homepage OG for crawlers
+    location = / {
+        if ($http_user_agent ~* "facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|whatsapp|telegram(bot)?|slack(-imgproxy|-bot|bot)?|discordbot|skypeuripreview|applebot|google(bot|-inspectiontool)|bingbot|yahoo!|pinterest(bot)?|reddit(bot)?|embedly|vkshare|qwantify|bitlybot|bufferbot|iframely|opengraph|lighthouse|pagespeed|duckduckbot|baiduspider|yandex(bot)?") {
             rewrite ^(.*)$ /index.php last;
         }
-        return 302 ${APP_FRONTEND_URL}$request_uri;
+        try_files $uri $uri/ /index.php?$query_string;
     }
 
     location / {

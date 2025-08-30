@@ -10,22 +10,33 @@
     RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
     RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
-    # Server-side redirect for social media crawlers to API for dynamic OG tags
-    # Matches username-like paths at site root (e.g., /arnon, /wanderson)
-    RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot)" [NC]
+    # Server-side redirect for social media crawlers (and testers with ?og=1) to API for dynamic OG tags
+    RewriteCond %{QUERY_STRING} (^|&)og=1(&|$) [OR]
+    RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|whatsapp|telegram(bot)?|slack(-imgproxy|-bot|bot)?|discordbot|skypeuripreview|applebot|google(bot|-inspectiontool)|bingbot|yahoo!|pinterest(bot)?|reddit(bot)?|embedly|vkshare|qwantify|bitlybot|bufferbot|iframely|opengraph|lighthouse|pagespeed|duckduckbot|baiduspider|yandex(bot)?)" [NC]
     RewriteCond %{REQUEST_URI} ^/([A-Za-z0-9_.-]+)/?$ 
-    # Exclude common non-profile routes
-    RewriteCond %1 !^(api|login|register|reset-password|documentation)$ [NC]
-    # Dev environment host → dev API
+    RewriteCond %1 !^(api|login|register|reset-password|documentation|privacy|terms|sitemap\.xml|robots\.txt|assets|favicon\.ico)$ [NC]
     RewriteCond %{HTTP_HOST} ^dev\.livrolog\.com$ [NC]
     RewriteRule ^ https://api.dev.livrolog.com%{REQUEST_URI} [R=302,L]
 
-    # Production host → production API
-    RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot)" [NC]
+    RewriteCond %{QUERY_STRING} (^|&)og=1(&|$) [OR]
+    RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|whatsapp|telegram(bot)?|slack(-imgproxy|-bot|bot)?|discordbot|skypeuripreview|applebot|google(bot|-inspectiontool)|bingbot|yahoo!|pinterest(bot)?|reddit(bot)?|embedly|vkshare|qwantify|bitlybot|bufferbot|iframely|opengraph|lighthouse|pagespeed|duckduckbot|baiduspider|yandex(bot)?)" [NC]
     RewriteCond %{REQUEST_URI} ^/([A-Za-z0-9_.-]+)/?$ 
-    RewriteCond %1 !^(api|login|register|reset-password|documentation)$ [NC]
+    RewriteCond %1 !^(api|login|register|reset-password|documentation|privacy|terms|sitemap\.xml|robots\.txt|assets|favicon\.ico)$ [NC]
     RewriteCond %{HTTP_HOST} ^livrolog\.com$ [NC]
     RewriteRule ^ https://api.livrolog.com%{REQUEST_URI} [R=302,L]
+
+    # Optional: homepage OG for crawlers (send bots to API root)
+    RewriteCond %{QUERY_STRING} (^|&)og=1(&|$) [OR]
+    RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|whatsapp|telegram(bot)?|slack(-imgproxy|-bot|bot)?|discordbot|skypeuripreview|applebot|google(bot|-inspectiontool)|bingbot|yahoo!|pinterest(bot)?|reddit(bot)?|embedly|vkshare|qwantify|bitlybot|bufferbot|iframely|opengraph|lighthouse|pagespeed|duckduckbot|baiduspider|yandex(bot)?)" [NC]
+    RewriteCond %{REQUEST_URI} ^/$
+    RewriteCond %{HTTP_HOST} ^dev\.livrolog\.com$ [NC]
+    RewriteRule ^ https://api.dev.livrolog.com/ [R=302,L]
+
+    RewriteCond %{QUERY_STRING} (^|&)og=1(&|$) [OR]
+    RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|facebookcatalog|twitterbot|linkedinbot|whatsapp|telegram(bot)?|slack(-imgproxy|-bot|bot)?|discordbot|skypeuripreview|applebot|google(bot|-inspectiontool)|bingbot|yahoo!|pinterest(bot)?|reddit(bot)?|embedly|vkshare|qwantify|bitlybot|bufferbot|iframely|opengraph|lighthouse|pagespeed|duckduckbot|baiduspider|yandex(bot)?)" [NC]
+    RewriteCond %{REQUEST_URI} ^/$
+    RewriteCond %{HTTP_HOST} ^livrolog\.com$ [NC]
+    RewriteRule ^ https://api.livrolog.com/ [R=302,L]
 
     # Handle SPA routing
     RewriteCond %{REQUEST_FILENAME} !-f
@@ -39,4 +50,3 @@
     Header set X-Content-Type-Options "nosniff"
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>
-
