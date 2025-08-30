@@ -582,6 +582,10 @@ class UserController extends Controller
     private function loadImageFromUrl($url)
     {
         try {
+            if (!$this->isAllowedDomain($url)) {
+                return null;
+            }
+
             $imageData = @file_get_contents($url);
             if ($imageData === false) {
                 return null;
@@ -592,6 +596,38 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Basic allowlist validation to prevent SSRF when fetching external images
+     */
+    private function isAllowedDomain(string $url): bool
+    {
+        $allowed = [
+            'books.google.com',
+            'books.googleapis.com',
+            'lh3.googleusercontent.com',
+            'ssl.gstatic.com',
+        ];
+
+        $parsed = parse_url($url);
+        if (!isset($parsed['host']) || !isset($parsed['scheme'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+        $scheme = strtolower($parsed['scheme']);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return false;
+        }
+
+        foreach ($allowed as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

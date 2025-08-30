@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Override the reset password URL sent in email to point to frontend page
         ResetPassword::createUrlUsing(function ($user, string $token) {
-            return env('APP_FRONTEND_URL', config('app.url'))
+            return config('app.frontend_url', config('app.url'))
                 .'/reset-password?token='.$token
                 .'&email='.urlencode($user->email);
         });

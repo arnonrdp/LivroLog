@@ -134,19 +134,7 @@ jobs:
             php artisan books:cache-clear
             php artisan config:clear
 
-      - name: Kill Queue Workers
-        uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            echo "Killing existing queue workers..."
-            pkill -f "php artisan queue:work" || echo "No existing workers found"
-            sleep 2
-            echo "Queue workers killed"
-
-      - name: Start Queue Workers  
+      - name: Restart Queue Workers
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -154,35 +142,27 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script_stop: false
           script: |
+            echo "Restarting queue workers..."
+            
+            # Kill existing workers silently
+            pkill -f "php artisan queue:work" >/dev/null 2>&1 || true
+            sleep 3
+            
             # Start production worker
             if [ -d "/var/www/livrolog/current/api" ]; then
                 cd /var/www/livrolog/current/api
-                
-                # Try screen first, fallback to nohup
-                if command -v screen >/dev/null 2>&1; then
-                    screen -dmS queue-worker php artisan queue:work --verbose --tries=3 --timeout=60
-                    echo "Production queue worker started in screen session"
-                else
-                    nohup php artisan queue:work --verbose --tries=3 --timeout=60 > storage/logs/queue-worker.log 2>&1 &
-                    echo "Production queue worker started with nohup"
-                fi
+                nohup php artisan queue:work --verbose --tries=3 --timeout=60 >/dev/null 2>&1 &
+                echo "Production queue worker restarted"
             fi
             
             # Start dev worker  
             if [ -d "/var/www/livrolog-dev/current/api" ]; then
                 cd /var/www/livrolog-dev/current/api
-                
-                # Try screen first, fallback to nohup
-                if command -v screen >/dev/null 2>&1; then
-                    screen -dmS queue-worker-dev php artisan queue:work --verbose --tries=3 --timeout=60
-                    echo "Dev queue worker started in screen session"
-                else
-                    nohup php artisan queue:work --verbose --tries=3 --timeout=60 > storage/logs/queue-worker.log 2>&1 &
-                    echo "Dev queue worker started with nohup"
-                fi
+                nohup php artisan queue:work --verbose --tries=3 --timeout=60 >/dev/null 2>&1 &
+                echo "Dev queue worker restarted"
             fi
             
-            echo "Queue workers started successfully"
+            echo "Queue workers restart completed"
 
       - name: Restart Apache
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0

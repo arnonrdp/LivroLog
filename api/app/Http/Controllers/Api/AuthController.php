@@ -655,27 +655,27 @@ class AuthController extends Controller
 
                 if ($user) {
                     // Update existing user with Google data - Google accounts are always verified
-                    $user->update([
-                        'google_id' => $googleUser->id,
-                        'avatar' => $googleUser->avatar,
-                        'email_verified' => true,
-                        'email_verified_at' => now(),
-                    ]);
+                    $user->google_id = $googleUser->id;
+                    $user->avatar = $googleUser->avatar;
+                    $user->email_verified = true;
+                    $user->email_verified_at = now();
+                    $user->save();
                 } else {
                     // Create new user
                     $username = $this->generateUniqueUsername($googleUser->name, $googleUser->email);
 
                     $user = User::create([
-                        'google_id' => $googleUser->id,
                         'display_name' => $googleUser->name,
                         'email' => $googleUser->email,
                         'username' => $username,
                         'avatar' => $googleUser->avatar,
                         'password' => null, // No password for Google users
                         'shelf_name' => $googleUser->name.self::LIBRARY_SUFFIX,
-                        'email_verified' => true,
-                        'email_verified_at' => now(),
                     ]);
+                    $user->google_id = $googleUser->id;
+                    $user->email_verified = true;
+                    $user->email_verified_at = now();
+                    $user->save();
                 }
             }
 
@@ -772,35 +772,31 @@ class AuthController extends Controller
 
                 if ($user) {
                     // Update existing user with Google data - Google accounts are always verified
-                    $updateData = [
-                        'google_id' => $googleId,
-                        'avatar' => $avatar,
-                        'email_verified' => true, // Google accounts are always verified
-                        'email_verified_at' => now(),
-                    ];
-
-                    // Set locale if not already set
+                    $user->google_id = $googleId;
+                    $user->avatar = $avatar;
+                    $user->email_verified = true; // Google accounts are always verified
+                    $user->email_verified_at = now();
                     if (is_null($user->locale) && $request->has('locale')) {
-                        $updateData['locale'] = $this->normalizeLocale($request->input('locale'));
+                        $user->locale = $this->normalizeLocale($request->input('locale'));
                     }
-
-                    $user->update($updateData);
+                    $user->save();
                 } else {
                     // Create new user
                     $username = $this->generateUniqueUsername($name, $email);
 
                     $user = User::create([
-                        'google_id' => $googleId,
                         'display_name' => $name,
                         'email' => $email,
                         'username' => $username,
                         'avatar' => $avatar,
                         'password' => null, // No password for Google users
                         'shelf_name' => $name.self::LIBRARY_SUFFIX,
-                        'email_verified' => true, // Google accounts are always verified
-                        'email_verified_at' => now(),
                         'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
                     ]);
+                    $user->google_id = $googleId;
+                    $user->email_verified = true; // Google accounts are always verified
+                    $user->email_verified_at = now();
+                    $user->save();
                 }
             }
 

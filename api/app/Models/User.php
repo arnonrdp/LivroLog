@@ -47,19 +47,13 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'google_id',
         'display_name',
         'email',
         'username',
         'shelf_name',
         'password',
         'locale',
-        'role',
         'avatar',
-        'email_verified',
-        'email_verified_at',
-        'followers_count',
-        'following_count',
         'is_private',
     ];
 
