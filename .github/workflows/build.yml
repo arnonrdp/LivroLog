@@ -106,21 +106,59 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webapp/yarn.lock
 
+      - name: Install dependencies with retry
+        working-directory: ./webapp
+        run: |
+          # Try yarn first with multiple registries and retry logic
+          for i in {1..5}; do
+            echo "📦 Attempt $i/5: Installing dependencies..."
+            
+            if [ $i -eq 1 ]; then
+              # First attempt with default registry
+              yarn install --frozen-lockfile --prefer-offline --network-timeout 100000 && break
+            elif [ $i -eq 2 ]; then
+              # Second attempt with npm registry
+              yarn install --frozen-lockfile --prefer-offline --network-timeout 100000 --registry https://registry.npmjs.org/ && break
+            elif [ $i -eq 3 ]; then
+              # Third attempt: clear cache and retry
+              yarn cache clean
+              yarn install --frozen-lockfile --prefer-offline --network-timeout 100000 && break
+            elif [ $i -eq 4 ]; then
+              # Fourth attempt: fallback to npm ci
+              echo "🔄 Falling back to npm..."
+              npm ci --prefer-offline --no-audit --legacy-peer-deps && break
+            else
+              # Final attempt: npm with different registry
+              npm install --prefer-offline --no-audit --legacy-peer-deps --registry https://registry.npmjs.org/ && break
+            fi
+            
+            echo "❌ Attempt $i failed. Waiting 30 seconds before retry..."
+            sleep 30
+          done
+          
+          if [ $i -eq 6 ]; then
+            echo "❌ All installation attempts failed"
+            exit 1
+          fi
+          
+          echo "✅ Dependencies installed successfully on attempt $i"
+
       - name: Build webapp (optimized)
         working-directory: ./webapp
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: |
-          yarn install --frozen-lockfile --prefer-offline
 
           # Set API URL and Google Client ID based on environment
           if [[ "${{ inputs.environment }}" == "Production" ]]; then
             echo "VITE_API_URL=https://api.livrolog.com" > .env.production
+            echo "VITE_FRONTEND_URL=https://livrolog.com" >> .env.production
             echo "VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env.production
             echo "VITE_APP_NAME=LivroLog" >> .env.production
             yarn build --mode production
           else
             echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
+            echo "VITE_FRONTEND_URL=https://dev.livrolog.com" >> .env.development
             echo "VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env.development
             echo "VITE_APP_NAME=LivroLog" >> .env.development
             yarn build --mode development
