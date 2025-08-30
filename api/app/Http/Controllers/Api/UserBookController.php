@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PaginatedResource;
+use App\Http\Resources\UserBookSimplifiedResource;
 use App\Models\Book;
-use App\Services\BookEnrichmentService;
+use App\Models\User;
 use App\Services\UnifiedBookEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
 use Illuminate\Http\JsonResponse;
@@ -22,87 +22,88 @@ class UserBookController extends Controller
      *     operationId="getUserBooks",
      *     tags={"User Library"},
      *     summary="Get user's personal library",
-     *     description="Returns paginated list of books in the authenticated user's personal library",
+     *     description="Returns all books in the authenticated user's personal library",
      *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="page",
-     *         in="query",
-     *         description="Page number",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="all",
-     *         in="query",
-     *         description="Return all books without pagination",
-     *         required=false,
-     *
-     *         @OA\Schema(type="string", example="true")
-     *     ),
-     *
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Items per page",
-     *         required=false,
-     *
-     *         @OA\Schema(type="integer", example=20)
-     *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="User's books library",
      *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Book")),
-     *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="total", type="integer"),
-     *             @OA\Property(property="per_page", type="integer")
-     *         )
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Book"))
      *     ),
      *
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
-    public function index(Request $request, AmazonLinkEnrichmentService $amazonService)
+    public function index(Request $request)
     {
         $user = $request->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $query = $user->books()->withPivot('added_at', 'read_at', 'is_private', 'reading_status');
+        $books = $user->books()
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+            ->get();
 
-        // If 'all' parameter is present, return all books without pagination
-        if ($request->has('all') && $request->get('all') === 'true') {
-            $books = $query->get()->toArray();
+        return UserBookSimplifiedResource::collection($books);
+    }
 
-            // Enrich with Amazon links
-            $books = $amazonService->enrichBooksWithAmazonLinks($books, [
-                'locale' => $request->header('Accept-Language', 'en-US')
-            ]);
-
-            return response()->json(['data' => $books]);
+    /**
+     * @OA\Get(
+     *     path="/user/books/{book}",
+     *     operationId="getUserBook",
+     *     tags={"User Library"},
+     *     summary="Get specific book from user's library",
+     *     description="Returns a specific book from the authenticated user's library with pivot data (read dates, status, etc.) and reviews",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book details with pivot data and reviews",
+     *         @OA\JsonContent(ref="#/components/schemas/Book")
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found in user's library"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function show(Request $request, Book $book, AmazonLinkEnrichmentService $amazonService)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Otherwise, paginate with configurable per_page parameter (default 20)
-        $perPage = $request->get('per_page', 20);
-        $booksPage = $query->paginate($perPage);
+        // Get book with pivot data from user's library
+        $userBook = $user->books()
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+            ->where('books.id', $book->id)
+            ->with(['reviews' => function ($query) {
+                $query->with('user:id,display_name,username,avatar');
+            }])
+            ->first();
 
-        // Enrich paginated data with Amazon links
+        if (!$userBook) {
+            return response()->json(['error' => 'Book not found in your library'], 404);
+        }
+
+        // Convert to array and enrich with Amazon links
+        $bookData = $userBook->toArray();
         $enrichedBooks = $amazonService->enrichBooksWithAmazonLinks(
-            $booksPage->items(),
+            [$bookData],
             ['locale' => $request->header('Accept-Language', 'en-US')]
         );
 
-        // Replace items with enriched data
-        $booksPage->setCollection(collect($enrichedBooks));
-
-        return new PaginatedResource($booksPage);
+        return response()->json($enrichedBooks[0]);
     }
 
     /**
@@ -434,6 +435,95 @@ class UserBookController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/users/{user}/books/{book}",
+     *     operationId="getSpecificUserBook",
+     *     tags={"User Library"},
+     *     summary="Get specific book from a user's library",
+     *     description="Returns a specific book from a user's library with their pivot data (read dates, status, etc.) and reviews. Respects privacy settings.",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="User ID or username",
+     *         required=true,
+     *         @OA\Schema(type="string", example="U-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book details with user's pivot data and reviews",
+     *         @OA\JsonContent(ref="#/components/schemas/Book")
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found in user's library or user not found"),
+     *     @OA\Response(response=403, description="Access denied - private profile"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function showUserBook(Request $request, string $userIdentifier, Book $book, AmazonLinkEnrichmentService $amazonService)
+    {
+        $currentUser = $request->user();
+
+        // Find the target user by ID or username
+        $targetUser = str_starts_with($userIdentifier, 'U-')
+            ? User::findOrFail($userIdentifier)
+            : User::where('username', $userIdentifier)->firstOrFail();
+
+        // Check if current user can access this user's library
+        $isOwner = $currentUser && $currentUser->id === $targetUser->id;
+        $isFollowing = false;
+
+        if ($currentUser && !$isOwner) {
+            $isFollowing = $currentUser->followingRelationships()
+                ->where('followed_id', $targetUser->id)
+                ->where('status', 'accepted')
+                ->exists();
+        }
+
+        // Check privacy access
+        if ($targetUser->is_private && !$isOwner && !$isFollowing) {
+            return response()->json(['error' => 'Access denied to private profile'], 403);
+        }
+
+        // Get book with pivot data from target user's library
+        $userBook = $targetUser->books()
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+            ->where('books.id', $book->id)
+            ->with(['reviews' => function ($query) {
+                $query->with('user:id,display_name,username,avatar');
+            }])
+            ->first();
+
+        if (!$userBook) {
+            return response()->json(['error' => 'Book not found in user\'s library'], 404);
+        }
+
+        // Filter private books (only owner can see their private books)
+        if (!$isOwner && $userBook->pivot->is_private) {
+            return response()->json(['error' => 'Book is private'], 403);
+        }
+
+        // Convert to array and enrich with Amazon links
+        $bookData = $userBook->toArray();
+        $enrichedBooks = $amazonService->enrichBooksWithAmazonLinks(
+            [$bookData],
+            ['locale' => $request->header('Accept-Language', 'en-US')]
+        );
+
+        return response()->json($enrichedBooks[0]);
+    }
+
+    /**
      * Determines if a book should be enriched
      */
     private function shouldEnrichBook(Book $book): bool
@@ -447,33 +537,4 @@ class UserBookController extends Controller
                ($book->page_count === null && $book->google_id !== null);
     }
 
-    /**
-     * Parse published date from various formats
-     */
-    private function parsePublishedDate(string $dateString): ?\Carbon\Carbon
-    {
-        try {
-            $result = null;
-
-            if (preg_match('/^\d{4}$/', $dateString)) {
-                // Year only (4 digits)
-                $result = \Carbon\Carbon::createFromFormat('Y', $dateString)->startOfYear();
-            } elseif (preg_match('/^\d{4}-\d{2}$/', $dateString)) {
-                // Year and month (YYYY-MM)
-                $result = \Carbon\Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
-            } else {
-                // Full date
-                $result = \Carbon\Carbon::parse($dateString);
-            }
-
-            return $result;
-        } catch (\Exception $e) {
-            \Log::warning('Error parsing publication date', [
-                'date_string' => $dateString,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-    }
 }

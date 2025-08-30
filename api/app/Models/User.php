@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -35,7 +36,7 @@ use Laravel\Sanctum\HasApiTokens;
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
  */
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -56,6 +57,7 @@ class User extends Authenticatable
         'role',
         'avatar',
         'email_verified',
+        'email_verified_at',
         'followers_count',
         'following_count',
         'is_private',
@@ -208,5 +210,21 @@ class User extends Authenticatable
         return Follow::where('followed_id', $this->id)
             ->where('status', 'pending')
             ->count();
+    }
+
+    /**
+     * Check if the user has a password set.
+     */
+    public function hasPasswordSet(): bool
+    {
+        return ! is_null($this->password);
+    }
+
+    /**
+     * Check if the user has Google account connected.
+     */
+    public function hasGoogleConnected(): bool
+    {
+        return ! is_null($this->google_id);
     }
 }

@@ -3,6 +3,7 @@ import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { LocalStorage, Meta, Notify, Quasar } from 'quasar'
 import SecureLS from 'secure-ls'
 import { createApp } from 'vue'
+import { registerSW } from 'virtual:pwa-register'
 import { i18n } from './locales'
 
 // Import Quasar CSS first
@@ -44,5 +45,8 @@ app.use(Quasar, {
 app.use(router)
 app.use(pinia)
 app.use(i18n)
+
+// Register Service Worker
+registerSW({ immediate: true })
 
 app.mount('#app')

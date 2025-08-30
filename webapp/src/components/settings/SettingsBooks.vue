@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { useUserBookStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -58,16 +58,20 @@ watch(
     const dates: Record<string, string> = {}
     const originals: Record<string, string> = {}
     books.value.forEach((book) => {
-      const existingDate = book.pivot?.read_at || ''
-      const dateOnly = existingDate ? existingDate.substring(0, 10) : ''
-      dates[book.id] = dateOnly
-      originals[book.id] = dateOnly
+      // Extract read_at from pivot data returned by GET /user/books
+      const readDate = book.pivot?.read_at || ''
+      dates[book.id] = readDate
+      originals[book.id] = readDate
     })
     readDates.value = dates
     originalDates.value = originals
   },
   { immediate: true, deep: true }
 )
+
+onMounted(() => {
+  userBookStore.getUserBooks()
+})
 
 watch(
   readDates,
@@ -82,7 +86,7 @@ watch(
 
         isUpdating.value[bookId] = true
         await userBookStore
-          .patchUserBookReadDate(bookId, dateOnly)
+          .patchUserBook(bookId, { read_at: dateOnly })
           .then(() => (originalDates.value[bookId] = dateOnly))
           .catch(() => (readDates.value[bookId] = originalDate))
           .finally(() => (isUpdating.value[bookId] = false))

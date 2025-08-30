@@ -7,11 +7,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     libonig-dev \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libxml2-dev \
     libzip-dev \
     unzip \
     zip \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath zip intl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath zip intl gd \
     && pecl install redis xdebug \
     && docker-php-ext-enable redis xdebug \
     && echo "xdebug.mode=debug,develop,coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \

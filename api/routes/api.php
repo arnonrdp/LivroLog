@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\ImageProxyController;
 use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
@@ -35,9 +37,19 @@ Route::middleware(['throttle:10,1'])->group(function () {
     Route::post('/auth/google', [AuthController::class, 'googleSignIn']);
 });
 
+// Email verification routes
+Route::get('/auth/verify-email', [EmailVerificationController::class, 'verifyEmail'])->name('verification.verify');
+
 // Public routes
 Route::get('/health', [HealthController::class, 'index']);
 Route::get('/books', [BookController::class, 'index']);
+
+// Image proxy (public for CORS issues)
+Route::get('/image-proxy', [ImageProxyController::class, 'proxy']);
+Route::get('/image-proxy/stats', [ImageProxyController::class, 'stats']);
+
+// User shelf images for social sharing (public)
+Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
@@ -54,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/auth/me', [AuthController::class, 'deleteMe']);
     Route::get('/auth/check-username', [AuthController::class, 'checkUsername']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
+    Route::post('/auth/verify-email', [EmailVerificationController::class, 'sendVerificationEmail']);
+    Route::put('/auth/google', [AuthController::class, 'connectGoogle']);
+    Route::delete('/auth/google', [AuthController::class, 'disconnectGoogle']);
 
     // Legacy password endpoint
     Route::put('/password', [AuthController::class, 'updatePassword']);
@@ -67,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // User's books (Personal Library Management)
     Route::get('/user/books', [UserBookController::class, 'index']);
+    Route::get('/user/books/{book}', [UserBookController::class, 'show']);
     Route::post('/user/books', [UserBookController::class, 'store']);
     Route::patch('/user/books/{book}', [UserBookController::class, 'update']);
     Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
@@ -76,6 +92,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{user}/follow', [FollowController::class, 'unfollow']);
     Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
     Route::get('/users/{user}/following', [FollowController::class, 'following']);
+
+    // User's specific book (for viewing other people's shelves)
+    Route::get('/users/{user}/books/{book}', [UserBookController::class, 'showUserBook']);
 
     // Follow requests
     Route::get('/follow-requests', [FollowController::class, 'getFollowRequests']);

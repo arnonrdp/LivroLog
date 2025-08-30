@@ -4,26 +4,33 @@
       <h1 class="text-primary text-left q-my-none">{{ userStore.me.display_name }}</h1>
       <q-space />
       <FollowRequestsIndicator class="q-mr-md" />
+      <q-btn class="q-mr-sm" dense flat icon="share" @click="showShareDialog = true">
+        <q-tooltip>{{ $t('share') }}</q-tooltip>
+      </q-btn>
       <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
     </div>
-    <TheShelf :books="filteredBooks" @readDateUpdated="handleReadDateUpdated" />
+    <TheShelf :books="filteredBooks" />
+
+    <ShareButtons v-model="showShareDialog" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
+import ShareButtons from '@/components/share/ShareButtons.vue'
 import FollowRequestsIndicator from '@/components/social/FollowRequestsIndicator.vue'
-import { useAuthStore, useUserStore } from '@/stores'
+import { useUserBookStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
 
-const authStore = useAuthStore()
 const userStore = useUserStore()
+const userBookStore = useUserBookStore()
 
 const ascDesc = ref('desc')
 const filter = ref('')
 const sortKey = ref<string | number>('readIn')
+const showShareDialog = ref(false)
 
 const filteredBooks = computed(() => {
   const filtered =
@@ -34,7 +41,7 @@ const filteredBooks = computed(() => {
 })
 
 onMounted(() => {
-  authStore.getMe()
+  userBookStore.getUserBooks()
 })
 
 function onSort(label: string | number) {
@@ -44,10 +51,5 @@ function onSort(label: string | number) {
     sortKey.value = label
     ascDesc.value = 'asc'
   }
-}
-
-async function handleReadDateUpdated() {
-  // Refresh the current user data to get updated books
-  await authStore.getMe()
 }
 </script>

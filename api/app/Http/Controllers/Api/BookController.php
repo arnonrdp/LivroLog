@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Book;
-use App\Services\BookEnrichmentService;
 use App\Services\UnifiedBookEnrichmentService;
 use App\Services\HybridBookSearchService;
-use App\Services\MultiSourceBookSearchService;
 use App\Transformers\BookTransformer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BookController extends Controller
 {
@@ -353,8 +352,8 @@ class BookController extends Controller
      *     path="/books/{id}",
      *     operationId="getBook",
      *     tags={"Books"},
-     *     summary="Get book by ID",
-     *     description="Returns detailed information about a specific book",
+     *     summary="Get book by ID with contextual data",
+     *     description="Returns detailed information about a specific book with optional user-specific data using with[] pattern",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
@@ -366,11 +365,44 @@ class BookController extends Controller
      *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
      *
+     *     @OA\Parameter(
+     *         name="with[]",
+     *         in="query",
+     *         description="Include additional data: pivot (user library data), reviews, details",
+     *         required=false,
+     *         style="form",
+     *         explode=true,
+     *
+     *         @OA\Schema(type="array", @OA\Items(type="string", enum={"pivot", "reviews", "details"}))
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="User ID to get pivot data for (used with with[]=pivot)",
+     *         required=false,
+     *
+     *         @OA\Schema(type="string", example="U-1ABC-2DEF")
+     *     ),
+     *
      *     @OA\Response(
      *         response=200,
-     *         description="Book information",
+     *         description="Book information with contextual data",
      *
-     *         @OA\JsonContent(ref="#/components/schemas/Book")
+     *         @OA\JsonContent(
+     *             allOf={
+     *                 @OA\Schema(ref="#/components/schemas/Book"),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="pivot", type="object", nullable=true,
+     *                         @OA\Property(property="added_at", type="string", format="date-time"),
+     *                         @OA\Property(property="read_at", type="string", format="date", nullable=true),
+     *                         @OA\Property(property="is_private", type="boolean"),
+     *                         @OA\Property(property="reading_status", type="string")
+     *                     ),
+     *                     @OA\Property(property="reviews", type="array", @OA\Items(type="object"))
+     *                 )
+     *             }
+     *         )
      *     ),
      *
      *     @OA\Response(response=404, description="Book not found"),
@@ -379,16 +411,26 @@ class BookController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $includes = BookTransformer::parseIncludes($request->input('with'));
+        $includes = $this->parseWithParameter($request->input('with', []));
         $transformer = new BookTransformer;
 
-        $book = Book::with([
-            'users',
-            'relatedBooks',
-            'reviews' => function ($query) {
+        // Build dynamic relationships based on includes
+        $with = [];
+
+        if (in_array('reviews', $includes)) {
+            $with['reviews'] = function ($query) {
                 $query->with('user')->latest()->limit(20);
-            }
-        ])->findOrFail($id);
+            };
+        }
+
+        // Load related books for details
+        if (in_array('details', $includes)) {
+            $with['relatedBooks'] = function ($query) {
+                $query->limit(10);
+            };
+        }
+
+        $book = Book::with($with)->findOrFail($id);
 
         // Always include details for single book view
         if (! in_array('details', $includes)) {
@@ -397,8 +439,16 @@ class BookController extends Controller
 
         $transformedBook = $transformer->transform($book, $includes);
 
-        // Include reviews in the response
-        $transformedBook['reviews'] = $this->transformReviews($book->reviews);
+        // Include reviews in the response if requested
+        if (in_array('reviews', $includes)) {
+            $transformedBook['reviews'] = $this->transformReviews($book->reviews ?? collect());
+        }
+
+        // Include pivot data if requested
+        if (in_array('pivot', $includes)) {
+            $pivotData = $this->getPivotData($book, $request);
+            $transformedBook['pivot'] = $pivotData;
+        }
 
         return response()->json($transformedBook);
     }
@@ -690,6 +740,88 @@ class BookController extends Controller
     }
 
     /**
+     * Parse 'with' parameter from request
+     */
+    private function parseWithParameter($withParam): array
+    {
+        if (is_string($withParam)) {
+            return explode(',', $withParam);
+        }
+
+        if (is_array($withParam)) {
+            return $withParam;
+        }
+
+        return [];
+    }
+
+    /**
+     * Get pivot data for a book and user
+     */
+    private function getPivotData(Book $book, Request $request): ?array
+    {
+        // Determine which user's pivot data to get
+        $targetUserId = $request->input('user_id');
+        $currentUser = $request->user();
+
+        if ($targetUserId) {
+            // Getting pivot for specific user
+            $targetUser = \App\Models\User::find($targetUserId);
+            if (!$targetUser) {
+                return null;
+            }
+
+            // Check privacy permissions
+            if ($currentUser && $targetUser->id !== $currentUser->id) {
+                // Check if target user is private and current user is not following
+                if ($targetUser->is_private) {
+                    $isFollowing = $currentUser->followingRelationships()
+                        ->where('followed_id', $targetUser->id)
+                        ->where('status', 'accepted')
+                        ->exists();
+
+                    if (!$isFollowing) {
+                        return null; // Private profile, no access
+                    }
+                }
+            }
+
+            $userBook = $targetUser->books()
+                ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+                ->where('books.id', $book->id)
+                ->first();
+
+        } elseif ($currentUser) {
+            // Getting pivot for authenticated user
+            $userBook = $currentUser->books()
+                ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+                ->where('books.id', $book->id)
+                ->first();
+        } else {
+            // No user context
+            return null;
+        }
+
+        if (!$userBook || !$userBook->pivot) {
+            return null;
+        }
+
+        $pivot = $userBook->pivot;
+
+        // Check if book is private (only owner can see private books)
+        if ($pivot->is_private && (!$currentUser || $currentUser->id !== $pivot->user_id)) {
+            return null;
+        }
+
+        return [
+            'added_at' => $pivot->added_at ? (is_string($pivot->added_at) ? $pivot->added_at : $pivot->added_at->toISOString()) : null,
+            'read_at' => $pivot->read_at ? (is_string($pivot->read_at) ? $pivot->read_at : $pivot->read_at->format('Y-m-d')) : null,
+            'is_private' => $pivot->is_private,
+            'reading_status' => $pivot->reading_status,
+        ];
+    }
+
+    /**
      * Parse published date from various formats
      */
     private function parsePublishedDate(string $dateString): ?\Carbon\Carbon
@@ -710,7 +842,7 @@ class BookController extends Controller
 
             return $result;
         } catch (\Exception $e) {
-            \Log::warning('Error parsing publication date', [
+            Log::warning('Error parsing publication date', [
                 'date_string' => $dateString,
                 'error' => $e->getMessage(),
             ]);

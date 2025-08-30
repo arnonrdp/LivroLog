@@ -26,8 +26,7 @@
       </figure>
     </section>
 
-    <!-- Book Reviews Dialog -->
-    <BookDialog v-if="selectedBook" v-model="showBookDialog" :book="selectedBook" />
+    <BookDialog v-model="showBookDialog" :book-data="selectedBook" :book-id="selectedBookId" />
   </q-page>
 </template>
 
@@ -48,7 +47,8 @@ const books = ref<Book[]>([])
 const seek = ref('')
 const showBookDialog = ref(false)
 const isSearching = ref(false)
-const selectedBook = ref<Book | null>(null)
+const selectedBookId = ref<string | undefined>()
+const selectedBook = ref<Book | undefined>()
 
 document.title = `LivroLog | ${t('add')}`
 
@@ -68,7 +68,15 @@ function clearSearch() {
 }
 
 function showBookReviews(book: Book) {
-  selectedBook.value = book
+  // If the book has an ID (it's in our database), pass the ID
+  // Otherwise, pass the entire book data for display
+  if (book.id) {
+    selectedBookId.value = book.id
+    selectedBook.value = undefined
+  } else {
+    selectedBookId.value = undefined
+    selectedBook.value = book
+  }
   showBookDialog.value = true
 }
 </script>

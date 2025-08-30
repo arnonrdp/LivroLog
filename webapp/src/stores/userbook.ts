@@ -7,12 +7,14 @@ import { useUserStore } from './user'
 
 export const useUserBookStore = defineStore('userbook', {
   state: () => ({
+    _book: {} as Book,
     _isLoading: false
   }),
 
   persist: true,
 
   getters: {
+    book: (state) => state._book,
     isLoading: (state) => state._isLoading
   },
 
@@ -23,19 +25,45 @@ export const useUserBookStore = defineStore('userbook', {
       return await api
         .get('/user/books')
         .then((response) => {
-          // Handle different response formats
-          const books = response.data.data || response.data.books || response.data || []
-          const validBooks = Array.isArray(books) ? books : []
+          const books = Array.isArray(response.data) ? response.data : []
 
-          // Update userStore.me.books
-          userStore.updateMe({ books: validBooks })
-          return validBooks
+          userStore.updateMe({ books: books })
+          return books
         })
         .catch((error) => {
           // Clear books on error
           userStore.updateMe({ books: [] })
           Notify.create({ message: error.response?.data?.message, type: 'negative' })
           return []
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
+    async getUserBook(bookId: string) {
+      this._isLoading = true
+      return api
+        .get(`/user/books/${bookId}`)
+        .then((response) => {
+          this._book = response.data
+          return response.data
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
+    async getUserBookFromUser(userIdentifier: string, bookId: string) {
+      this._isLoading = true
+      return api
+        .get(`/users/${userIdentifier}/books/${bookId}`)
+        .then((response) => {
+          return response.data
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+          throw error
         })
         .finally(() => (this._isLoading = false))
     },
@@ -116,19 +144,19 @@ export const useUserBookStore = defineStore('userbook', {
         .finally(() => (this._isLoading = false))
     },
 
-    async patchUserBook(bookId: Book['id'], updates: { read_at?: string; is_private?: boolean; reading_status?: ReadingStatus }) {
+    async patchUserBook(bookId: Book['id'], payload: { read_at?: string; is_private?: boolean; reading_status?: ReadingStatus }) {
       this._isLoading = true
       const userStore = useUserStore()
       return api
-        .patch(`/user/books/${bookId}`, updates)
+        .patch(`/user/books/${bookId}`, payload)
         .then((response) => {
           const currentBooks = userStore.me.books || []
           const updatedBooks = currentBooks.map((book) => {
             if (book.id === bookId && book.pivot) {
               const updatedPivot = { ...book.pivot }
-              if (updates.read_at !== undefined) updatedPivot.read_at = updates.read_at
-              if (updates.is_private !== undefined) updatedPivot.is_private = updates.is_private
-              if (updates.reading_status !== undefined) updatedPivot.reading_status = updates.reading_status
+              if (payload.read_at !== undefined) updatedPivot.read_at = payload.read_at
+              if (payload.is_private !== undefined) updatedPivot.is_private = payload.is_private
+              if (payload.reading_status !== undefined) updatedPivot.reading_status = payload.reading_status
               return { ...book, pivot: updatedPivot }
             }
             return book
@@ -136,13 +164,13 @@ export const useUserBookStore = defineStore('userbook', {
           userStore.updateMe({ books: updatedBooks })
 
           // Show appropriate success message
-          if (Object.keys(updates).length > 1) {
+          if (Object.keys(payload).length > 1) {
             Notify.create({ message: i18n.global.t('book-updated'), type: 'positive' })
-          } else if (updates.read_at !== undefined) {
+          } else if (payload.read_at !== undefined) {
             Notify.create({ message: i18n.global.t('read-date-saved'), type: 'positive' })
-          } else if (updates.is_private !== undefined) {
+          } else if (payload.is_private !== undefined) {
             Notify.create({ message: i18n.global.t('privacy-updated'), type: 'positive' })
-          } else if (updates.reading_status !== undefined) {
+          } else if (payload.reading_status !== undefined) {
             Notify.create({ message: i18n.global.t('reading-status-updated'), type: 'positive' })
           }
 
@@ -153,19 +181,6 @@ export const useUserBookStore = defineStore('userbook', {
           throw error
         })
         .finally(() => (this._isLoading = false))
-    },
-
-    // Backward compatibility methods
-    async patchUserBookReadDate(bookId: Book['id'], readDate: string) {
-      return this.patchUserBook(bookId, { read_at: readDate })
-    },
-
-    async patchUserBookPrivacy(bookId: Book['id'], isPrivate: boolean) {
-      return this.patchUserBook(bookId, { is_private: isPrivate })
-    },
-
-    async patchUserBookStatus(bookId: Book['id'], readingStatus: ReadingStatus) {
-      return this.patchUserBook(bookId, { reading_status: readingStatus })
     },
 
     async deleteUserBook(bookId: Book['id']) {

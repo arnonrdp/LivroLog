@@ -32,8 +32,8 @@ export const useBookStore = defineStore('book', {
           }
 
           books.sort((a: Book, b: Book) => {
-            const aDate = a.pivot?.read_at || a.readIn
-            const bDate = b.pivot?.read_at || b.readIn
+            const aDate = a.readIn
+            const bDate = b.readIn
             if (!aDate || !bDate) return 0
             return new Date(bDate).getTime() - new Date(aDate).getTime()
           })
@@ -45,10 +45,21 @@ export const useBookStore = defineStore('book', {
         .finally(() => (this._isLoading = false))
     },
 
-    async getBook(bookId: Book['id']) {
+    async getBook(bookId: Book['id'], options: { with?: string[]; user_id?: string } = {}) {
       this._isLoading = true
+
+      const params: Record<string, string | string[]> = {}
+
+      if (options.with && options.with.length > 0) {
+        params['with[]'] = options.with
+      }
+
+      if (options.user_id) {
+        params.user_id = options.user_id
+      }
+
       return await api
-        .get(`/books/${bookId}`)
+        .get(`/books/${bookId}`, { params })
         .then((response) => {
           this._book = response.data
           return response.data
