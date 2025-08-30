@@ -1,12 +1,16 @@
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
+import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  
+  return {
   build: {
     sourcemap: false, // Disable source maps to avoid eval() usage
     rollupOptions: {
@@ -43,6 +47,15 @@ export default defineConfig({
 
     quasar({
       sassVariables: fileURLToPath(new URL('./src/quasar-variables.sass', import.meta.url))
+    }),
+
+    createHtmlPlugin({
+      inject: {
+        data: {
+          VITE_API_URL: env.VITE_API_URL || 'http://localhost:8000',
+          VITE_FRONTEND_URL: env.VITE_FRONTEND_URL || 'https://livrolog.com'
+        }
+      }
     }),
 
     vueDevTools(),
@@ -109,5 +122,6 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       'Cross-Origin-Embedder-Policy': 'unsafe-none'
     }
+  }
   }
 })

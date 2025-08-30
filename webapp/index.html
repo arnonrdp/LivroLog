@@ -1,6 +1,42 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Environment variables -->
+    <meta name="api-url" content="%VITE_API_URL%">
+
+    <!-- Social Media Crawler Redirect -->
+    <script>
+      // Detect social media crawlers and redirect to API for proper meta tags
+      (function() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const crawlers = [
+          'facebookexternalhit',
+          'twitterbot', 
+          'linkedinbot',
+          'whatsapp',
+          'telegrambot',
+          'slackbot',
+          'discordbot',
+          'skypeuripreview',
+          'applebot',
+          'googlebot',
+          'bingbot',
+          'yahoo',
+          'pinterest',
+          'redditbot'
+        ];
+        
+        const isCrawler = crawlers.some(crawler => userAgent.includes(crawler));
+        
+        if (isCrawler) {
+          // Get API URL from meta tag
+          const apiUrl = document.querySelector('meta[name="api-url"]').getAttribute('content') + window.location.pathname + window.location.search;
+          window.location.replace(apiUrl);
+          return;
+        }
+      })();
+    </script>
+
     <!-- Google Tag Manager -->
     <script>
       ;(function (w, d, s, l, i) {
@@ -31,31 +67,31 @@
 
     <!-- Primary Meta Tags -->
     <title>LivroLog</title>
-    <link rel="canonical" href="https://livrolog.com/" />
+    <link rel="canonical" href="%VITE_FRONTEND_URL%" />
     <meta name="description" content="A place for you to organize everything you've read. Add your books and see what your friends are reading." />
     <meta name="keywords" content="livros, books, estante, shelf, bookcase, organize" />
     <meta name="author" content="Arnon Rodrigues" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://livrolog.com/" />
+    <meta property="og:url" content="%VITE_FRONTEND_URL%" />
     <meta property="og:title" content="LivroLog" />
     <meta
       property="og:description"
       content="A place for you to organize everything you've read. Add your books and see what your friends are reading."
     />
-    <meta property="og:image" content="https://livrolog.com/screenshot-web.jpg" />
+    <meta property="og:image" content="%VITE_FRONTEND_URL%/screenshot-web.jpg" />
     <meta property="og:image:alt" content="Homepage of the LivroLog website with a bookcase with several book covers" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://livrolog.com/" />
+    <meta property="twitter:url" content="%VITE_FRONTEND_URL%" />
     <meta property="twitter:title" content="LivroLog" />
     <meta
       property="twitter:description"
       content="A place for you to organize everything you've read. Add your books and see what your friends are reading."
     />
-    <meta property="twitter:image" content="https://livrolog.com/screenshot-web.jpg" />
+    <meta property="twitter:image" content="%VITE_FRONTEND_URL%/screenshot-web.jpg" />
 
     <!-- Google -->
     <meta name="robots" content="index,follow" />

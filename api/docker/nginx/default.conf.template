@@ -8,14 +8,14 @@ server {
         if ($http_user_agent ~* "facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot") {
             rewrite ^(.*)$ /index.php last;
         }
-        return 302 http://localhost:8001$request_uri;
+        return 302 ${APP_FRONTEND_URL}$request_uri;
     }
     
     location /wanderson {
         if ($http_user_agent ~* "facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot") {
             rewrite ^(.*)$ /index.php last;
         }
-        return 302 http://localhost:8001$request_uri;
+        return 302 ${APP_FRONTEND_URL}$request_uri;
     }
 
     location / {

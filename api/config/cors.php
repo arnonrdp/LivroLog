@@ -23,7 +23,6 @@ return [
         env('APP_FRONTEND_URL', 'http://localhost:8001'),
         env('APP_URL', 'http://localhost:8000'),
         'https://livrolog.com',
-        'https://dev.livrolog.com',
     ],
 
     'allowed_origins_patterns' => [],
