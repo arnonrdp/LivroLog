@@ -134,78 +134,42 @@ jobs:
             php artisan books:cache-clear
             php artisan config:clear
 
-      - name: Restart Queue Workers
+      - name: Kill Queue Workers
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "=== Restarting Queue Workers ==="
-
-            # Kill existing queue workers gracefully
+            echo "Killing existing queue workers..."
             pkill -f "php artisan queue:work" || echo "No existing workers found"
-            sleep 3
+            sleep 2
+            echo "Queue workers killed"
 
-            # Function to start queue worker
-            start_queue_worker() {
-                local app_path="$1"
-                local env_name="$2"
-                
-                if [ -d "$app_path/current/api" ]; then
-                    cd "$app_path/current/api"
-                    
-                    # Create systemd-style background process that survives SSH disconnection
-                    setsid php artisan queue:work \
-                        --verbose \
-                        --tries=3 \
-                        --timeout=60 \
-                        --max-jobs=100 \
-                        --max-time=3600 \
-                        --sleep=3 \
-                        --rest=0 \
-                        > storage/logs/queue-worker.log 2>&1 < /dev/null &
-                    
-                    # Get the PID and verify it started
-                    sleep 1
-                    local worker_pid=$(pgrep -f "php artisan queue:work")
-                    
-                    if [ -n "$worker_pid" ]; then
-                        echo "$env_name queue worker started with PID: $worker_pid"
-                        
-                        # Save PID to file for future reference
-                        echo "$worker_pid" > storage/logs/queue-worker.pid
-                        
-                        # Verify it's actually running
-                        if ps -p "$worker_pid" > /dev/null; then
-                            echo "$env_name queue worker verified running"
-                        else
-                            echo "WARNING: $env_name queue worker PID $worker_pid not found"
-                        fi
-                    else
-                        echo "ERROR: Failed to start $env_name queue worker"
-                        return 1
-                    fi
-                else
-                    echo "Directory $app_path/current/api not found"
-                fi
-            }
-
-            # Start production queue worker if in production
+      - name: Start Queue Workers  
+        uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: false
+          script: |
+            # Start production worker
             if [ -d "/var/www/livrolog/current/api" ]; then
-                start_queue_worker "/var/www/livrolog" "Production"
+                cd /var/www/livrolog/current/api
+                screen -dmS queue-worker php artisan queue:work --verbose --tries=3 --timeout=60
+                echo "Production queue worker started in screen session"
             fi
-
-            # Start dev queue worker if in dev
-            if [ -d "/var/www/livrolog-dev/current/api" ]; then
-                start_queue_worker "/var/www/livrolog-dev" "Development"
-            fi
-
-            # Final verification
-            echo "=== Current queue worker processes ==="
-            pgrep -af "php artisan queue:work" || echo "No queue workers found"
             
-            echo "=== Queue workers restart completed ==="
+            # Start dev worker  
+            if [ -d "/var/www/livrolog-dev/current/api" ]; then
+                cd /var/www/livrolog-dev/current/api
+                screen -dmS queue-worker-dev php artisan queue:work --verbose --tries=3 --timeout=60
+                echo "Dev queue worker started in screen session"
+            fi
+            
+            # Quick verification
+            screen -ls | grep queue || echo "No screen sessions found"
 
       - name: Restart Apache
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
