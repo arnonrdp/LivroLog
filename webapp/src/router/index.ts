@@ -12,9 +12,12 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/',
-    alias: '/home',
     component: () => import('@/views/HomeView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/home',
+    redirect: '/'
   },
   {
     path: '/add',
@@ -33,6 +36,10 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/settings',
+    redirect: '/settings/books'
+  },
+  {
+    path: '/settings/:tab',
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true }
   },

@@ -4,11 +4,11 @@ type Accessor = (b: Book) => string
 
 const sortAccessors: Record<string, Accessor> = {
   authors: (b) => b.authors || '',
-  addedIn: (b) => String(b.addedIn || b.created_at || ''),
-  added_at: (b) => String(b.addedIn || b.created_at || ''),
-  created_at: (b) => String(b.addedIn || b.created_at || ''),
-  readIn: (b) => String(b.readIn || b.pivot?.read_at || ''),
-  read_at: (b) => String(b.readIn || b.pivot?.read_at || ''),
+  addedIn: (b) => String(b.pivot?.added_at || b.created_at || ''),
+  added_at: (b) => String(b.pivot?.added_at || b.created_at || ''),
+  created_at: (b) => String(b.created_at || ''),
+  readIn: (b) => String(b.pivot?.read_at || ''),
+  read_at: (b) => String(b.pivot?.read_at || ''),
   title: (b) => b.title || ''
 }
 

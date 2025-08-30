@@ -1,12 +1,7 @@
 <template>
   <section class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
-      <!-- Private book indicator -->
-      <div v-if="book.pivot?.is_private" class="private-indicator">
-        <q-icon name="lock" size="14px">
-          <q-tooltip anchor="top middle" class="bg-black" self="center middle">{{ $t('book-private-viewed-by-you') }}</q-tooltip>
-        </q-icon>
-      </div>
+      <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable -->
       <div class="book-cover" @click="openBookDialog(book)">
@@ -21,7 +16,7 @@
   </section>
 
   <!-- Book Dialog -->
-  <BookDialog v-if="selectedBook" v-model="showBookDialog" :book="selectedBook" @read-date-updated="$emit('readDateUpdated')" />
+  <BookDialog v-model="showBookDialog" :book-id="selectedBookId" :user-identifier="props.userIdentifier" />
 </template>
 
 <script setup lang="ts">
@@ -29,22 +24,21 @@ import type { Book, User } from '@/models'
 import { ref } from 'vue'
 import BookDialog from './BookDialog.vue'
 
-defineProps<{
+const props = defineProps<{
   books: User['books']
+  userIdentifier?: string // if provided, means viewing another user's shelf
 }>()
 
-defineEmits(['readDateUpdated'])
-
 const filter = ref('')
-const selectedBook = ref<Book | null>(null)
 const showBookDialog = ref(false)
+const selectedBookId = ref<string | undefined>()
 
 function onFilter(title: Book['title']) {
   return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
 function openBookDialog(book: Book) {
-  selectedBook.value = book
+  selectedBookId.value = book.id
   showBookDialog.value = true
 }
 </script>

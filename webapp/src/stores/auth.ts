@@ -31,11 +31,33 @@ export const useAuthStore = defineStore('auth', {
     async getMe() {
       this._isLoading = true
       const userStore = useUserStore()
+
+      // Check for email verification status in URL
+      const urlParams = new URLSearchParams(window.location.search)
+      const status = urlParams.get('status')
+      const error = urlParams.get('error')
+
       return await api
         .get('/auth/me')
         .then((response) => {
           userStore.setMe(response.data)
           LocalStorage.set('user', response.data)
+
+          // Handle email verification notifications
+          if (status === 'verified') {
+            Notify.create({ message: i18n.global.t('email-verified-successfully'), type: 'positive' })
+            window.history.replaceState({}, '', window.location.pathname)
+          } else if (status === 'already_verified') {
+            Notify.create({ message: i18n.global.t('email-already-verified'), type: 'info' })
+            window.history.replaceState({}, '', window.location.pathname)
+          } else if (error === 'invalid_link' || error === 'invalid_hash') {
+            Notify.create({ message: i18n.global.t('invalid-verification-link'), type: 'negative' })
+            window.history.replaceState({}, '', window.location.pathname)
+          } else if (error === 'user_not_found') {
+            Notify.create({ message: i18n.global.t('user-not-found', 'User not found. Please contact support.'), type: 'negative' })
+            window.history.replaceState({}, '', window.location.pathname)
+          }
+
           return response.data
         })
         .catch((error) => {
@@ -46,12 +68,44 @@ export const useAuthStore = defineStore('auth', {
         .finally(() => (this._isLoading = false))
     },
 
-    async postAuthLogin(email: string, password: string) {
+    async putMe(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
+      this._isLoading = true
+      return await api
+        .put('/auth/me', data)
+        .then((response) => {
+          this.setUser(response.data.user)
+          LocalStorage.set('user', response.data.user)
+          if (data.locale) {
+            i18n.global.locale.value = data.locale as SupportedLocale
+          }
+          Notify.create({ message: i18n.global.t('profile-updated'), type: 'positive' })
+          return response.data
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
+    async deleteMe() {
+      this._isLoading = true
+      return await api
+        .delete('/auth/me')
+        .then(() => router.push('/login'))
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
+    async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
       this._isLoading = true
       const userStore = useUserStore()
       const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/login', { email, password, locale: navigatorLanguage })
+        .post('/auth/register', { ...data, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -67,12 +121,12 @@ export const useAuthStore = defineStore('auth', {
         .finally(() => (this._isLoading = false))
     },
 
-    async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
+    async postAuthLogin(email: string, password: string) {
       this._isLoading = true
       const userStore = useUserStore()
       const navigatorLanguage = navigator.language || undefined
       return await api
-        .post('/auth/register', { ...data, locale: navigatorLanguage })
+        .post('/auth/login', { email, password, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
           localStorage.setItem('auth_token', authData.access_token)
@@ -103,11 +157,23 @@ export const useAuthStore = defineStore('auth', {
       this._isLoading = false
     },
 
-    async putAuthPassword(data: { current_password: string; password: string; password_confirmation: string }) {
+    async putAuthPassword(data: { current_password?: string; password: string; password_confirmation: string }) {
       this._isLoading = true
+      const userStore = useUserStore()
+      const wasPasswordSet = userStore.me.has_password_set
       return await api
         .put('/auth/password', data)
-        .then((response) => response.data)
+        .then((response) => {
+          if (response.data.user) {
+            userStore.setMe(response.data.user)
+            LocalStorage.set('user', response.data.user)
+          }
+          Notify.create({
+            message: wasPasswordSet ? i18n.global.t('password-updated') : i18n.global.t('password-set'),
+            type: 'positive'
+          })
+          return response.data
+        })
         .catch((error) => {
           Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
           throw error
@@ -163,6 +229,43 @@ export const useAuthStore = defineStore('auth', {
         .finally(() => (this._isGoogleLoading = false))
     },
 
+    async putAuthGoogleConnect(idToken: string, action: 'connect' | 'update_email') {
+      this._isLoading = true
+      const userStore = useUserStore()
+      return await api
+        .put('/auth/google', { id_token: idToken, action })
+        .then((response) => {
+          if (response.data.user) {
+            userStore.setMe(response.data.user)
+            LocalStorage.set('user', response.data.user)
+          }
+          Notify.create({ message: response.data.message || i18n.global.t('google-connected'), type: 'positive' })
+          return response.data
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-connecting-google'), type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
+    async deleteAuthGoogle() {
+      this._isLoading = true
+      const userStore = useUserStore()
+      return await api
+        .delete('/auth/google')
+        .then((response) => {
+          userStore.updateMe({ has_google_connected: false })
+          Notify.create({ message: i18n.global.t('google-disconnected'), type: 'positive' })
+          return response.data
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-disconnecting-google'), type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
     isAuthenticatedCheck(): boolean {
       return !!localStorage.getItem('auth_token')
     },
@@ -180,36 +283,21 @@ export const useAuthStore = defineStore('auth', {
       return false
     },
 
-
-    async putMe(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
+    async postAuthVerifyEmail() {
       this._isLoading = true
       return await api
-        .put('/auth/me', data)
+        .post('/auth/verify-email')
         .then((response) => {
-          this.setUser(response.data.user)
-          LocalStorage.set('user', response.data.user)
-          if (data.locale) {
-            i18n.global.locale.value = data.locale as SupportedLocale
-          }
-          Notify.create({ message: i18n.global.t('profile-updated'), type: 'positive' })
+          Notify.create({ message: i18n.global.t('verification-email-sent'), type: 'positive' })
           return response.data
         })
         .catch((error) => {
-          Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
-          throw error
-        })
-        .finally(() => (this._isLoading = false))
-    },
-
-    async deleteMe() {
-      this._isLoading = true
-      return await api
-        .delete('/auth/me')
-        .then(() => {
-          router.push('/login')
-        })
-        .catch((error) => {
-          Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
+          if (error.response?.status === 400 && error.response?.data?.message === 'Email already verified') {
+            Notify.create({ message: i18n.global.t('email-already-verified'), type: 'info' })
+            this.getMe()
+          } else {
+            Notify.create({ message: error.response?.data?.message || i18n.global.t('error-sending-verification'), type: 'negative' })
+          }
           throw error
         })
         .finally(() => (this._isLoading = false))

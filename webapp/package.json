@@ -21,6 +21,7 @@
     "@quasar/extras": "^1.17.0",
     "axios": "^1.11.0",
     "google-auth-library": "^10.2.1",
+    "html2canvas": "^1.4.1",
     "jwt-decode": "^4.0.0",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
@@ -50,6 +51,7 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
+    "vite-plugin-pwa": "^1.0.3",
     "vue-eslint-parser": "^10.2.0",
     "vue-tsc": "^3.0.5"
   }

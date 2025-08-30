@@ -356,4 +356,256 @@ class UserController extends Controller
 
         return response()->json(['message' => 'User deleted successfully']);
     }
+
+    /**
+     * Generate shelf image for social sharing
+     *
+     * @OA\Get(
+     *     path="/users/{id}/shelf-image",
+     *     operationId="getUserShelfImage",
+     *     tags={"Users"},
+     *     summary="Generate user's shelf image for social sharing",
+     *     description="Returns a generated image of user's bookshelf for Open Graph sharing",
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Generated shelf image",
+     *         @OA\MediaType(
+     *             mediaType="image/jpeg"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
+    public function shelfImage(string $id)
+    {
+        $user = User::findOrFail($id);
+
+        // Get user's books with covers - limit to 20 for display
+        $books = $user->books()
+            ->whereNotNull('thumbnail')
+            ->orderBy('pivot_read_in', 'desc')
+            ->limit(20)
+            ->get();
+
+        // Generate the shelf image
+        $image = $this->generateShelfImage($user, $books);
+
+        return response($image, 200, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'public, max-age=3600', // Cache for 1 hour
+            'Last-Modified' => now()->toRfc7231String(),
+        ]);
+    }
+
+    /**
+     * Generate the actual shelf image using GD
+     */
+    private function generateShelfImage(User $user, $books)
+    {
+        // Image dimensions optimized for Open Graph (1.91:1 ratio)
+        $width = 1200;
+        $height = 630;
+
+        // Create canvas
+        $image = imagecreatetruecolor($width, $height);
+
+        // Colors
+        $backgroundColor = imagecolorallocate($image, 14, 165, 233); // #0ea5e9 (theme color)
+        $whiteColor = imagecolorallocate($image, 255, 255, 255);
+        $textColor = imagecolorallocate($image, 255, 255, 255);
+
+        // Fill background with gradient-like effect
+        imagefill($image, 0, 0, $backgroundColor);
+
+        // Add semi-transparent overlay for better text readability
+        $overlayColor = imagecolorallocatealpha($image, 0, 0, 0, 40);
+        imagefilledrectangle($image, 0, 0, $width, $height, $overlayColor);
+
+        // Add title text
+        $fontSize = 32;
+        $shelfName = $user->shelf_name ?: $user->display_name;
+        $titleText = $shelfName . ' - LivroLog';
+
+        // Add text with fallback for missing font
+        $fontPath = $this->getFontPath();
+        if ($fontPath && file_exists($fontPath)) {
+            // Use TTF font
+            $textBox = imagettfbbox($fontSize, 0, $fontPath, $titleText);
+            $textWidth = $textBox[2] - $textBox[0];
+            $textX = ($width - $textWidth) / 2;
+            $textY = 80;
+
+            // Add text with shadow effect
+            imagettftext($image, $fontSize, 0, $textX + 2, $textY + 2, imagecolorallocate($image, 0, 0, 0), $fontPath, $titleText);
+            imagettftext($image, $fontSize, 0, $textX, $textY, $textColor, $fontPath, $titleText);
+        } else {
+            // Use built-in font
+            $textWidth = strlen($titleText) * 10; // Approximate width
+            $textX = ($width - $textWidth) / 2;
+            $textY = 80;
+
+            imagestring($image, 5, $textX + 1, $textY + 1, $titleText, imagecolorallocate($image, 0, 0, 0));
+            imagestring($image, 5, $textX, $textY, $titleText, $textColor);
+        }
+
+        // Add book count subtitle
+        $booksCount = count($books);
+        if ($booksCount > 0) {
+            $subtitleText = "{$booksCount} livros";
+            if ($fontPath && file_exists($fontPath)) {
+                $subtitleSize = 18;
+                $subtitleBox = imagettfbbox($subtitleSize, 0, $fontPath, $subtitleText);
+                $subtitleWidth = $subtitleBox[2] - $subtitleBox[0];
+                $subtitleX = ($width - $subtitleWidth) / 2;
+                $subtitleY = 120;
+
+                imagettftext($image, $subtitleSize, 0, $subtitleX + 1, $subtitleY + 1, imagecolorallocate($image, 0, 0, 0), $fontPath, $subtitleText);
+                imagettftext($image, $subtitleSize, 0, $subtitleX, $subtitleY, $textColor, $fontPath, $subtitleText);
+            } else {
+                $subtitleWidth = strlen($subtitleText) * 8;
+                $subtitleX = ($width - $subtitleWidth) / 2;
+                $subtitleY = 120;
+
+                imagestring($image, 3, $subtitleX + 1, $subtitleY + 1, $subtitleText, imagecolorallocate($image, 0, 0, 0));
+                imagestring($image, 3, $subtitleX, $subtitleY, $subtitleText, $textColor);
+            }
+        }
+
+        // Add book covers in a grid
+        if ($booksCount > 0) {
+            $this->addBookCoversToImage($image, $books, $width, $height);
+        }
+
+        // Add LivroLog logo/branding (bottom right)
+        $brandText = 'LivroLog.com';
+        if ($fontPath && file_exists($fontPath)) {
+            $brandSize = 14;
+            $brandBox = imagettfbbox($brandSize, 0, $fontPath, $brandText);
+            $brandWidth = $brandBox[2] - $brandBox[0];
+            $brandX = $width - $brandWidth - 20;
+            $brandY = $height - 20;
+
+            imagettftext($image, $brandSize, 0, $brandX + 1, $brandY + 1, imagecolorallocate($image, 0, 0, 0), $fontPath, $brandText);
+            imagettftext($image, $brandSize, 0, $brandX, $brandY, $textColor, $fontPath, $brandText);
+        } else {
+            $brandWidth = strlen($brandText) * 6;
+            $brandX = $width - $brandWidth - 20;
+            $brandY = $height - 20;
+
+            imagestring($image, 2, $brandX + 1, $brandY + 1, $brandText, imagecolorallocate($image, 0, 0, 0));
+            imagestring($image, 2, $brandX, $brandY, $brandText, $textColor);
+        }
+
+        // Convert to JPEG
+        ob_start();
+        imagejpeg($image, null, 85); // 85% quality
+        $imageData = ob_get_contents();
+        ob_end_clean();
+
+        // Clean up memory
+        imagedestroy($image);
+
+        return $imageData;
+    }
+
+    /**
+     * Add book covers to the image in a grid layout
+     */
+    private function addBookCoversToImage($image, $books, $width, $height)
+    {
+        $coverWidth = 60;
+        $coverHeight = 90;
+        $spacing = 10;
+        $startY = 200;
+
+        // Calculate grid layout
+        $coversPerRow = min(8, count($books));
+        $totalWidth = ($coversPerRow * $coverWidth) + (($coversPerRow - 1) * $spacing);
+        $startX = ($width - $totalWidth) / 2;
+
+        $rows = ceil(count($books) / $coversPerRow);
+        $maxRows = min(3, $rows); // Maximum 3 rows
+
+        $bookIndex = 0;
+        for ($row = 0; $row < $maxRows && $bookIndex < count($books); $row++) {
+            $y = $startY + ($row * ($coverHeight + $spacing));
+
+            for ($col = 0; $col < $coversPerRow && $bookIndex < count($books); $col++) {
+                $x = $startX + ($col * ($coverWidth + $spacing));
+                $book = $books[$bookIndex];
+
+                // Try to load book cover
+                if ($book->thumbnail && $coverImage = $this->loadImageFromUrl($book->thumbnail)) {
+                    // Resize and add cover
+                    $resizedCover = imagecreatetruecolor($coverWidth, $coverHeight);
+                    imagecopyresampled($resizedCover, $coverImage, 0, 0, 0, 0, $coverWidth, $coverHeight, imagesx($coverImage), imagesy($coverImage));
+
+                    // Add border
+                    $borderColor = imagecolorallocate($image, 200, 200, 200);
+                    imagerectangle($image, $x - 1, $y - 1, $x + $coverWidth, $y + $coverHeight, $borderColor);
+
+                    // Copy to main image
+                    imagecopy($image, $resizedCover, $x, $y, 0, 0, $coverWidth, $coverHeight);
+
+                    imagedestroy($resizedCover);
+                    imagedestroy($coverImage);
+                } else {
+                    // Draw placeholder rectangle
+                    $placeholderColor = imagecolorallocate($image, 100, 100, 100);
+                    imagefilledrectangle($image, $x, $y, $x + $coverWidth, $y + $coverHeight, $placeholderColor);
+
+                    // Add book icon or text
+                    $placeholderText = 'BOOK';
+                    imagestring($image, 3, $x + 10, $y + 35, $placeholderText, imagecolorallocate($image, 255, 255, 255));
+                }
+
+                $bookIndex++;
+            }
+        }
+    }
+
+    /**
+     * Load image from URL with error handling
+     */
+    private function loadImageFromUrl($url)
+    {
+        try {
+            $imageData = @file_get_contents($url);
+            if ($imageData === false) {
+                return null;
+            }
+
+            $image = @imagecreatefromstring($imageData);
+            return $image ?: null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get font path - fallback to default if custom font not available
+     */
+    private function getFontPath()
+    {
+        $fontPath = storage_path('app/fonts/arial.ttf');
+
+        // If custom font doesn't exist, use built-in font (return null for imagestring functions)
+        if (!file_exists($fontPath)) {
+            return null;
+        }
+
+        return $fontPath;
+    }
 }

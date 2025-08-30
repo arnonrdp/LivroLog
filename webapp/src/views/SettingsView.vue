@@ -1,15 +1,14 @@
 <template>
   <q-page padding>
-    <q-tabs v-model="tab" align="justify" class="text-teal">
-      <q-tab icon="event" :label="$t('books')" name="readDates" />
-      <q-tab icon="person" :label="$t('profile')" name="profile" />
-      <q-tab icon="translate" :label="$t('language')" name="language" />
-      <q-tab icon="email" :label="$t('account')" name="account" />
-      <q-tab icon="lock" :label="$t('password')" name="password" />
+    <q-tabs align="justify" class="text-teal">
+      <q-route-tab exact icon="event" :label="$t('books', 0)" to="/settings/books" />
+      <q-route-tab icon="person" :label="$t('profile')" to="/settings/profile" />
+      <q-route-tab icon="translate" :label="$t('language')" to="/settings/language" />
+      <q-route-tab icon="security" label="Account & Security" to="/settings/account" />
     </q-tabs>
 
-    <q-tab-panels v-model="tab" animated swipeable transition-next="jump-up" transition-prev="jump-up">
-      <q-tab-panel name="readDates">
+    <q-tab-panels v-model="activePanel" animated swipeable transition-next="jump-up" transition-prev="jump-up">
+      <q-tab-panel name="books">
         <SettingsBooks />
       </q-tab-panel>
 
@@ -24,10 +23,6 @@
       <q-tab-panel name="account">
         <SettingsAccount />
       </q-tab-panel>
-
-      <q-tab-panel name="password">
-        <SettingsPassword />
-      </q-tab-panel>
     </q-tab-panels>
   </q-page>
 </template>
@@ -36,11 +31,16 @@
 import SettingsAccount from '@/components/settings/SettingsAccount.vue'
 import SettingsBooks from '@/components/settings/SettingsBooks.vue'
 import SettingsLanguage from '@/components/settings/SettingsLanguage.vue'
-import SettingsPassword from '@/components/settings/SettingsPassword.vue'
 import SettingsProfile from '@/components/settings/SettingsProfile.vue'
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
-const tab = ref('readDates')
+const route = useRoute()
+
+const activePanel = computed(() => {
+  const routeTab = route.params.tab as string
+  return routeTab || 'books'
+})
 </script>
 
 <style scoped>

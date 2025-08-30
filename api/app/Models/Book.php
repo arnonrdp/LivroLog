@@ -104,7 +104,7 @@ class Book extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = 'B-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
@@ -200,7 +200,165 @@ class Book extends Model
     }
 
     /**
+     * Get sanitized description with preserved inline formatting
+     */
+    public function getSanitizedDescriptionAttribute()
+    {
+        if (!$this->description) {
+            return null;
+        }
+
+        // Decode HTML entities first
+        $text = html_entity_decode($this->description, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Convert Amazon-style span tags to semantic tags first
+        // Bold and italic combination
+        $text = preg_replace('/<span[^>]*class="[^"]*a-text-bold\s+a-text-italic[^"]*"[^>]*>(.*?)<\/span>/is', '<b><i>$1</i></b>', $text);
+        $text = preg_replace('/<span[^>]*class="[^"]*a-text-italic\s+a-text-bold[^"]*"[^>]*>(.*?)<\/span>/is', '<b><i>$1</i></b>', $text);
+
+        // Just bold
+        $text = preg_replace('/<span[^>]*class="[^"]*a-text-bold[^"]*"[^>]*>(.*?)<\/span>/is', '<b>$1</b>', $text);
+
+        // Just italic
+        $text = preg_replace('/<span[^>]*class="[^"]*a-text-italic[^"]*"[^>]*>(.*?)<\/span>/is', '<i>$1</i>', $text);
+
+        // Now convert semantic tags to markdown-style markers
+        // Bold tags
+        $text = preg_replace('/<(b|strong)>/i', '**', $text);
+        $text = preg_replace('/<\/(b|strong)>/i', '**', $text);
+
+        // Italic tags
+        $text = preg_replace('/<(i|em)>/i', '__', $text);
+        $text = preg_replace('/<\/(i|em)>/i', '__', $text);
+
+        // Underline tags
+        $text = preg_replace('/<u>/i', '~~', $text);
+        $text = preg_replace('/<\/u>/i', '~~', $text);
+
+        // Replace common HTML tags with appropriate formatting
+        // Preserve line breaks from <br> and <p> tags
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+        $text = preg_replace('/<\/p>/i', "\n\n", $text);
+        $text = preg_replace('/<p[^>]*>/i', '', $text);
+
+        // Replace list items with bullet points
+        $text = preg_replace('/<li[^>]*>/i', '• ', $text);
+        $text = preg_replace('/<\/li>/i', "\n", $text);
+
+        // Add line breaks for headers
+        $text = preg_replace('/<h[1-6][^>]*>/i', "\n", $text);
+        $text = preg_replace('/<\/h[1-6]>/i', "\n", $text);
+
+        // Remove all remaining HTML tags (like span, div, etc)
+        $text = strip_tags($text);
+
+        // Clean up multiple spaces and line breaks
+        $text = preg_replace('/[ \t]+/', ' ', $text);
+        $text = preg_replace('/\n\s*\n\s*\n/', "\n\n", $text);
+
+        // Trim the result
+        return trim($text);
+    }
+
+    /**
+     * Parse text with markdown-like markers into structured spans
+     */
+    private function parseInlineFormatting($text)
+    {
+        $result = [];
+        $parts = preg_split('/(\*\*|__|~~)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        $currentStyle = [];
+        $buffer = '';
+
+        for ($i = 0; $i < count($parts); $i++) {
+            $part = $parts[$i];
+
+            if ($part === '**') {
+                // Toggle bold
+                if (!empty($buffer)) {
+                    $result[] = ['text' => $buffer, 'style' => $currentStyle];
+                    $buffer = '';
+                }
+                if (in_array('bold', $currentStyle)) {
+                    $currentStyle = array_diff($currentStyle, ['bold']);
+                } else {
+                    $currentStyle[] = 'bold';
+                }
+            } elseif ($part === '__') {
+                // Toggle italic
+                if (!empty($buffer)) {
+                    $result[] = ['text' => $buffer, 'style' => $currentStyle];
+                    $buffer = '';
+                }
+                if (in_array('italic', $currentStyle)) {
+                    $currentStyle = array_diff($currentStyle, ['italic']);
+                } else {
+                    $currentStyle[] = 'italic';
+                }
+            } elseif ($part === '~~') {
+                // Toggle underline
+                if (!empty($buffer)) {
+                    $result[] = ['text' => $buffer, 'style' => $currentStyle];
+                    $buffer = '';
+                }
+                if (in_array('underline', $currentStyle)) {
+                    $currentStyle = array_diff($currentStyle, ['underline']);
+                } else {
+                    $currentStyle[] = 'underline';
+                }
+            } else {
+                $buffer .= $part;
+            }
+        }
+
+        // Add any remaining text
+        if (!empty($buffer)) {
+            $result[] = ['text' => $buffer, 'style' => array_values($currentStyle)];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get formatted description for display (preserves basic formatting)
+     */
+    public function getFormattedDescriptionAttribute()
+    {
+        if (!$this->description) {
+            return null;
+        }
+
+        $sanitized = $this->sanitized_description;
+
+        // Convert line breaks to proper structure for frontend display
+        $paragraphs = explode("\n\n", $sanitized);
+        $formatted = array_map(function($p) {
+            $p = trim($p);
+            if (empty($p)) return '';
+
+            // If it starts with a bullet, create list
+            if (strpos($p, '•') === 0) {
+                $items = explode("\n", $p);
+                $listItems = array_map(function($item) {
+                    $cleanItem = trim(str_replace('•', '', $item));
+                    return $this->parseInlineFormatting($cleanItem);
+                }, array_filter($items));
+                return ['type' => 'list', 'items' => $listItems];
+            }
+
+            // Otherwise it's a paragraph with inline formatting
+            return [
+                'type' => 'paragraph',
+                'content' => $this->parseInlineFormatting($p)
+            ];
+        }, $paragraphs);
+
+        return array_values(array_filter($formatted));
+    }
+
+    /**
      * Append formatted date and review stats to JSON output
      */
-    protected $appends = ['formatted_published_date', 'average_rating', 'reviews_count'];
+    protected $appends = ['formatted_published_date', 'average_rating', 'reviews_count', 'formatted_description'];
 }

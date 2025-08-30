@@ -34,7 +34,7 @@ useMeta(() => ({
     ogType: { name: 'og:type', content: 'website' },
     ogTitle: { name: 'og:title', content: 'LivroLog' },
     ogDescription: { name: 'og:description', content: t('description') },
-    ogImage: { name: 'og:image', content: 'https://livrolog.com/main.jpg' as string },
+    ogImage: { name: 'og:image', content: 'https://livrolog.com/screenshot-web.jpg' as string },
     ogUrl: { name: 'og:url', content: 'https://livrolog.com/' },
     ogProperty: { name: 'og:image:alt', content: t('image-alt') },
 
@@ -42,7 +42,7 @@ useMeta(() => ({
     twitterCard: { name: 'twitter:card', content: 'summary_large_image' },
     twitterTitle: { name: 'twitter:title', content: 'LivroLog' },
     twitterDescription: { name: 'twitter:description', content: t('description') },
-    twitterImage: { name: 'twitter:image', content: 'https://livrolog.com/main.jpg' },
+    twitterImage: { name: 'twitter:image', content: 'https://livrolog.com/screenshot-web.jpg' },
     twitterUrl: { name: 'twitter:url', content: 'https://livrolog.com/' }
   }
 }))

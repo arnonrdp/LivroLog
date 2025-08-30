@@ -3,9 +3,12 @@
 Personal library management system that allows users to organize their reading collection, follow other readers, and share book recommendations with Google Books API integration.
 
 <p align="center">
+<a href="https://www.buymeacoffee.com/arnonrdp" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 20px !important;width: 72px !important;" ></a>
 <a href="https://livrolog.com"><img src="https://img.shields.io/website?url=https%3A%2F%2Flivrolog.com" /></a>
+<img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/arnonrdp/LivroLog">
 <img src="https://img.shields.io/github/repo-size/arnonrdp/LivroLog" />
 <img alt="GitHub commit activity (branch)" src="https://img.shields.io/github/commit-activity/m/arnonrdp/LivroLog" />
+<img alt="GitHub Release" src="https://img.shields.io/github/v/release/arnonrdp/LivroLog">
 <br />
 <img src="https://img.shields.io/github/package-json/dependency-version/arnonrdp/LivroLog/pinia?filename=webapp%2Fpackage.json" />
 <img src="https://img.shields.io/github/package-json/dependency-version/arnonrdp/LivroLog/quasar?filename=webapp%2Fpackage.json" />
@@ -18,7 +21,7 @@ Personal library management system that allows users to organize their reading c
 - Follow your friends, see what each person's shelf looks like and find out what they just finished reading
 - Download an image of your shelf and use it as a background in your video calls
 
-<img src="./webapp/public/main.jpg" />
+<img src="./webapp/public/screenshot-web.jpg" />
 
 _Developed with ❤️ for book lovers_
 

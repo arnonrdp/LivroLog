@@ -14,6 +14,8 @@ export interface User {
   following_count?: number
   google_id?: string | null
   has_pending_follow_request?: boolean
+  has_password_set?: boolean
+  has_google_connected?: boolean
   id: string
   is_private?: boolean
   is_following?: boolean

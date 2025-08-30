@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Http\Resources\UserWithBooksResource;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -343,14 +344,18 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user()
-            ->loadCount(['followers', 'following'])
-            ->load(['books' => function ($query) {
-                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
-            }]);
+            ->loadCount(['followers', 'following']);
 
-        $resource = new UserWithBooksResource($user);
+        $resource = new UserResource($user);
         $userData = $resource->toArray(request());
         $userData['pending_follow_requests_count'] = $user->pending_follow_requests_count;
+
+        // Add account status information
+        $userData['email'] = $user->email;
+        $userData['email_verified'] = !is_null($user->email_verified_at);
+        $userData['email_verified_at'] = $user->email_verified_at;
+        $userData['has_password_set'] = $user->hasPasswordSet();
+        $userData['has_google_connected'] = $user->hasGoogleConnected();
 
         return response()->json($userData);
     }
@@ -401,19 +406,31 @@ class AuthController extends Controller
      */
     public function updatePassword(Request $request)
     {
-        $request->validate([
-            'current_password' => self::VALIDATION_REQUIRED_STRING,
-            'password' => array_merge(self::VALIDATION_PASSWORD_RULES, ['confirmed']),
-        ]);
-
         $user = $request->user();
 
-        // Verify current password
-        if (! Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'message' => 'The current password is incorrect.',
-                'errors' => ['current_password' => ['The current password is incorrect.']],
-            ], 422);
+        // Check if user has a password set
+        $hasPassword = $user->hasPasswordSet();
+
+        // Different validation rules based on whether user has a password
+        $rules = [
+            'password' => array_merge(self::VALIDATION_PASSWORD_RULES, ['confirmed']),
+        ];
+
+        // Only require current password if user already has one set
+        if ($hasPassword) {
+            $rules['current_password'] = self::VALIDATION_REQUIRED_STRING;
+        }
+
+        $request->validate($rules);
+
+        // Verify current password if user has one set
+        if ($hasPassword) {
+            if (! Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'message' => 'The current password is incorrect.',
+                    'errors' => ['current_password' => ['The current password is incorrect.']],
+                ], 422);
+            }
         }
 
         // Update password
@@ -421,8 +438,23 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Reload user with fresh data including relationships
+        $user = $user->fresh()
+            ->loadCount(['followers', 'following'])
+            ->load(['books' => function ($query) {
+                $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
+            }]);
+
+        // Add account status information
+        $resource = new UserWithBooksResource($user);
+        $userData = $resource->toArray(request());
+        $userData['pending_follow_requests_count'] = $user->pending_follow_requests_count;
+        $userData['has_password_set'] = $user->hasPasswordSet();
+        $userData['has_google_connected'] = $user->hasGoogleConnected();
+
         return response()->json([
-            'message' => 'Password updated successfully',
+            'message' => $hasPassword ? 'Password updated successfully' : 'Password set successfully',
+            'user' => $userData,
         ]);
     }
 
@@ -622,7 +654,7 @@ class AuthController extends Controller
                 $user = User::where('email', $googleUser->email)->first();
 
                 if ($user) {
-                    // Update existing user with Google data
+                    // Update existing user with Google data - Google accounts are always verified
                     $user->update([
                         'google_id' => $googleUser->id,
                         'avatar' => $googleUser->avatar,
@@ -639,7 +671,7 @@ class AuthController extends Controller
                         'email' => $googleUser->email,
                         'username' => $username,
                         'avatar' => $googleUser->avatar,
-                        'password' => Hash::make(Str::random(32)), // Random password since they'll use Google
+                        'password' => null, // No password for Google users
                         'shelf_name' => $googleUser->name.self::LIBRARY_SUFFIX,
                         'email_verified' => true,
                         'email_verified_at' => now(),
@@ -730,7 +762,6 @@ class AuthController extends Controller
             $email = $payload['email'];
             $name = $payload['name'];
             $avatar = $payload['picture'] ?? null;
-            $emailVerified = $payload['email_verified'] ?? false;
 
             // Check if user already exists by google_id
             $user = User::where('google_id', $googleId)->first();
@@ -740,12 +771,12 @@ class AuthController extends Controller
                 $user = User::where('email', $email)->first();
 
                 if ($user) {
-                    // Update existing user with Google data
+                    // Update existing user with Google data - Google accounts are always verified
                     $updateData = [
                         'google_id' => $googleId,
                         'avatar' => $avatar,
-                        'email_verified' => $emailVerified,
-                        'email_verified_at' => $emailVerified ? now() : null,
+                        'email_verified' => true, // Google accounts are always verified
+                        'email_verified_at' => now(),
                     ];
 
                     // Set locale if not already set
@@ -764,10 +795,10 @@ class AuthController extends Controller
                         'email' => $email,
                         'username' => $username,
                         'avatar' => $avatar,
-                        'password' => Hash::make(Str::random(32)), // Random password since they'll use Google
+                        'password' => null, // No password for Google users
                         'shelf_name' => $name.self::LIBRARY_SUFFIX,
-                        'email_verified' => $emailVerified,
-                        'email_verified_at' => $emailVerified ? now() : null,
+                        'email_verified' => true, // Google accounts are always verified
+                        'email_verified_at' => now(),
                         'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
                     ]);
                 }
@@ -976,6 +1007,175 @@ class AuthController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'Account deleted successfully']);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/auth/google",
+     *     operationId="disconnectGoogle",
+     *     tags={"Authentication"},
+     *     summary="Disconnect Google account",
+     *     description="Removes Google account connection from the authenticated user",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Google account disconnected successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Google account disconnected successfully")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=400,
+     *         description="Cannot disconnect without password",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="message", type="string", example="Please set a password before disconnecting Google account")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function disconnectGoogle(Request $request)
+    {
+        $user = $request->user();
+
+        // Check if user has Google connected
+        if (! $user->hasGoogleConnected()) {
+            return response()->json(['message' => 'Google account is not connected'], 400);
+        }
+
+        // Check if user has a password set
+        if (! $user->hasPasswordSet()) {
+            return response()->json([
+                'message' => 'Please set a password before disconnecting Google account',
+            ], 400);
+        }
+
+        // Disconnect Google
+        $user->update([
+            'google_id' => null,
+        ]);
+
+        return response()->json(['message' => 'Google account disconnected successfully']);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/auth/google",
+     *     operationId="connectGoogleAccount",
+     *     tags={"Authentication"},
+     *     summary="Connect Google account to existing user",
+     *     description="Connects a Google account to the authenticated user's account",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"id_token", "action"},
+     *             @OA\Property(property="id_token", type="string", description="Google ID token"),
+     *             @OA\Property(property="action", type="string", enum={"connect", "update_email"}, description="Action to perform")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Google account connected successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Google account connected successfully"),
+     *             @OA\Property(property="user", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=401, description="Unauthenticated"),
+     *     @OA\Response(response=409, description="Google account already connected to another user")
+     * )
+     */
+    public function connectGoogle(Request $request)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+            'action' => 'required|string|in:connect,update_email'
+        ]);
+
+        $user = $request->user();
+        $idToken = $request->input('id_token');
+        $action = $request->input('action');
+
+        try {
+            $client = new \Google_Client();
+            $client->setClientId(config('services.google.client_id'));
+
+            $payload = $client->verifyIdToken($idToken);
+            if (!$payload) {
+                return response()->json(['message' => 'Invalid Google token'], 400);
+            }
+
+            $googleId = $payload['sub'];
+            $googleEmail = $payload['email'];
+            $googleName = $payload['name'] ?? '';
+            $googleAvatar = $payload['picture'] ?? null;
+
+            $existingUser = User::where('google_id', $googleId)->first();
+            if ($existingUser && $existingUser->id !== $user->id) {
+                return response()->json(['message' => 'Google account is already connected to another user'], 409);
+            }
+
+            if ($action === 'update_email') {
+                $emailUser = User::where('email', $googleEmail)->where('id', '!=', $user->id)->first();
+                if ($emailUser) {
+                    return response()->json(['message' => 'Email is already used by another user'], 409);
+                }
+            }
+
+            $user->google_id = $googleId;
+            $user->email_verified = true;
+            $user->email_verified_at = now();
+
+            if ($action === 'update_email') {
+                $user->email = $googleEmail;
+            }
+
+            if (!$user->avatar && $googleAvatar) {
+                $user->avatar = $googleAvatar;
+            }
+
+            if (!$user->display_name && $googleName) {
+                $user->display_name = $googleName;
+            }
+
+            $user->save();
+
+            $user = $user->fresh()
+                ->loadCount(['followers', 'following'])
+                ->load(['books' => function ($query) {
+                    $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
+                }]);
+
+            $resource = new UserWithBooksResource($user);
+            $userData = $resource->toArray(request());
+            $userData['pending_follow_requests_count'] = $user->pending_follow_requests_count;
+
+            $userData['email'] = $user->email;
+            $userData['email_verified'] = !is_null($user->email_verified_at);
+            $userData['email_verified_at'] = $user->email_verified_at;
+            $userData['has_password_set'] = $user->hasPasswordSet();
+            $userData['has_google_connected'] = $user->hasGoogleConnected();
+
+            return response()->json([
+                'message' => 'Google account connected successfully',
+                'user' => $userData
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to connect Google account: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
