@@ -232,7 +232,11 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
-            'thumbnail' => 'nullable|url|max:512',
+            'thumbnail' => ['nullable','url','max:512', function ($attribute, $value, $fail) {
+                if (! $this->isAllowedThumbnailDomain($value)) {
+                    $fail('The thumbnail URL domain is not allowed.');
+                }
+            }],
             'description' => self::VALIDATION_NULLABLE_STRING,
             'language' => self::VALIDATION_NULLABLE_STRING.'|max:10',
             'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
@@ -518,7 +522,11 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$book->id,
             'authors' => self::VALIDATION_NULLABLE_STRING,
-            'thumbnail' => 'nullable|url|max:512',
+            'thumbnail' => ['nullable','url','max:512', function ($attribute, $value, $fail) {
+                if (! $this->isAllowedThumbnailDomain($value)) {
+                    $fail('The thumbnail URL domain is not allowed.');
+                }
+            }],
             'language' => self::VALIDATION_NULLABLE_STRING.'|max:10',
             'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
             'edition' => 'nullable|string|max:50',
@@ -527,6 +535,39 @@ class BookController extends Controller
         $book->update($request->all());
 
         return response()->json($book);
+    }
+
+    /**
+     * Validate thumbnail URL is on allowed domains to reduce SSRF risk
+     */
+    private function isAllowedThumbnailDomain(string $url): bool
+    {
+        $allowed = [
+            'books.google.com',
+            'books.googleapis.com',
+            'lh3.googleusercontent.com',
+            'ssl.gstatic.com',
+            'covers.openlibrary.org',
+        ];
+
+        $parsed = parse_url($url);
+        if (!isset($parsed['host']) || !isset($parsed['scheme'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+        $scheme = strtolower($parsed['scheme']);
+        if (!in_array($scheme, ['http','https'], true)) {
+            return false;
+        }
+
+        foreach ($allowed as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

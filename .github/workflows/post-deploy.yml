@@ -134,35 +134,6 @@ jobs:
             php artisan books:cache-clear
             php artisan config:clear
 
-      - name: Restart Queue Workers
-        uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script_stop: false
-          script: |
-            echo "Restarting queue workers..."
-            
-            # Kill existing workers silently
-            pkill -f "php artisan queue:work" >/dev/null 2>&1 || true
-            sleep 3
-            
-            # Start production worker
-            if [ -d "/var/www/livrolog/current/api" ]; then
-                cd /var/www/livrolog/current/api
-                nohup php artisan queue:work --verbose --tries=3 --timeout=60 >/dev/null 2>&1 &
-                echo "Production queue worker restarted"
-            fi
-            
-            # Start dev worker  
-            if [ -d "/var/www/livrolog-dev/current/api" ]; then
-                cd /var/www/livrolog-dev/current/api
-                nohup php artisan queue:work --verbose --tries=3 --timeout=60 >/dev/null 2>&1 &
-                echo "Dev queue worker restarted"
-            fi
-            
-            echo "Queue workers restart completed"
 
       - name: Restart Apache
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
