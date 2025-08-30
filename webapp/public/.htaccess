@@ -1,4 +1,4 @@
-# Redirect www to non-www
+# Redirect www to non-www and force HTTPS
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
@@ -13,7 +13,7 @@
     # Server-side redirect for social media crawlers to API for dynamic OG tags
     # Matches username-like paths at site root (e.g., /arnon, /wanderson)
     RewriteCond %{HTTP_USER_AGENT} "(facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot)" [NC]
-    RewriteCond %{REQUEST_URI} ^/([A-Za-z0-9_.-]+)/?$
+    RewriteCond %{REQUEST_URI} ^/([A-Za-z0-9_.-]+)/?$ 
     # Exclude common non-profile routes
     RewriteCond %1 !^(api|login|register|reset-password|documentation)$ [NC]
     # Dev environment host → dev API
@@ -26,8 +26,8 @@
     RewriteCond %1 !^(api|login|register|reset-password|documentation)$ [NC]
     RewriteCond %{HTTP_HOST} ^livrolog\.com$ [NC]
     RewriteRule ^ https://api.livrolog.com%{REQUEST_URI} [R=302,L]
-    
-    # Handle Vue.js SPA routing
+
+    # Handle SPA routing
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule . /index.html [L]
@@ -39,3 +39,4 @@
     Header set X-Content-Type-Options "nosniff"
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>
+

@@ -182,7 +182,11 @@ class SocialMediaCrawlerMiddleware
                 $metaTags .= '<meta name="' . $property . '" content="' . htmlspecialchars($content) . '">' . "\n    ";
             }
         }
-        
+        $frontendUrl = config('app.frontend_url');
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+        $safeFrontendUrl = htmlspecialchars($frontendUrl, ENT_QUOTES);
+        $safeRequestUri = htmlspecialchars($requestUri, ENT_QUOTES);
+
         return <<<HTML
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -197,20 +201,20 @@ class SocialMediaCrawlerMiddleware
     <script>
         // Redirect to frontend for regular users
         if (!navigator.userAgent.match(/facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot/i)) {
-            window.location.href = '" . config('app.frontend_url') . "' + window.location.pathname;
+            window.location.href = '{$safeFrontendUrl}' + window.location.pathname + window.location.search;
         }
     </script>
     
     <!-- Fallback redirect -->
     <noscript>
-        <meta http-equiv="refresh" content="0;url=" . config('app.frontend_url') . ">
+        <meta http-equiv="refresh" content="0;url={$safeFrontendUrl}{$safeRequestUri}">
     </noscript>
 </head>
 <body>
     <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
         <h1>LivroLog</h1>
         <p>Redirecionando...</p>
-        <p><a href="" . config('app.frontend_url') . "{$_SERVER['REQUEST_URI']}">Clique aqui se não for redirecionado automaticamente</a></p>
+        <p><a href="{$safeFrontendUrl}{$safeRequestUri}">Clique aqui se não for redirecionado automaticamente</a></p>
     </div>
 </body>
 </html>
