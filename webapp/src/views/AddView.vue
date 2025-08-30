@@ -12,7 +12,13 @@
 
     <section class="items-baseline justify-center row">
       <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
-        <q-btn color="primary" icon="add" round @click.once="addBook(book)" />
+        <q-btn 
+          :color="isBookInLibrary(book) ? 'positive' : 'primary'" 
+          :icon="isBookInLibrary(book) ? 'check' : 'add'" 
+          :disable="isBookInLibrary(book)"
+          round 
+          @click.once="addBook(book)" 
+        />
         <div class="book-cover" @click="showBookReviews(book)">
           <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" style="width: 8rem" />
           <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" style="width: 8rem" />
@@ -34,7 +40,7 @@
 import TheLoading from '@/components/add/TheLoading.vue'
 import BookDialog from '@/components/home/BookDialog.vue'
 import type { Book } from '@/models'
-import { useBookStore, useUserBookStore } from '@/stores'
+import { useBookStore, useUserBookStore, useUserStore } from '@/stores'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -42,6 +48,7 @@ const { t } = useI18n()
 
 const bookStore = useBookStore()
 const userBookStore = useUserBookStore()
+const userStore = useUserStore()
 
 const books = ref<Book[]>([])
 const seek = ref('')
@@ -65,6 +72,25 @@ async function addBook(book: Book) {
 function clearSearch() {
   seek.value = ''
   books.value = []
+}
+
+function isBookInLibrary(book: Book): boolean {
+  const userBooks = userStore.me.books || []
+  return userBooks.some((userBook) => {
+    // Check by internal ID (if book.id exists and is internal)
+    if (book.id && book.id.startsWith('B-') && userBook.id === book.id) {
+      return true
+    }
+    // Check by google_id (most reliable for external books)
+    if (book.google_id && userBook.google_id === book.google_id) {
+      return true
+    }
+    // Legacy check: if book.id is actually a google_id
+    if (book.id && !book.id.startsWith('B-') && userBook.google_id === book.id) {
+      return true
+    }
+    return false
+  })
 }
 
 function showBookReviews(book: Book) {

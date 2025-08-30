@@ -51,6 +51,7 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
+    "vite-plugin-static-copy": "^0.17.0",
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-pwa": "^1.0.3",
     "vue-eslint-parser": "^10.2.0",

@@ -476,9 +476,10 @@ class UserController extends Controller
 
         // Try to use the same wooden shelf textures used by the frontend
         $frontend = rtrim(config('app.frontend_url'), '/');
-        $leftUrl = $frontend . '/assets/shelfleft-LBalqrtB.jpg';
-        $rightUrl = $frontend . '/assets/shelfright-BniE6HMr.jpg';
-        $centerUrl = $frontend . '/assets/shelfcenter-BJQyKgxt.jpg';
+        // Use stable paths copied by Vite build to /og/* to avoid fingerprinted filenames
+        $leftUrl = $frontend . '/og/shelfleft.jpg';
+        $rightUrl = $frontend . '/og/shelfright.jpg';
+        $centerUrl = $frontend . '/og/shelfcenter.jpg';
 
         $leftImg = $this->loadImageFromUrl($leftUrl);
         $rightImg = $this->loadImageFromUrl($rightUrl);
