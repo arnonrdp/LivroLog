@@ -437,11 +437,11 @@ class UserBookController extends Controller
     /**
      * @OA\Get(
      *     path="/users/{user}/books/{book}",
-     *     operationId="getUserBook",
+     *     operationId="getSpecificUserBook",
      *     tags={"User Library"},
      *     summary="Get specific book from a user's library",
      *     description="Returns a specific book from a user's library with their pivot data (read dates, status, etc.) and reviews. Respects privacy settings.",
-     *     security={{\"bearerAuth\": {}}},
+     *     security={{"bearerAuth": {}}},
      *
      *     @OA\Parameter(
      *         name="user",
