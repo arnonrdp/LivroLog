@@ -54,7 +54,7 @@ const shareText = computed(() => {
 
 const shareUrl = computed(() => {
   if (!userStore.me?.username) return window.location.origin
-  return `${window.location.origin}/people/${userStore.me.username}`
+  return `${window.location.origin}/${userStore.me.username}`
 })
 
 const socialPlatforms = computed(() => [

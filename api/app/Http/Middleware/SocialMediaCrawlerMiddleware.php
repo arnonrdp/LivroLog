@@ -155,8 +155,10 @@ class SocialMediaCrawlerMiddleware
             ->where('user_id', $user->id)
             ->max('updated_at');
         $version = $versionTs ? (is_string($versionTs) ? (string) strtotime($versionTs) : (string) strtotime((string) $versionTs)) : (string) time();
-        // Image served by API without /api prefix, with version
-        $imageUrl = rtrim(config('app.url'), '/') . "/users/{$user->id}/shelf-image?v={$version}";
+        // Image served by API without /api prefix, with version.
+        // Prefer current request host so that proxies/CDNs (dev.livrolog.com) generate same-host URLs.
+        $hostBase = rtrim(($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
+        $imageUrl = $hostBase . "/users/{$user->id}/shelf-image?v={$version}";
 
         // i18n based on Accept-Language
         $lang = strtolower($request->header('Accept-Language', ''));
