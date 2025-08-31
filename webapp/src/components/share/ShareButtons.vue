@@ -61,35 +61,35 @@ const socialPlatforms = computed(() => [
   {
     name: 'facebook',
     label: 'Facebook',
-    icon: '/src/assets/icons/facebook.svg',
+    icon: '/icons/facebook.svg',
     color: 'blue-8',
     url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl.value)}`
   },
   {
     name: 'linkedin',
     label: 'LinkedIn',
-    icon: '/src/assets/icons/linkedin.svg',
+    icon: '/icons/linkedin.svg',
     color: 'blue-7',
     url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl.value)}`
   },
   {
     name: 'telegram',
     label: 'Telegram',
-    icon: '/src/assets/icons/telegram.svg',
+    icon: '/icons/telegram.svg',
     color: 'blue-5',
     url: `https://t.me/share/url?url=${encodeURIComponent(shareUrl.value)}&text=${encodeURIComponent(shareText.value)}`
   },
   {
     name: 'whatsapp',
     label: 'WhatsApp',
-    icon: '/src/assets/icons/whatsapp.svg',
+    icon: '/icons/whatsapp.svg',
     color: 'green-6',
     url: `https://wa.me/?text=${encodeURIComponent(`${shareText.value} ${shareUrl.value}`)}`
   },
   {
     name: 'x',
     label: 'X',
-    icon: '/src/assets/icons/x.svg',
+    icon: '/icons/x.svg',
     color: 'grey-9',
     url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`
   }

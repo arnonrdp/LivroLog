@@ -9,8 +9,9 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\UserWithBooksResource;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -390,32 +391,38 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function shelfImage(string $id)
+    public function shelfImage(Request $request, string $id)
     {
         $user = User::findOrFail($id);
 
-        // Get user's books with covers - limit to 20 for display
+        // Get user's public books for display - up to 100
         $books = $user->books()
-            ->whereNotNull('thumbnail')
             ->orderBy('pivot_added_at', 'desc')
-            ->limit(20)
+            ->wherePivot('is_private', false)
+            ->limit(100)
             ->get();
 
         // Compute a version for cache-busting based on last change in user's shelf
         $version = $this->getShelfVersion($user);
 
-        // Serve from on-disk cache if available
-        $cachePath = storage_path("app/public/og/shelf-{$user->id}-{$version}.jpg");
-        if (is_file($cachePath)) {
-            return response()->file($cachePath, [
+        // Serve from on-disk cache if available (use the 'public' disk for portability)
+        // Include an auto-updating render version (based on code/assets mtimes)
+        $renderVersion = $this->getRendererVersion();
+        $relative = "og/shelf-v{$renderVersion}-{$user->id}-{$version}.jpg";
+        $cachePath = Storage::disk('public')->path($relative);
+        if (Storage::disk('public')->exists($relative)) {
+            return response()->file(Storage::disk('public')->path($relative), [
                 'Content-Type' => 'image/jpeg',
                 'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
-                'Last-Modified' => gmdate('D, d M Y H:i:s', filemtime($cachePath)) . ' GMT',
+                'Last-Modified' => gmdate('D, d M Y H:i:s', @filemtime($cachePath) ?: time()) . ' GMT',
             ]);
         }
 
         // If GD is unavailable, gracefully fall back to a static OG image
         if (!function_exists('imagecreatetruecolor')) {
+            if ($request->boolean('debug')) {
+                return response()->json(['error' => 'GD extension not available'], 500);
+            }
             $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
             return redirect()->away($fallback, 302, [
                 'Cache-Control' => 'public, max-age=1800',
@@ -426,9 +433,25 @@ class UserController extends Controller
             // Generate the shelf image
             $image = $this->generateShelfImage($user, $books);
 
-            // Ensure directory exists and save to disk cache
-            Storage::makeDirectory('public/og');
-            file_put_contents($cachePath, $image);
+            // Ensure directory exists and save to disk cache (public disk)
+            Storage::disk('public')->makeDirectory('og');
+            Storage::disk('public')->put($relative, $image);
+
+            if ($request->boolean('debug')) {
+                return response()->json([
+                    'gd' => extension_loaded('gd'),
+                    'books_public' => count($books),
+                    'bytes' => strlen($image),
+                    'textures' => [
+                        'left' => file_exists(public_path('og/textures/shelfleft.jpg')),
+                        'center' => file_exists(public_path('og/textures/shelfcenter.jpg')),
+                        'right' => file_exists(public_path('og/textures/shelfright.jpg')),
+                    ],
+                    'storage_writable' => is_writable(storage_path('app/public')),
+                    'stored' => Storage::disk('public')->exists($relative),
+                    'stored_path' => Storage::disk('public')->path($relative),
+                ]);
+            }
 
             return response($image, 200, [
                 'Content-Type' => 'image/jpeg',
@@ -436,6 +459,13 @@ class UserController extends Controller
                 'Last-Modified' => now()->toRfc7231String(),
             ]);
         } catch (\Throwable $e) {
+            Log::error('shelf-image generation failed', [
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
+            ]);
+            if ($request->boolean('debug')) {
+                return response()->json(['error' => 'generation_failed', 'message' => $e->getMessage()], 500);
+            }
             // On any error, fall back to static OG image to avoid blank previews
             $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
             return redirect()->away($fallback, 302, [
@@ -463,6 +493,10 @@ class UserController extends Controller
      */
     private function generateShelfImage(User $user, $books)
     {
+        // Ensure OG textures are available locally
+        $this->ensureOgTextures();
+        // Ensure we have a decent TTF font available (prefer Roboto)
+        $this->ensureOgFont();
         // Image dimensions optimized for Open Graph (1.91:1 ratio)
         $width = 1200;
         $height = 630;
@@ -470,23 +504,44 @@ class UserController extends Controller
         // Create canvas
         $image = imagecreatetruecolor($width, $height);
 
-        // Base background (light grey)
-        $bgColor = imagecolorallocate($image, 245, 245, 245);
+        // Base background (white to match site background)
+        $bgColor = imagecolorallocate($image, 255, 255, 255);
         imagefill($image, 0, 0, $bgColor);
 
-        // Try to use the same wooden shelf textures used by the frontend
-        $frontend = rtrim(config('app.frontend_url'), '/');
-        // Use stable paths copied by Vite build to /og/* to avoid fingerprinted filenames
-        $leftUrl = $frontend . '/og/shelfleft.jpg';
-        $rightUrl = $frontend . '/og/shelfright.jpg';
-        $centerUrl = $frontend . '/og/shelfcenter.jpg';
+        // Load shelf wood textures directly from local filesystem to avoid HTTP self-fetch issues
+        $leftPath = public_path('og/textures/shelfleft.jpg');
+        $rightPath = public_path('og/textures/shelfright.jpg');
+        $centerPath = public_path('og/textures/shelfcenter.jpg');
 
-        $leftImg = $this->loadImageFromUrl($leftUrl);
-        $rightImg = $this->loadImageFromUrl($rightUrl);
-        $centerImg = $this->loadImageFromUrl($centerUrl);
+        $leftImg = (is_file($leftPath) ? @imagecreatefromjpeg($leftPath) : null);
+        $rightImg = (is_file($rightPath) ? @imagecreatefromjpeg($rightPath) : null);
+        $centerImg = (is_file($centerPath) ? @imagecreatefromjpeg($centerPath) : null);
 
-        $paddingTop = 70;   // space for title
-        $paddingBottom = 40; // space for branding
+        // Title: shelf name above the shelf, aligned to top-left
+        $titleText = ($user->shelf_name ?: $user->display_name) ?: '';
+        $titleColor = imagecolorallocate($image, 33, 37, 41); // dark gray, similar to site text
+        $titleFontPath = $this->getFontPath();
+        $titleSize = 32;
+        $titleLeft = 24;
+        $titleBaseline = 48; // initial baseline
+
+        // Measure title height if TTF available
+        $titleHeight = 28; // default approx
+        if ($titleFontPath && file_exists($titleFontPath)) {
+            $bbox = imagettfbbox($titleSize, 0, $titleFontPath, $titleText);
+            // bbox: [llx,lly,lrx,lry, urx, ury, ulx, uly]
+            $titleHeight = abs($bbox[7] - $bbox[1]);
+            // Draw the text
+            imagettftext($image, $titleSize, 0, $titleLeft, $titleBaseline, $titleColor, $titleFontPath, $titleText);
+        } else {
+            // Built-in font fallback
+            imagestring($image, 5, $titleLeft, $titleBaseline - 18, $titleText, $titleColor);
+            $titleHeight = 18;
+        }
+
+        // Layout paddings: leave space for the title above, fill bottom with shelves
+        $paddingTop = $titleBaseline + (int) round($titleHeight * 0.45); // space below the title before first shelf row
+        $paddingBottom = 0; // fill bottom entirely with shelves
         $shelfAreaHeight = $height - $paddingTop - $paddingBottom;
         $rows = max(1, min(4, (int) ceil(count($books) / 10)));
         $rowHeight = (int) floor($shelfAreaHeight / $rows);
@@ -524,76 +579,15 @@ class UserController extends Controller
             }
         }
 
-        // Text color
-        $textColor = imagecolorallocate($image, 20, 20, 20);
-
-        // Add title text
-        $fontSize = 34;
-        $shelfName = $user->shelf_name ?: $user->display_name;
-        $titleText = $shelfName . ' - LivroLog';
-
-        // Add text with fallback for missing font
-        $fontPath = $this->getFontPath();
-        if ($fontPath && file_exists($fontPath)) {
-            // Use TTF font
-            $textBox = imagettfbbox($fontSize, 0, $fontPath, $titleText);
-            $textWidth = $textBox[2] - $textBox[0];
-            $textX = ($width - $textWidth) / 2;
-            $textY = 56;
-            imagettftext($image, $fontSize, 0, $textX, $textY, $textColor, $fontPath, $titleText);
-        } else {
-            // Use built-in font
-            $textWidth = strlen($titleText) * 10; // Approximate width
-            $textX = ($width - $textWidth) / 2;
-            $textY = 56;
-
-            imagestring($image, 5, $textX, $textY, $titleText, $textColor);
-        }
-
-        // Add book count subtitle
+        // No title/subtitle/branding text overlays
         $booksCount = count($books);
-        if ($booksCount > 0) {
-            $subtitleText = "{$booksCount} livros";
-            if ($fontPath && file_exists($fontPath)) {
-                $subtitleSize = 18;
-                $subtitleBox = imagettfbbox($subtitleSize, 0, $fontPath, $subtitleText);
-                $subtitleWidth = $subtitleBox[2] - $subtitleBox[0];
-                $subtitleX = ($width - $subtitleWidth) / 2;
-                $subtitleY = 86;
-                imagettftext($image, $subtitleSize, 0, $subtitleX, $subtitleY, $textColor, $fontPath, $subtitleText);
-            } else {
-                $subtitleWidth = strlen($subtitleText) * 8;
-                $subtitleX = ($width - $subtitleWidth) / 2;
-                $subtitleY = 86;
-
-                imagestring($image, 3, $subtitleX, $subtitleY, $subtitleText, $textColor);
-            }
-        }
 
         // Add book covers in a grid aligned to the wooden rows
         if ($booksCount > 0) {
             $this->addBookCoversToImage($image, $books, $width, $height, $paddingTop, $paddingBottom, $rows);
         }
 
-        // Add LivroLog logo/branding (bottom right)
-        $brandText = 'LivroLog.com';
-        if ($fontPath && file_exists($fontPath)) {
-            $brandSize = 14;
-            $brandBox = imagettfbbox($brandSize, 0, $fontPath, $brandText);
-            $brandWidth = $brandBox[2] - $brandBox[0];
-            $brandX = $width - $brandWidth - 20;
-            $brandY = $height - 20;
-
-            imagettftext($image, $brandSize, 0, $brandX + 1, $brandY + 1, imagecolorallocate($image, 0, 0, 0), $fontPath, $brandText);
-            imagettftext($image, $brandSize, 0, $brandX, $brandY, $textColor, $fontPath, $brandText);
-        } else {
-            $brandWidth = strlen($brandText) * 6;
-            $brandX = $width - $brandWidth - 20;
-            $brandY = $height - 20;
-
-            imagestring($image, 2, $brandX + 1, $brandY + 1, $brandText, imagecolorallocate($image, 0, 0, 0));
-            imagestring($image, 2, $brandX, $brandY, $brandText, $textColor);
-        }
+        // Branding removed per request
 
         // Convert to JPEG
         ob_start();
@@ -607,41 +601,178 @@ class UserController extends Controller
         return $imageData;
     }
 
+    private function ensureOgTextures(): void
+    {
+        $destDir = public_path('og/textures');
+        if (!is_dir($destDir)) {
+            @mkdir($destDir, 0775, true);
+        }
+
+        $files = [
+            'shelfleft.jpg',
+            'shelfright.jpg',
+            'shelfcenter.jpg',
+        ];
+
+        // Try to copy from the front-end assets if available in monorepo
+        foreach ($files as $f) {
+            $dest = $destDir . DIRECTORY_SEPARATOR . $f;
+            if (!file_exists($dest)) {
+                $src = base_path('../webapp/src/assets/textures/' . $f);
+                if (file_exists($src)) {
+                    @copy($src, $dest);
+                }
+            }
+        }
+    }
+
+    /**
+     * Ensure Roboto fonts are available locally for high-quality text rendering
+     */
+    private function ensureOgFont(): void
+    {
+        $publicDir = public_path('og/fonts');
+        $storageDir = storage_path('app/fonts');
+        if (!is_dir($publicDir)) {
+            @mkdir($publicDir, 0775, true);
+        }
+        if (!is_dir($storageDir)) {
+            @mkdir($storageDir, 0775, true);
+        }
+
+        $fonts = [
+            [
+                'name' => 'Roboto-Bold.ttf',
+                'urls' => [
+                    'https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Bold.ttf',
+                    'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Bold.ttf',
+                ],
+            ],
+            [
+                'name' => 'Roboto-Regular.ttf',
+                'urls' => [
+                    'https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Regular.ttf',
+                    'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf',
+                ],
+            ],
+        ];
+
+        foreach ($fonts as $font) {
+            $pubPath = $publicDir . DIRECTORY_SEPARATOR . $font['name'];
+            $storPath = $storageDir . DIRECTORY_SEPARATOR . $font['name'];
+            if (file_exists($pubPath) || file_exists($storPath)) {
+                // Ensure both locations have a copy
+                if (file_exists($pubPath) && !file_exists($storPath)) {
+                    @copy($pubPath, $storPath);
+                } elseif (file_exists($storPath) && !file_exists($pubPath)) {
+                    @copy($storPath, $pubPath);
+                }
+                continue;
+            }
+
+            // Try downloading from known URLs
+            foreach ($font['urls'] as $url) {
+                try {
+                    $data = @file_get_contents($url);
+                    if ($data !== false && strlen($data) > 1000) { // crude sanity check
+                        @file_put_contents($pubPath, $data);
+                        @file_put_contents($storPath, $data);
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    // ignore and try next url
+                }
+            }
+        }
+    }
+
+    /**
+     * Compute a renderer version based on last modified times of code and assets.
+     * This automatically busts the cache when we change layout code, textures, or fonts.
+     */
+    private function getRendererVersion(): string
+    {
+        $files = [
+            __FILE__,
+            public_path('og/textures/shelfleft.jpg'),
+            public_path('og/textures/shelfright.jpg'),
+            public_path('og/textures/shelfcenter.jpg'),
+            public_path('og/fonts/Roboto-Bold.ttf'),
+            public_path('og/fonts/Roboto-Regular.ttf'),
+            storage_path('app/fonts/Roboto-Bold.ttf'),
+            storage_path('app/fonts/Roboto-Regular.ttf'),
+            storage_path('app/fonts/arial.ttf'),
+        ];
+        $latest = 0;
+        foreach ($files as $f) {
+            $t = @filemtime($f);
+            if ($t && $t > $latest) {
+                $latest = $t;
+            }
+        }
+        if (!$latest) {
+            $latest = time();
+        }
+        return (string) $latest;
+    }
+
     /**
      * Add book covers to the image in a grid layout
      */
-    private function addBookCoversToImage($image, $books, $width, $height, $paddingTop = 70, $paddingBottom = 40, $rows = 4)
+    private function addBookCoversToImage($image, $books, $width, $height, $paddingTop = 70, $paddingBottom = 40, $rows = 1)
     {
+        $n = max(0, count($books));
+        if ($n === 0) return;
+
+        // Compute row metrics to match the wooden shelves we drew earlier
+        $rows = max(1, (int) $rows);
         $availableHeight = $height - $paddingTop - $paddingBottom;
         $rowHeight = (int) floor($availableHeight / $rows);
-        $verticalMargin = (int) round($rowHeight * 0.1);
-        $coverHeight = $rowHeight - (2 * $verticalMargin);
-        $coverWidth = (int) round($coverHeight * 0.66);
-        $horizontalPadding = 60; // keep away from wood sides
-        $spacing = 12;
 
+        // Cover size: occupy ~80% of row height and ensure a minimum top clearance
+        $bottomClearance = 6;      // gap from the shelf surface
+        $minTopClearance = 12;     // ensure books don't touch the shelf above
+        $targetHeight = (int) max(50, round($rowHeight * 0.8));
+        $maxByClearance = $rowHeight - $bottomClearance - $minTopClearance;
+        $coverHeight = (int) min($targetHeight, $maxByClearance);
+        if ($coverHeight > ($rowHeight - $bottomClearance)) {
+            $coverHeight = $rowHeight - $bottomClearance;
+        }
+        $coverWidth = (int) max(34, round($coverHeight * 0.66)); // typical book aspect ratio
+
+        // Horizontal layout
+        $horizontalPadding = 80; // avoid side pillars
+        $spacing = 14; // space between books
         $usableWidth = $width - (2 * $horizontalPadding);
-        $coversPerRow = max(3, (int) floor(($usableWidth + $spacing) / ($coverWidth + $spacing)));
-        $totalGridWidth = ($coversPerRow * $coverWidth) + (($coversPerRow - 1) * $spacing);
+        $cols = max(3, (int) floor(($usableWidth + $spacing) / ($coverWidth + $spacing)));
+
+        // Center grid horizontally
+        $totalGridWidth = ($cols * $coverWidth) + (($cols - 1) * $spacing);
         $startX = (int) (($width - $totalGridWidth) / 2);
 
         $bookIndex = 0;
-        for ($row = 0; $row < $rows && $bookIndex < count($books); $row++) {
-            $y = $paddingTop + ($row * $rowHeight) + $verticalMargin;
-            for ($col = 0; $col < $coversPerRow && $bookIndex < count($books); $col++) {
+        for ($row = 0; $row < $rows && $bookIndex < $n; $row++) {
+            $rowTop = $paddingTop + ($row * $rowHeight);
+            $y = $rowTop + $rowHeight - $coverHeight - $bottomClearance; // align to shelf
+
+            for ($col = 0; $col < $cols && $bookIndex < $n; $col++) {
                 $x = $startX + ($col * ($coverWidth + $spacing));
                 $book = $books[$bookIndex];
 
-                if ($book->thumbnail && $coverImage = $this->loadImageFromUrl($book->thumbnail)) {
+                if (!empty($book->thumbnail) && ($coverImage = $this->loadImageFromUrl($book->thumbnail))) {
                     $resizedCover = imagecreatetruecolor($coverWidth, $coverHeight);
                     imagecopyresampled($resizedCover, $coverImage, 0, 0, 0, 0, $coverWidth, $coverHeight, imagesx($coverImage), imagesy($coverImage));
-                    // subtle border
-                    $borderColor = imagecolorallocate($image, 220, 220, 220);
-                    imagerectangle($image, $x - 1, $y - 1, $x + $coverWidth, $y + $coverHeight, $borderColor);
                     imagecopy($image, $resizedCover, $x, $y, 0, 0, $coverWidth, $coverHeight);
                     imagedestroy($resizedCover);
                     imagedestroy($coverImage);
+                } else {
+                    // Placeholder for books without cover
+                    $bg = imagecolorallocate($image, 210, 210, 210);
+                    imagefilledrectangle($image, $x, $y, $x + $coverWidth, $y + $coverHeight, $bg);
+                    $border = imagecolorallocate($image, 190, 190, 190);
+                    imagerectangle($image, $x, $y, $x + $coverWidth, $y + $coverHeight, $border);
                 }
+
                 $bookIndex++;
             }
         }
@@ -684,13 +815,20 @@ class UserController extends Controller
      */
     private function getFontPath()
     {
-        $fontPath = storage_path('app/fonts/arial.ttf');
-
-        // If custom font doesn't exist, use built-in font (return null for imagestring functions)
-        if (!file_exists($fontPath)) {
-            return null;
+        // Prefer Roboto (to match frontend), then Arial fallback
+        $candidates = [
+            public_path('og/fonts/Roboto-Bold.ttf'),
+            public_path('og/fonts/Roboto-Regular.ttf'),
+            storage_path('app/fonts/Roboto-Bold.ttf'),
+            storage_path('app/fonts/Roboto-Regular.ttf'),
+            storage_path('app/fonts/arial.ttf'),
+        ];
+        foreach ($candidates as $p) {
+            if ($p && file_exists($p)) {
+                return $p;
+            }
         }
-
-        return $fontPath;
+        // If no custom font, use built-in font (return null for imagestring functions)
+        return null;
     }
 }

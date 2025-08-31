@@ -62,11 +62,12 @@ export default defineConfig(({ mode }) => {
       vueDevTools(),
 
       // Copy OG wood textures to stable paths (avoid hashed filenames)
+      // Use the new smaller shelf textures under src/assets/textures
       viteStaticCopy({
         targets: [
-          { src: 'src/assets/shelfleft.jpg', dest: 'og' },
-          { src: 'src/assets/shelfright.jpg', dest: 'og' },
-          { src: 'src/assets/shelfcenter.jpg', dest: 'og' }
+          { src: 'src/assets/textures/shelfleft.jpg', dest: 'og/textures' },
+          { src: 'src/assets/textures/shelfright.jpg', dest: 'og/textures' },
+          { src: 'src/assets/textures/shelfcenter.jpg', dest: 'og/textures' }
         ]
       }),
 

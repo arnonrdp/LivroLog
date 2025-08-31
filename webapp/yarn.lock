@@ -2185,7 +2185,7 @@ chalk@^4.0.0:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chokidar@^3.5.3:
+chokidar@^3.6.0:
   version "3.6.0"
   resolved "https://registry.yarnpkg.com/chokidar/-/chokidar-3.6.0.tgz#197c6cc669ef2a8dc5e7b4d97ee4e092c3eb0d5b"
   integrity sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw==
@@ -2989,7 +2989,7 @@ fs-extra@^10.0.1:
     jsonfile "^6.0.1"
     universalify "^2.0.0"
 
-fs-extra@^11.1.0:
+fs-extra@^11.3.0:
   version "11.3.1"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-11.3.1.tgz#ba7a1f97a85f94c6db2e52ff69570db3671d5a74"
   integrity sha512-eXvGGwZ5CL17ZSwHWd3bbgk7UUpF6IFHtP57NYYakPvHOs8GDgDe5KJI36jIJzDkJ6eJjuzRA8eBQb6SkKue0g==
@@ -4133,6 +4133,11 @@ p-locate@^5.0.0:
   dependencies:
     p-limit "^3.0.2"
 
+p-map@^7.0.3:
+  version "7.0.3"
+  resolved "https://registry.yarnpkg.com/p-map/-/p-map-7.0.3.tgz#7ac210a2d36f81ec28b736134810f7ba4418cdb6"
+  integrity sha512-VkndIv2fIB99swvQoA65bm+fsmt6UNdGeIB0oxBs+WhAhdh08QA04JXpI7rbB9r08/nkbysKoya9rtDERYOYMA==
+
 param-case@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/param-case/-/param-case-3.0.4.tgz#7d17fe4aa12bde34d4a77d91acfb6219caad01c5"
@@ -4211,7 +4216,7 @@ perfect-debounce@^2.0.0:
   resolved "https://registry.yarnpkg.com/perfect-debounce/-/perfect-debounce-2.0.0.tgz#0ff94f1ecbe0a6bca4b1703a2ed08bbe43739aa7"
   integrity sha512-fkEH/OBiKrqqI/yIgjR92lMfs2K8105zt/VT6+7eTjNwisrsh47CeIED9z58zI7DfKdH3uHAn25ziRZn3kgAow==
 
-picocolors@^1.0.0, picocolors@^1.1.1:
+picocolors@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/picocolors/-/picocolors-1.1.1.tgz#3d321af3eab939b083c8f929a1d12cda81c26b6b"
   integrity sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==
@@ -5280,15 +5285,16 @@ vite-plugin-pwa@^1.0.3:
     workbox-build "^7.3.0"
     workbox-window "^7.3.0"
 
-vite-plugin-static-copy@^0.17.0:
-  version "0.17.1"
-  resolved "https://registry.yarnpkg.com/vite-plugin-static-copy/-/vite-plugin-static-copy-0.17.1.tgz#0de35c4a4c760d5f344b5559d0a8d7d417a52093"
-  integrity sha512-9h3iaVs0bqnqZOM5YHJXGHqdC5VAVlTZ2ARYsuNpzhEJUHmFqXY7dAK4ZFpjEQ4WLFKcaN8yWbczr81n01U4sQ==
+vite-plugin-static-copy@^3.1.2:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/vite-plugin-static-copy/-/vite-plugin-static-copy-3.1.2.tgz#5d5e6ce965e5da6a326d47a5feb5033d52db43ca"
+  integrity sha512-aVmYOzptLVOI2b1jL+cmkF7O6uhRv1u5fvOkQgbohWZp2CbR22kn9ZqkCUIt9umKF7UhdbsEpshn1rf4720QFg==
   dependencies:
-    chokidar "^3.5.3"
-    fast-glob "^3.2.11"
-    fs-extra "^11.1.0"
-    picocolors "^1.0.0"
+    chokidar "^3.6.0"
+    fs-extra "^11.3.0"
+    p-map "^7.0.3"
+    picocolors "^1.1.1"
+    tinyglobby "^0.2.14"
 
 vite-plugin-vue-devtools@^8.0.0:
   version "8.0.1"
