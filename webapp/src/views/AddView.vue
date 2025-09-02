@@ -14,8 +14,8 @@
       <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
         <q-btn 
           :color="isBookInLibrary(book) ? 'positive' : 'primary'" 
-          :icon="isBookInLibrary(book) ? 'check' : 'add'" 
-          :disable="isBookInLibrary(book)"
+          :disable="isBookInLibrary(book)" 
+          :icon="isBookInLibrary(book) ? 'check' : 'add'"
           round 
           @click.once="addBook(book)" 
         />
