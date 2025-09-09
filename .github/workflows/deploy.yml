@@ -340,10 +340,22 @@ jobs:
             echo "$RESOLVED_TAG" > .resolved_tag_prod
             echo "$RESOLVED_TAG" > .last_tag_prod
 
-            # Pull and start containers
-            echo "🐳 Pulling and starting containers..."
+            # Preflight cleanup - stop existing containers and remove orphans
+            echo "🧹 Preflight cleanup - ensuring idempotent deployment..."
+            echo "Stopping existing compose project if running..."
+            docker compose -p livrolog -f docker-compose.prod.yml down --remove-orphans || true
+            
+            echo "Removing any orphaned containers by name..."
+            docker rm -f livrolog-api livrolog-web || true
+            docker rm -f livrolog_api_1 livrolog_web_1 || true
+            
+            echo "Cleaning up old networks..."
+            docker network rm livrolog-net || true
+
+            # Pull and start containers (idempotent)
+            echo "🐳 Pulling and starting containers with force-recreate..."
             docker compose -p livrolog -f docker-compose.prod.yml pull
-            docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
 
             # Wait for health checks with timeout
             echo "⏳ Waiting for services to be healthy (max 180s)..."
@@ -364,30 +376,38 @@ jobs:
                 echo "❌ Health checks timed out, performing rollback..."
                 echo "=== Container Status ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-                echo "=== API Logs (last 50 lines) ==="
-                docker logs --tail=50 livrolog-api || true
-                echo "=== Web Logs (last 50 lines) ==="
-                docker logs --tail=50 livrolog-web || true
+                echo "=== Web Logs (last 120 lines) ==="
+                docker logs --tail=120 $(docker compose -p livrolog ps -q web) || true
+                echo "=== API Logs (last 120 lines) ==="
+                docker logs --tail=120 $(docker compose -p livrolog ps -q api) || true
                 
-                # Rollback
+                # Idempotent rollback
+                echo "🔄 Performing idempotent rollback..."
+                docker compose -p livrolog -f docker-compose.prod.yml down --remove-orphans || true
                 LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
                 export TAG="$LAST_TAG"
+                echo "Rolling back to tag: $TAG"
                 docker compose -p livrolog -f docker-compose.prod.yml pull
-                docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
+                docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
                 exit 1
               fi
               sleep 5
             done
 
-            # Run migrations and clear caches
+            # Run migrations and clear caches using dynamic container names
             echo "🔄 Running migrations..."
-            docker exec livrolog-api php artisan migrate --force
+            API_CONTAINER=$(docker compose -p livrolog ps -q api | head -n 1)
+            if [ -z "$API_CONTAINER" ]; then
+              echo "❌ No API container found!"
+              exit 1
+            fi
+            docker exec "$API_CONTAINER" php artisan migrate --force
 
             echo "🧹 Clearing caches..."
-            docker exec livrolog-api php artisan config:clear || true
-            docker exec livrolog-api php artisan cache:clear || true
-            docker exec livrolog-api php artisan config:cache || true
-            docker exec livrolog-api php artisan route:cache || true
+            docker exec "$API_CONTAINER" php artisan config:clear || true
+            docker exec "$API_CONTAINER" php artisan cache:clear || true
+            docker exec "$API_CONTAINER" php artisan config:cache || true
+            docker exec "$API_CONTAINER" php artisan route:cache || true
 
             # Smoke tests
             echo "🧪 Running smoke tests..."

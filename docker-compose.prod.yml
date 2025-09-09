@@ -8,7 +8,6 @@ services:
   # Laravel API with Nginx + PHP-FPM
   api:
     image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
-    container_name: livrolog-api
     restart: always
     env_file:
       - /var/www/livrolog/shared/.env
@@ -35,7 +34,6 @@ services:
   # Vue/Quasar WebApp served by Nginx
   web:
     image: ghcr.io/${OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
-    container_name: livrolog-web
     restart: always
     ports:
       - "127.0.0.1:18080:80"
