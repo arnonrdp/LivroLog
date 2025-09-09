@@ -315,8 +315,27 @@ jobs:
               echo "Aviso: GHCR_PAT vazio. Se os pacotes forem privados, o pull falhará."
             fi
 
+            # Encontrar porta livre entre 8082-8090
+            WEB_PORT=""
+            for port in {8082..8090}; do
+              if ! ss -ltn | grep -q ":${port} "; then
+                WEB_PORT=$port
+                break
+              fi
+            done
+
+            if [ -z "$WEB_PORT" ]; then
+              echo "❌ Nenhuma porta disponível entre 8082-8090. Verifique processos em execução." >&2
+              exit 1
+            fi
+
+            echo "🔍 Usando porta ${WEB_PORT} para web"
+
+            # Opcional: limpar containers antigos do LivroLog
+            docker rm -f livrolog-web-dev livrolog-web 2>/dev/null || true
+
             # Gera compose dev
-            cat > docker-compose.dev.yml << 'EOF'
+            cat > docker-compose.dev.yml << EOF
             name: livrolog_dev
             services:
               web:
@@ -324,7 +343,7 @@ jobs:
                 container_name: livrolog-web-dev
                 restart: always
                 ports:
-                  - "8082:80"
+                  - "${WEB_PORT}:80"
                 healthcheck:
                   test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
                   interval: 15s
@@ -393,8 +412,8 @@ jobs:
             deadline=$((SECONDS+120))
             while true; do
               web_ok=0; api_ok=0
-              curl -fsS http://localhost:8082/healthz >/dev/null 2>&1 && web_ok=1
-              curl -fsS http://localhost:8000/health  >/dev/null 2>&1 && api_ok=1
+              curl -fsS http://localhost:${WEB_PORT}/healthz >/dev/null 2>&1 && web_ok=1
+              curl -fsS http://127.0.0.1:8000/health >/dev/null 2>&1 && api_ok=1
               if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks failed, rolling back…"
@@ -414,7 +433,7 @@ jobs:
             docker exec livrolog-api-dev php artisan config:clear || true
             docker exec livrolog-api-dev php artisan cache:clear || true
 
-            echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):8082"
+            echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):${WEB_PORT}"
 
   docker-canary-prod:
     name: docker-canary-prod
