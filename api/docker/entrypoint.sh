@@ -12,15 +12,39 @@ until php artisan migrate:status > /dev/null 2>&1; do
     sleep 2
 done
 
-# Generate application key if needed
-php artisan key:generate --force || true
+# Check if APP_KEY exists and is valid (base64: + at least 44 chars = 50+ total)
+if [ -z "${APP_KEY}" ] || [[ "${APP_KEY}" == *"XXXX"* ]] || [[ ! "${APP_KEY}" =~ ^base64: ]] || [ ${#APP_KEY} -lt 50 ]; then
+    echo "⚠️ WARNING: APP_KEY is not set or invalid!"
+    echo "  Current value length: ${#APP_KEY} chars"
+    echo "  Required: starts with 'base64:' and at least 50 chars total"
+    
+    # In production, fail fast to avoid security issues
+    if [ "${APP_ENV:-production}" = "production" ]; then
+        echo "❌ ERROR: Production requires a valid APP_KEY in .env file"
+        echo "Generate one with: php artisan key:generate --show"
+        exit 1
+    else
+        # Non-production: generate a key
+        echo "Generating application key (non-production)..."
+        php artisan key:generate --force || true
+    fi
+else
+    echo "✅ APP_KEY is configured (${#APP_KEY} chars)"
+fi
 
 # Laravel cache optimizations
 echo "Optimizing Laravel caches..."
 php artisan config:clear
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache || true
+
+# Only cache views if views directory exists
+if [ -d "resources/views" ]; then
+    echo "Caching views..."
+    php artisan view:cache || true
+else
+    echo "WARNING: 'resources/views' directory not found. Skipping view cache step."
+fi
 
 # Generate Swagger documentation
 php artisan l5-swagger:generate || true
