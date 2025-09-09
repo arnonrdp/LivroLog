@@ -287,6 +287,7 @@ jobs:
     env:
       ENVIRONMENT: Development
       DEPLOY_PATH: /var/www/livrolog-dev
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
     
     steps:
       - name: Deploy canary containers (livrolog-dev)
@@ -295,13 +296,14 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: GHCR_PAT,GITHUB_SHA
           script: |
-            set -e
-
+            set -euo pipefail
+            
             # Vars
             DOCKER_DIR="/var/www/livrolog-dev/docker"
             export GITHUB_REPOSITORY_OWNER=arnonrdp
-            export TAG=${GITHUB_SHA}  # SHA imutável do commit
+            export TAG="${GITHUB_SHA}"
 
             # Ensure directory (with sudo once), then own it
             sudo mkdir -p "$DOCKER_DIR"
@@ -348,11 +350,15 @@ jobs:
                   retries: 10
             EOF
 
-            # Login GHCR (o token vem como secret mascarado no log)
-            echo "${GHCR_TOKEN:-${GITHUB_TOKEN}}" | docker login ghcr.io -u arnonrdp --password-stdin
+            # Login condicional no GHCR
+            if [ -n "${GHCR_PAT:-}" ]; then
+              echo "$GHCR_PAT" | docker login ghcr.io -u arnonrdp --password-stdin
+            else
+              echo "GHCR_PAT vazio. Pacotes são públicos? Se privados, configure o secret GHCR_PAT." >&2
+            fi
 
             # Guardar tag atual para rollback
-            echo "${TAG}" > .last_tag_dev
+            echo "${GITHUB_SHA}" > .last_tag_dev
 
             # Pull e start
             docker compose -p livrolog_dev -f docker-compose.dev.yml pull
@@ -372,7 +378,7 @@ jobs:
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks failed, rolling back…"
                 LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
-                export TAG=$LAST_TAG
+                export TAG="$LAST_TAG"
                 docker compose -p livrolog_dev -f docker-compose.dev.yml pull
                 docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
                 exit 1
@@ -385,8 +391,7 @@ jobs:
             docker exec livrolog-api-dev php artisan config:clear || true
             docker exec livrolog-api-dev php artisan cache:clear || true
 
-            echo "✅ Canary Docker deployment completed successfully!"
-            echo "🐳 Web available at http://$(hostname -I | awk '{print $1}'):8082"
+            echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):8082"
 
   docker-canary-prod:
     name: docker-canary-prod
