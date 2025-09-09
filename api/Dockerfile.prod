@@ -5,8 +5,8 @@
 # Build stage - Install dependencies
 FROM composer:2 AS vendor
 WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --optimize-autoloader --classmap-authoritative
+COPY api/composer.json api/composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --optimize-autoloader --classmap-authoritative --no-scripts
 
 # Production stage - Optimized PHP-FPM runtime
 FROM php:8.3-fpm AS app
@@ -46,7 +46,7 @@ RUN echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/99-upload-limits.in
 WORKDIR /var/www/html
 
 # Copy application code
-COPY . ./
+COPY api/ ./
 
 # Copy optimized vendor from composer stage
 COPY --from=vendor /app/vendor ./vendor
@@ -57,7 +57,7 @@ RUN mkdir -p bootstrap/cache storage/logs storage/framework/{cache,sessions,test
     && chmod -R 775 bootstrap/cache storage
 
 # Copy and make entrypoint executable
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY api/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Expose port for built-in server (used by healthcheck)
