@@ -2,6 +2,26 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+
+// Healthcheck endpoint for Docker containers
+// Comments in English only
+Route::get('/healthz', function () {
+    try {
+        // Check database connection
+        DB::connection()->getPdo();
+        
+        // Check Redis connection if configured
+        if (config('database.redis.default.host')) {
+            Redis::ping();
+        }
+        
+        return response('healthy', 200);
+    } catch (Exception $e) {
+        return response('unhealthy: ' . $e->getMessage(), 500);
+    }
+});
 
 // Serve Swagger JSON directly to avoid environment path issues
 Route::get('/docs/api-docs.json', function () {

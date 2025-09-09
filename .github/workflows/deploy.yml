@@ -269,3 +269,204 @@ jobs:
               ls -la $DEPLOY_PATH/releases/ 2>/dev/null || echo "No releases directory found"
               exit 1
             fi
+
+  # Canary deployment for Docker containers (optional)
+  # Comments in English only
+  docker-canary-dev:
+    name: docker-canary-dev
+    runs-on: ubuntu-latest
+    needs: [required-checks, build]
+    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/dev'
+    
+    env:
+      ENVIRONMENT: Development
+      DEPLOY_PATH: /var/www/livrolog-dev
+    
+    steps:
+      - name: Deploy canary containers (livrolog-dev)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            
+            # Install Docker if not present
+            if ! command -v docker &> /dev/null; then
+              echo "Installing Docker..."
+              curl -fsSL https://get.docker.com -o get-docker.sh
+              sudo sh get-docker.sh
+              sudo usermod -aG docker $USER
+            fi
+            
+            # Create Docker deployment directory
+            DOCKER_DIR="/srv/livrolog"
+            mkdir -p $DOCKER_DIR
+            cd $DOCKER_DIR
+            
+            # Create dev compose file
+            cat > docker-compose.dev.yml << 'EOF'
+            name: livrolog_dev
+            services:
+              web:
+                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/livrolog-web:${TAG}
+                container_name: livrolog-web-dev
+                restart: always
+                ports:
+                  - "8081:80"
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
+                  interval: 15s
+                  timeout: 3s
+                  retries: 10
+                depends_on:
+                  api:
+                    condition: service_healthy
+              api:
+                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/livrolog-api:${TAG}
+                container_name: livrolog-api-dev
+                restart: always
+                env_file:
+                  - /var/www/livrolog-dev/shared/.env.dev
+                environment:
+                  - DB_HOST=127.0.0.1
+                  - DB_PORT=3306
+                  - DB_DATABASE=livrolog_dev
+                  - REDIS_HOST=127.0.0.1
+                  - REDIS_PORT=6379
+                network_mode: host
+                volumes:
+                  - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+                  interval: 15s
+                  timeout: 3s
+                  retries: 10
+            EOF
+            
+            # Set environment variables for Docker Compose
+            export GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
+            export TAG=${{ github.sha }} # Use immutable SHA tag
+            
+            # Log in to GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            
+            # Store current tag for rollback
+            echo ${{ github.sha }} > .last_tag_dev
+            
+            # Pull and start services
+            echo "Pulling Docker images..."
+            docker compose -p livrolog_dev -f docker-compose.dev.yml pull
+            
+            echo "Starting Docker services..."
+            docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+            
+            # Wait for health checks with rollback on failure
+            echo "Waiting for services to be healthy..."
+            if ! timeout 120 bash -c 'until docker compose -p livrolog_dev -f docker-compose.dev.yml ps --format json | jq -e ".[] | select(.Health == \"healthy\")" > /dev/null 2>&1; do sleep 5; done'; then
+              echo "❌ Health checks failed, rolling back..."
+              LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
+              export TAG=$LAST_TAG
+              docker compose -p livrolog_dev -f docker-compose.dev.yml pull
+              docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+              exit 1
+            fi
+            
+            # Run migrations and clear caches
+            echo "Running migrations..."
+            docker exec livrolog-api-dev php artisan migrate --force
+            docker exec livrolog-api-dev php artisan config:clear
+            docker exec livrolog-api-dev php artisan cache:clear
+            
+            echo "✅ Canary Docker deployment completed successfully!"
+            echo "🐳 Containers are running at http://$(hostname -I | awk '{print $1}'):8081"
+
+  docker-canary-prod:
+    name: docker-canary-prod
+    runs-on: ubuntu-latest
+    needs: [required-checks, build]
+    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/main'
+    
+    env:
+      ENVIRONMENT: Production
+      DEPLOY_PATH: /var/www/livrolog
+    
+    steps:
+      - name: Deploy canary containers (livrolog production)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            
+            DOCKER_DIR="/srv/livrolog"
+            mkdir -p $DOCKER_DIR
+            cd $DOCKER_DIR
+            
+            # Create production compose file
+            cat > docker-compose.prod.yml << 'EOF'
+            name: livrolog
+            services:
+              web:
+                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/livrolog-web:${TAG}
+                container_name: livrolog-web
+                restart: always
+                ports:
+                  - "8080:80"
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
+                  interval: 15s
+                  timeout: 3s
+                  retries: 10
+                depends_on:
+                  api:
+                    condition: service_healthy
+              api:
+                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/livrolog-api:${TAG}
+                container_name: livrolog-api
+                restart: always
+                env_file:
+                  - /var/www/livrolog/shared/.env
+                environment:
+                  - DB_HOST=127.0.0.1
+                  - DB_PORT=3306
+                  - REDIS_HOST=127.0.0.1
+                  - REDIS_PORT=6379
+                network_mode: host
+                volumes:
+                  - /var/www/livrolog/shared/storage:/var/www/html/storage
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+                  interval: 15s
+                  timeout: 3s
+                  retries: 10
+            EOF
+            
+            export GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
+            export TAG=${{ github.sha }}
+            
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            
+            echo ${{ github.sha }} > .last_tag_prod
+            
+            docker compose -p livrolog -f docker-compose.prod.yml pull
+            docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
+            
+            if ! timeout 120 bash -c 'until docker compose -p livrolog -f docker-compose.prod.yml ps --format json | jq -e ".[] | select(.Health == \"healthy\")" > /dev/null 2>&1; do sleep 5; done'; then
+              echo "❌ Production health checks failed, rolling back..."
+              LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
+              export TAG=$LAST_TAG
+              docker compose -p livrolog -f docker-compose.prod.yml pull
+              docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
+              exit 1
+            fi
+            
+            docker exec livrolog-api php artisan migrate --force
+            docker exec livrolog-api php artisan config:clear
+            docker exec livrolog-api php artisan cache:clear
+            
+            echo "✅ Production Docker deployment completed successfully!"
+            echo "🐳 Containers are running at http://$(hostname -I | awk '{print $1}'):8080"

@@ -1,0 +1,55 @@
+# docker-compose.prod.yml
+# Production Docker Compose using external MariaDB/Redis
+# Comments in English only
+
+name: livrolog
+
+services:
+  # Vue/Quasar WebApp served by Nginx
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-owner}/livrolog-web:${TAG:-latest}
+    container_name: livrolog-web
+    restart: always
+    ports:
+      - "8080:80" # Keep Apache on 80/443; use 8080 until cutover
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - livrolog-net
+
+  # Laravel API with PHP-FPM
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-owner}/livrolog-api:${TAG:-latest}
+    container_name: livrolog-api
+    restart: always
+    env_file:
+      - /var/www/livrolog/shared/.env # Rendered by post-deploy workflow
+    environment:
+      # Override DB/Redis to use external services (existing MariaDB/Redis)
+      - DB_HOST=127.0.0.1
+      - DB_PORT=3306
+      - REDIS_HOST=127.0.0.1
+      - REDIS_PORT=6379
+    # Use host network to access external MariaDB/Redis on localhost
+    network_mode: host
+    volumes:
+      # Mount shared storage from existing deployment
+      - /var/www/livrolog/shared/storage:/var/www/html/storage
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+networks:
+  livrolog-net:
+    name: livrolog-net
+    driver: bridge
