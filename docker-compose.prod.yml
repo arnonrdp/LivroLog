@@ -5,25 +5,26 @@
 name: livrolog
 
 services:
-  # Laravel API with Nginx + PHP-FPM
+  # Laravel API with Nginx + PHP-FPM (serves on port 8080)
   api:
     image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
     restart: always
-    env_file:
-      - /var/www/livrolog/shared/.env
     environment:
-      # Override DB/Redis to use external services (existing MariaDB/Redis)
-      - DB_HOST=127.0.0.1
+      # Override DB/Redis to use external services via host gateway
+      - DB_HOST=host.docker.internal
       - DB_PORT=3306
-      - REDIS_HOST=127.0.0.1
+      - REDIS_HOST=host.docker.internal
       - REDIS_PORT=6379
-    # Use host network to access external MariaDB/Redis on localhost
-    network_mode: host
     ports:
       - "127.0.0.1:18081:8080"
+    networks:
+      - livrolog-net
     volumes:
-      # Mount shared storage from existing deployment
+      # Mount shared storage and .env from existing deployment
       - /var/www/livrolog/shared/storage:/var/www/html/storage
+      - /var/www/livrolog/shared/.env:/var/www/html/.env:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
       interval: 15s
