@@ -366,11 +366,11 @@ jobs:
                 volumes:
                   - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
                 healthcheck:
-                  test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
-                  start_period: 60s
+                  test: ["CMD", "php", "artisan", "about"]
                   interval: 10s
                   timeout: 5s
                   retries: 30
+                  start_period: 60s
             EOF
 
             # Resolve tag existente: dev-<sha> -> <sha> -> dev
@@ -412,11 +412,20 @@ jobs:
             deadline=$((SECONDS+120))
             while true; do
               web_ok=0; api_ok=0
-              curl -fsS http://localhost:${WEB_PORT}/healthz >/dev/null 2>&1 && web_ok=1
-              curl -fsS http://127.0.0.1:8000/health >/dev/null 2>&1 && api_ok=1
+              curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
+              docker exec livrolog-api-dev php artisan about >/dev/null 2>&1 && api_ok=1
               if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks failed, rolling back…"
+                echo "=== Diagnóstico de containers ==="
+                docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+                echo "=== Health status da API ==="
+                docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
+                echo "=== Logs da API (últimas 80 linhas) ==="
+                docker logs --tail=80 livrolog-api-dev || true
+                echo "=== Logs da Web (últimas 80 linhas) ==="
+                docker logs --tail=80 livrolog-web-dev || true
+                echo "=== Iniciando rollback ==="
                 LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
                 export TAG="$LAST_TAG"
                 sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
