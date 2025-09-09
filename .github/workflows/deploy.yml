@@ -396,13 +396,18 @@ jobs:
 
             # Run migrations and clear caches using dynamic container names
             echo "🔄 Running migrations..."
-            docker exec $(docker compose -p livrolog ps -q api) php artisan migrate --force
+            API_CONTAINER=$(docker compose -p livrolog ps -q api | head -n 1)
+            if [ -z "$API_CONTAINER" ]; then
+              echo "❌ No API container found!"
+              exit 1
+            fi
+            docker exec "$API_CONTAINER" php artisan migrate --force
 
             echo "🧹 Clearing caches..."
-            docker exec $(docker compose -p livrolog ps -q api) php artisan config:clear || true
-            docker exec $(docker compose -p livrolog ps -q api) php artisan cache:clear || true
-            docker exec $(docker compose -p livrolog ps -q api) php artisan config:cache || true
-            docker exec $(docker compose -p livrolog ps -q api) php artisan route:cache || true
+            docker exec "$API_CONTAINER" php artisan config:clear || true
+            docker exec "$API_CONTAINER" php artisan cache:clear || true
+            docker exec "$API_CONTAINER" php artisan config:cache || true
+            docker exec "$API_CONTAINER" php artisan route:cache || true
 
             # Smoke tests
             echo "🧪 Running smoke tests..."
