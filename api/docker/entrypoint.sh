@@ -25,10 +25,11 @@ php artisan view:cache || true
 # Generate Swagger documentation
 php artisan l5-swagger:generate || true
 
-# Start built-in server for healthcheck (background)
-php artisan serve --host=0.0.0.0 --port=8000 &
+# Set proper permissions for Nginx
+chown -R www-data:www-data /var/www/html
+chmod -R 755 /var/www/html
 
 echo "Laravel optimization completed successfully"
 
-# Execute the main command (PHP-FPM)
+# Execute the main command (Supervisor with PHP-FPM + Nginx)
 exec "$@"

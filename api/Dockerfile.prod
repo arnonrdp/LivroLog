@@ -11,9 +11,11 @@ RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --opt
 # Production stage - Optimized PHP-FPM runtime
 FROM php:8.3-fpm AS app
 
-# Install system dependencies and PHP extensions
+# Install system dependencies, Nginx and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    nginx \
+    supervisor \
     libicu-dev \
     libonig-dev \
     libpng-dev \
@@ -56,13 +58,21 @@ RUN mkdir -p bootstrap/cache storage/logs storage/framework/{cache,sessions,test
     && chown -R www-data:www-data bootstrap/cache storage \
     && chmod -R 775 bootstrap/cache storage
 
+# Configure Nginx
+RUN rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+COPY api/docker/nginx.conf /etc/nginx/sites-available/laravel
+RUN ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/laravel
+
+# Configure Supervisor to run both PHP-FPM and Nginx
+COPY api/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Copy and make entrypoint executable
 COPY api/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose port for built-in server (used by healthcheck)
-EXPOSE 8000
+# Expose port 8080 for Nginx
+EXPOSE 8080
 
-# Use entrypoint to run Laravel optimizations before starting PHP-FPM
+# Use entrypoint to run Laravel optimizations, then start supervisor
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["php-fpm", "-F"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf", "-n"]
