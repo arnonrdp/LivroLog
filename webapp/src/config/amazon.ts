@@ -59,6 +59,7 @@ export function getAmazonRegionConfig(locale: string): AmazonRegionConfig {
   const localeToRegion: Record<string, string> = {
     'pt-br': 'BR', // Brazil has its own Amazon Associates program
     pt_br: 'BR',
+    pt: 'BR',
     'en-gb': 'UK',
     en_gb: 'UK',
     'en-ca': 'CA',

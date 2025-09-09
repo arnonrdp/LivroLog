@@ -103,7 +103,7 @@ class AmazonBooksProvider implements BookSearchProvider
 
         if (isset($options['locale'])) {
             $locale = strtolower($options['locale']);
-            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br')) {
+            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br') || $locale === 'pt') {
                 return 'BR';
             } elseif (str_starts_with($locale, 'en-gb') || str_starts_with($locale, 'en_gb')) {
                 return 'UK';
@@ -150,7 +150,7 @@ class AmazonBooksProvider implements BookSearchProvider
         $searchItemsRequest->setPartnerType(PartnerType::ASSOCIATES);
         $searchItemsRequest->setMarketplace($this->regionConfig[$region]['marketplace']);
 
-        // Request comprehensive book information
+        // Request comprehensive book information (constant names per thewirecutter/paapi5-php-sdk)
         $searchItemsRequest->setResources([
             SearchItemsResource::ITEM_INFOTITLE,
             SearchItemsResource::ITEM_INFOFEATURES,
@@ -163,7 +163,7 @@ class AmazonBooksProvider implements BookSearchProvider
             SearchItemsResource::IMAGESPRIMARYMEDIUM,
             SearchItemsResource::IMAGESPRIMARYSMALL,
             SearchItemsResource::OFFERSLISTINGSPRICE,
-            SearchItemsResource::OFFERSLISTINGSAVAILABILITY,
+            // Availability constants vary by SDK fork; omit to avoid undefined constant issues
         ]);
 
         return $searchItemsRequest;
