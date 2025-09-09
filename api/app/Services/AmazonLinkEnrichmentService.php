@@ -12,7 +12,7 @@ class AmazonLinkEnrichmentService
             'search_url' => 'https://www.amazon.com/s'
         ],
         'BR' => [
-            'domain' => 'amazon.com.br', 
+            'domain' => 'amazon.com.br',
             'search_url' => 'https://www.amazon.com.br/s'
         ],
         'UK' => [
@@ -49,18 +49,18 @@ class AmazonLinkEnrichmentService
     private function generateAmazonLink(array $book, string $region, string $associateTag): string
     {
         $domain = $this->regionConfig[$region]['domain'];
-        
+
         // Se tiver ASIN, gera link direto para o produto
         if (!empty($book['amazon_asin'])) {
             return "https://www.{$domain}/dp/{$book['amazon_asin']}?tag={$associateTag}";
         }
-        
+
         // Fallback: gera link de busca
         $searchUrl = $this->regionConfig[$region]['search_url'];
-        
+
         // Prioridade: ISBN > Título + Autor > Título
         $searchTerm = '';
-        
+
         if (!empty($book['isbn'])) {
             $searchTerm = $book['isbn'];
         } elseif (!empty($book['title']) && !empty($book['authors'])) {
@@ -84,10 +84,10 @@ class AmazonLinkEnrichmentService
         if (isset($options['region']) && isset($this->regionConfig[$options['region']])) {
             return $options['region'];
         }
-        
+
         if (isset($options['locale'])) {
             $locale = strtolower($options['locale']);
-            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br')) {
+            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br') || $locale === 'pt') {
                 return 'BR';
             } elseif (str_starts_with($locale, 'en-gb') || str_starts_with($locale, 'en_gb')) {
                 return 'UK';
@@ -95,13 +95,13 @@ class AmazonLinkEnrichmentService
                 return 'CA';
             }
         }
-        
+
         return 'US';
     }
 
     private function isEnabled(): bool
     {
-        return config('services.amazon.sitestripe_enabled', false) 
+        return config('services.amazon.sitestripe_enabled', false)
             && !empty(config('services.amazon.associate_tag'));
     }
 }

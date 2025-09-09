@@ -692,6 +692,77 @@
                     }
                 }
             },
+            "put": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Connect Google account to existing user",
+                "description": "Connects a Google account to the authenticated user's account",
+                "operationId": "connectGoogleAccount",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_token",
+                                    "action"
+                                ],
+                                "properties": {
+                                    "id_token": {
+                                        "description": "Google ID token",
+                                        "type": "string"
+                                    },
+                                    "action": {
+                                        "description": "Action to perform",
+                                        "type": "string",
+                                        "enum": [
+                                            "connect",
+                                            "update_email"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Google account connected successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Google account connected successfully"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "409": {
+                        "description": "Google account already connected to another user"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Authentication"
@@ -759,6 +830,56 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Disconnect Google account",
+                "description": "Removes Google account connection from the authenticated user",
+                "operationId": "disconnectGoogle",
+                "responses": {
+                    "200": {
+                        "description": "Google account disconnected successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Google account disconnected successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot disconnect without password",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Please set a password before disconnecting Google account"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/auth/google/callback": {
@@ -1236,8 +1357,8 @@
                 "tags": [
                     "Books"
                 ],
-                "summary": "Get book by ID",
-                "description": "Returns detailed information about a specific book",
+                "summary": "Get book by ID with contextual data",
+                "description": "Returns detailed information about a specific book with optional user-specific data using with[] pattern",
                 "operationId": "getBook",
                 "parameters": [
                     {
@@ -1249,15 +1370,80 @@
                             "type": "string",
                             "example": "B-1ABC-2DEF"
                         }
+                    },
+                    {
+                        "name": "with[]",
+                        "in": "query",
+                        "description": "Include additional data: pivot (user library data), reviews, details",
+                        "required": false,
+                        "style": "form",
+                        "explode": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "pivot",
+                                    "reviews",
+                                    "details"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "User ID to get pivot data for (used with with[]=pivot)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-1ABC-2DEF"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Book information",
+                        "description": "Book information with contextual data",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Book"
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        {
+                                            "properties": {
+                                                "pivot": {
+                                                    "properties": {
+                                                        "added_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "read_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "nullable": true
+                                                        },
+                                                        "is_private": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "reading_status": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "reviews": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -1524,6 +1710,138 @@
                     },
                     "422": {
                         "description": "Enrichment failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/verify-email": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify email address",
+                "description": "Verifies the user's email address using the link sent via email",
+                "operationId": "verifyEmail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "hash",
+                        "in": "query",
+                        "description": "Verification hash",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expires",
+                        "in": "query",
+                        "description": "Expiration timestamp",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "signature",
+                        "in": "query",
+                        "description": "URL signature",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email verified successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired link",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid or expired verification link"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send email verification link",
+                "description": "Sends an email verification link to the authenticated user",
+                "operationId": "sendVerificationEmail",
+                "responses": {
+                    "200": {
+                        "description": "Verification link sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Verification link sent successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Email already verified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email already verified"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -2221,64 +2539,18 @@
                     "User Library"
                 ],
                 "summary": "Get user's personal library",
-                "description": "Returns paginated list of books in the authenticated user's personal library",
+                "description": "Returns all books in the authenticated user's personal library",
                 "operationId": "getUserBooks",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Page number",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "all",
-                        "in": "query",
-                        "description": "Return all books without pagination",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "true"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Items per page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "example": 20
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "User's books library",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Book"
-                                            }
-                                        },
-                                        "current_page": {
-                                            "type": "integer"
-                                        },
-                                        "total": {
-                                            "type": "integer"
-                                        },
-                                        "per_page": {
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Book"
+                                    }
                                 }
                             }
                         }
@@ -2416,6 +2688,49 @@
             }
         },
         "/user/books/{book}": {
+            "get": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Get specific book from user's library",
+                "description": "Returns a specific book from the authenticated user's library with pivot data (read dates, status, etc.) and reviews",
+                "operationId": "getUserBook",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book details with pivot data and reviews",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Book"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found in user's library"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "delete": {
                 "tags": [
                     "User Library"
@@ -2553,6 +2868,64 @@
                     },
                     "404": {
                         "description": "Book not found in user's library"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{user}/books/{book}": {
+            "get": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Get specific book from a user's library",
+                "description": "Returns a specific book from a user's library with their pivot data (read dates, status, etc.) and reviews. Respects privacy settings.",
+                "operationId": "getSpecificUserBook",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "User ID or username",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "U-1ABC-2DEF"
+                        }
+                    },
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book details with user's pivot data and reviews",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Book"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found in user's library or user not found"
+                    },
+                    "403": {
+                        "description": "Access denied - private profile"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -2943,6 +3316,38 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/users/{id}/shelf-image": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Generate user's shelf image for social sharing",
+                "description": "Returns a generated image of user's bookshelf for Open Graph sharing",
+                "operationId": "getUserShelfImage",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Generated shelf image",
+                        "content": {
+                            "image/jpeg": {}
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
             }
         },
         "/reviews": {
@@ -3674,6 +4079,26 @@
                         "example": "8fcQEAAAQBAJ",
                         "nullable": true
                     },
+                    "amazon_asin": {
+                        "type": "string",
+                        "example": "B08LPMFDQC",
+                        "nullable": true
+                    },
+                    "asin_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "completed",
+                            "failed"
+                        ],
+                        "example": "completed"
+                    },
+                    "asin_processed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
                     "isbn": {
                         "type": "string",
                         "example": "9788533613379",
@@ -3703,7 +4128,8 @@
                     },
                     "language": {
                         "type": "string",
-                        "example": "pt-BR"
+                        "example": "en",
+                        "nullable": true
                     },
                     "publisher": {
                         "type": "string",

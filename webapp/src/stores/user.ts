@@ -58,6 +58,12 @@ export const useUserStore = defineStore('user', {
     // Update a specific property of the current user
     updateMe(updates: Partial<User>) {
       this._me = { ...this._me, ...updates }
+    },
+
+    // Generate shelf image URL for Open Graph sharing
+    getShelfImageUrl(userId: string) {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      return `${apiUrl}/users/${userId}/shelf-image`
     }
   }
 })

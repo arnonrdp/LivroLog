@@ -383,18 +383,6 @@ API endpoints can be imported into Postman using the OpenAPI specification URL.
 
 ## 🚀 Deployment
 
-### Production Checklist
-
--   [ ] Set `APP_ENV=production`
--   [ ] Set `APP_DEBUG=false`
--   [ ] Configure production database
--   [ ] Set up Redis for caching
--   [ ] Configure queue workers
--   [ ] Set up SSL certificates
--   [ ] Configure CORS for production frontend domain
--   [ ] Set up monitoring and logging
--   [ ] Configure backup strategy
-
 ### Artisan Commands
 
 ```bash

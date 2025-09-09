@@ -11,6 +11,12 @@ env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '20'
 
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+
 jobs:
   required-checks:
     uses: ./.github/workflows/required-checks.yml
@@ -22,250 +28,376 @@ jobs:
       environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
     secrets: inherit
 
-  deploy:
-    name: deploy
+  # Legacy deploy job (disabled - Docker containers handle deployment now)
+  # deploy:
+  #   name: deploy
+  #   runs-on: ubuntu-latest
+  #   needs: [required-checks, build]
+  #   if: false  # Disabled in favor of Docker containers
+
+  # post-deploy:
+  #   name: post-deploy
+  #   needs: [deploy]
+  #   uses: ./.github/workflows/post-deploy.yml
+  #   with:
+  #     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
+  #   secrets: inherit
+
+  # Legacy rollback (disabled - Docker containers handle rollback now)
+
+  # Docker container deployments are the primary deployment method
+  docker-canary-dev:
+    name: docker-canary-dev
     runs-on: ubuntu-latest
     needs: [required-checks, build]
-    if: always() && needs.build.result == 'success'
+    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/dev'
 
     env:
-      TIMESTAMP: ${{ github.run_number }}-${{ github.sha }}
-      ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
-      DEPLOY_PATH: ${{ github.ref == 'refs/heads/main' && '/var/www/livrolog' || '/var/www/livrolog-dev' }}
-      SHARED_ENV: ${{ github.ref == 'refs/heads/main' && '.env' || '.env.dev' }}
+      ENVIRONMENT: Development
+      DEPLOY_PATH: /var/www/livrolog-dev
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
 
     steps:
-      - name: Set environment variables
-        run: |
-          if [[ "${{ env.ENVIRONMENT }}" == "Production" ]]; then
-            echo "API_URL=api.livrolog.com" >> $GITHUB_ENV
-            echo "WEB_URL=livrolog.com" >> $GITHUB_ENV
-          else
-            echo "API_URL=api.dev.livrolog.com" >> $GITHUB_ENV
-            echo "WEB_URL=dev.livrolog.com" >> $GITHUB_ENV
-          fi
-
-      - name: Download API artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: api-build-${{ github.sha }}
-
-      - name: Download webapp artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: webapp-build-${{ github.sha }}
-
-      - name: Prepare release directory
+      - name: Deploy canary containers (livrolog-dev)
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME
           script: |
-            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
-            mkdir -p $RELEASE_DIR/{api,webapp}
+            set -euo pipefail
+            DOCKER_DIR="/var/www/livrolog-dev/docker"
+            OWNER="arnonrdp"
+            IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
+            IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
 
-            # Create base directories for dev if needed
-            if [[ "${{ env.ENVIRONMENT }}" == "Development" ]]; then
-              sudo mkdir -p ${{ env.DEPLOY_PATH }}/{releases,shared/storage}
-              sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}
-            fi
+            sudo mkdir -p "$DOCKER_DIR"
+            sudo chown -R bitnami:bitnami /var/www/livrolog-dev
+            cd "$DOCKER_DIR"
 
-      - name: Deploy API
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: 'api-build.tar.gz'
-          target: '/tmp/'
-
-      - name: Deploy webapp
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: 'webapp-build.tar.gz'
-          target: '/tmp/'
-
-      - name: Setup application
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            set -e
-            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
-
-            # Extract API
-            cd $RELEASE_DIR/api
-            tar -xzf /tmp/api-build.tar.gz --strip-components=0
-            rm /tmp/api-build.tar.gz
-            
-            # Setup API symlinks
-            ln -nfs ${{ env.DEPLOY_PATH }}/shared/${{ env.SHARED_ENV }} .env
-            rm -rf storage
-            ln -nfs ${{ env.DEPLOY_PATH }}/shared/storage storage
-
-            # Extract webapp
-            cd $RELEASE_DIR/webapp
-            tar -xzf /tmp/webapp-build.tar.gz --strip-components=1
-            rm /tmp/webapp-build.tar.gz
-
-            # Set permissions
-            sudo chown -R bitnami:daemon $RELEASE_DIR
-            chmod -R 755 $RELEASE_DIR
-
-            echo "✅ Application setup completed"
-
-      - name: Run migrations
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            set -e
-            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
-
-            echo "🔄 Running database migrations..."
-            cd $RELEASE_DIR/api
-
-            # Clear Laravel caches to avoid permission conflicts
-            php artisan cache:clear || true
-            php artisan view:clear || true
-            php artisan config:clear || true
-
-            # Ensure shared storage directories exist with proper permissions
-            sudo mkdir -p ${{ env.DEPLOY_PATH }}/shared/storage/{app,framework/{cache,sessions,testing,views},logs}
-
-            # Set ownership first, then permissions on shared storage
-            sudo chown -R bitnami:daemon ${{ env.DEPLOY_PATH }}/shared/storage
-            sudo chmod -R 775 ${{ env.DEPLOY_PATH }}/shared/storage
-
-            # Remove existing cache and session files from shared storage
-            rm -rf ${{ env.DEPLOY_PATH }}/shared/storage/framework/sessions/* || true
-            rm -rf ${{ env.DEPLOY_PATH }}/shared/storage/framework/views/* || true
-            rm -rf ${{ env.DEPLOY_PATH }}/shared/storage/framework/cache/* || true
-
-            # Test migration first
-            php artisan migrate:status
-            php artisan migrate --force --no-interaction
-
-            echo "✅ Migrations completed successfully"
-
-      - name: Switch to new release
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            set -e
-            RELEASE_DIR="${{ env.DEPLOY_PATH }}/releases/${{ env.TIMESTAMP }}"
-
-            # Atomic switch
-            ln -nfs $RELEASE_DIR ${{ env.DEPLOY_PATH }}/current
-
-            # Clear caches and regenerate
-            cd ${{ env.DEPLOY_PATH }}/current/api
-            php artisan config:clear
-            php artisan cache:clear
-            php artisan books:cache-clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache || true
-            
-            # Regenerate Swagger documentation
-            php artisan l5-swagger:generate
-
-            # Restart services
-            sudo /opt/bitnami/ctlscript.sh restart apache
-            sudo /opt/bitnami/ctlscript.sh restart php-fpm
-
-            # Cleanup old releases (keep last 3)
-            cd ${{ env.DEPLOY_PATH }}/releases
-            ls -t | tail -n +4 | xargs -r rm -rf
-
-            echo "🚀 Deployment switched successfully!"
-
-  post-deploy:
-    name: post-deploy
-    needs: [deploy]
-    uses: ./.github/workflows/post-deploy.yml
-    with:
-      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
-    secrets: inherit
-
-  rollback:
-    name: rollback
-    runs-on: ubuntu-latest
-    if: failure() && github.event_name != 'workflow_dispatch'
-    needs: [deploy]
-
-    steps:
-      - name: Automatic rollback
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            set -e
-            echo "🔄 Performing automatic rollback due to deployment failure..."
-
-            # Determine environment from branch
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              ENVIRONMENT="Production"
+            # Login condicional no GHCR (se GHCR_PAT estiver definido e não vazio)
+            if [ -n "${GHCR_PAT:-}" ]; then
+              echo "$GHCR_PAT" | docker login ghcr.io -u arnonrdp --password-stdin
             else
-              ENVIRONMENT="Development"
+              echo "Aviso: GHCR_PAT vazio. Se os pacotes forem privados, o pull falhará."
             fi
 
-            if [[ "$ENVIRONMENT" == "Production" ]]; then
-              DEPLOY_PATH="/var/www/livrolog"
-              API_URL="api.livrolog.com"
-              WEB_URL="livrolog.com"
-            else
-              DEPLOY_PATH="/var/www/livrolog-dev"
-              API_URL="api.dev.livrolog.com"
-              WEB_URL="dev.livrolog.com"
-            fi
-
-            echo "Rollback environment: $ENVIRONMENT"
-            echo "Deploy path: $DEPLOY_PATH"
-
-            # Get previous release
-            PREVIOUS=$(ls -t $DEPLOY_PATH/releases 2>/dev/null | sed -n '2p')
-
-            if [[ -n "$PREVIOUS" && -d "$DEPLOY_PATH/releases/$PREVIOUS" ]]; then
-              echo "Rolling back to previous release: $PREVIOUS"
-              
-              # Atomic switch to previous release
-              ln -nfs $DEPLOY_PATH/releases/$PREVIOUS $DEPLOY_PATH/current
-              
-              # Restart services
-              sudo /opt/bitnami/ctlscript.sh restart apache
-              sudo /opt/bitnami/ctlscript.sh restart php-fpm
-              
-              # Wait for services to restart
-              sleep 5
-              
-              
-              # Remove failed release
-              FAILED_RELEASE="${{ github.run_number }}-${{ github.sha }}"
-              if [[ -d "$DEPLOY_PATH/releases/$FAILED_RELEASE" ]]; then
-                echo "🗑️  Removing failed release: $FAILED_RELEASE"
-                rm -rf "$DEPLOY_PATH/releases/$FAILED_RELEASE"
+            # Encontrar porta livre entre 8082-8090
+            WEB_PORT=""
+            for port in {8082..8090}; do
+              if ! ss -ltn | grep -q ":${port} "; then
+                WEB_PORT=$port
+                break
               fi
-              
-              echo "✅ Rollback to $PREVIOUS completed successfully"
-              echo "🚨 Deployment failed and was automatically rolled back!"
-              
-            else
-              echo "❌ No previous release found for rollback"
-              echo "Available releases:"
-              ls -la $DEPLOY_PATH/releases/ 2>/dev/null || echo "No releases directory found"
+            done
+
+            if [ -z "$WEB_PORT" ]; then
+              echo "❌ Nenhuma porta disponível entre 8082-8090. Verifique processos em execução." >&2
               exit 1
             fi
+
+            echo "🔍 Usando porta ${WEB_PORT} para web"
+
+            # Opcional: limpar containers antigos do LivroLog
+            docker rm -f livrolog-web-dev livrolog-web 2>/dev/null || true
+
+            # Gera compose dev
+            cat > docker-compose.dev.yml << EOF
+            name: livrolog_dev
+            services:
+              web:
+                image: REPLACE_WEB_IMAGE
+                container_name: livrolog-web-dev
+                restart: always
+                ports:
+                  - "${WEB_PORT}:80"
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
+                  interval: 15s
+                  timeout: 3s
+                  retries: 10
+                depends_on:
+                  - api
+              api:
+                image: REPLACE_API_IMAGE
+                container_name: livrolog-api-dev
+                restart: always
+                env_file:
+                  - /var/www/livrolog-dev/shared/.env.dev
+                environment:
+                  - DB_HOST=127.0.0.1
+                  - DB_PORT=3306
+                  - REDIS_HOST=127.0.0.1
+                  - REDIS_PORT=6379
+                network_mode: host
+                volumes:
+                  - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
+                healthcheck:
+                  test: ["CMD", "php", "artisan", "about"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 30
+                  start_period: 60s
+            EOF
+
+            # Resolve tag existente: dev-<sha> -> <sha> -> dev
+            BRANCH="${GITHUB_REF_NAME:-dev}"
+            SHA="${GITHUB_SHA}"
+            CANDIDATES=("${BRANCH}-${SHA}" "${SHA}" "dev")
+
+            RESOLVED_TAG=""
+            for tag in "${CANDIDATES[@]}"; do
+              if docker manifest inspect "${IMAGE_WEB}:${tag}" >/dev/null 2>&1 && docker manifest inspect "${IMAGE_API}:${tag}" >/dev/null 2>&1; then
+                RESOLVED_TAG="${tag}"
+                break
+              fi
+            done
+
+            if [ -z "$RESOLVED_TAG" ]; then
+              echo "❌ Nenhuma tag encontrada (testadas: ${CANDIDATES[*]}). Verifique as tags publicadas no GHCR." >&2
+              exit 1
+            fi
+
+            echo "$RESOLVED_TAG" > .resolved_tag_dev
+            echo "$RESOLVED_TAG" > .last_tag_dev
+            export TAG="$RESOLVED_TAG"
+
+            # Substitui as imagens no compose
+            sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
+            sed -i "s|REPLACE_API_IMAGE|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
+
+            # Verificar .env e storage antes do up (fail-fast com mensagem clara)
+            test -f /var/www/livrolog-dev/shared/.env.dev || { echo "❌ /var/www/livrolog-dev/shared/.env.dev não existe"; exit 1; }
+            test -d /var/www/livrolog-dev/shared/storage || { echo "❌ /var/www/livrolog-dev/shared/storage não existe"; exit 1; }
+
+            # Pull e start
+            docker compose -p livrolog_dev -f docker-compose.dev.yml pull
+            docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+
+            # Espera healthchecks
+            echo "Waiting for services to be healthy (max 120s)…"
+            deadline=$((SECONDS+120))
+            while true; do
+              web_ok=0; api_ok=0
+              curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
+              docker exec livrolog-api-dev php artisan about >/dev/null 2>&1 && api_ok=1
+              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
+              if [ $SECONDS -ge $deadline ]; then
+                echo "❌ Health checks failed, rolling back…"
+                echo "=== Diagnóstico de containers ==="
+                docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+                echo "=== Health status da API ==="
+                docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
+                echo "=== Logs da API (últimas 80 linhas) ==="
+                docker logs --tail=80 livrolog-api-dev || true
+                echo "=== Logs da Web (últimas 80 linhas) ==="
+                docker logs --tail=80 livrolog-web-dev || true
+                echo "=== Iniciando rollback ==="
+                LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
+                export TAG="$LAST_TAG"
+                sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
+                sed -i "s|ghcr.io/.*/livrolog-api:.*|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
+                docker compose -p livrolog_dev -f docker-compose.dev.yml pull
+                docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+                exit 1
+              fi
+              sleep 5
+            done
+
+            # Migrations e caches
+            docker exec livrolog-api-dev php artisan migrate --force
+            docker exec livrolog-api-dev php artisan config:clear || true
+            docker exec livrolog-api-dev php artisan cache:clear || true
+
+            echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):${WEB_PORT}"
+
+  docker-canary-prod:
+    name: docker-canary-prod
+    runs-on: ubuntu-latest
+    needs: [required-checks, build]
+    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/main'
+
+    env:
+      ENVIRONMENT: Production
+      DEPLOY_PATH: /var/www/livrolog
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
+
+    steps:
+      - name: Checkout code for compose file
+        uses: actions/checkout@v4
+
+      - name: Deploy production containers
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME
+          script: |
+            set -euo pipefail
+            DOCKER_DIR="/var/www/livrolog/docker"
+            OWNER="arnonrdp"
+            IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
+            IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
+
+            # Create docker directory and set permissions
+            sudo mkdir -p "$DOCKER_DIR"
+            sudo chown -R bitnami:bitnami /var/www/livrolog
+            cd "$DOCKER_DIR"
+
+            # Pre-checks: verify .env and storage
+            echo "🔍 Performing pre-checks..."
+            test -f /var/www/livrolog/shared/.env || { echo "❌ /var/www/livrolog/shared/.env não existe"; exit 1; }
+            test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
+
+            # Login to GHCR if PAT is available
+            if [ -n "${GHCR_PAT:-}" ]; then
+              echo "$GHCR_PAT" | docker login ghcr.io -u arnonrdp --password-stdin
+            else
+              echo "⚠️ GHCR_PAT not set. Using public access."
+            fi
+
+            # Resolve tag: prefer 'prod', fallback to SHA
+            BRANCH="${GITHUB_REF_NAME:-main}"
+            SHA="${GITHUB_SHA}"
+            CANDIDATES=("prod" "${SHA}" "main")
+
+            RESOLVED_TAG=""
+            for tag in "${CANDIDATES[@]}"; do
+              if docker manifest inspect "${IMAGE_WEB}:${tag}" >/dev/null 2>&1 && docker manifest inspect "${IMAGE_API}:${tag}" >/dev/null 2>&1; then
+                RESOLVED_TAG="${tag}"
+                break
+              fi
+            done
+
+            if [ -z "$RESOLVED_TAG" ]; then
+              echo "❌ Nenhuma tag encontrada (testadas: ${CANDIDATES[*]})"
+              exit 1
+            fi
+
+            echo "🏷️ Using resolved tag: $RESOLVED_TAG"
+            export TAG="$RESOLVED_TAG"
+            export OWNER="$OWNER"
+
+            # Create production compose file
+            cat > docker-compose.prod.yml << 'EOF'
+            # docker-compose.prod.yml
+            # Production Docker Compose with internal network and loopback ports
+            
+            name: livrolog
+            
+            services:
+              # Laravel API with Nginx + PHP-FPM
+              api:
+                image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
+                container_name: livrolog-api
+                restart: always
+                env_file:
+                  - /var/www/livrolog/shared/.env
+                environment:
+                  - DB_HOST=127.0.0.1
+                  - DB_PORT=3306
+                  - REDIS_HOST=127.0.0.1
+                  - REDIS_PORT=6379
+                network_mode: host
+                ports:
+                  - "127.0.0.1:18081:8080"
+                volumes:
+                  - /var/www/livrolog/shared/storage:/var/www/html/storage
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+                  interval: 15s
+                  timeout: 5s
+                  retries: 10
+                  start_period: 30s
+            
+              # Vue/Quasar WebApp served by Nginx
+              web:
+                image: ghcr.io/${OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
+                container_name: livrolog-web
+                restart: always
+                ports:
+                  - "127.0.0.1:18080:80"
+                networks:
+                  - livrolog-net
+                depends_on:
+                  - api
+                healthcheck:
+                  test: ["CMD", "sh", "-c", "curl -fsS http://localhost/healthz && curl -fsS http://127.0.0.1:18081/health"]
+                  interval: 15s
+                  timeout: 10s
+                  retries: 10
+                  start_period: 30s
+            
+            networks:
+              livrolog-net:
+                name: livrolog-net
+                driver: bridge
+            EOF
+
+            # Save current tag for rollback
+            echo "$RESOLVED_TAG" > .resolved_tag_prod
+            echo "$RESOLVED_TAG" > .last_tag_prod
+
+            # Pull and start containers
+            echo "🐳 Pulling and starting containers..."
+            docker compose -p livrolog -f docker-compose.prod.yml pull
+            docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Wait for health checks with timeout
+            echo "⏳ Waiting for services to be healthy (max 180s)..."
+            deadline=$((SECONDS+180))
+            while true; do
+              web_ok=0; api_ok=0
+              # Check web health
+              curl -fsS "http://127.0.0.1:18080/healthz" >/dev/null 2>&1 && web_ok=1
+              # Check api health  
+              curl -fsS "http://127.0.0.1:18081/health" >/dev/null 2>&1 && api_ok=1
+              
+              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then 
+                echo "✅ All services are healthy"
+                break
+              fi
+              
+              if [ $SECONDS -ge $deadline ]; then
+                echo "❌ Health checks timed out, performing rollback..."
+                echo "=== Container Status ==="
+                docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+                echo "=== API Logs (last 50 lines) ==="
+                docker logs --tail=50 livrolog-api || true
+                echo "=== Web Logs (last 50 lines) ==="
+                docker logs --tail=50 livrolog-web || true
+                
+                # Rollback
+                LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
+                export TAG="$LAST_TAG"
+                docker compose -p livrolog -f docker-compose.prod.yml pull
+                docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
+                exit 1
+              fi
+              sleep 5
+            done
+
+            # Run migrations and clear caches
+            echo "🔄 Running migrations..."
+            docker exec livrolog-api php artisan migrate --force
+
+            echo "🧹 Clearing caches..."
+            docker exec livrolog-api php artisan config:clear || true
+            docker exec livrolog-api php artisan cache:clear || true
+            docker exec livrolog-api php artisan config:cache || true
+            docker exec livrolog-api php artisan route:cache || true
+
+            # Smoke tests
+            echo "🧪 Running smoke tests..."
+            echo "Testing web frontend:"
+            curl -I http://127.0.0.1:18080/ || exit 1
+            echo "Testing API health:"
+            curl -I http://127.0.0.1:18081/health || exit 1
+            echo "Container status:"
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
+            echo "✅ Production Docker deployment completed successfully!"
+            echo "🌐 Web: http://127.0.0.1:18080"
+            echo "🔌 API: http://127.0.0.1:18081"

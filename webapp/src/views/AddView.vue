@@ -12,7 +12,13 @@
 
     <section class="items-baseline justify-center row">
       <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
-        <q-btn color="primary" icon="add" round @click.once="addBook(book)" />
+        <q-btn 
+          :color="isBookInLibrary(book) ? 'positive' : 'primary'" 
+          :disable="isBookInLibrary(book)" 
+          :icon="isBookInLibrary(book) ? 'check' : 'add'"
+          round 
+          @click.once="addBook(book)" 
+        />
         <div class="book-cover" @click="showBookReviews(book)">
           <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" style="width: 8rem" />
           <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" style="width: 8rem" />
@@ -26,8 +32,7 @@
       </figure>
     </section>
 
-    <!-- Book Reviews Dialog -->
-    <BookDialog v-if="selectedBook" v-model="showBookDialog" :book="selectedBook" />
+    <BookDialog v-model="showBookDialog" :book-data="selectedBook" :book-id="selectedBookId" />
   </q-page>
 </template>
 
@@ -35,7 +40,7 @@
 import TheLoading from '@/components/add/TheLoading.vue'
 import BookDialog from '@/components/home/BookDialog.vue'
 import type { Book } from '@/models'
-import { useBookStore, useUserBookStore } from '@/stores'
+import { useBookStore, useUserBookStore, useUserStore } from '@/stores'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -43,12 +48,14 @@ const { t } = useI18n()
 
 const bookStore = useBookStore()
 const userBookStore = useUserBookStore()
+const userStore = useUserStore()
 
 const books = ref<Book[]>([])
 const seek = ref('')
 const showBookDialog = ref(false)
 const isSearching = ref(false)
-const selectedBook = ref<Book | null>(null)
+const selectedBookId = ref<string | undefined>()
+const selectedBook = ref<Book | undefined>()
 
 document.title = `LivroLog | ${t('add')}`
 
@@ -67,8 +74,35 @@ function clearSearch() {
   books.value = []
 }
 
+function isBookInLibrary(book: Book): boolean {
+  const userBooks = userStore.me.books || []
+  return userBooks.some((userBook) => {
+    // Check by internal ID (if book.id exists and is internal)
+    if (book.id && book.id.startsWith('B-') && userBook.id === book.id) {
+      return true
+    }
+    // Check by google_id (most reliable for external books)
+    if (book.google_id && userBook.google_id === book.google_id) {
+      return true
+    }
+    // Legacy check: if book.id is actually a google_id
+    if (book.id && !book.id.startsWith('B-') && userBook.google_id === book.id) {
+      return true
+    }
+    return false
+  })
+}
+
 function showBookReviews(book: Book) {
-  selectedBook.value = book
+  // If the book has an ID (it's in our database), pass the ID
+  // Otherwise, pass the entire book data for display
+  if (book.id) {
+    selectedBookId.value = book.id
+    selectedBook.value = undefined
+  } else {
+    selectedBookId.value = undefined
+    selectedBook.value = book
+  }
   showBookDialog.value = true
 }
 </script>

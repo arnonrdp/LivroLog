@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\Log;
 class AmazonSiteStripeProvider implements BookSearchProvider
 {
     private const PRIORITY = 2;
-    
+
     private array $regionConfig = [
         'US' => [
             'domain' => 'amazon.com',
             'search_url' => 'https://www.amazon.com/s'
         ],
         'BR' => [
-            'domain' => 'amazon.com.br', 
+            'domain' => 'amazon.com.br',
             'search_url' => 'https://www.amazon.com.br/s'
         ],
         'UK' => [
@@ -39,22 +39,22 @@ class AmazonSiteStripeProvider implements BookSearchProvider
         try {
             $region = $this->detectOptimalRegion($options);
             $searchQuery = $this->buildSearchQuery($query, $options);
-            
+
             // Para SiteStripe, criamos links diretos baseados na busca
             $books = $this->createSiteStripeResults($searchQuery, $region, $options);
-            
+
             if (empty($books)) {
                 return $this->buildErrorResponse('No books found');
             }
-            
+
             return $this->buildSuccessResponse($books, count($books));
-            
+
         } catch (\Exception $e) {
             Log::error('Amazon SiteStripe Provider error', [
                 'query' => $query,
                 'error' => $e->getMessage()
             ]);
-            
+
             return $this->buildErrorResponse('Search failed: ' . $e->getMessage());
         }
     }
@@ -77,10 +77,10 @@ class AmazonSiteStripeProvider implements BookSearchProvider
         if (isset($options['region']) && isset($this->regionConfig[$options['region']])) {
             return $options['region'];
         }
-        
+
         if (isset($options['locale'])) {
             $locale = strtolower($options['locale']);
-            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br')) {
+            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br') || $locale === 'pt') {
                 return 'BR';
             } elseif (str_starts_with($locale, 'en-gb') || str_starts_with($locale, 'en_gb')) {
                 return 'UK';
@@ -88,7 +88,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
                 return 'CA';
             }
         }
-        
+
         return 'US';
     }
 
@@ -105,16 +105,16 @@ class AmazonSiteStripeProvider implements BookSearchProvider
         if (!$associateTag) {
             return null;
         }
-        
+
         // Gera um ID único baseado na busca e região
         $uniqueId = 'AMZ-' . strtoupper(substr(md5($searchQuery . $region . $index), 0, 8));
-        
+
         // Verifica se já existe um livro similar no banco
         $existingBook = Book::where('title', 'like', '%' . $searchQuery . '%')->first();
-        
+
         $domain = $this->regionConfig[$region]['domain'];
         $searchUrl = $this->regionConfig[$region]['search_url'];
-        
+
         // Cria URL de busca com associate tag
         $amazonSearchUrl = $searchUrl . '?' . http_build_query([
             'k' => $searchQuery,
@@ -122,7 +122,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
             'tag' => $associateTag,
             'ref' => 'nb_sb_noss'
         ]);
-        
+
         $bookData = [
             'provider' => $this->getName(),
             'amazon_search_url' => $amazonSearchUrl,
@@ -155,7 +155,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
     {
         return match($region) {
             'BR' => 'pt-BR',
-            'UK' => 'en-GB', 
+            'UK' => 'en-GB',
             'CA' => 'en-CA',
             default => 'en-US'
         };
@@ -179,7 +179,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
 
     public function isEnabled(): bool
     {
-        return config('services.amazon.sitestripe_enabled', false) 
+        return config('services.amazon.sitestripe_enabled', false)
             && !empty(config('services.amazon.associate_tag'));
     }
 

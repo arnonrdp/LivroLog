@@ -29,6 +29,7 @@
           dense
           :label="$t('mail')"
           lazy-rules
+          name="email"
           required
           :rules="[(val, rules) => rules.email(val)]"
           type="email"
@@ -43,6 +44,7 @@
           dense
           :label="$t('password')"
           lazy-rules
+          name="password"
           required
           :rules="[(val) => val.length >= 6]"
           type="password"

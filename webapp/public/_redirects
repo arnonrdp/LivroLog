@@ -1,0 +1,7 @@
+# Force HTTPS
+http://livrolog.com/* https://livrolog.com/:splat 301!
+http://www.livrolog.com/* https://livrolog.com/:splat 301!
+https://www.livrolog.com/* https://livrolog.com/:splat 301!
+
+# Handle SPA routing
+/*  /index.html  200

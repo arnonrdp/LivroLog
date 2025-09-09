@@ -32,29 +32,13 @@
 
       <!-- Public Profile or Following -->
       <div v-else>
-        <!-- Mobile Layout -->
-        <div class="lt-md">
-          <div class="flex items-center q-mb-md">
-            <h1 class="text-primary text-left q-my-none">
-              {{ person.shelf_name || person.display_name }}
-            </h1>
-            <q-space />
-            <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
-          </div>
-
-          <TheShelf :books="filteredBooks" />
+        <div class="flex items-center">
+          <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
+          <q-space />
+          <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
         </div>
 
-        <!-- Desktop Layout -->
-        <div class="gt-sm">
-          <div class="flex items-center q-mb-md">
-            <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
-            <q-space />
-            <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
-          </div>
-
-          <TheShelf :books="filteredBooks" />
-        </div>
+        <TheShelf :books="filteredBooks" :user-identifier="person.username" />
       </div>
     </div>
 
@@ -86,7 +70,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
-// Accept username prop from router but we don't use it (use route.params instead)
 defineProps<{
   username?: string
 }>()
@@ -101,6 +84,8 @@ const followStore = useFollowStore()
 const ascDesc = ref('desc')
 const filter = ref('')
 const showUnfollowDialog = ref(false)
+const sortKey = ref<string | number>('readIn')
+
 const person = computed(() => {
   const username = route.params.username as string
   // If viewing own profile, use userStore.me, otherwise use userStore.user
@@ -110,7 +95,6 @@ const person = computed(() => {
   }
   return userStore.user
 })
-const sortKey = ref<string | number>('readIn')
 
 const filteredBooks = computed(() => {
   // Ensure books is an array before filtering
@@ -150,6 +134,58 @@ const showFollowButton = computed(() => {
   )
 })
 
+// Update Open Graph meta tags for social sharing
+function updateMetaTags() {
+  // Remove existing OG tags
+  const existingTags = document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')
+  existingTags.forEach((tag) => tag.remove())
+
+  if (person.value?.display_name) {
+    const booksCount = Array.isArray(person.value.books) ? person.value.books.length : 0
+    const shelfName = person.value.shelf_name || person.value.display_name
+    const currentUrl = window.location.href
+    const imageUrl = userStore.getShelfImageUrl(person.value.id)
+    const description =
+      booksCount > 0
+        ? `Veja os ${booksCount} livros favoritos do ${person.value.display_name}`
+        : `Biblioteca do ${person.value.display_name} no LivroLog`
+
+    // Create and append new meta tags
+    const metaTags = [
+      { property: 'og:title', content: `${shelfName} - LivroLog` },
+      { property: 'og:description', content: description },
+      { property: 'og:image', content: imageUrl },
+      { property: 'og:url', content: currentUrl },
+      { property: 'og:type', content: 'profile' },
+      { property: 'og:site_name', content: 'LivroLog' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: `${shelfName} - LivroLog` },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: imageUrl }
+    ]
+
+    metaTags.forEach((tagData) => {
+      const meta = document.createElement('meta')
+      if (tagData.property) {
+        meta.setAttribute('property', tagData.property)
+      } else if (tagData.name) {
+        meta.setAttribute('name', tagData.name)
+      }
+      meta.setAttribute('content', tagData.content)
+      document.head.appendChild(meta)
+    })
+
+    // Update description meta tag
+    let descriptionTag = document.querySelector('meta[name="description"]')
+    if (!descriptionTag) {
+      descriptionTag = document.createElement('meta')
+      descriptionTag.setAttribute('name', 'description')
+      document.head.appendChild(descriptionTag)
+    }
+    descriptionTag.setAttribute('content', description)
+  }
+}
+
 function getButtonColor() {
   if (hasPendingRequest.value) return 'orange'
   if (isFollowing.value) return 'grey'
@@ -178,11 +214,12 @@ function handleFollowAction() {
   }
 }
 
-// Update document title when person changes
+// Update document title and meta tags when person changes
 watch(
   person,
   (newPerson) => {
     document.title = newPerson?.display_name ? `LivroLog | ${newPerson.display_name}` : 'LivroLog'
+    updateMetaTags()
   },
   { immediate: true }
 )
@@ -215,6 +252,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   followStore.clearFollowStatus()
+
+  // Clean up meta tags
+  const metaTags = document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')
+  metaTags.forEach((tag) => tag.remove())
 })
 
 function onSort(label: string | number) {

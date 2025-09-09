@@ -9,7 +9,8 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[php]": {
-    "editor.defaultFormatter": "vscode.php-language-features"
+    "editor.defaultFormatter": "junstyle.php-cs-fixer",
+    "editor.formatOnSave": false
   },
   "[sass]": {
     "editor.defaultFormatter": "syler.sass-indented"
@@ -40,8 +41,20 @@
   "i18n-ally.pathMatcher": "{locale}.json",
   "i18n-ally.sortKeys": true,
   "i18n-ally.sourceLanguage": "en",
-  "php-cs-fixer.executablePath": "${workspaceFolder}/api/vendor/bin/php-cs-fixer",
-  "php-cs-fixer.rules": "@PSR12",
+  "php.validate.enable": false,
   "postman.settings.dotenv-detection-notification-visibility": false,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "i18n-ally.keysInUse": [
+    "language-pt_br",
+    "language-de",
+    "language-en",
+    "language-pt_pt",
+    "language-es",
+    "language-fr",
+    "language-it",
+    "language-ja",
+    "language-pt",
+    "language-ru",
+    "language-zh"
+  ]
 }

@@ -1,2 +1,11 @@
 User-agent: *
-Disallow:
+Disallow: /*?*api-docs.json
+Disallow: /*?api-docs.json
+Disallow: /api-docs.json
+Disallow: /api-docs.yaml
+Disallow: /api/documentation
+Disallow: /docs
+Disallow: /docs?
+Disallow: /docs*
+Disallow: /documentation
+Allow: /

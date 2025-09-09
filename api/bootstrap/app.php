@@ -15,10 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'social.crawler' => \App\Http\Middleware\SocialMediaCrawlerMiddleware::class,
         ]);
 
         // Add security headers to all requests
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        
+        // Add social media crawler middleware to web routes
+        $middleware->web(append: [
+            \App\Http\Middleware\SocialMediaCrawlerMiddleware::class,
+        ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
         // Daily database backup at 3:00 AM

@@ -3,6 +3,18 @@ import type { Review } from './Review'
 export type ReadingStatus = 'want_to_read' | 'reading' | 'read' | 'abandoned' | 'on_hold' | 're_reading'
 export type AsinStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
+export interface TextSegment {
+  text: string
+  style: string[]
+}
+
+export interface DescriptionBlock {
+  type: 'paragraph' | 'list'
+  content?: TextSegment[]
+  text?: string // Legacy support
+  items?: TextSegment[][] | string[] // Legacy support
+}
+
 export interface Book {
   addedIn?: Date | string | number
   amazon_asin?: string
@@ -14,15 +26,18 @@ export interface Book {
   categories?: string | string[]
   created_at?: string
   description?: string
+  formatted_description?: DescriptionBlock[]
   edition?: string
   google_id?: string
   id: string
-  industry_identifiers?: string | unknown[]
+  industry_identifiers?: string | { identifier: string; type: string }[]
   isbn?: string
   ISBN?: string
   language: string
   link?: string
+  page_count?: number
   pivot?: {
+    added_at?: string
     book_id: string
     created_at?: string
     is_private?: boolean
@@ -38,6 +53,7 @@ export interface Book {
   publisher?: string
   readIn?: string | number
   reviews?: Review[]
+  subtitle?: string | null
   thumbnail?: string | null
   title: string
   updated_at?: string
