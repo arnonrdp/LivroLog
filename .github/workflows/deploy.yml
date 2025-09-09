@@ -109,7 +109,7 @@ jobs:
             cd $RELEASE_DIR/api
             tar -xzf /tmp/api-build.tar.gz --strip-components=0
             rm /tmp/api-build.tar.gz
-            
+
             # Setup API symlinks
             ln -nfs ${{ env.DEPLOY_PATH }}/shared/${{ env.SHARED_ENV }} .env
             rm -rf storage
@@ -183,7 +183,7 @@ jobs:
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache || true
-            
+
             # Regenerate Swagger documentation
             php artisan l5-swagger:generate
 
@@ -283,12 +283,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [required-checks, build]
     if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/dev'
-    
+
     env:
       ENVIRONMENT: Development
       DEPLOY_PATH: /var/www/livrolog-dev
       GHCR_PAT: ${{ secrets.GHCR_PAT }}
-    
+
     steps:
       - name: Deploy canary containers (livrolog-dev)
         uses: appleboy/ssh-action@v1.0.0
@@ -296,27 +296,31 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME
           script: |
             set -euo pipefail
-            
-            # Vars
             DOCKER_DIR="/var/www/livrolog-dev/docker"
-            export GITHUB_REPOSITORY_OWNER=arnonrdp
-            export TAG="${GITHUB_SHA}"
+            OWNER="arnonrdp"
+            IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
+            IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
 
-            # Ensure directory (with sudo once), then own it
             sudo mkdir -p "$DOCKER_DIR"
             sudo chown -R bitnami:bitnami /var/www/livrolog-dev
-
             cd "$DOCKER_DIR"
 
-            # Compose file (dev)
+            # Login condicional no GHCR (se GHCR_PAT estiver definido e não vazio)
+            if [ -n "${GHCR_PAT:-}" ]; then
+              echo "$GHCR_PAT" | docker login ghcr.io -u arnonrdp --password-stdin
+            else
+              echo "Aviso: GHCR_PAT vazio. Se os pacotes forem privados, o pull falhará."
+            fi
+
+            # Gera compose dev
             cat > docker-compose.dev.yml << 'EOF'
             name: livrolog_dev
             services:
               web:
-                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/livrolog-web:${TAG}
+                image: REPLACE_WEB_IMAGE
                 container_name: livrolog-web-dev
                 restart: always
                 ports:
@@ -330,7 +334,7 @@ jobs:
                   api:
                     condition: service_healthy
               api:
-                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/livrolog-api:${TAG}
+                image: REPLACE_API_IMAGE
                 container_name: livrolog-api-dev
                 restart: always
                 env_file:
@@ -350,35 +354,50 @@ jobs:
                   retries: 10
             EOF
 
-            # Login condicional no GHCR
-            if [ -n "${GHCR_PAT:-}" ]; then
-              echo "$GHCR_PAT" | docker login ghcr.io -u arnonrdp --password-stdin
-            else
-              echo "GHCR_PAT vazio. Pacotes são públicos? Se privados, configure o secret GHCR_PAT." >&2
+            # Resolve tag existente: dev-<sha> -> <sha> -> dev
+            BRANCH="${GITHUB_REF_NAME:-dev}"
+            SHA="${GITHUB_SHA}"
+            CANDIDATES=("${BRANCH}-${SHA}" "${SHA}" "dev")
+
+            RESOLVED_TAG=""
+            for tag in "${CANDIDATES[@]}"; do
+              if docker manifest inspect "${IMAGE_WEB}:${tag}" >/dev/null 2>&1 && docker manifest inspect "${IMAGE_API}:${tag}" >/dev/null 2>&1; then
+                RESOLVED_TAG="${tag}"
+                break
+              fi
+            done
+
+            if [ -z "$RESOLVED_TAG" ]; then
+              echo "❌ Nenhuma tag encontrada (testadas: ${CANDIDATES[*]}). Verifique as tags publicadas no GHCR." >&2
+              exit 1
             fi
 
-            # Guardar tag atual para rollback
-            echo "${GITHUB_SHA}" > .last_tag_dev
+            echo "$RESOLVED_TAG" > .resolved_tag_dev
+            echo "$RESOLVED_TAG" > .last_tag_dev
+            export TAG="$RESOLVED_TAG"
+
+            # Substitui as imagens no compose
+            sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
+            sed -i "s|REPLACE_API_IMAGE|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
 
             # Pull e start
             docker compose -p livrolog_dev -f docker-compose.dev.yml pull
             docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
 
-            # Esperar ficar saudável (sem jq)
+            # Espera healthchecks
             echo "Waiting for services to be healthy (max 120s)…"
             deadline=$((SECONDS+120))
             while true; do
-              web_ok=0
-              api_ok=0
+              web_ok=0; api_ok=0
               curl -fsS http://localhost:8082/healthz >/dev/null 2>&1 && web_ok=1
-              curl -fsS http://localhost:8000/health >/dev/null 2>&1 && api_ok=1
-              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then
-                break
-              fi
+              curl -fsS http://localhost:8000/health  >/dev/null 2>&1 && api_ok=1
+              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks failed, rolling back…"
                 LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
                 export TAG="$LAST_TAG"
+                sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
+                sed -i "s|ghcr.io/.*/livrolog-api:.*|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
                 docker compose -p livrolog_dev -f docker-compose.dev.yml pull
                 docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
                 exit 1
@@ -398,11 +417,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [required-checks, build]
     if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/main'
-    
+
     env:
       ENVIRONMENT: Production
       DEPLOY_PATH: /var/www/livrolog
-    
+
     steps:
       - name: Deploy canary containers (livrolog production)
         uses: appleboy/ssh-action@v1.0.0
@@ -412,11 +431,11 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            
+
             DOCKER_DIR="/srv/livrolog"
             mkdir -p $DOCKER_DIR
             cd $DOCKER_DIR
-            
+
             # Create production compose file
             cat > docker-compose.prod.yml << 'EOF'
             name: livrolog
@@ -455,17 +474,17 @@ jobs:
                   timeout: 3s
                   retries: 10
             EOF
-            
+
             export GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
             export TAG=${{ github.sha }}
-            
+
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-            
+
             echo ${{ github.sha }} > .last_tag_prod
-            
+
             docker compose -p livrolog -f docker-compose.prod.yml pull
             docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
-            
+
             if ! timeout 120 bash -c 'until docker compose -p livrolog -f docker-compose.prod.yml ps --format json | jq -e ".[] | select(.Health == \"healthy\")" > /dev/null 2>&1; do sleep 5; done'; then
               echo "❌ Production health checks failed, rolling back..."
               LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
@@ -474,10 +493,10 @@ jobs:
               docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans
               exit 1
             fi
-            
+
             docker exec livrolog-api php artisan migrate --force
             docker exec livrolog-api php artisan config:clear
             docker exec livrolog-api php artisan cache:clear
-            
+
             echo "✅ Production Docker deployment completed successfully!"
             echo "🐳 Containers are running at http://$(hostname -I | awk '{print $1}'):8080"
