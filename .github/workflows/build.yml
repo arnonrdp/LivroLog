@@ -206,24 +206,34 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/livrolog-api
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=raw,value=prod,enable=${{ github.ref == 'refs/heads/main' }}
       
       - name: Build and push API image
-        run: |
-          # Build image with SHA tag (immutable)
-          docker build -t ghcr.io/${{ github.repository_owner }}/livrolog-api:${{ github.sha }} -f api/Dockerfile.prod .
-          
-          # Tag with environment alias
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            docker tag ghcr.io/${{ github.repository_owner }}/livrolog-api:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/livrolog-api:prod
-            docker push ghcr.io/${{ github.repository_owner }}/livrolog-api:prod
-          else
-            docker tag ghcr.io/${{ github.repository_owner }}/livrolog-api:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/livrolog-api:dev
-            docker push ghcr.io/${{ github.repository_owner }}/livrolog-api:dev
-          fi
-          
-          # Push SHA tag
-          docker push ghcr.io/${{ github.repository_owner }}/livrolog-api:${{ github.sha }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./api/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   docker-web:
     name: docker-web
@@ -239,27 +249,37 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/livrolog-web
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=raw,value=prod,enable=${{ github.ref == 'refs/heads/main' }}
       
       - name: Build and push Web image
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-        run: |
-          # Set build arguments based on environment
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            BUILD_ARGS="--build-arg ENVIRONMENT=production --build-arg API_URL=https://api.livrolog.com --build-arg FRONTEND_URL=https://livrolog.com --build-arg GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
-            ENV_TAG="prod"
-          else
-            BUILD_ARGS="--build-arg ENVIRONMENT=development --build-arg API_URL=https://api.dev.livrolog.com --build-arg FRONTEND_URL=https://dev.livrolog.com --build-arg GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
-            ENV_TAG="dev"
-          fi
-          
-          # Build image with SHA tag
-          docker build $BUILD_ARGS -t ghcr.io/${{ github.repository_owner }}/livrolog-web:${{ github.sha }} -f webapp/Dockerfile.prod .
-          
-          # Tag with environment alias
-          docker tag ghcr.io/${{ github.repository_owner }}/livrolog-web:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/livrolog-web:${ENV_TAG}
-          
-          # Push both tags
-          docker push ghcr.io/${{ github.repository_owner }}/livrolog-web:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/livrolog-web:${ENV_TAG}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./webapp/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ENVIRONMENT=${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+            API_URL=${{ github.ref == 'refs/heads/main' && 'https://api.livrolog.com' || 'https://api.dev.livrolog.com' }}
+            FRONTEND_URL=${{ github.ref == 'refs/heads/main' && 'https://livrolog.com' || 'https://dev.livrolog.com' }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            APP_NAME=LivroLog
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
