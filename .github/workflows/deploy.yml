@@ -331,8 +331,7 @@ jobs:
                   timeout: 3s
                   retries: 10
                 depends_on:
-                  api:
-                    condition: service_healthy
+                  - api
               api:
                 image: REPLACE_API_IMAGE
                 container_name: livrolog-api-dev
@@ -348,10 +347,11 @@ jobs:
                 volumes:
                   - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
                 healthcheck:
-                  test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
-                  interval: 15s
-                  timeout: 3s
-                  retries: 10
+                  test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+                  start_period: 60s
+                  interval: 10s
+                  timeout: 5s
+                  retries: 30
             EOF
 
             # Resolve tag existente: dev-<sha> -> <sha> -> dev
@@ -379,6 +379,10 @@ jobs:
             # Substitui as imagens no compose
             sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
             sed -i "s|REPLACE_API_IMAGE|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
+
+            # Verificar .env e storage antes do up (fail-fast com mensagem clara)
+            test -f /var/www/livrolog-dev/shared/.env.dev || { echo "❌ /var/www/livrolog-dev/shared/.env.dev não existe"; exit 1; }
+            test -d /var/www/livrolog-dev/shared/storage || { echo "❌ /var/www/livrolog-dev/shared/storage não existe"; exit 1; }
 
             # Pull e start
             docker compose -p livrolog_dev -f docker-compose.dev.yml pull
