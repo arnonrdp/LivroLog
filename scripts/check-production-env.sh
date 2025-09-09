@@ -45,10 +45,18 @@ fi
 
 # Check APP_KEY specifically
 APP_KEY=$(grep "^APP_KEY=" "$ENV_FILE" | cut -d'=' -f2-)
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "" ] || [[ "$APP_KEY" == *"XXXX"* ]]; then
-    echo "⚠️ WARNING: APP_KEY is invalid or not set properly!"
+# Validate APP_KEY: not empty, not default, starts with 'base64:', and is at least 50 chars total
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "" ] || [[ "$APP_KEY" == *"XXXX"* ]] || [[ ! "$APP_KEY" =~ ^base64: ]] || [ ${#APP_KEY} -lt 50 ]; then
+    echo "❌ ERROR: APP_KEY is invalid or not set properly!"
+    echo ""
+    echo "Requirements:"
+    echo "  • Must start with 'base64:'"
+    echo "  • Must be at least 50 characters total (base64: + 44 chars minimum)"
+    echo "  • Must not contain placeholder text (XXXX)"
+    echo ""
     echo "To generate a new APP_KEY, run:"
     echo "  docker run --rm ghcr.io/arnonrdp/livrolog-api:prod php artisan key:generate --show"
+    echo ""
     echo "Then add it to $ENV_FILE as:"
     echo "  APP_KEY=base64:generated_key_here"
     exit 1

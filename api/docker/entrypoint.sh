@@ -12,9 +12,11 @@ until php artisan migrate:status > /dev/null 2>&1; do
     sleep 2
 done
 
-# Check if APP_KEY exists and is valid
-if [ -z "${APP_KEY}" ] || [ "${APP_KEY}" = "base64:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ]; then
+# Check if APP_KEY exists and is valid (base64: + at least 44 chars = 50+ total)
+if [ -z "${APP_KEY}" ] || [[ "${APP_KEY}" == *"XXXX"* ]] || [[ ! "${APP_KEY}" =~ ^base64: ]] || [ ${#APP_KEY} -lt 50 ]; then
     echo "⚠️ WARNING: APP_KEY is not set or invalid!"
+    echo "  Current value length: ${#APP_KEY} chars"
+    echo "  Required: starts with 'base64:' and at least 50 chars total"
     
     # In production, fail fast to avoid security issues
     if [ "${APP_ENV:-production}" = "production" ]; then
@@ -27,7 +29,7 @@ if [ -z "${APP_KEY}" ] || [ "${APP_KEY}" = "base64:XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         php artisan key:generate --force || true
     fi
 else
-    echo "✅ APP_KEY is configured"
+    echo "✅ APP_KEY is configured (${#APP_KEY} chars)"
 fi
 
 # Laravel cache optimizations
@@ -40,6 +42,8 @@ php artisan route:cache
 if [ -d "resources/views" ]; then
     echo "Caching views..."
     php artisan view:cache || true
+else
+    echo "WARNING: 'resources/views' directory not found. Skipping view cache step."
 fi
 
 # Generate Swagger documentation
