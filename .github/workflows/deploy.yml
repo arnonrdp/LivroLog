@@ -249,6 +249,7 @@ jobs:
             echo "🚀 Starting production deployment"
             echo "Using internal MariaDB + Redis containers"
             echo "DB_HEALTH_TIMEOUT=${DB_HEALTH_TIMEOUT:-600}s, REDIS_HEALTH_TIMEOUT=${REDIS_HEALTH_TIMEOUT:-300}s"
+            echo "Deployment is idempotent - auto-normalizes .env configuration"
             echo "=================================================="
 
             # Create all required directories
@@ -298,6 +299,8 @@ jobs:
             fi
 
             # Normalize database and Redis configuration (idempotent)
+            # This step ensures the .env always has correct values for internal services
+            # regardless of previous state, making the deployment fully idempotent
             echo "📝 Normalizing database and Redis configuration in .env..."
             
             # Read existing values to preserve
@@ -531,6 +534,7 @@ ENVEOF
             docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
 
             # Wait for MariaDB health with configurable timeout
+            # Default: 600s (10 minutes), max: 1800s (30 minutes)
             DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-600}"
             [ "$DB_WAIT_TIMEOUT" -gt 1800 ] && DB_WAIT_TIMEOUT=1800
             
@@ -555,7 +559,8 @@ ENVEOF
               sleep 10
             done
             
-            # Wait for Redis health with configurable timeout
+            # Wait for Redis health with configurable timeout  
+            # Default: 300s (5 minutes), max: 600s (10 minutes)
             REDIS_WAIT_TIMEOUT="${REDIS_HEALTH_TIMEOUT:-300}"
             [ "$REDIS_WAIT_TIMEOUT" -gt 600 ] && REDIS_WAIT_TIMEOUT=600
             
