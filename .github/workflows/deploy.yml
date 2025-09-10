@@ -387,6 +387,16 @@ jobs:
               
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks timed out, performing rollback..."
+                
+                echo "=== Host DB socket/listeners ==="
+                sudo ss -ltnp | (grep :3306 || true) || true
+                echo "=== UFW status ==="
+                sudo ufw status || true
+
+                echo "=== API->DB TCP test ==="
+                API_CID=$(docker compose -p livrolog ps -q api)
+                [ -n "$API_CID" ] && docker exec "$API_CID" bash -lc 'nc -vz host.docker.internal 3306 || (timeout 5 bash -lc "cat </dev/null >/dev/tcp/host.docker.internal/3306")' || true
+                
                 echo "=== Container Status ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                 echo "=== Web Logs (last 120 lines) ==="
