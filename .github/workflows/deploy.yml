@@ -5,11 +5,27 @@ on:
     branches:
       - main
       - dev
+    paths:
+      - '.github/workflows/deploy.yml'
+      - 'api/**'
+      - 'webapp/**'
+      - 'docker/**'
+      - '**/Dockerfile'
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Target branch to deploy'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - 'main'
+          - 'dev'
 
 env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '20'
+  TARGET_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
 
 permissions:
   contents: read
@@ -50,12 +66,13 @@ jobs:
     name: docker-canary-dev
     runs-on: ubuntu-latest
     needs: [required-checks, build]
-    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/dev'
+    if: always() && needs.build.result == 'success' && (github.ref == 'refs/heads/dev' || (github.event_name == 'workflow_dispatch' && github.event.inputs.branch == 'dev'))
 
     env:
       ENVIRONMENT: Development
       DEPLOY_PATH: /var/www/livrolog-dev
       GHCR_PAT: ${{ secrets.GHCR_PAT }}
+      TARGET_BRANCH: dev
 
     steps:
       - name: Deploy canary containers (livrolog-dev)
@@ -64,7 +81,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,TARGET_BRANCH
           script: |
             set -euo pipefail
             DOCKER_DIR="/var/www/livrolog-dev/docker"
@@ -142,9 +159,9 @@ jobs:
             EOF
 
             # Resolve tag existente: dev-<sha> -> <sha> -> dev
-            BRANCH="${GITHUB_REF_NAME:-dev}"
+            BRANCH="${TARGET_BRANCH:-${GITHUB_REF_NAME:-dev}}"
             SHA="${GITHUB_SHA}"
-            CANDIDATES=("${BRANCH}-${SHA}" "${SHA}" "dev")
+            CANDIDATES=("${BRANCH}-${SHA}" "${SHA}" "${BRANCH}")
 
             RESOLVED_TAG=""
             for tag in "${CANDIDATES[@]}"; do
@@ -211,18 +228,22 @@ jobs:
             docker exec livrolog-api-dev php artisan cache:clear || true
 
             echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):${WEB_PORT}"
+            echo "🎯 Deployed branch: ${TARGET_BRANCH:-dev}"
 
   docker-canary-prod:
     name: docker-canary-prod
     runs-on: ubuntu-latest
     needs: [required-checks, build]
-    if: always() && needs.build.result == 'success' && github.ref == 'refs/heads/main'
+    if: always() && needs.build.result == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.branch == 'main'))
 
     env:
       ENVIRONMENT: Production
       DEPLOY_PATH: /var/www/livrolog
       GHCR_PAT: ${{ secrets.GHCR_PAT }}
       APP_KEY: ${{ secrets.APP_KEY }}
+      DB_HEALTH_TIMEOUT: ${{ secrets.DB_HEALTH_TIMEOUT || 600 }}
+      REDIS_HEALTH_TIMEOUT: '300'
+      TARGET_BRANCH: main
 
     steps:
       - name: Checkout code for compose file
@@ -234,24 +255,36 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
           script: |
             set -eu
             DOCKER_DIR="/var/www/livrolog/docker"
             OWNER="arnonrdp"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
             IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
+            
+            # Display deployment configuration
+            echo "=================================================="
+            echo "🚀 Starting production deployment (branch: ${TARGET_BRANCH:-main})"
+            echo "Using internal MariaDB + Redis containers"
+            echo "DB_HEALTH_TIMEOUT=${DB_HEALTH_TIMEOUT:-600}s, REDIS_HEALTH_TIMEOUT=${REDIS_HEALTH_TIMEOUT:-300}s"
+            echo "Deployment is idempotent - auto-normalizes .env configuration"
+            echo "=================================================="
 
-            # Create docker directory and set permissions
+            # Create all required directories
+            echo "📁 Creating required directories..."
             sudo mkdir -p "$DOCKER_DIR"
-            sudo chown -R bitnami:bitnami /var/www/livrolog
+            sudo mkdir -p /var/www/livrolog/shared/{storage,db}
+            
+            # Set proper permissions (999:999 is the default MariaDB container user)
+            sudo chown -R 999:999 /var/www/livrolog/shared/db
+            sudo chown -R "$USER:$USER" /var/www/livrolog
             cd "$DOCKER_DIR"
 
-            # Auto-provision/repair .env (POSIX + idempotent)
-            echo "🔧 Auto-provisioning .env (APP_KEY)..."
-            sudo mkdir -p /var/www/livrolog/shared
+            # Auto-provision and normalize .env (idempotent)
+            echo "🔧 Normalizing .env configuration..."
             sudo touch /var/www/livrolog/shared/.env
-            sudo chown -R "$USER:$USER" /var/www/livrolog
+            sudo chown -R "$USER:$USER" /var/www/livrolog/shared/.env
             
             # Função POSIX para gerar APP_KEY compatível com Laravel (sem depender de imagens externas)
             gen_app_key() {
@@ -284,12 +317,53 @@ jobs:
               exit 1
             fi
 
+            # Normalize database and Redis configuration (idempotent)
+            # This step ensures the .env always has correct values for internal services
+            # regardless of previous state, making the deployment fully idempotent
+            echo "📝 Normalizing database and Redis configuration in .env..."
+            
+            # Read existing values to preserve
+            eval $(grep -E '^(DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env 2>/dev/null || true)
+            
+            # Set defaults if not present
+            DB_DATABASE="${DB_DATABASE:-livrolog}"
+            DB_USERNAME="${DB_USERNAME:-root}"
+            # DB_PASSWORD must exist - fail if not set
+            if [ -z "${DB_PASSWORD:-}" ]; then
+              echo "❌ DB_PASSWORD not found in .env. Please set it first."
+              exit 1
+            fi
+            
+            # Create normalized .env with correct values (atomic operation)
+            tmpfile="$(mktemp)"
+            
+            # Copy all non-DB/Redis lines
+            grep -v -E '^(APP_ENV|DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env > "$tmpfile" 2>/dev/null || true
+            
+            # Append normalized configuration
+            cat >> "$tmpfile" << ENVEOF
+            APP_ENV=production
+            DB_CONNECTION=mysql
+            DB_HOST=mariadb
+            DB_PORT=3306
+            DB_DATABASE=${DB_DATABASE}
+            DB_USERNAME=${DB_USERNAME}
+            DB_PASSWORD=${DB_PASSWORD}
+            REDIS_HOST=redis
+            REDIS_PORT=6379
+            ENVEOF
+            
+            # Atomically replace .env
+            mv "$tmpfile" /var/www/livrolog/shared/.env
+            echo "✅ .env normalized for internal MariaDB and Redis"
+            
             # Pre-checks: verify environment and infrastructure
             echo "🔍 Performing pre-deployment checks..."
             
-            # Check 1: .env file exists
+            # Check 1: required directories exist
             test -f /var/www/livrolog/shared/.env || { echo "❌ /var/www/livrolog/shared/.env não existe"; exit 1; }
             test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
+            test -d /var/www/livrolog/shared/db || { echo "❌ /var/www/livrolog/shared/db não existe"; exit 1; }
             
             # Validação correta da APP_KEY no .env (exatamente 44 chars após base64:)
             echo "Validating APP_KEY in .env..."
@@ -299,51 +373,21 @@ jobs:
             fi
             echo "✅ APP_KEY ok"
             
-            # Check 2: Database credentials validation
-            echo "Validating database credentials in .env..."
+            # Reload normalized values for validation
+            eval $(grep -E '^(DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env)
             
-            # Extract DB values from .env for validation
-            eval $(grep -E '^(DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env)
+            # Validate critical configuration
+            echo "Validating normalized configuration..."
+            [ "${DB_CONNECTION}" = "mysql" ] || { echo "❌ DB_CONNECTION validation failed"; exit 1; }
+            [ "${DB_HOST}" = "mariadb" ] || { echo "❌ DB_HOST validation failed"; exit 1; }
+            [ "${DB_PORT}" = "3306" ] || { echo "❌ DB_PORT validation failed"; exit 1; }
+            [ "${REDIS_HOST}" = "redis" ] || { echo "❌ REDIS_HOST validation failed"; exit 1; }
+            [ "${REDIS_PORT}" = "6379" ] || { echo "❌ REDIS_PORT validation failed"; exit 1; }
+            [ -n "${DB_DATABASE}" ] || { echo "❌ DB_DATABASE is empty"; exit 1; }
+            [ -n "${DB_USERNAME}" ] || { echo "❌ DB_USERNAME is empty"; exit 1; }
+            [ -n "${DB_PASSWORD}" ] || { echo "❌ DB_PASSWORD is empty"; exit 1; }
             
-            # Check required DB fields
-            if [ "${DB_CONNECTION:-}" != "mysql" ]; then
-              echo "❌ DB_CONNECTION deve ser 'mysql'. Encontrado: '${DB_CONNECTION:-vazio}'"
-              exit 1
-            fi
-            
-            if [ "${DB_HOST:-}" != "mariadb" ]; then
-              echo "❌ DB_HOST deve ser 'mariadb' (container name). Encontrado: '${DB_HOST:-vazio}'"
-              echo "🔧 Para corrigir: DB_HOST=mariadb"
-              exit 1
-            fi
-            
-            if [ "${DB_PORT:-}" != "3306" ]; then
-              echo "❌ DB_PORT deve ser '3306'. Encontrado: '${DB_PORT:-vazio}'"
-              exit 1
-            fi
-            
-            if [ -z "${DB_DATABASE:-}" ]; then
-              echo "❌ DB_DATABASE não pode estar vazio"
-              exit 1
-            fi
-            
-            if [ -z "${DB_USERNAME:-}" ]; then
-              echo "❌ DB_USERNAME não pode estar vazio"  
-              exit 1
-            fi
-            
-            if [ -z "${DB_PASSWORD:-}" ]; then
-              echo "❌ DB_PASSWORD não pode estar vazio"
-              exit 1
-            fi
-            
-            echo "✅ Database credentials ok"
-            
-            # Check 3: Create DB volume directory
-            echo "Creating database volume directory..."
-            sudo mkdir -p /var/www/livrolog/shared/db
-            sudo chown -R 999:999 /var/www/livrolog/shared/db  # MySQL container runs as user 999
-            echo "✅ Database volume ready"
+            echo "✅ Configuration validated successfully"
 
             # Login to GHCR if PAT is available
             if [ -n "${GHCR_PAT:-}" ]; then
@@ -353,9 +397,9 @@ jobs:
             fi
 
             # Resolve tag: prefer 'prod', fallback to SHA
-            BRANCH="${GITHUB_REF_NAME:-main}"
+            BRANCH="${TARGET_BRANCH:-${GITHUB_REF_NAME:-main}}"
             SHA="${GITHUB_SHA}"
-            CANDIDATES=("prod" "${SHA}" "main")
+            CANDIDATES=("prod" "${SHA}" "${BRANCH}")
 
             RESOLVED_TAG=""
             for tag in "${CANDIDATES[@]}"; do
@@ -374,10 +418,10 @@ jobs:
             export TAG="$RESOLVED_TAG"
             export OWNER="$OWNER"
 
-            # Create production compose file
+            # Create production compose file with MariaDB and Redis
             cat > docker-compose.prod.yml << 'EOF'
             # docker-compose.prod.yml
-            # Production Docker Compose with internal MariaDB and network isolation
+            # Production Docker Compose with internal MariaDB and Redis
             
             name: livrolog
             
@@ -402,16 +446,28 @@ jobs:
                   retries: 30
                   start_period: 60s
             
+              # Redis Cache (internal, no exposed ports)
+              redis:
+                image: redis:7-alpine
+                restart: always
+                networks:
+                  - livrolog-net
+                healthcheck:
+                  test: ["CMD", "redis-cli", "ping"]
+                  interval: 5s
+                  timeout: 3s
+                  retries: 30
+                  start_period: 10s
+            
               # Laravel API with Nginx + PHP-FPM (serves on port 8080)
               api:
                 image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
                 restart: always
                 environment:
-                  # Use containerized MariaDB
+                  # Use containerized services
                   - DB_HOST=mariadb
                   - DB_PORT=3306
-                  # Keep Redis external for now via host gateway
-                  - REDIS_HOST=host.docker.internal
+                  - REDIS_HOST=redis
                   - REDIS_PORT=6379
                 ports:
                   - "127.0.0.1:18081:8080"
@@ -425,6 +481,8 @@ jobs:
                   - "host.docker.internal:host-gateway"
                 depends_on:
                   mariadb:
+                    condition: service_healthy
+                  redis:
                     condition: service_healthy
                 healthcheck:
                   test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
@@ -450,20 +508,6 @@ jobs:
                   timeout: 10s
                   retries: 10
                   start_period: 30s
-            
-            # Optional Redis service for future use (commented out - using external Redis for now)
-            #  redis:
-            #    image: redis:7-alpine
-            #    restart: always
-            #    networks:
-            #      - livrolog-net
-            #    volumes:
-            #      - /var/www/livrolog/shared/redis:/data
-            #    healthcheck:
-            #      test: ["CMD", "redis-cli", "ping"]
-            #      interval: 10s
-            #      timeout: 3s
-            #      retries: 5
             
             networks:
               livrolog-net:
@@ -505,14 +549,15 @@ jobs:
             echo "🐳 Pulling and starting containers with force-recreate..."
             docker compose -p livrolog -f docker-compose.prod.yml pull
             
-            echo "🗄️ Subindo mariadb (sem portas expostas)..."
+            echo "🗄️ Starting MariaDB and Redis..."
             docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
 
-            # Wait specifically for MariaDB health with configurable timeout
-            DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-${MARIADB_HEALTH_TIMEOUT:-600}}"
+            # Wait for MariaDB health with configurable timeout
+            # Default: 600s (10 minutes), max: 1800s (30 minutes)
+            DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-600}"
             [ "$DB_WAIT_TIMEOUT" -gt 1800 ] && DB_WAIT_TIMEOUT=1800
             
-            echo "⏳ Aguardando health do mariadb (timeout=${DB_WAIT_TIMEOUT}s)..."
+            echo "⏳ Waiting for MariaDB health (timeout=${DB_WAIT_TIMEOUT}s)..."
             deadline=$((SECONDS+DB_WAIT_TIMEOUT))
             while true; do
               if docker compose -p livrolog -f docker-compose.prod.yml ps mariadb | grep -q "healthy"; then
@@ -524,13 +569,39 @@ jobs:
                 echo "❌ MariaDB health check timed out after ${DB_WAIT_TIMEOUT}s"
                 echo "=== MariaDB Status ==="
                 docker compose -p livrolog ps mariadb
-                echo "=== MariaDB Logs (last 80 lines) ==="
-                docker compose -p livrolog logs --tail=80 mariadb
+                echo "=== MariaDB Logs (last 120 lines) ==="
+                docker compose -p livrolog logs --tail=120 mariadb
                 exit 1
               fi
               
               echo "Waiting for MariaDB... ($((deadline - SECONDS))s remaining)"
               sleep 10
+            done
+            
+            # Wait for Redis health with configurable timeout  
+            # Default: 300s (5 minutes), max: 600s (10 minutes)
+            REDIS_WAIT_TIMEOUT="${REDIS_HEALTH_TIMEOUT:-300}"
+            [ "$REDIS_WAIT_TIMEOUT" -gt 600 ] && REDIS_WAIT_TIMEOUT=600
+            
+            echo "⏳ Waiting for Redis health (timeout=${REDIS_WAIT_TIMEOUT}s)..."
+            deadline=$((SECONDS+REDIS_WAIT_TIMEOUT))
+            while true; do
+              if docker compose -p livrolog -f docker-compose.prod.yml ps redis | grep -q "healthy"; then
+                echo "✅ Redis is healthy"
+                break
+              fi
+              
+              if [ $SECONDS -ge $deadline ]; then
+                echo "❌ Redis health check timed out after ${REDIS_WAIT_TIMEOUT}s"
+                echo "=== Redis Status ==="
+                docker compose -p livrolog ps redis
+                echo "=== Redis Logs (last 120 lines) ==="
+                docker compose -p livrolog logs --tail=120 redis
+                exit 1
+              fi
+              
+              echo "Waiting for Redis... ($((deadline - SECONDS))s remaining)"
+              sleep 5
             done
 
             # Optional database seeding (safe and idempotent)
@@ -627,7 +698,16 @@ jobs:
               exit 1
             fi
             
-            echo "✅ Smoke tests web/api ok"
+            # Test Redis connectivity
+            echo "Testing Redis connectivity:"
+            if docker compose -p livrolog exec -T redis redis-cli ping | grep -q "PONG"; then
+              echo "✅ Redis connection ok"
+            else
+              echo "❌ Redis connection failed"
+              exit 1
+            fi
+            
+            echo "✅ All smoke tests passed"
             echo "Container status:"
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
