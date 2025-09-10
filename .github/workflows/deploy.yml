@@ -116,8 +116,17 @@ jobs:
 
             echo "🔍 Usando porta ${WEB_PORT} para web"
 
-            # Opcional: limpar containers antigos do LivroLog
+            # Limpar containers antigos do LivroLog e espaço em disco
             docker rm -f livrolog-web-dev livrolog-web 2>/dev/null || true
+
+            # Limpeza de espaço em disco para evitar "no space left on device"
+            echo "🧹 Limpando espaço em disco..."
+            echo "Espaço antes da limpeza:"
+            df -h / || true
+            docker system prune -f --volumes || true
+            docker image prune -a -f || true
+            echo "Espaço após limpeza:"
+            df -h / || true
 
             # Gera compose dev
             cat > docker-compose.dev.yml << EOF
@@ -606,6 +615,15 @@ jobs:
 
             echo "Cleaning up old networks..."
             docker network rm livrolog-net || true
+
+            # Limpeza de espaço em disco para evitar "no space left on device"
+            echo "🧹 Limpando espaço em disco..."
+            echo "Espaço antes da limpeza:"
+            df -h / || true
+            docker system prune -f --volumes || true
+            docker image prune -a -f || true
+            echo "Espaço após limpeza:"
+            df -h / || true
 
             # Pull and start containers (idempotent)
             echo "🐳 Pulling and starting containers with force-recreate..."
