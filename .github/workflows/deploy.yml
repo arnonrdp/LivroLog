@@ -624,11 +624,12 @@ jobs:
                   redis:
                     condition: service_healthy
                 healthcheck:
-                  test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
-                  interval: 30s
-                  timeout: 15s
-                  retries: 20
-                  start_period: 120s
+                  # Multi-stage healthcheck: first check nginx is responding, then Laravel
+                  test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/health >/dev/null 2>&1 && curl -f http://localhost:8080/healthz >/dev/null 2>&1"]
+                  interval: 15s
+                  timeout: 10s
+                  retries: 30
+                  start_period: 180s
 
               # Vue/Quasar WebApp served by Nginx
               web:
