@@ -158,6 +158,10 @@ jobs:
                   start_period: 60s
             EOF
 
+            # Ler tag anterior para rollback real em caso de falha
+            PREV_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
+            echo "📋 Tag anterior para rollback: ${PREV_TAG}"
+
             # Resolve tag existente: dev-<sha> -> <sha> -> dev
             BRANCH="${TARGET_BRANCH:-${GITHUB_REF_NAME:-dev}}"
             SHA="${GITHUB_SHA}"
@@ -177,8 +181,12 @@ jobs:
             fi
 
             echo "$RESOLVED_TAG" > .resolved_tag_dev
-            echo "$RESOLVED_TAG" > .last_tag_dev
             export TAG="$RESOLVED_TAG"
+
+            # Define compose command para dev
+            # Centraliza flags comuns para operações do docker compose dev
+            COMPOSE="docker compose -p livrolog_dev -f docker-compose.dev.yml"
+            echo "📋 Using compose command: $COMPOSE"
 
             # Substitui as imagens no compose
             sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
@@ -188,35 +196,42 @@ jobs:
             test -f /var/www/livrolog-dev/shared/.env.dev || { echo "❌ /var/www/livrolog-dev/shared/.env.dev não existe"; exit 1; }
             test -d /var/www/livrolog-dev/shared/storage || { echo "❌ /var/www/livrolog-dev/shared/storage não existe"; exit 1; }
 
-            # Pull e start
-            docker compose -p livrolog_dev -f docker-compose.dev.yml pull
-            docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+            # Persistir porta escolhida para debug
+            echo "$WEB_PORT" > .web_port_dev
 
-            # Espera healthchecks
-            echo "Waiting for services to be healthy (max 120s)…"
-            deadline=$((SECONDS+120))
+            # Pull e start
+            $COMPOSE pull
+            $COMPOSE up -d --remove-orphans
+
+            # Espera healthchecks (aumentado timeout para 180s)
+            echo "Waiting for services to be healthy (max 180s)…"
+            deadline=$((SECONDS+180))
             while true; do
               web_ok=0; api_ok=0
               curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
               docker exec livrolog-api-dev php artisan about >/dev/null 2>&1 && api_ok=1
               if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
               if [ $SECONDS -ge $deadline ]; then
-                echo "❌ Health checks failed, rolling back…"
+                echo "❌ Health checks failed, rolling back para tag anterior…"
                 echo "=== Diagnóstico de containers ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                 echo "=== Health status da API ==="
-                docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
+                if command -v jq >/dev/null 2>&1; then
+                  docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
+                else
+                  echo "⚠️ jq não encontrado, exibindo JSON raw:"
+                  docker inspect --format='{{json .State.Health}}' livrolog-api-dev || true
+                fi
                 echo "=== Logs da API (últimas 80 linhas) ==="
                 docker logs --tail=80 livrolog-api-dev || true
                 echo "=== Logs da Web (últimas 80 linhas) ==="
                 docker logs --tail=80 livrolog-web-dev || true
-                echo "=== Iniciando rollback ==="
-                LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
-                export TAG="$LAST_TAG"
+                echo "=== Iniciando rollback para tag: ${PREV_TAG} ==="
+                export TAG="$PREV_TAG"
                 sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
                 sed -i "s|ghcr.io/.*/livrolog-api:.*|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
-                docker compose -p livrolog_dev -f docker-compose.dev.yml pull
-                docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+                $COMPOSE pull
+                $COMPOSE up -d --remove-orphans
                 exit 1
               fi
               sleep 5
@@ -226,6 +241,10 @@ jobs:
             docker exec livrolog-api-dev php artisan migrate --force
             docker exec livrolog-api-dev php artisan config:clear || true
             docker exec livrolog-api-dev php artisan cache:clear || true
+
+            # Deploy bem-sucedido: atualizar .last_tag_dev para próximos rollbacks
+            echo "$RESOLVED_TAG" > .last_tag_dev
+            echo "📝 Tag $RESOLVED_TAG salva para rollbacks futuros"
 
             echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):${WEB_PORT}"
             echo "🎯 Deployed branch: ${TARGET_BRANCH:-dev}"
@@ -241,6 +260,7 @@ jobs:
       DEPLOY_PATH: /var/www/livrolog
       GHCR_PAT: ${{ secrets.GHCR_PAT }}
       APP_KEY: ${{ secrets.APP_KEY }}
+      DEPLOY_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_HEALTH_TIMEOUT: ${{ secrets.DB_HEALTH_TIMEOUT || 600 }}
       REDIS_HEALTH_TIMEOUT: '300'
       TARGET_BRANCH: main
@@ -255,14 +275,14 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DEPLOY_DB_PASSWORD,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
           script: |
-            set -eu
+            set -euo pipefail
             DOCKER_DIR="/var/www/livrolog/docker"
             OWNER="arnonrdp"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
             IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
-            
+
             # Display deployment configuration
             echo "=================================================="
             echo "🚀 Starting production deployment (branch: ${TARGET_BRANCH:-main})"
@@ -275,7 +295,7 @@ jobs:
             echo "📁 Creating required directories..."
             sudo mkdir -p "$DOCKER_DIR"
             sudo mkdir -p /var/www/livrolog/shared/{storage,db}
-            
+
             # Set proper permissions (999:999 is the default MariaDB container user)
             sudo chown -R 999:999 /var/www/livrolog/shared/db
             sudo chown -R "$USER:$USER" /var/www/livrolog
@@ -285,7 +305,7 @@ jobs:
             echo "🔧 Normalizing .env configuration..."
             sudo touch /var/www/livrolog/shared/.env
             sudo chown -R "$USER:$USER" /var/www/livrolog/shared/.env
-            
+
             # Função POSIX para gerar APP_KEY compatível com Laravel (sem depender de imagens externas)
             gen_app_key() {
               if command -v head >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1; then
@@ -296,14 +316,14 @@ jobs:
                 dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n' | awk '{print "base64:" $0}'
               fi
             }
-            
+
             # 1) Tenta usar a secret APP_KEY; se ausente/inválida, gera automaticamente
             APP_KEY_CAND="${APP_KEY:-}"
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
             fi
-            
+
             # 2) Valida e grava no .env (operação atômica)
             if printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               tmpfile="$(mktemp)"
@@ -321,25 +341,44 @@ jobs:
             # This step ensures the .env always has correct values for internal services
             # regardless of previous state, making the deployment fully idempotent
             echo "📝 Normalizing database and Redis configuration in .env..."
-            
-            # Read existing values to preserve
+
+            # Read existing values to preserve from .env file
             eval $(grep -E '^(DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env 2>/dev/null || true)
-            
-            # Set defaults if not present
-            DB_DATABASE="${DB_DATABASE:-livrolog}"
-            DB_USERNAME="${DB_USERNAME:-root}"
-            # DB_PASSWORD must exist - fail if not set
-            if [ -z "${DB_PASSWORD:-}" ]; then
-              echo "❌ DB_PASSWORD not found in .env. Please set it first."
-              exit 1
+
+            # Bootstrap database credentials from GitHub Secrets if not present in .env
+            if [ -z "${DB_DATABASE:-}" ]; then
+              DB_DATABASE="livrolog"
+              echo "📝 Using default DB_DATABASE: ${DB_DATABASE}"
             fi
             
+            if [ -z "${DB_USERNAME:-}" ]; then
+              DB_USERNAME="root"  
+              echo "📝 Using default DB_USERNAME: ${DB_USERNAME}"
+            fi
+            
+            # Bootstrap DB_PASSWORD - prioridade: .env -> GitHub Secret -> falha
+            # DB_PASSWORD_FROM_ENV: valor lido do arquivo .env no servidor
+            # DEPLOY_DB_PASSWORD: valor vindo da GitHub Secret via environment variable
+            DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"  # From .env file on server
+            DEPLOY_DB_PASSWORD="${DEPLOY_DB_PASSWORD:-}"  # From GitHub Secret (environment variable)
+            
+            if [ -n "${DB_PASSWORD_FROM_ENV}" ]; then
+              DB_PASSWORD="${DB_PASSWORD_FROM_ENV}"
+              echo "📝 Using DB_PASSWORD from existing .env file"
+            elif [ -n "${DEPLOY_DB_PASSWORD}" ]; then
+              DB_PASSWORD="${DEPLOY_DB_PASSWORD}"
+              echo "📝 Bootstrapping DB_PASSWORD from GitHub Secret"
+            else
+              echo "❌ DB_PASSWORD not found in .env and DEPLOY_DB_PASSWORD secret not provided"
+              exit 1
+            fi
+
             # Create normalized .env with correct values (atomic operation)
             tmpfile="$(mktemp)"
-            
+
             # Copy all non-DB/Redis lines
             grep -v -E '^(APP_ENV|DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env > "$tmpfile" 2>/dev/null || true
-            
+
             # Append normalized configuration
             cat >> "$tmpfile" << ENVEOF
             APP_ENV=production
@@ -352,19 +391,19 @@ jobs:
             REDIS_HOST=redis
             REDIS_PORT=6379
             ENVEOF
-            
+
             # Atomically replace .env
             mv "$tmpfile" /var/www/livrolog/shared/.env
             echo "✅ .env normalized for internal MariaDB and Redis"
-            
+
             # Pre-checks: verify environment and infrastructure
             echo "🔍 Performing pre-deployment checks..."
-            
+
             # Check 1: required directories exist
             test -f /var/www/livrolog/shared/.env || { echo "❌ /var/www/livrolog/shared/.env não existe"; exit 1; }
             test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
             test -d /var/www/livrolog/shared/db || { echo "❌ /var/www/livrolog/shared/db não existe"; exit 1; }
-            
+
             # Validação correta da APP_KEY no .env (exatamente 44 chars após base64:)
             echo "Validating APP_KEY in .env..."
             if ! grep -Eq '^APP_KEY=base64:[A-Za-z0-9+/=]{44}$' /var/www/livrolog/shared/.env; then
@@ -372,10 +411,10 @@ jobs:
               exit 1
             fi
             echo "✅ APP_KEY ok"
-            
+
             # Reload normalized values for validation
             eval $(grep -E '^(DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env)
-            
+
             # Validate critical configuration
             echo "Validating normalized configuration..."
             [ "${DB_CONNECTION}" = "mysql" ] || { echo "❌ DB_CONNECTION validation failed"; exit 1; }
@@ -386,7 +425,7 @@ jobs:
             [ -n "${DB_DATABASE}" ] || { echo "❌ DB_DATABASE is empty"; exit 1; }
             [ -n "${DB_USERNAME}" ] || { echo "❌ DB_USERNAME is empty"; exit 1; }
             [ -n "${DB_PASSWORD}" ] || { echo "❌ DB_PASSWORD is empty"; exit 1; }
-            
+
             echo "✅ Configuration validated successfully"
 
             # Login to GHCR if PAT is available
@@ -422,9 +461,9 @@ jobs:
             cat > docker-compose.prod.yml << 'EOF'
             # docker-compose.prod.yml
             # Production Docker Compose with internal MariaDB and Redis
-            
+
             name: livrolog
-            
+
             services:
               # MariaDB Database (internal, no exposed ports)
               mariadb:
@@ -440,12 +479,12 @@ jobs:
                 volumes:
                   - /var/www/livrolog/shared/db:/var/lib/mysql
                 healthcheck:
-                  test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "${DB_USERNAME}", "--password=${DB_PASSWORD}"]
+                  test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u${DB_USERNAME} -p${DB_PASSWORD}"]
                   interval: 10s
                   timeout: 5s
                   retries: 30
                   start_period: 60s
-            
+
               # Redis Cache (internal, no exposed ports)
               redis:
                 image: redis:7-alpine
@@ -458,7 +497,7 @@ jobs:
                   timeout: 3s
                   retries: 30
                   start_period: 10s
-            
+
               # Laravel API with Nginx + PHP-FPM (serves on port 8080)
               api:
                 image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
@@ -490,7 +529,7 @@ jobs:
                   timeout: 5s
                   retries: 10
                   start_period: 30s
-            
+
               # Vue/Quasar WebApp served by Nginx
               web:
                 image: ghcr.io/${OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
@@ -508,7 +547,7 @@ jobs:
                   timeout: 10s
                   retries: 10
                   start_period: 30s
-            
+
             networks:
               livrolog-net:
                 name: livrolog-net
@@ -518,6 +557,12 @@ jobs:
             # Save current tag for rollback
             echo "$RESOLVED_TAG" > .resolved_tag_prod
             echo "$RESOLVED_TAG" > .last_tag_prod
+
+            # Define compose command with env-file to ensure all variables are loaded
+            # $COMPOSE centraliza flags comuns: --env-file garante que DB_PASSWORD e outras vars sejam lidas do .env
+            # -p livrolog define project name consistente, -f especifica o compose file de produção
+            COMPOSE="docker compose --env-file /var/www/livrolog/shared/.env -p livrolog -f docker-compose.prod.yml"
+            echo "📋 Using compose command: $COMPOSE"
 
             # Check for optional database seeding
             echo "Checking for database seeding..."
@@ -536,31 +581,31 @@ jobs:
             # Preflight cleanup - stop existing containers and remove orphans
             echo "🧹 Preflight cleanup - ensuring idempotent deployment..."
             echo "Stopping existing compose project if running..."
-            docker compose -p livrolog -f docker-compose.prod.yml down --remove-orphans || true
-            
+            $COMPOSE down --remove-orphans || true
+
             echo "Removing any orphaned containers by name..."
             docker rm -f livrolog-api livrolog-web livrolog-mariadb || true
             docker rm -f livrolog_api_1 livrolog_web_1 livrolog_mariadb_1 || true
-            
+
             echo "Cleaning up old networks..."
             docker network rm livrolog-net || true
 
             # Pull and start containers (idempotent)
             echo "🐳 Pulling and starting containers with force-recreate..."
-            docker compose -p livrolog -f docker-compose.prod.yml pull
-            
+            $COMPOSE pull
+
             echo "🗄️ Starting MariaDB and Redis..."
-            docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
+            $COMPOSE up -d --remove-orphans --force-recreate
 
             # Wait for MariaDB health with configurable timeout
             # Default: 600s (10 minutes), max: 1800s (30 minutes)
             DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-600}"
             [ "$DB_WAIT_TIMEOUT" -gt 1800 ] && DB_WAIT_TIMEOUT=1800
-            
+
             echo "⏳ Waiting for MariaDB health (timeout=${DB_WAIT_TIMEOUT}s)..."
             deadline=$((SECONDS+DB_WAIT_TIMEOUT))
             while true; do
-              if docker compose -p livrolog -f docker-compose.prod.yml ps mariadb | grep -q "healthy"; then
+              if $COMPOSE ps mariadb | grep -q "healthy"; then
                 echo "✅ MariaDB is healthy"
                 break
               fi
@@ -568,25 +613,25 @@ jobs:
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ MariaDB health check timed out after ${DB_WAIT_TIMEOUT}s"
                 echo "=== MariaDB Status ==="
-                docker compose -p livrolog ps mariadb
+                $COMPOSE ps mariadb
                 echo "=== MariaDB Logs (last 120 lines) ==="
-                docker compose -p livrolog logs --tail=120 mariadb
+                $COMPOSE logs --tail=120 mariadb
                 exit 1
               fi
               
               echo "Waiting for MariaDB... ($((deadline - SECONDS))s remaining)"
               sleep 10
             done
-            
+
             # Wait for Redis health with configurable timeout  
             # Default: 300s (5 minutes), max: 600s (10 minutes)
             REDIS_WAIT_TIMEOUT="${REDIS_HEALTH_TIMEOUT:-300}"
             [ "$REDIS_WAIT_TIMEOUT" -gt 600 ] && REDIS_WAIT_TIMEOUT=600
-            
+
             echo "⏳ Waiting for Redis health (timeout=${REDIS_WAIT_TIMEOUT}s)..."
             deadline=$((SECONDS+REDIS_WAIT_TIMEOUT))
             while true; do
-              if docker compose -p livrolog -f docker-compose.prod.yml ps redis | grep -q "healthy"; then
+              if $COMPOSE ps redis | grep -q "healthy"; then
                 echo "✅ Redis is healthy"
                 break
               fi
@@ -594,9 +639,9 @@ jobs:
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Redis health check timed out after ${REDIS_WAIT_TIMEOUT}s"
                 echo "=== Redis Status ==="
-                docker compose -p livrolog ps redis
+                $COMPOSE ps redis
                 echo "=== Redis Logs (last 120 lines) ==="
-                docker compose -p livrolog logs --tail=120 redis
+                $COMPOSE logs --tail=120 redis
                 exit 1
               fi
               
@@ -607,7 +652,7 @@ jobs:
             # Optional database seeding (safe and idempotent)
             if [ "$SEED_REQUIRED" -eq 1 ]; then
               echo "🌱 Seeding database from /var/www/livrolog/shared/db-seed.sql..."
-              if docker compose -p livrolog exec -T mariadb mysql -u"${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/livrolog/shared/db-seed.sql; then
+              if $COMPOSE exec -T mariadb mysql -u"${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/livrolog/shared/db-seed.sql; then
                 echo "✅ Database seeded successfully"
               else
                 echo "⚠️ Database seeding failed, but continuing with deployment"
@@ -616,7 +661,7 @@ jobs:
 
             # Verify connectivity from API container to MariaDB
             echo "🔍 Verifying API container connectivity..."
-            API_CID=$(docker compose -p livrolog ps -q api)
+            API_CID=$($COMPOSE ps -q api)
             if [ -n "$API_CID" ]; then
               echo "API Container ID: $API_CID"
               echo "Testing MariaDB connectivity from API container:"
@@ -644,24 +689,24 @@ jobs:
                 echo "=== Container Status ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                 echo "=== MariaDB Logs (last 80 lines) ==="
-                docker compose -p livrolog logs --tail=80 mariadb || true
+                $COMPOSE logs --tail=80 mariadb || true
                 echo "=== API Logs (last 80 lines) ==="
-                docker compose -p livrolog logs --tail=80 api || true
+                $COMPOSE logs --tail=80 api || true
                 echo "=== Web Logs (last 80 lines) ==="
-                docker compose -p livrolog logs --tail=80 web || true
+                $COMPOSE logs --tail=80 web || true
                 
                 echo "=== API->MariaDB connectivity test ==="
-                API_CID=$(docker compose -p livrolog ps -q api)
+                API_CID=$($COMPOSE ps -q api)
                 [ -n "$API_CID" ] && docker exec "$API_CID" timeout 5 bash -c 'cat </dev/null >/dev/tcp/mariadb/3306' && echo "✅ API can reach MariaDB" || echo "❌ API cannot reach MariaDB"
                 
                 # Idempotent rollback (preserve DB volume)
                 echo "🔄 Performing idempotent rollback..."
-                docker compose -p livrolog -f docker-compose.prod.yml down --remove-orphans || true
+                $COMPOSE down --remove-orphans || true
                 LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
                 export TAG="$LAST_TAG"
                 echo "Rolling back to tag: $TAG"
-                docker compose -p livrolog -f docker-compose.prod.yml pull
-                docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
+                $COMPOSE pull
+                $COMPOSE up -d --remove-orphans --force-recreate
                 exit 1
               fi
               sleep 5
@@ -669,7 +714,7 @@ jobs:
 
             # Run migrations and clear caches using dynamic container names
             echo "🔄 Rodando migrations..."
-            API_CONTAINER=$(docker compose -p livrolog ps -q api | head -n 1)
+            API_CONTAINER=$($COMPOSE ps -q api | head -n 1)
             if [ -z "$API_CONTAINER" ]; then
               echo "❌ No API container found!"
               exit 1
@@ -688,7 +733,7 @@ jobs:
             curl -I http://127.0.0.1:18080/ || exit 1
             echo "Testing API health:"
             curl -I http://127.0.0.1:18081/health || exit 1
-            
+
             # Test database connectivity from API
             echo "Testing database connectivity from API:"
             if docker exec "$API_CONTAINER" php artisan tinker --execute="DB::connection()->getPdo(); echo 'DB OK';" >/dev/null 2>&1; then
@@ -697,16 +742,16 @@ jobs:
               echo "❌ Database connection failed"
               exit 1
             fi
-            
+
             # Test Redis connectivity
             echo "Testing Redis connectivity:"
-            if docker compose -p livrolog exec -T redis redis-cli ping | grep -q "PONG"; then
+            if $COMPOSE exec -T redis redis-cli ping | grep -q "PONG"; then
               echo "✅ Redis connection ok"
             else
               echo "❌ Redis connection failed"
               exit 1
             fi
-            
+
             echo "✅ All smoke tests passed"
             echo "Container status:"
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
