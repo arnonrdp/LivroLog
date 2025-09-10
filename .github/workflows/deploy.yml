@@ -324,7 +324,7 @@ jobs:
             # Regex pattern for 44-char base64 key (explicitly define for clarity)
             APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
             
-            if ! printf '%s' "$APP_KEY_CAND" | grep -E "$APP_KEY_PATTERN" >/dev/null 2>&1; then
+            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
               echo "🔧 Generated new APP_KEY: [${#APP_KEY_CAND} chars]"
@@ -333,7 +333,7 @@ jobs:
             fi
 
             # 2) Valida e grava no .env (operação atômica)
-            if printf '%s' "$APP_KEY_CAND" | grep -E "$APP_KEY_PATTERN" >/dev/null 2>&1; then
+            if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               tmpfile="$(mktemp)"
               # Remove qualquer APP_KEY existente e escreve a nova (seguro p/ caracteres especiais)
               grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
@@ -416,10 +416,10 @@ jobs:
             echo "🔍 Validating APP_KEY in .env file..."
             
             # Extract and validate APP_KEY from .env
-            ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- || echo "")
+            ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- && true || echo "")
             echo "Found APP_KEY in .env: [${#ENV_APP_KEY} chars]${ENV_APP_KEY:+ (has value)}${ENV_APP_KEY:- (missing)}"
             
-            if ! printf '%s' "$ENV_APP_KEY" | grep -E "$APP_KEY_PATTERN" >/dev/null 2>&1; then
+            if ! printf '%s' "$ENV_APP_KEY" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
               echo "Expected pattern: $APP_KEY_PATTERN"
               echo "Actual value: '$ENV_APP_KEY'"
@@ -615,9 +615,11 @@ jobs:
             
             # Verify database directory permissions before starting
             echo "🔍 Pre-startup checks..."
-            ls -la /var/www/livrolog/shared/ | grep "db " || echo "Database directory not visible in listing"
-            echo "Database directory permissions:"
-            stat /var/www/livrolog/shared/db 2>/dev/null || echo "Database directory not found (will be created)"
+            if test -d /var/www/livrolog/shared/db; then
+              ls -ld /var/www/livrolog/shared/db
+            else
+              echo "Database directory not found (will be created)"
+            fi
             
             # Start containers with enhanced error reporting
             if ! $COMPOSE up -d --remove-orphans --force-recreate; then
