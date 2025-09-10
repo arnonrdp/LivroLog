@@ -235,34 +235,34 @@ jobs:
               printf 'APP_KEY=%s\n' "$APP_KEY_CAND" >> "$tmpfile"
               # Add basic Laravel environment settings if .env.dev didn't exist
               if [ ! -f /var/www/livrolog-dev/shared/.env.dev ]; then
-                cat >> "$tmpfile" << 'EOF'
-APP_NAME=LivroLog
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=http://localhost
-
-LOG_CHANNEL=stack
-LOG_DEPRECATIONS_CHANNEL=null
-LOG_LEVEL=debug
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=livrolog
-DB_USERNAME=livrolog
-DB_PASSWORD=
-
-BROADCAST_DRIVER=log
-CACHE_DRIVER=redis
-FILESYSTEM_DISK=local
-QUEUE_CONNECTION=sync
-SESSION_DRIVER=file
-SESSION_LIFETIME=120
-
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-EOF
+                {
+                  echo "APP_NAME=LivroLog"
+                  echo "APP_ENV=production"
+                  echo "APP_DEBUG=false"
+                  echo "APP_URL=http://localhost"
+                  echo ""
+                  echo "LOG_CHANNEL=stack"
+                  echo "LOG_DEPRECATIONS_CHANNEL=null"
+                  echo "LOG_LEVEL=debug"
+                  echo ""
+                  echo "DB_CONNECTION=mysql"
+                  echo "DB_HOST=127.0.0.1"
+                  echo "DB_PORT=3306"
+                  echo "DB_DATABASE=livrolog"
+                  echo "DB_USERNAME=livrolog"
+                  echo "DB_PASSWORD="
+                  echo ""
+                  echo "BROADCAST_DRIVER=log"
+                  echo "CACHE_DRIVER=redis"
+                  echo "FILESYSTEM_DISK=local"
+                  echo "QUEUE_CONNECTION=sync"
+                  echo "SESSION_DRIVER=file"
+                  echo "SESSION_LIFETIME=120"
+                  echo ""
+                  echo "REDIS_HOST=127.0.0.1"
+                  echo "REDIS_PASSWORD=null"
+                  echo "REDIS_PORT=6379"
+                } >> "$tmpfile"
               fi
               sudo mv "$tmpfile" /var/www/livrolog-dev/shared/.env.dev
               sudo chown bitnami:bitnami /var/www/livrolog-dev/shared/.env.dev
