@@ -508,9 +508,12 @@ jobs:
             echo "🗄️ Subindo mariadb (sem portas expostas)..."
             docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
 
-            # Wait specifically for MariaDB health before proceeding
-            echo "⏳ Aguardando health do mariadb..."
-            deadline=$((SECONDS+300))  # 5 minutes timeout for DB startup
+            # Wait specifically for MariaDB health with configurable timeout
+            DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-${MARIADB_HEALTH_TIMEOUT:-600}}"
+            [ "$DB_WAIT_TIMEOUT" -gt 1800 ] && DB_WAIT_TIMEOUT=1800
+            
+            echo "⏳ Aguardando health do mariadb (timeout=${DB_WAIT_TIMEOUT}s)..."
+            deadline=$((SECONDS+DB_WAIT_TIMEOUT))
             while true; do
               if docker compose -p livrolog -f docker-compose.prod.yml ps mariadb | grep -q "healthy"; then
                 echo "✅ MariaDB is healthy"
@@ -518,7 +521,7 @@ jobs:
               fi
               
               if [ $SECONDS -ge $deadline ]; then
-                echo "❌ MariaDB health check timed out after 5 minutes"
+                echo "❌ MariaDB health check timed out after ${DB_WAIT_TIMEOUT}s"
                 echo "=== MariaDB Status ==="
                 docker compose -p livrolog ps mariadb
                 echo "=== MariaDB Logs (last 80 lines) ==="
