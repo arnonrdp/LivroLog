@@ -551,7 +551,7 @@ jobs:
                   redis:
                     condition: service_healthy
                 healthcheck:
-                  test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+                  test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
                   interval: 15s
                   timeout: 5s
                   retries: 10
@@ -733,7 +733,7 @@ jobs:
               # Check web health
               curl -fsS "http://127.0.0.1:18080/healthz" >/dev/null 2>&1 && web_ok=1
               # Check api health  
-              curl -fsS "http://127.0.0.1:18081/health" >/dev/null 2>&1 && api_ok=1
+              curl -fsS "http://127.0.0.1:18081/healthz" >/dev/null 2>&1 && api_ok=1
               
               if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then 
                 echo "✅ All services are healthy"
@@ -789,7 +789,7 @@ jobs:
             echo "Testing web frontend:"
             curl -I http://127.0.0.1:18080/ || exit 1
             echo "Testing API health:"
-            curl -I http://127.0.0.1:18081/health || exit 1
+            curl -I http://127.0.0.1:18081/healthz || exit 1
 
             # Test database connectivity from API
             echo "Testing database connectivity from API:"
