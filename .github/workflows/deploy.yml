@@ -158,6 +158,10 @@ jobs:
                   start_period: 60s
             EOF
 
+            # Ler tag anterior para rollback real em caso de falha
+            PREV_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
+            echo "📋 Tag anterior para rollback: ${PREV_TAG}"
+
             # Resolve tag existente: dev-<sha> -> <sha> -> dev
             BRANCH="${TARGET_BRANCH:-${GITHUB_REF_NAME:-dev}}"
             SHA="${GITHUB_SHA}"
@@ -177,8 +181,12 @@ jobs:
             fi
 
             echo "$RESOLVED_TAG" > .resolved_tag_dev
-            echo "$RESOLVED_TAG" > .last_tag_dev
             export TAG="$RESOLVED_TAG"
+
+            # Define compose command para dev
+            # Centraliza flags comuns para operações do docker compose dev
+            COMPOSE="docker compose -p livrolog_dev -f docker-compose.dev.yml"
+            echo "📋 Using compose command: $COMPOSE"
 
             # Substitui as imagens no compose
             sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
@@ -188,35 +196,42 @@ jobs:
             test -f /var/www/livrolog-dev/shared/.env.dev || { echo "❌ /var/www/livrolog-dev/shared/.env.dev não existe"; exit 1; }
             test -d /var/www/livrolog-dev/shared/storage || { echo "❌ /var/www/livrolog-dev/shared/storage não existe"; exit 1; }
 
-            # Pull e start
-            docker compose -p livrolog_dev -f docker-compose.dev.yml pull
-            docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+            # Persistir porta escolhida para debug
+            echo "$WEB_PORT" > .web_port_dev
 
-            # Espera healthchecks
-            echo "Waiting for services to be healthy (max 120s)…"
-            deadline=$((SECONDS+120))
+            # Pull e start
+            $COMPOSE pull
+            $COMPOSE up -d --remove-orphans
+
+            # Espera healthchecks (aumentado timeout para 180s)
+            echo "Waiting for services to be healthy (max 180s)…"
+            deadline=$((SECONDS+180))
             while true; do
               web_ok=0; api_ok=0
               curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
               docker exec livrolog-api-dev php artisan about >/dev/null 2>&1 && api_ok=1
               if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
               if [ $SECONDS -ge $deadline ]; then
-                echo "❌ Health checks failed, rolling back…"
+                echo "❌ Health checks failed, rolling back para tag anterior…"
                 echo "=== Diagnóstico de containers ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                 echo "=== Health status da API ==="
-                docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
+                if command -v jq >/dev/null 2>&1; then
+                  docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
+                else
+                  echo "⚠️ jq não encontrado, exibindo JSON raw:"
+                  docker inspect --format='{{json .State.Health}}' livrolog-api-dev || true
+                fi
                 echo "=== Logs da API (últimas 80 linhas) ==="
                 docker logs --tail=80 livrolog-api-dev || true
                 echo "=== Logs da Web (últimas 80 linhas) ==="
                 docker logs --tail=80 livrolog-web-dev || true
-                echo "=== Iniciando rollback ==="
-                LAST_TAG=$(cat .last_tag_dev 2>/dev/null || echo "dev")
-                export TAG="$LAST_TAG"
+                echo "=== Iniciando rollback para tag: ${PREV_TAG} ==="
+                export TAG="$PREV_TAG"
                 sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
                 sed -i "s|ghcr.io/.*/livrolog-api:.*|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
-                docker compose -p livrolog_dev -f docker-compose.dev.yml pull
-                docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
+                $COMPOSE pull
+                $COMPOSE up -d --remove-orphans
                 exit 1
               fi
               sleep 5
@@ -226,6 +241,10 @@ jobs:
             docker exec livrolog-api-dev php artisan migrate --force
             docker exec livrolog-api-dev php artisan config:clear || true
             docker exec livrolog-api-dev php artisan cache:clear || true
+
+            # Deploy bem-sucedido: atualizar .last_tag_dev para próximos rollbacks
+            echo "$RESOLVED_TAG" > .last_tag_dev
+            echo "📝 Tag $RESOLVED_TAG salva para rollbacks futuros"
 
             echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):${WEB_PORT}"
             echo "🎯 Deployed branch: ${TARGET_BRANCH:-dev}"
@@ -241,7 +260,7 @@ jobs:
       DEPLOY_PATH: /var/www/livrolog
       GHCR_PAT: ${{ secrets.GHCR_PAT }}
       APP_KEY: ${{ secrets.APP_KEY }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DEPLOY_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_HEALTH_TIMEOUT: ${{ secrets.DB_HEALTH_TIMEOUT || 600 }}
       REDIS_HEALTH_TIMEOUT: '300'
       TARGET_BRANCH: main
@@ -256,9 +275,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DB_PASSWORD,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DEPLOY_DB_PASSWORD,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
           script: |
-            set -eu
+            set -euo pipefail
             DOCKER_DIR="/var/www/livrolog/docker"
             OWNER="arnonrdp"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
@@ -323,7 +342,7 @@ jobs:
             # regardless of previous state, making the deployment fully idempotent
             echo "📝 Normalizing database and Redis configuration in .env..."
 
-            # Read existing values to preserve
+            # Read existing values to preserve from .env file
             eval $(grep -E '^(DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env 2>/dev/null || true)
 
             # Bootstrap database credentials from GitHub Secrets if not present in .env
@@ -337,20 +356,21 @@ jobs:
               echo "📝 Using default DB_USERNAME: ${DB_USERNAME}"
             fi
             
-            # Bootstrap DB_PASSWORD from GitHub Secret if not in .env
-            DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"  # From .env file
-            DB_PASSWORD_FROM_SECRET="${DB_PASSWORD:-}"  # From GitHub Secret (environment variable)
+            # Bootstrap DB_PASSWORD - prioridade: .env -> GitHub Secret -> falha
+            # DB_PASSWORD_FROM_ENV: valor lido do arquivo .env no servidor
+            # DEPLOY_DB_PASSWORD: valor vindo da GitHub Secret via environment variable
+            DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"  # From .env file on server
+            DEPLOY_DB_PASSWORD="${DEPLOY_DB_PASSWORD:-}"  # From GitHub Secret (environment variable)
             
-            if [ -z "${DB_PASSWORD_FROM_ENV}" ]; then
-              if [ -n "${DB_PASSWORD_FROM_SECRET}" ]; then
-                DB_PASSWORD="${DB_PASSWORD_FROM_SECRET}"
-                echo "📝 Bootstrapping DB_PASSWORD from GitHub Secret"
-              else
-                echo "❌ DB_PASSWORD not found in .env and not provided via GitHub Secret"
-                exit 1
-              fi
-            else
+            if [ -n "${DB_PASSWORD_FROM_ENV}" ]; then
               DB_PASSWORD="${DB_PASSWORD_FROM_ENV}"
+              echo "📝 Using DB_PASSWORD from existing .env file"
+            elif [ -n "${DEPLOY_DB_PASSWORD}" ]; then
+              DB_PASSWORD="${DEPLOY_DB_PASSWORD}"
+              echo "📝 Bootstrapping DB_PASSWORD from GitHub Secret"
+            else
+              echo "❌ DB_PASSWORD not found in .env and DEPLOY_DB_PASSWORD secret not provided"
+              exit 1
             fi
 
             # Create normalized .env with correct values (atomic operation)
@@ -539,6 +559,8 @@ jobs:
             echo "$RESOLVED_TAG" > .last_tag_prod
 
             # Define compose command with env-file to ensure all variables are loaded
+            # $COMPOSE centraliza flags comuns: --env-file garante que DB_PASSWORD e outras vars sejam lidas do .env
+            # -p livrolog define project name consistente, -f especifica o compose file de produção
             COMPOSE="docker compose --env-file /var/www/livrolog/shared/.env -p livrolog -f docker-compose.prod.yml"
             echo "📋 Using compose command: $COMPOSE"
 
