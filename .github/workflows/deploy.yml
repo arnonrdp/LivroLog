@@ -553,9 +553,9 @@ jobs:
                 healthcheck:
                   test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
                   interval: 15s
-                  timeout: 5s
-                  retries: 10
-                  start_period: 30s
+                  timeout: 10s
+                  retries: 15
+                  start_period: 60s
 
               # Vue/Quasar WebApp served by Nginx
               web:
@@ -654,6 +654,24 @@ jobs:
             echo "🔍 Initial container status:"
             $COMPOSE ps
 
+            # Wait for API container to start (give it 30 seconds initially)
+            echo "⏳ Waiting for API container to start..."
+            sleep 30
+            
+            # Check API container status and logs early
+            echo "🔍 API container status after startup:"
+            API_STATUS=$($COMPOSE ps api --format "table {{.State}}" | tail -n +2)
+            echo "API Status: $API_STATUS"
+            
+            if echo "$API_STATUS" | grep -q "Restarting\|Exited"; then
+              echo "❌ API container is failing to start. Showing logs..."
+              echo "=== API Container Logs (last 50 lines) ==="
+              $COMPOSE logs --tail=50 api || true
+              echo "=== API Container Inspect ==="
+              API_CID=$($COMPOSE ps -q api)
+              [ -n "$API_CID" ] && docker inspect "$API_CID" | jq '.[0].State' || true
+            fi
+
             # Wait for MariaDB health with configurable timeout
             # Default: 600s (10 minutes), max: 1800s (30 minutes)
             DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-600}"
@@ -723,6 +741,21 @@ jobs:
               echo "API Container ID: $API_CID"
               echo "Testing MariaDB connectivity from API container:"
               docker exec "$API_CID" timeout 5 bash -c 'cat < /dev/null > /dev/tcp/mariadb/3306' && echo "✅ MariaDB port 3306 reachable from API" || echo "❌ MariaDB port 3306 unreachable from API"
+              
+              echo "Testing Redis connectivity from API container:"
+              docker exec "$API_CID" timeout 5 bash -c 'cat < /dev/null > /dev/tcp/redis/6379' && echo "✅ Redis port 6379 reachable from API" || echo "❌ Redis port 6379 unreachable from API"
+              
+              echo "Testing /healthz endpoint directly from API container:"
+              docker exec "$API_CID" curl -f http://localhost:8080/healthz || echo "❌ /healthz endpoint not responding"
+              
+              echo "Checking Laravel configuration:"
+              docker exec "$API_CID" php artisan config:show database.connections.mysql.host || echo "❌ Cannot show DB config"
+              docker exec "$API_CID" php artisan config:show database.redis.default.host || echo "❌ Cannot show Redis config"
+              
+              echo "Testing basic Laravel functionality:"
+              docker exec "$API_CID" php artisan about --only=environment || echo "❌ Laravel about command failed"
+            else
+              echo "❌ No API container found for connectivity testing"
             fi
 
             # Wait for health checks with timeout
