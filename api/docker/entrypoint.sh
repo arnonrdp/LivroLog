@@ -5,10 +5,17 @@
 
 set -e
 
+# Try to get APP_KEY from environment variable first, then from .env file
+APP_KEY_TO_CHECK="${APP_KEY}"
+if [ -z "${APP_KEY_TO_CHECK}" ] && [ -f "/var/www/html/.env" ]; then
+    APP_KEY_TO_CHECK=$(grep '^APP_KEY=' /var/www/html/.env | cut -d'=' -f2 | tr -d '"'"'"'')
+    echo "📖 Reading APP_KEY from .env file"
+fi
+
 # Check if APP_KEY exists and is valid (base64: + at least 44 chars = 50+ total)
-if [ -z "${APP_KEY}" ] || [[ "${APP_KEY}" == *"XXXX"* ]] || [[ ! "${APP_KEY}" =~ ^base64: ]] || [ ${#APP_KEY} -lt 50 ]; then
+if [ -z "${APP_KEY_TO_CHECK}" ] || [[ "${APP_KEY_TO_CHECK}" == *"XXXX"* ]] || [[ ! "${APP_KEY_TO_CHECK}" =~ ^base64: ]] || [ ${#APP_KEY_TO_CHECK} -lt 50 ]; then
     echo "⚠️ WARNING: APP_KEY is not set or invalid!"
-    echo "  Current value length: ${#APP_KEY} chars"
+    echo "  Current value length: ${#APP_KEY_TO_CHECK} chars"
     echo "  Required: starts with 'base64:' and at least 50 chars total"
     
     # In production, fail fast to avoid security issues
@@ -22,7 +29,7 @@ if [ -z "${APP_KEY}" ] || [[ "${APP_KEY}" == *"XXXX"* ]] || [[ ! "${APP_KEY}" =~
         php artisan key:generate --force || true
     fi
 else
-    echo "✅ APP_KEY is configured (${#APP_KEY} chars)"
+    echo "✅ APP_KEY is configured (${#APP_KEY_TO_CHECK} chars)"
 fi
 
 # Safe Laravel optimizations (do not depend on DB)
