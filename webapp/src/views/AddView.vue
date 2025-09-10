@@ -12,12 +12,12 @@
 
     <section class="items-baseline justify-center row">
       <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
-        <q-btn 
-          :color="isBookInLibrary(book) ? 'positive' : 'primary'" 
-          :disable="isBookInLibrary(book)" 
+        <q-btn
+          :color="isBookInLibrary(book) ? 'positive' : 'primary'"
+          :disable="isBookInLibrary(book)"
           :icon="isBookInLibrary(book) ? 'check' : 'add'"
-          round 
-          @click.once="addBook(book)" 
+          round
+          @click.once="addBook(book)"
         />
         <div class="book-cover" @click="showBookReviews(book)">
           <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" style="width: 8rem" />
