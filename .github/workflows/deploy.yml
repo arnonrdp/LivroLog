@@ -266,13 +266,13 @@ jobs:
             
             # 1) Tenta usar a secret APP_KEY; se ausente/inválida, gera automaticamente
             APP_KEY_CAND="${APP_KEY:-}"
-            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{40,}$'; then
+            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
             fi
             
             # 2) Valida e grava no .env (operação atômica)
-            if printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{40,}$'; then
+            if printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               tmpfile="$(mktemp)"
               # Remove qualquer APP_KEY existente e escreve a nova (seguro p/ caracteres especiais)
               grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
@@ -293,7 +293,7 @@ jobs:
             
             # Validação correta da APP_KEY no .env (44+ chars após base64:)
             echo "Validating APP_KEY in .env..."
-            if ! grep -Eq '^APP_KEY=base64:[A-Za-z0-9+/=]{40,}$' /var/www/livrolog/shared/.env; then
+            if ! grep -Eq '^APP_KEY=base64:[A-Za-z0-9+/=]{44}$' /var/www/livrolog/shared/.env; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
               echo ""
               echo "🔧 Para corrigir:"
