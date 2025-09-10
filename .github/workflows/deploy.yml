@@ -327,7 +327,7 @@ jobs:
             }
 
             # Define APP_KEY validation pattern to avoid YAML truncation issues
-            APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
+            APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}\$'
 
             # 1) Tenta usar a secret APP_KEY; se ausente/inválida, gera automaticamente
             APP_KEY_CAND="${APP_KEY:-}"
