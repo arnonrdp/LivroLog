@@ -116,8 +116,17 @@ jobs:
 
             echo "🔍 Usando porta ${WEB_PORT} para web"
 
-            # Opcional: limpar containers antigos do LivroLog
+            # Limpar containers antigos do LivroLog e espaço em disco
             docker rm -f livrolog-web-dev livrolog-web 2>/dev/null || true
+
+            # Limpeza de espaço em disco para evitar "no space left on device"
+            echo "🧹 Limpando espaço em disco..."
+            echo "Espaço antes da limpeza:"
+            df -h / || true
+            docker system prune -f --volumes || true
+            docker image prune -a -f || true
+            echo "Espaço após limpeza:"
+            df -h / || true
 
             # Gera compose dev
             cat > docker-compose.dev.yml << EOF
@@ -319,13 +328,21 @@ jobs:
 
             # 1) Tenta usar a secret APP_KEY; se ausente/inválida, gera automaticamente
             APP_KEY_CAND="${APP_KEY:-}"
-            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
+            echo "🔍 Validating APP_KEY candidate: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ (has value)}${APP_KEY_CAND:- (empty)}"
+            
+            # Regex pattern for 44-char base64 key (explicitly define for clarity)
+            APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
+            
+            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
+              echo "🔧 Generated new APP_KEY: [${#APP_KEY_CAND} chars]"
+            else
+              echo "✅ APP_KEY from secret is valid"
             fi
 
             # 2) Valida e grava no .env (operação atômica)
-            if printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
+            if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               tmpfile="$(mktemp)"
               # Remove qualquer APP_KEY existente e escreve a nova (seguro p/ caracteres especiais)
               grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
@@ -405,12 +422,19 @@ jobs:
             test -d /var/www/livrolog/shared/db || { echo "❌ /var/www/livrolog/shared/db não existe"; exit 1; }
 
             # Validação correta da APP_KEY no .env (exatamente 44 chars após base64:)
-            echo "Validating APP_KEY in .env..."
-            if ! grep -Eq '^APP_KEY=base64:[A-Za-z0-9+/=]{44}$' /var/www/livrolog/shared/.env; then
+            echo "🔍 Validating APP_KEY in .env file..."
+            
+            # Extract and validate APP_KEY from .env
+            ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- && true || echo "")
+            echo "Found APP_KEY in .env: [${#ENV_APP_KEY} chars]${ENV_APP_KEY:+ (has value)}${ENV_APP_KEY:- (missing)}"
+            
+            if ! printf '%s' "$ENV_APP_KEY" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
+              echo "Expected pattern: $APP_KEY_PATTERN"
+              echo "Actual value: '$ENV_APP_KEY'"
               exit 1
             fi
-            echo "✅ APP_KEY ok"
+            echo "✅ APP_KEY validation passed"
 
             # Reload normalized values for validation
             eval $(grep -E '^(DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env)
@@ -479,11 +503,13 @@ jobs:
                 volumes:
                   - /var/www/livrolog/shared/db:/var/lib/mysql
                 healthcheck:
-                  test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u${DB_USERNAME} -p${DB_PASSWORD}"]
+                  # Uses root user since DB_USERNAME defaults to 'root' in this deployment
+                  # For non-root users, use: mysql --silent --connect-timeout=5 -u $$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1'
+                  test: ["CMD-SHELL", "mysql --silent --connect-timeout=5 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
                   interval: 10s
                   timeout: 5s
                   retries: 30
-                  start_period: 60s
+                  start_period: 90s
 
               # Redis Cache (internal, no exposed ports)
               redis:
@@ -590,12 +616,42 @@ jobs:
             echo "Cleaning up old networks..."
             docker network rm livrolog-net || true
 
+            # Limpeza de espaço em disco para evitar "no space left on device"
+            echo "🧹 Limpando espaço em disco..."
+            echo "Espaço antes da limpeza:"
+            df -h / || true
+            docker system prune -f --volumes || true
+            docker image prune -a -f || true
+            echo "Espaço após limpeza:"
+            df -h / || true
+
             # Pull and start containers (idempotent)
             echo "🐳 Pulling and starting containers with force-recreate..."
             $COMPOSE pull
 
             echo "🗄️ Starting MariaDB and Redis..."
-            $COMPOSE up -d --remove-orphans --force-recreate
+            
+            # Verify database directory permissions before starting
+            echo "🔍 Pre-startup checks..."
+            if test -d /var/www/livrolog/shared/db; then
+              ls -ld /var/www/livrolog/shared/db
+            else
+              echo "Database directory not found (will be created)"
+            fi
+            
+            # Start containers with enhanced error reporting
+            if ! $COMPOSE up -d --remove-orphans --force-recreate; then
+              echo "❌ Failed to start containers"
+              echo "=== Docker Compose Status ==="
+              $COMPOSE ps || true
+              echo "=== Docker System Info ==="
+              docker system df || true
+              exit 1
+            fi
+            
+            # Immediate status check
+            echo "🔍 Initial container status:"
+            $COMPOSE ps
 
             # Wait for MariaDB health with configurable timeout
             # Default: 600s (10 minutes), max: 1800s (30 minutes)
