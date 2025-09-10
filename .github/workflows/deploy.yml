@@ -201,6 +201,77 @@ jobs:
             sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
             sed -i "s|REPLACE_API_IMAGE|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
 
+            # Setup APP_KEY for development environment (same logic as production)
+            echo "🔧 Setting up APP_KEY for development environment..."
+            
+            # Use the same gen_app_key function and pattern as production
+            APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
+            APP_KEY_CAND="${APP_KEY:-}"
+            echo "🔍 Validating APP_KEY candidate for dev: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ (has value)}${APP_KEY_CAND:- (empty)}"
+            
+            # Validate APP_KEY format: base64:44characters
+            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
+              echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente para dev..."
+              APP_KEY_CAND="$(gen_app_key || true)"
+              echo "🔧 Generated new APP_KEY for dev: [${#APP_KEY_CAND} chars]"
+            else
+              echo "✅ APP_KEY from secret is valid for dev"
+            fi
+
+            # Setup .env.dev file with proper APP_KEY
+            if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
+              # Ensure the dev shared directory and storage exist
+              sudo mkdir -p /var/www/livrolog-dev/shared
+              sudo mkdir -p /var/www/livrolog-dev/shared/storage
+              sudo chown -R bitnami:bitnami /var/www/livrolog-dev
+              
+              # Create/update the .env.dev file with APP_KEY
+              tmpfile="$(mktemp)"
+              # If .env.dev exists, remove any existing APP_KEY line
+              if [ -f /var/www/livrolog-dev/shared/.env.dev ]; then
+                grep -v '^APP_KEY=' /var/www/livrolog-dev/shared/.env.dev > "$tmpfile" || true
+              fi
+              # Add the valid APP_KEY
+              printf 'APP_KEY=%s\n' "$APP_KEY_CAND" >> "$tmpfile"
+              # Add basic Laravel environment settings if .env.dev didn't exist
+              if [ ! -f /var/www/livrolog-dev/shared/.env.dev ]; then
+                cat >> "$tmpfile" << 'EOF'
+APP_NAME=LivroLog
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=http://localhost
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=livrolog
+DB_USERNAME=livrolog
+DB_PASSWORD=
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=redis
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+EOF
+              fi
+              sudo mv "$tmpfile" /var/www/livrolog-dev/shared/.env.dev
+              sudo chown bitnami:bitnami /var/www/livrolog-dev/shared/.env.dev
+              echo "✅ APP_KEY provisionada/atualizada em /var/www/livrolog-dev/shared/.env.dev"
+            else
+              echo "❌ Falha ao provisionar APP_KEY automaticamente para dev (não foi possível obter uma chave válida)"
+              exit 1
+            fi
+
             # Verificar .env e storage antes do up (fail-fast com mensagem clara)
             test -f /var/www/livrolog-dev/shared/.env.dev || { echo "❌ /var/www/livrolog-dev/shared/.env.dev não existe"; exit 1; }
             test -d /var/www/livrolog-dev/shared/storage || { echo "❌ /var/www/livrolog-dev/shared/storage não existe"; exit 1; }
