@@ -246,10 +246,54 @@ jobs:
             sudo chown -R bitnami:bitnami /var/www/livrolog
             cd "$DOCKER_DIR"
 
-            # Pre-checks: verify .env and storage
-            echo "🔍 Performing pre-checks..."
+            # Pre-checks: verify environment and infrastructure
+            echo "🔍 Performing pre-deployment checks..."
+            
+            # Check 1: .env file exists
             test -f /var/www/livrolog/shared/.env || { echo "❌ /var/www/livrolog/shared/.env não existe"; exit 1; }
             test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
+            
+            # Check 2: APP_KEY validation
+            echo "Validating APP_KEY in .env..."
+            if ! grep -Eq '^APP_KEY=base64:.{50,}' /var/www/livrolog/shared/.env; then
+              echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
+              echo ""
+              echo "🔧 Para corrigir:"
+              echo "   1. Gere uma chave válida:"
+              echo "      docker run --rm -v /var/www/livrolog/shared:/app -w /var/www/html ghcr.io/arnonrdp/livrolog-api:prod bash -lc 'php artisan key:generate --show'"
+              echo ""
+              echo "   2. Adicione a chave ao arquivo .env:"
+              echo "      sudo nano /var/www/livrolog/shared/.env"
+              echo "      # Insira a linha: APP_KEY=base64:chave_gerada_acima"
+              echo ""
+              exit 1
+            fi
+            echo "✅ APP_KEY válida encontrada"
+            
+            # Check 3: MySQL/MariaDB bind-address detection
+            echo "Checking MySQL/MariaDB bind configuration..."
+            if ss -ltn | awk '{print $4}' | grep -qE '(^|:)127\.0\.0\.1:3306'; then
+              echo "⚠️ MySQL ouvindo apenas em 127.0.0.1:3306. Ajuste bind-address=0.0.0.0 para containers alcançarem."
+              echo ""
+              echo "🔧 Para corrigir no servidor:"
+              echo ""
+              echo "   Bitnami MariaDB:"
+              echo "     sudo sed -i 's/^\s*bind-address\s*=.*/bind-address=0.0.0.0/' /opt/bitnami/mariadb/conf/my.cnf"
+              echo "     sudo sed -i 's/^\s*skip-networking/# skip-networking/' /opt/bitnami/mariadb/conf/my.cnf"
+              echo "     sudo /opt/bitnami/ctlscript.sh restart mariadb"
+              echo ""
+              echo "   Ubuntu/Debian padrão:"
+              echo "     sudo sed -i 's/^\s*bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf"
+              echo "     sudo sed -i 's/^\s*skip-networking/# skip-networking/' /etc/mysql/mysql.conf.d/mysqld.cnf"
+              echo "     sudo systemctl restart mysql"
+              echo ""
+              echo "   Firewall (se UFW estiver ativo):"
+              echo "     sudo ufw allow from 172.17.0.0/16 to any port 3306 proto tcp"
+              echo ""
+              echo "❌ Corrigir configuração do MySQL e executar novamente o deploy"
+              exit 1
+            fi
+            echo "✅ MySQL ouvindo em 0.0.0.0:3306"
 
             # Login to GHCR if PAT is available
             if [ -n "${GHCR_PAT:-}" ]; then
