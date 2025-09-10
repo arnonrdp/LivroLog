@@ -247,23 +247,44 @@ jobs:
             sudo chown -R bitnami:bitnami /var/www/livrolog
             cd "$DOCKER_DIR"
 
-            # Auto-repair .env using GitHub secret if available
-            echo "🔧 Auto-repairing .env from GitHub secret..."
+            # Auto-provision/repair .env (POSIX + idempotent)
+            echo "🔧 Auto-provisioning .env (APP_KEY)..."
             sudo mkdir -p /var/www/livrolog/shared
             sudo touch /var/www/livrolog/shared/.env
             sudo chown -R $USER:$USER /var/www/livrolog
             
+            # Tenta usar APP_KEY de secret, senão gera
+            APP_KEY_CAND=""
+            
+            # 1) Secret do GitHub (se presente e válido)
             if [ -n "${APP_KEY:-}" ] && echo "$APP_KEY" | grep -Eq '^base64:.{50,}'; then
-              echo "✅ Valid APP_KEY found in GitHub secret, updating .env..."
-              tmpfile="$(mktemp)"
-              # Remove existing APP_KEY lines
-              grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
-              # Add new APP_KEY line (safe from special characters)
-              printf 'APP_KEY=%s\n' "$APP_KEY" >> "$tmpfile"
-              mv "$tmpfile" /var/www/livrolog/shared/.env
-              echo "   Updated .env with new APP_KEY"
+              APP_KEY_CAND="$APP_KEY"
             else
-              echo "⚠️ No valid APP_KEY in GitHub secret"
+              echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente via Docker..."
+              
+              # 2) Geração via Docker (php:8.3-cli)
+              APP_KEY_CAND="$(docker run --rm php:8.3-cli php -r 'echo "base64:".base64_encode(random_bytes(32)).PHP_EOL;' 2>/dev/null || true)"
+              
+              # 3) Fallback opcional local (se openssl existir), apenas se ainda inválido
+              if ! echo "$APP_KEY_CAND" | grep -Eq '^base64:.{50,}'; then
+                if command -v openssl >/dev/null 2>&1; then
+                  APP_KEY_CAND="$(openssl rand -base64 32 2>/dev/null | awk '{print "base64:"$0}' || true)"
+                fi
+              fi
+            fi
+            
+            # Valida novamente
+            if echo "$APP_KEY_CAND" | grep -Eq '^base64:.{50,}'; then
+              tmpfile="$(mktemp)"
+              # Remove qualquer APP_KEY atual
+              grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
+              # Escreve a APP_KEY validada (sem sed; seguro p/ caracteres especiais)
+              printf 'APP_KEY=%s\n' "$APP_KEY_CAND" >> "$tmpfile"
+              mv "$tmpfile" /var/www/livrolog/shared/.env
+              echo "✅ APP_KEY provisionada/atualizada em /var/www/livrolog/shared/.env"
+            else
+              echo "❌ Falha ao provisionar APP_KEY automaticamente (não foi possível obter uma chave válida)"
+              exit 1
             fi
 
             # Pre-checks: verify environment and infrastructure
