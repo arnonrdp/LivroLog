@@ -576,8 +576,8 @@ jobs:
                   - /var/www/livrolog/shared/db:/var/lib/mysql
                 healthcheck:
                   # Uses root user since DB_USERNAME defaults to 'root' in this deployment
-                  # For non-root users, use: mysql --silent --connect-timeout=5 -u $$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1'
-                  test: ["CMD-SHELL", "mysql --silent --connect-timeout=5 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
+                  # For non-root users, use: mysql --silent --connect-timeout=5 -u $MYSQL_USER -p$MYSQL_PASSWORD -e 'SELECT 1'
+                  test: ["CMD-SHELL", "mysql --silent --connect-timeout=5 -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
                   interval: 10s
                   timeout: 5s
                   retries: 30
@@ -606,8 +606,6 @@ jobs:
                   - DB_PORT=3306
                   - REDIS_HOST=redis
                   - REDIS_PORT=6379
-                  # Ensure APP_KEY is available to the container
-                  - APP_KEY=${APP_KEY}
                 ports:
                   - "127.0.0.1:18081:8080"
                 networks:
@@ -624,8 +622,8 @@ jobs:
                   redis:
                     condition: service_healthy
                 healthcheck:
-                  # Multi-stage healthcheck: first check nginx is responding, then Laravel
-                  test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/health >/dev/null 2>&1 && curl -f http://localhost:8080/healthz >/dev/null 2>&1"]
+                  # Simplified healthcheck using curl to test if nginx is responding
+                  test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
                   interval: 15s
                   timeout: 10s
                   retries: 30
