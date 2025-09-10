@@ -330,10 +330,8 @@ jobs:
             APP_KEY_CAND="${APP_KEY:-}"
             echo "🔍 Validating APP_KEY candidate: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ (has value)}${APP_KEY_CAND:- (empty)}"
             
-            # Regex pattern for 44-char base64 key (explicitly define for clarity)
-            APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
-            
-            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
+            # Validate APP_KEY format: base64:44characters
+            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
               echo "🔧 Generated new APP_KEY: [${#APP_KEY_CAND} chars]"
@@ -342,7 +340,7 @@ jobs:
             fi
 
             # 2) Valida e grava no .env (operação atômica)
-            if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
+            if printf '%s' "$APP_KEY_CAND" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               tmpfile="$(mktemp)"
               # Remove qualquer APP_KEY existente e escreve a nova (seguro p/ caracteres especiais)
               grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
@@ -428,9 +426,9 @@ jobs:
             ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- && true || echo "")
             echo "Found APP_KEY in .env: [${#ENV_APP_KEY} chars]${ENV_APP_KEY:+ (has value)}${ENV_APP_KEY:- (missing)}"
             
-            if ! printf '%s' "$ENV_APP_KEY" | grep -Eq "$APP_KEY_PATTERN"; then
+            if ! printf '%s' "$ENV_APP_KEY" | grep -Eq '^base64:[A-Za-z0-9+/=]{44}$'; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
-              echo "Expected pattern: $APP_KEY_PATTERN"
+              echo "Expected pattern: ^base64:[A-Za-z0-9+/=]{44}$"
               echo "Actual value: '$ENV_APP_KEY'"
               exit 1
             fi
