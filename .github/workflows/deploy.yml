@@ -222,6 +222,7 @@ jobs:
       ENVIRONMENT: Production
       DEPLOY_PATH: /var/www/livrolog
       GHCR_PAT: ${{ secrets.GHCR_PAT }}
+      APP_KEY: ${{ secrets.APP_KEY }}
 
     steps:
       - name: Checkout code for compose file
@@ -233,7 +234,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY
           script: |
             set -euo pipefail
             DOCKER_DIR="/var/www/livrolog/docker"
@@ -245,6 +246,25 @@ jobs:
             sudo mkdir -p "$DOCKER_DIR"
             sudo chown -R bitnami:bitnami /var/www/livrolog
             cd "$DOCKER_DIR"
+
+            # Auto-repair .env using GitHub secret if available
+            echo "🔧 Auto-repairing .env from GitHub secret..."
+            sudo mkdir -p /var/www/livrolog/shared
+            sudo touch /var/www/livrolog/shared/.env
+            sudo chown -R $USER:$USER /var/www/livrolog
+            
+            if [ -n "${APP_KEY:-}" ] && echo "$APP_KEY" | grep -Eq '^base64:.{50,}'; then
+              echo "✅ Valid APP_KEY found in GitHub secret, updating .env..."
+              if grep -q '^APP_KEY=' /var/www/livrolog/shared/.env; then
+                sed -i 's/^APP_KEY=.*/APP_KEY='"$APP_KEY"'/' /var/www/livrolog/shared/.env
+                echo "   Updated existing APP_KEY line"
+              else
+                printf '\nAPP_KEY=%s\n' "$APP_KEY" >> /var/www/livrolog/shared/.env
+                echo "   Added new APP_KEY line"
+              fi
+            else
+              echo "⚠️ No valid APP_KEY in GitHub secret (${#APP_KEY:-0} chars)"
+            fi
 
             # Pre-checks: verify environment and infrastructure
             echo "🔍 Performing pre-deployment checks..."
@@ -287,7 +307,7 @@ jobs:
               echo "     sudo sed -i 's/^\s*skip-networking/# skip-networking/' /etc/mysql/mysql.conf.d/mysqld.cnf"
               echo "     sudo systemctl restart mysql"
               echo ""
-              echo "   Firewall (se UFW estiver ativo):"
+              echo "   Firewall (se UFW estiver disponível):"
               echo "     sudo ufw allow from 172.17.0.0/16 to any port 3306 proto tcp"
               echo ""
               echo "❌ Corrigir configuração do MySQL e executar novamente o deploy"
@@ -435,7 +455,11 @@ jobs:
                 echo "=== Host DB socket/listeners ==="
                 sudo ss -ltnp | (grep :3306 || true) || true
                 echo "=== UFW status ==="
-                sudo ufw status || true
+                if command -v ufw >/dev/null 2>&1; then
+                  sudo ufw status || true
+                else
+                  echo "ℹ️ ufw not installed on host"
+                fi
 
                 echo "=== API->DB TCP test ==="
                 API_CID=$(docker compose -p livrolog ps -q api)
