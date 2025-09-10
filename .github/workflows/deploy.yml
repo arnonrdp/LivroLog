@@ -291,47 +291,59 @@ jobs:
             test -f /var/www/livrolog/shared/.env || { echo "❌ /var/www/livrolog/shared/.env não existe"; exit 1; }
             test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
             
-            # Validação correta da APP_KEY no .env (44+ chars após base64:)
+            # Validação correta da APP_KEY no .env (exatamente 44 chars após base64:)
             echo "Validating APP_KEY in .env..."
             if ! grep -Eq '^APP_KEY=base64:[A-Za-z0-9+/=]{44}$' /var/www/livrolog/shared/.env; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
-              echo ""
-              echo "🔧 Para corrigir:"
-              echo "   1. Gere uma chave válida:"
-              echo "      docker run --rm -v /var/www/livrolog/shared:/app -w /var/www/html ghcr.io/arnonrdp/livrolog-api:prod bash -lc 'php artisan key:generate --show'"
-              echo ""
-              echo "   2. Adicione a chave ao arquivo .env:"
-              echo "      sudo nano /var/www/livrolog/shared/.env"
-              echo "      # Insira a linha: APP_KEY=base64:chave_gerada_acima"
-              echo ""
               exit 1
             fi
-            echo "✅ APP_KEY válida encontrada"
+            echo "✅ APP_KEY ok"
             
-            # Check 3: MySQL/MariaDB bind-address detection
-            echo "Checking MySQL/MariaDB bind configuration..."
-            if ss -ltn | awk '{print $4}' | grep -qE '(^|:)127\.0\.0\.1:3306'; then
-              echo "⚠️ MySQL ouvindo apenas em 127.0.0.1:3306. Ajuste bind-address=0.0.0.0 para containers alcançarem."
-              echo ""
-              echo "🔧 Para corrigir no servidor:"
-              echo ""
-              echo "   Bitnami MariaDB:"
-              echo "     sudo sed -i 's/^\s*bind-address\s*=.*/bind-address=0.0.0.0/' /opt/bitnami/mariadb/conf/my.cnf"
-              echo "     sudo sed -i 's/^\s*skip-networking/# skip-networking/' /opt/bitnami/mariadb/conf/my.cnf"
-              echo "     sudo /opt/bitnami/ctlscript.sh restart mariadb"
-              echo ""
-              echo "   Ubuntu/Debian padrão:"
-              echo "     sudo sed -i 's/^\s*bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf"
-              echo "     sudo sed -i 's/^\s*skip-networking/# skip-networking/' /etc/mysql/mysql.conf.d/mysqld.cnf"
-              echo "     sudo systemctl restart mysql"
-              echo ""
-              echo "   Firewall (se UFW estiver disponível):"
-              echo "     sudo ufw allow from 172.17.0.0/16 to any port 3306 proto tcp"
-              echo ""
-              echo "❌ Corrigir configuração do MySQL e executar novamente o deploy"
+            # Check 2: Database credentials validation
+            echo "Validating database credentials in .env..."
+            
+            # Extract DB values from .env for validation
+            eval $(grep -E '^(DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env)
+            
+            # Check required DB fields
+            if [ "${DB_CONNECTION:-}" != "mysql" ]; then
+              echo "❌ DB_CONNECTION deve ser 'mysql'. Encontrado: '${DB_CONNECTION:-vazio}'"
               exit 1
             fi
-            echo "✅ MySQL ouvindo em 0.0.0.0:3306"
+            
+            if [ "${DB_HOST:-}" != "mariadb" ]; then
+              echo "❌ DB_HOST deve ser 'mariadb' (container name). Encontrado: '${DB_HOST:-vazio}'"
+              echo "🔧 Para corrigir: DB_HOST=mariadb"
+              exit 1
+            fi
+            
+            if [ "${DB_PORT:-}" != "3306" ]; then
+              echo "❌ DB_PORT deve ser '3306'. Encontrado: '${DB_PORT:-vazio}'"
+              exit 1
+            fi
+            
+            if [ -z "${DB_DATABASE:-}" ]; then
+              echo "❌ DB_DATABASE não pode estar vazio"
+              exit 1
+            fi
+            
+            if [ -z "${DB_USERNAME:-}" ]; then
+              echo "❌ DB_USERNAME não pode estar vazio"  
+              exit 1
+            fi
+            
+            if [ -z "${DB_PASSWORD:-}" ]; then
+              echo "❌ DB_PASSWORD não pode estar vazio"
+              exit 1
+            fi
+            
+            echo "✅ Database credentials ok"
+            
+            # Check 3: Create DB volume directory
+            echo "Creating database volume directory..."
+            sudo mkdir -p /var/www/livrolog/shared/db
+            sudo chown -R 999:999 /var/www/livrolog/shared/db  # MySQL container runs as user 999
+            echo "✅ Database volume ready"
 
             # Login to GHCR if PAT is available
             if [ -n "${GHCR_PAT:-}" ]; then
@@ -365,19 +377,40 @@ jobs:
             # Create production compose file
             cat > docker-compose.prod.yml << 'EOF'
             # docker-compose.prod.yml
-            # Production Docker Compose with internal network and loopback ports
+            # Production Docker Compose with internal MariaDB and network isolation
             
             name: livrolog
             
             services:
+              # MariaDB Database (internal, no exposed ports)
+              mariadb:
+                image: mariadb:10.11-jammy
+                restart: always
+                environment:
+                  - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+                  - MYSQL_DATABASE=${DB_DATABASE}
+                  - MYSQL_USER=${DB_USERNAME}
+                  - MYSQL_PASSWORD=${DB_PASSWORD}
+                networks:
+                  - livrolog-net
+                volumes:
+                  - /var/www/livrolog/shared/db:/var/lib/mysql
+                healthcheck:
+                  test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "${DB_USERNAME}", "--password=${DB_PASSWORD}"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 30
+                  start_period: 60s
+            
               # Laravel API with Nginx + PHP-FPM (serves on port 8080)
               api:
                 image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
                 restart: always
                 environment:
-                  # Override DB/Redis to use external services via host gateway
-                  - DB_HOST=host.docker.internal
+                  # Use containerized MariaDB
+                  - DB_HOST=mariadb
                   - DB_PORT=3306
+                  # Keep Redis external for now via host gateway
                   - REDIS_HOST=host.docker.internal
                   - REDIS_PORT=6379
                 ports:
@@ -390,6 +423,9 @@ jobs:
                   - /var/www/livrolog/shared/.env:/var/www/html/.env:ro
                 extra_hosts:
                   - "host.docker.internal:host-gateway"
+                depends_on:
+                  mariadb:
+                    condition: service_healthy
                 healthcheck:
                   test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
                   interval: 15s
@@ -406,13 +442,28 @@ jobs:
                 networks:
                   - livrolog-net
                 depends_on:
-                  - api
+                  api:
+                    condition: service_healthy
                 healthcheck:
                   test: ["CMD", "sh", "-c", "curl -fsS http://localhost/healthz"]
                   interval: 15s
                   timeout: 10s
                   retries: 10
                   start_period: 30s
+            
+            # Optional Redis service for future use (commented out - using external Redis for now)
+            #  redis:
+            #    image: redis:7-alpine
+            #    restart: always
+            #    networks:
+            #      - livrolog-net
+            #    volumes:
+            #      - /var/www/livrolog/shared/redis:/data
+            #    healthcheck:
+            #      test: ["CMD", "redis-cli", "ping"]
+            #      interval: 10s
+            #      timeout: 3s
+            #      retries: 5
             
             networks:
               livrolog-net:
@@ -424,14 +475,28 @@ jobs:
             echo "$RESOLVED_TAG" > .resolved_tag_prod
             echo "$RESOLVED_TAG" > .last_tag_prod
 
+            # Check for optional database seeding
+            echo "Checking for database seeding..."
+            if [ ! -f /var/www/livrolog/shared/db/ibdata1 ] && [ -f /var/www/livrolog/shared/db-seed.sql ]; then
+              echo "🌱 Empty database detected with seed file available - will seed after MariaDB starts"
+              SEED_REQUIRED=1
+            elif [ ! -f /var/www/livrolog/shared/db/ibdata1 ]; then
+              echo "🆕 Empty database detected (first run)"
+              echo "ℹ️ Para semear: coloque o dump em /var/www/livrolog/shared/db-seed.sql e reexecute o workflow"
+              SEED_REQUIRED=0
+            else
+              echo "✅ Existing database detected"
+              SEED_REQUIRED=0
+            fi
+
             # Preflight cleanup - stop existing containers and remove orphans
             echo "🧹 Preflight cleanup - ensuring idempotent deployment..."
             echo "Stopping existing compose project if running..."
             docker compose -p livrolog -f docker-compose.prod.yml down --remove-orphans || true
             
             echo "Removing any orphaned containers by name..."
-            docker rm -f livrolog-api livrolog-web || true
-            docker rm -f livrolog_api_1 livrolog_web_1 || true
+            docker rm -f livrolog-api livrolog-web livrolog-mariadb || true
+            docker rm -f livrolog_api_1 livrolog_web_1 livrolog_mariadb_1 || true
             
             echo "Cleaning up old networks..."
             docker network rm livrolog-net || true
@@ -439,17 +504,49 @@ jobs:
             # Pull and start containers (idempotent)
             echo "🐳 Pulling and starting containers with force-recreate..."
             docker compose -p livrolog -f docker-compose.prod.yml pull
+            
+            echo "🗄️ Subindo mariadb (sem portas expostas)..."
             docker compose -p livrolog -f docker-compose.prod.yml up -d --remove-orphans --force-recreate
 
-            # Verify connectivity from API container to host services
+            # Wait specifically for MariaDB health before proceeding
+            echo "⏳ Aguardando health do mariadb..."
+            deadline=$((SECONDS+300))  # 5 minutes timeout for DB startup
+            while true; do
+              if docker compose -p livrolog -f docker-compose.prod.yml ps mariadb | grep -q "healthy"; then
+                echo "✅ MariaDB is healthy"
+                break
+              fi
+              
+              if [ $SECONDS -ge $deadline ]; then
+                echo "❌ MariaDB health check timed out after 5 minutes"
+                echo "=== MariaDB Status ==="
+                docker compose -p livrolog ps mariadb
+                echo "=== MariaDB Logs (last 80 lines) ==="
+                docker compose -p livrolog logs --tail=80 mariadb
+                exit 1
+              fi
+              
+              echo "Waiting for MariaDB... ($((deadline - SECONDS))s remaining)"
+              sleep 10
+            done
+
+            # Optional database seeding (safe and idempotent)
+            if [ "$SEED_REQUIRED" -eq 1 ]; then
+              echo "🌱 Seeding database from /var/www/livrolog/shared/db-seed.sql..."
+              if docker compose -p livrolog exec -T mariadb mysql -u"${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/livrolog/shared/db-seed.sql; then
+                echo "✅ Database seeded successfully"
+              else
+                echo "⚠️ Database seeding failed, but continuing with deployment"
+              fi
+            fi
+
+            # Verify connectivity from API container to MariaDB
             echo "🔍 Verifying API container connectivity..."
             API_CID=$(docker compose -p livrolog ps -q api)
             if [ -n "$API_CID" ]; then
               echo "API Container ID: $API_CID"
-              echo "Testing host.docker.internal resolution:"
-              docker exec "$API_CID" getent hosts host.docker.internal || true
-              echo "Testing database connectivity:"
-              docker exec "$API_CID" timeout 5 bash -c 'cat < /dev/null > /dev/tcp/host.docker.internal/3306' && echo "✅ Database port 3306 reachable" || echo "❌ Database port 3306 unreachable"
+              echo "Testing MariaDB connectivity from API container:"
+              docker exec "$API_CID" timeout 5 bash -c 'cat < /dev/null > /dev/tcp/mariadb/3306' && echo "✅ MariaDB port 3306 reachable from API" || echo "❌ MariaDB port 3306 unreachable from API"
             fi
 
             # Wait for health checks with timeout
@@ -470,27 +567,20 @@ jobs:
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks timed out, performing rollback..."
                 
-                echo "=== Host DB socket/listeners ==="
-                sudo ss -ltnp | (grep :3306 || true) || true
-                echo "=== UFW status ==="
-                if command -v ufw >/dev/null 2>&1; then
-                  sudo ufw status || true
-                else
-                  echo "ℹ️ ufw not installed on host"
-                fi
-
-                echo "=== API->DB TCP test ==="
-                API_CID=$(docker compose -p livrolog ps -q api)
-                [ -n "$API_CID" ] && docker exec "$API_CID" bash -lc 'nc -vz host.docker.internal 3306 || (timeout 5 bash -lc "cat </dev/null >/dev/tcp/host.docker.internal/3306")' || true
-                
                 echo "=== Container Status ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-                echo "=== Web Logs (last 120 lines) ==="
-                docker logs --tail=120 $(docker compose -p livrolog ps -q web) || true
-                echo "=== API Logs (last 120 lines) ==="
-                docker logs --tail=120 $(docker compose -p livrolog ps -q api) || true
+                echo "=== MariaDB Logs (last 80 lines) ==="
+                docker compose -p livrolog logs --tail=80 mariadb || true
+                echo "=== API Logs (last 80 lines) ==="
+                docker compose -p livrolog logs --tail=80 api || true
+                echo "=== Web Logs (last 80 lines) ==="
+                docker compose -p livrolog logs --tail=80 web || true
                 
-                # Idempotent rollback
+                echo "=== API->MariaDB connectivity test ==="
+                API_CID=$(docker compose -p livrolog ps -q api)
+                [ -n "$API_CID" ] && docker exec "$API_CID" timeout 5 bash -c 'cat </dev/null >/dev/tcp/mariadb/3306' && echo "✅ API can reach MariaDB" || echo "❌ API cannot reach MariaDB"
+                
+                # Idempotent rollback (preserve DB volume)
                 echo "🔄 Performing idempotent rollback..."
                 docker compose -p livrolog -f docker-compose.prod.yml down --remove-orphans || true
                 LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
@@ -504,7 +594,7 @@ jobs:
             done
 
             # Run migrations and clear caches using dynamic container names
-            echo "🔄 Running migrations..."
+            echo "🔄 Rodando migrations..."
             API_CONTAINER=$(docker compose -p livrolog ps -q api | head -n 1)
             if [ -z "$API_CONTAINER" ]; then
               echo "❌ No API container found!"
@@ -524,6 +614,17 @@ jobs:
             curl -I http://127.0.0.1:18080/ || exit 1
             echo "Testing API health:"
             curl -I http://127.0.0.1:18081/health || exit 1
+            
+            # Test database connectivity from API
+            echo "Testing database connectivity from API:"
+            if docker exec "$API_CONTAINER" php artisan tinker --execute="DB::connection()->getPdo(); echo 'DB OK';" >/dev/null 2>&1; then
+              echo "✅ Database connection ok"
+            else
+              echo "❌ Database connection failed"
+              exit 1
+            fi
+            
+            echo "✅ Smoke tests web/api ok"
             echo "Container status:"
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
