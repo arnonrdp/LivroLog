@@ -203,12 +203,12 @@ jobs:
 
             # Setup APP_KEY for development environment (same logic as production)
             echo "🔧 Setting up APP_KEY for development environment..."
-            
+
             # Use the same gen_app_key function and pattern as production
             APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
             APP_KEY_CAND="${APP_KEY:-}"
             echo "🔍 Validating APP_KEY candidate for dev: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ (has value)}${APP_KEY_CAND:- (empty)}"
-            
+
             # Validate APP_KEY format: base64:44characters
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente para dev..."
@@ -403,7 +403,7 @@ jobs:
             # 1) Tenta usar a secret APP_KEY; se ausente/inválida, gera automaticamente
             APP_KEY_CAND="${APP_KEY:-}"
             echo "🔍 Validating APP_KEY candidate: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ (has value)}${APP_KEY_CAND:- (empty)}"
-            
+
             # Validate APP_KEY format: base64:44characters
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
@@ -439,18 +439,18 @@ jobs:
               DB_DATABASE="livrolog"
               echo "📝 Using default DB_DATABASE: ${DB_DATABASE}"
             fi
-            
+
             if [ -z "${DB_USERNAME:-}" ]; then
               DB_USERNAME="root"  
               echo "📝 Using default DB_USERNAME: ${DB_USERNAME}"
             fi
-            
+
             # Bootstrap DB_PASSWORD - prioridade: .env -> GitHub Secret -> falha
             # DB_PASSWORD_FROM_ENV: valor lido do arquivo .env no servidor
             # DEPLOY_DB_PASSWORD: valor vindo da GitHub Secret via environment variable
             DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"  # From .env file on server
             DEPLOY_DB_PASSWORD="${DEPLOY_DB_PASSWORD:-}"  # From GitHub Secret (environment variable)
-            
+
             if [ -n "${DB_PASSWORD_FROM_ENV}" ]; then
               DB_PASSWORD="${DB_PASSWORD_FROM_ENV}"
               echo "📝 Using DB_PASSWORD from existing .env file"
@@ -495,11 +495,11 @@ jobs:
 
             # Validação correta da APP_KEY no .env (exatamente 44 chars após base64:)
             echo "🔍 Validating APP_KEY in .env file..."
-            
+
             # Extract and validate APP_KEY from .env
             ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- && true || echo "")
             echo "Found APP_KEY in .env: [${#ENV_APP_KEY} chars]${ENV_APP_KEY:+ (has value)}${ENV_APP_KEY:- (missing)}"
-            
+
             if ! printf '%s' "$ENV_APP_KEY" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
               echo "Expected pattern: $APP_KEY_PATTERN"
@@ -606,6 +606,8 @@ jobs:
                   - DB_PORT=3306
                   - REDIS_HOST=redis
                   - REDIS_PORT=6379
+                  # Ensure APP_KEY is available to the container
+                  - APP_KEY=${APP_KEY}
                 ports:
                   - "127.0.0.1:18081:8080"
                 networks:
@@ -702,7 +704,7 @@ jobs:
             $COMPOSE pull
 
             echo "🗄️ Starting MariaDB and Redis..."
-            
+
             # Verify database directory permissions before starting
             echo "🔍 Pre-startup checks..."
             if test -d /var/www/livrolog/shared/db; then
@@ -710,7 +712,7 @@ jobs:
             else
               echo "Database directory not found (will be created)"
             fi
-            
+
             # Start containers with enhanced error reporting
             if ! $COMPOSE up -d --remove-orphans --force-recreate; then
               echo "❌ Failed to start containers"
@@ -720,7 +722,7 @@ jobs:
               docker system df || true
               exit 1
             fi
-            
+
             # Immediate status check
             echo "🔍 Initial container status:"
             $COMPOSE ps
@@ -728,12 +730,12 @@ jobs:
             # Wait for API container to start (give it 30 seconds initially)
             echo "⏳ Waiting for API container to start..."
             sleep 30
-            
+
             # Check API container status and logs early
             echo "🔍 API container status after startup:"
             API_STATUS=$($COMPOSE ps api --format "table {{.State}}" | tail -n +2)
             echo "API Status: $API_STATUS"
-            
+
             if echo "$API_STATUS" | grep -q "Restarting\|Exited"; then
               echo "❌ API container is failing to start. Showing logs..."
               echo "=== API Container Logs (last 50 lines) ==="
