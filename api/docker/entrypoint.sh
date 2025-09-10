@@ -5,13 +5,6 @@
 
 set -e
 
-# Wait for database to be ready
-echo "Waiting for database connection..."
-until php artisan migrate:status > /dev/null 2>&1; do
-    echo "Database not ready, waiting 2 seconds..."
-    sleep 2
-done
-
 # Check if APP_KEY exists and is valid (base64: + at least 44 chars = 50+ total)
 if [ -z "${APP_KEY}" ] || [[ "${APP_KEY}" == *"XXXX"* ]] || [[ ! "${APP_KEY}" =~ ^base64: ]] || [ ${#APP_KEY} -lt 50 ]; then
     echo "⚠️ WARNING: APP_KEY is not set or invalid!"
@@ -32,11 +25,12 @@ else
     echo "✅ APP_KEY is configured (${#APP_KEY} chars)"
 fi
 
-# Laravel cache optimizations
+# Safe Laravel optimizations (do not depend on DB)
 echo "Optimizing Laravel caches..."
-php artisan config:clear
-php artisan config:cache
-php artisan route:cache
+php artisan config:clear || true
+php artisan cache:clear || true
+php artisan config:cache || true
+php artisan route:cache || true
 
 # Only cache views if views directory exists
 if [ -d "resources/views" ]; then
@@ -46,7 +40,7 @@ else
     echo "WARNING: 'resources/views' directory not found. Skipping view cache step."
 fi
 
-# Generate Swagger documentation
+# Generate Swagger documentation (optional)
 php artisan l5-swagger:generate || true
 
 # Set proper permissions for Nginx
