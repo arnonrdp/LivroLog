@@ -29,10 +29,6 @@ jobs:
           script: |
             set -euo pipefail +x
             DOCKER_DIR="/var/www/livrolog-dev/docker"
-            OWNER="arnonrdp"
-            TAG="dev"
-            IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
-            IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
             
             echo "🚀 Starting simple development deployment"
             echo "Using MySQL + Redis containers"
@@ -44,23 +40,23 @@ jobs:
             sudo chown -R "$USER:$USER" /var/www/livrolog-dev
             cd "$DOCKER_DIR"
             
-            # Create minimal .env
+            # Create minimal .env for host applications to connect to containerized databases
             cat > /var/www/livrolog-dev/shared/.env.dev << ENVEOF
             APP_NAME=LivroLog
             APP_ENV=development
             APP_DEBUG=true
             APP_KEY=base64:$(head -c 32 /dev/urandom | base64 | tr -d '\n')
             DB_CONNECTION=mysql
-            DB_HOST=mysql
-            DB_PORT=3306
+            DB_HOST=127.0.0.1
+            DB_PORT=3307
             DB_DATABASE=livrolog_dev
             DB_USERNAME=livrolog
             DB_PASSWORD=supersecret
-            REDIS_HOST=redis
-            REDIS_PORT=6379
+            REDIS_HOST=127.0.0.1
+            REDIS_PORT=6380
             ENVEOF
             
-            # Create simple compose file
+            # Create simple compose file - ONLY MySQL and Redis
             cat > docker-compose.dev.yml << EOF
             name: livrolog_dev
             services:
@@ -99,81 +95,48 @@ jobs:
                   timeout: 2s
                   retries: 10
                   start_period: 5s
-              api:
-                image: ${IMAGE_API}:${TAG}
-                container_name: livrolog-api-dev
-                restart: always
-                environment:
-                  - DB_HOST=mysql
-                  - DB_PORT=3306
-                  - REDIS_HOST=redis
-                  - REDIS_PORT=6379
-                ports:
-                  - "127.0.0.1:8081:8080"
-                volumes:
-                  - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
-                  - /var/www/livrolog-dev/shared/.env.dev:/var/www/html/.env
-                networks:
-                  - dev-net
-                depends_on:
-                  mysql:
-                    condition: service_healthy
-                  redis:
-                    condition: service_healthy
-                healthcheck:
-                  test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
-                  interval: 10s
-                  timeout: 5s
-                  retries: 12
-                  start_period: 30s
-              web:
-                image: ${IMAGE_WEB}:${TAG}
-                container_name: livrolog-web-dev
-                restart: always
-                ports:
-                  - "127.0.0.1:8080:80"
-                networks:
-                  - dev-net
-                depends_on:
-                  api:
-                    condition: service_healthy
-                healthcheck:
-                  test: ["CMD", "sh", "-c", "curl -fsS http://localhost/healthz"]
-                  interval: 10s
-                  timeout: 5s
-                  retries: 6
-                  start_period: 15s
             networks:
               dev-net:
                 name: livrolog-dev-net
                 driver: bridge
             EOF
             
-            # Login to GitHub Container Registry
-            echo "${GHCR_PAT}" | docker login ghcr.io -u "${OWNER}" --password-stdin
-            
-            # Clean up and deploy
+            # Clean up and deploy database containers only
             docker compose -f docker-compose.dev.yml down --remove-orphans 2>/dev/null || true
             docker compose -f docker-compose.dev.yml pull
             docker compose -f docker-compose.dev.yml up -d
             
-            # Simple health check
-            echo "Waiting for services..."
-            sleep 60
+            # Wait for database health checks
+            echo "Waiting for database services to be healthy..."
+            timeout=60
+            elapsed=0
+            while [ $elapsed -lt $timeout ]; do
+              mysql_ok=0
+              redis_ok=0
+              
+              # Check MySQL
+              if docker exec livrolog-mysql-dev mysqladmin ping -h localhost -u root -psupersecret >/dev/null 2>&1; then
+                mysql_ok=1
+              fi
+              
+              # Check Redis  
+              if docker exec livrolog-redis-dev redis-cli ping | grep -q PONG >/dev/null 2>&1; then
+                redis_ok=1
+              fi
+              
+              if [ $mysql_ok -eq 1 ] && [ $redis_ok -eq 1 ]; then
+                echo "✅ Database services healthy"
+                echo "💾 MySQL: localhost:3307 (user: livrolog, password: supersecret, database: livrolog_dev)"
+                echo "🔴 Redis: localhost:6380"
+                echo "📂 Storage: /var/www/livrolog-dev/shared/storage"
+                echo "🎉 Database-only deployment completed successfully!"
+                exit 0
+              fi
+              
+              echo "Waiting for services... (MySQL: $mysql_ok, Redis: $redis_ok)"
+              sleep 5
+              elapsed=$((elapsed + 5))
+            done
             
-            # Test endpoints
-            if curl -f http://localhost:8080/healthz >/dev/null 2>&1; then
-              echo "✅ Web service healthy"
-            else
-              echo "❌ Web service failed"
-              exit 1
-            fi
-            
-            if curl -f http://localhost:8081/healthz >/dev/null 2>&1; then
-              echo "✅ API service healthy"
-            else
-              echo "❌ API service failed"
-              exit 1
-            fi
-            
-            echo "🎉 Simple deployment completed successfully"
+            echo "❌ Database services failed to become healthy within $timeout seconds"
+            exit 1
