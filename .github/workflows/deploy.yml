@@ -123,8 +123,8 @@ jobs:
             echo "🧹 Limpando espaço em disco..."
             echo "Espaço antes da limpeza:"
             df -h / || true
-            docker system prune -f --volumes || true
-            docker image prune -a -f || true
+            docker system prune -f --volumes 2>/dev/null || true
+            docker image prune -a -f 2>/dev/null || true
             echo "Espaço após limpeza:"
             df -h / || true
 
@@ -400,29 +400,24 @@ jobs:
             # Define APP_KEY validation pattern to avoid YAML truncation issues
             APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
 
-            # 1) Tenta usar a secret APP_KEY; se ausente/inválida, gera automaticamente
+            # Auto-provision APP_KEY if needed
             APP_KEY_CAND="${APP_KEY:-}"
-            echo "🔍 Validating APP_KEY candidate: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ (has value)}${APP_KEY_CAND:- (empty)}"
-
-            # Validate APP_KEY format: base64:44characters
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
-              echo "🔧 Generated new APP_KEY: [${#APP_KEY_CAND} chars]"
             else
               echo "✅ APP_KEY from secret is valid"
             fi
 
-            # 2) Valida e grava no .env (operação atômica)
+            # Save valid APP_KEY to .env
             if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               tmpfile="$(mktemp)"
-              # Remove qualquer APP_KEY existente e escreve a nova (seguro p/ caracteres especiais)
               grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
               printf 'APP_KEY=%s\n' "$APP_KEY_CAND" >> "$tmpfile"
               mv "$tmpfile" /var/www/livrolog/shared/.env
               echo "✅ APP_KEY provisionada/atualizada em /var/www/livrolog/shared/.env"
             else
-              echo "❌ Falha ao provisionar APP_KEY automaticamente (não foi possível obter uma chave válida)"
+              echo "❌ Falha ao provisionar APP_KEY automaticamente"
               exit 1
             fi
 
@@ -435,21 +430,12 @@ jobs:
             eval $(grep -E '^(DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env 2>/dev/null || true)
 
             # Bootstrap database credentials from GitHub Secrets if not present in .env
-            if [ -z "${DB_DATABASE:-}" ]; then
-              DB_DATABASE="livrolog"
-              echo "📝 Using default DB_DATABASE: ${DB_DATABASE}"
-            fi
-
-            if [ -z "${DB_USERNAME:-}" ]; then
-              DB_USERNAME="root"  
-              echo "📝 Using default DB_USERNAME: ${DB_USERNAME}"
-            fi
+            [ -z "${DB_DATABASE:-}" ] && DB_DATABASE="livrolog" && echo "📝 Using default DB_DATABASE: ${DB_DATABASE}"
+            [ -z "${DB_USERNAME:-}" ] && DB_USERNAME="root" && echo "📝 Using default DB_USERNAME: ${DB_USERNAME}"
 
             # Bootstrap DB_PASSWORD - prioridade: .env -> GitHub Secret -> falha
-            # DB_PASSWORD_FROM_ENV: valor lido do arquivo .env no servidor
-            # DEPLOY_DB_PASSWORD: valor vindo da GitHub Secret via environment variable
-            DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"  # From .env file on server
-            DEPLOY_DB_PASSWORD="${DEPLOY_DB_PASSWORD:-}"  # From GitHub Secret (environment variable)
+            DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"
+            DEPLOY_DB_PASSWORD="${DEPLOY_DB_PASSWORD:-}"
 
             if [ -n "${DB_PASSWORD_FROM_ENV}" ]; then
               DB_PASSWORD="${DB_PASSWORD_FROM_ENV}"
@@ -493,17 +479,11 @@ jobs:
             test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
             test -d /var/www/livrolog/shared/db || { echo "❌ /var/www/livrolog/shared/db não existe"; exit 1; }
 
-            # Validação correta da APP_KEY no .env (exatamente 44 chars após base64:)
+            # Validate APP_KEY in .env file
             echo "🔍 Validating APP_KEY in .env file..."
-
-            # Extract and validate APP_KEY from .env
             ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- && true || echo "")
-            echo "Found APP_KEY in .env: [${#ENV_APP_KEY} chars]${ENV_APP_KEY:+ (has value)}${ENV_APP_KEY:- (missing)}"
-
             if ! printf '%s' "$ENV_APP_KEY" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
-              echo "Expected pattern: $APP_KEY_PATTERN"
-              echo "Actual value: '$ENV_APP_KEY'"
               exit 1
             fi
             echo "✅ APP_KEY validation passed"
@@ -680,21 +660,21 @@ jobs:
             # Preflight cleanup - stop existing containers and remove orphans
             echo "🧹 Preflight cleanup - ensuring idempotent deployment..."
             echo "Stopping existing compose project if running..."
-            $COMPOSE down --remove-orphans || true
+            $COMPOSE down --remove-orphans 2>/dev/null || true
 
             echo "Removing any orphaned containers by name..."
-            docker rm -f livrolog-api livrolog-web livrolog-mariadb || true
-            docker rm -f livrolog_api_1 livrolog_web_1 livrolog_mariadb_1 || true
+            docker rm -f livrolog-api livrolog-web livrolog-mariadb 2>/dev/null || true
+            docker rm -f livrolog_api_1 livrolog_web_1 livrolog_mariadb_1 2>/dev/null || true
 
             echo "Cleaning up old networks..."
-            docker network rm livrolog-net || true
+            docker network rm livrolog-net 2>/dev/null || true
 
             # Limpeza de espaço em disco para evitar "no space left on device"
             echo "🧹 Limpando espaço em disco..."
             echo "Espaço antes da limpeza:"
             df -h / || true
-            docker system prune -f --volumes || true
-            docker image prune -a -f || true
+            docker system prune -f --volumes 2>/dev/null || true
+            docker image prune -a -f 2>/dev/null || true
             echo "Espaço após limpeza:"
             df -h / || true
 
@@ -863,12 +843,12 @@ jobs:
                 
                 # Idempotent rollback (preserve DB volume)
                 echo "🔄 Performing idempotent rollback..."
-                $COMPOSE down --remove-orphans || true
+                $COMPOSE down --remove-orphans 2>/dev/null || true
                 LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
                 export TAG="$LAST_TAG"
                 echo "Rolling back to tag: $TAG"
-                $COMPOSE pull
-                $COMPOSE up -d --remove-orphans --force-recreate
+                $COMPOSE pull 2>/dev/null || true
+                $COMPOSE up -d --remove-orphans --force-recreate 2>/dev/null || true
                 exit 1
               fi
               sleep 5
