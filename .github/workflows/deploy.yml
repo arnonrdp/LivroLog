@@ -222,10 +222,8 @@ jobs:
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente para dev..."
               APP_KEY_CAND="$(gen_app_key || true)"
-              echo "🔧 Generated new APP_KEY for dev: [${#APP_KEY_CAND} chars]"
-            else
-              echo "✅ APP_KEY from secret is valid for dev"
             fi
+            echo "🔧 APP_KEY for dev: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ ($(printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN" && echo "valid" || echo "invalid"))}${APP_KEY_CAND:- (empty)}"
 
             # Setup .env.dev file with proper APP_KEY
             if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
@@ -415,9 +413,8 @@ jobs:
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
-            else
-              echo "✅ APP_KEY from secret is valid"
             fi
+            echo "🔧 APP_KEY for prod: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ ($(printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN" && echo "valid" || echo "invalid"))}${APP_KEY_CAND:- (empty)}"
 
             # Save valid APP_KEY to .env
             if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
