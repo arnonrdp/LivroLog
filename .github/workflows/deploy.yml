@@ -152,12 +152,6 @@ jobs:
                   condition: service_healthy
                 redis:
                   condition: service_healthy
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
-                interval: 15s
-                timeout: 5s
-                retries: 10
-                start_period: 60s
             web:
               image: ghcr.io/arnonrdp/livrolog-web:dev
               container_name: livrolog-web-dev
@@ -167,8 +161,7 @@ jobs:
               networks:
                 - livrolog-dev-net
               depends_on:
-                api:
-                  condition: service_healthy
+                - api
               healthcheck:
                 test: ["CMD", "curl", "-f", "http://localhost/"]
                 interval: 30s
