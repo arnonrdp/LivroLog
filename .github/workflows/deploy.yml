@@ -202,6 +202,17 @@ jobs:
             # Setup APP_KEY for development environment (same logic as production)
             echo "🔧 Setting up APP_KEY for development environment..."
 
+            # Função POSIX para gerar APP_KEY compatível com Laravel (sem depender de imagens externas)
+            gen_app_key() {
+              if command -v head >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1; then
+                head -c 32 /dev/urandom | base64 | tr -d '\n' | awk '{print "base64:" $0}'
+              elif command -v openssl >/dev/null 2>&1; then
+                openssl rand -base64 32 | tr -d '\n' | awk '{print "base64:" $0}'
+              else
+                echo ""
+              fi
+            }
+
             # Use the same gen_app_key function and pattern as production
             APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
             APP_KEY_CAND="${APP_KEY:-}"
