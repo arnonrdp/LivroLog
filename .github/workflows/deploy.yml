@@ -83,7 +83,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,TARGET_BRANCH
           script: |
-            set -euo pipefail
+            set -euo pipefail +x
             DOCKER_DIR="/var/www/livrolog-dev/docker"
             OWNER="arnonrdp"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
@@ -357,7 +357,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DEPLOY_DB_PASSWORD,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
           script: |
-            set -euo pipefail
+            set -euo pipefail +x
             DOCKER_DIR="/var/www/livrolog/docker"
             OWNER="arnonrdp"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
@@ -679,8 +679,8 @@ jobs:
             df -h / || true
 
             # Pull and start containers (idempotent)
-            echo "🐳 Pulling and starting containers with force-recreate..."
-            $COMPOSE pull
+            echo "🐳 Pulling containers..."
+            $COMPOSE pull >/dev/null 2>&1
 
             echo "🗄️ Starting MariaDB and Redis..."
 
@@ -693,7 +693,8 @@ jobs:
             fi
 
             # Start containers with enhanced error reporting
-            if ! $COMPOSE up -d --remove-orphans --force-recreate; then
+            echo "🐳 Starting containers..."
+            if ! $COMPOSE up -d --remove-orphans --force-recreate >/dev/null 2>&1; then
               echo "❌ Failed to start containers"
               echo "=== Docker Compose Status ==="
               $COMPOSE ps || true
