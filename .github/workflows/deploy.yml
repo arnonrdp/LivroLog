@@ -119,14 +119,12 @@ jobs:
             # Limpar containers antigos do LivroLog e espaço em disco
             docker rm -f livrolog-web-dev livrolog-web 2>/dev/null || true
 
-            # Limpeza de espaço em disco para evitar "no space left on device"
-            echo "🧹 Limpando espaço em disco..."
-            echo "Espaço antes da limpeza:"
-            df -h / || true
-            docker system prune -f --volumes 2>/dev/null || true
-            docker image prune -a -f 2>/dev/null || true
-            echo "Espaço após limpeza:"
-            df -h / || true
+            # Limpeza seletiva de espaço em disco (rápida e eficiente)
+            echo "🧹 Limpando recursos Docker não utilizados..."
+            # Remove apenas containers parados e volumes órfãos (rápido)
+            timeout 10 docker system prune -f --volumes 2>/dev/null || true
+            # Skip image pruning for dev - not critical
+            echo "✅ Limpeza concluída"
 
             # Gera compose dev
             cat > docker-compose.dev.yml << EOF
@@ -356,6 +354,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DEPLOY_DB_PASSWORD,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
+          command_timeout: 15m
           script: |
             set -euo pipefail +x
             DOCKER_DIR="/var/www/livrolog/docker"
@@ -669,14 +668,14 @@ jobs:
             echo "Cleaning up old networks..."
             docker network rm livrolog-net 2>/dev/null || true
 
-            # Limpeza de espaço em disco para evitar "no space left on device"
-            echo "🧹 Limpando espaço em disco..."
-            echo "Espaço antes da limpeza:"
-            df -h / || true
-            docker system prune -f --volumes 2>/dev/null || true
-            docker image prune -a -f 2>/dev/null || true
-            echo "Espaço após limpeza:"
-            df -h / || true
+            # Limpeza seletiva de espaço em disco (rápida e eficiente)
+            echo "🧹 Limpando recursos Docker não utilizados..."
+            # Remove apenas containers parados e volumes órfãos (rápido)
+            timeout 10 docker system prune -f --volumes 2>/dev/null || true
+            # Limpa apenas imagens antigas do LivroLog (seletivo e seguro)
+            echo "🗑️ Removendo imagens antigas do LivroLog..."
+            docker images | grep -E "livrolog-(api|web)" | grep -v "$RESOLVED_TAG" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            echo "✅ Limpeza concluída"
 
             # Pull and start containers (idempotent)
             echo "🐳 Pulling containers..."
