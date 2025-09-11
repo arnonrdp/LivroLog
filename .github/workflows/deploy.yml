@@ -83,18 +83,19 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,TARGET_BRANCH
           command_timeout: 5m
+          timeout: 5m
           script: |
             set -euo pipefail +x
             DOCKER_DIR="/var/www/livrolog-dev/docker"
-            
+
             echo "🚀 Deploying database containers for dev environment"
-            
+
             # Quick setup
             sudo mkdir -p "$DOCKER_DIR" /var/www/livrolog-dev/shared/{storage,db}
             sudo chown -R bitnami:bitnami /var/www/livrolog-dev
             sudo chown -R 999:999 /var/www/livrolog-dev/shared/db  # MySQL container user
             cd "$DOCKER_DIR"
-            
+
             # Quick cleanup - remove only database containers
             docker rm -f livrolog-mysql-dev livrolog-redis-dev 2>/dev/null || true
 
@@ -135,11 +136,11 @@ jobs:
             # Deploy database containers
             echo "Starting database containers..."
             docker compose -p livrolog_dev -f docker-compose.dev.yml up -d --remove-orphans
-            
+
             # Quick verification (max 20s)
             echo "Verifying containers..."
             sleep 5
-            
+
             if docker ps | grep -q livrolog-mysql-dev && docker ps | grep -q livrolog-redis-dev; then
               echo "✅ Database containers deployed successfully"
             else
