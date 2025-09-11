@@ -1,0 +1,174 @@
+name: Simple Dev Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docker-canary-dev:
+    name: docker-canary-dev
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: Development
+      DEPLOY_PATH: /var/www/livrolog-dev
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
+      APP_KEY: ${{ secrets.APP_KEY }}
+      TARGET_BRANCH: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy development containers
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,TARGET_BRANCH
+          command_timeout: 10m
+          script: |
+            set -euo pipefail +x
+            DOCKER_DIR="/var/www/livrolog-dev/docker"
+            OWNER="arnonrdp"
+            TAG="dev"
+            IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
+            IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
+            
+            echo "🚀 Starting simple development deployment"
+            echo "Using MySQL + Redis containers"
+            
+            # Create directories
+            sudo mkdir -p "$DOCKER_DIR"
+            sudo mkdir -p /var/www/livrolog-dev/shared/{storage,db}
+            sudo chown -R 999:999 /var/www/livrolog-dev/shared/db
+            sudo chown -R "$USER:$USER" /var/www/livrolog-dev
+            cd "$DOCKER_DIR"
+            
+            # Create minimal .env
+            cat > /var/www/livrolog-dev/shared/.env.dev << ENVEOF
+            APP_NAME=LivroLog
+            APP_ENV=development
+            APP_DEBUG=true
+            APP_KEY=base64:$(head -c 32 /dev/urandom | base64 | tr -d '\n')
+            DB_CONNECTION=mysql
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_DATABASE=livrolog_dev
+            DB_USERNAME=livrolog
+            DB_PASSWORD=supersecret
+            REDIS_HOST=redis
+            REDIS_PORT=6379
+            ENVEOF
+            
+            # Create simple compose file
+            cat > docker-compose.dev.yml << EOF
+            name: livrolog_dev
+            services:
+              mysql:
+                image: mysql:8.0
+                container_name: livrolog-mysql-dev
+                restart: always
+                environment:
+                  MYSQL_ROOT_PASSWORD: supersecret
+                  MYSQL_DATABASE: livrolog_dev
+                  MYSQL_USER: livrolog
+                  MYSQL_PASSWORD: supersecret
+                ports:
+                  - "127.0.0.1:3307:3306"
+                volumes:
+                  - /var/www/livrolog-dev/shared/db:/var/lib/mysql
+                networks:
+                  - dev-net
+                healthcheck:
+                  test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psupersecret"]
+                  interval: 5s
+                  timeout: 3s
+                  retries: 12
+                  start_period: 20s
+              redis:
+                image: redis:7-alpine
+                container_name: livrolog-redis-dev
+                restart: always
+                ports:
+                  - "127.0.0.1:6380:6379"
+                networks:
+                  - dev-net
+                healthcheck:
+                  test: ["CMD", "redis-cli", "ping"]
+                  interval: 3s
+                  timeout: 2s
+                  retries: 10
+                  start_period: 5s
+              api:
+                image: ${IMAGE_API}:${TAG}
+                container_name: livrolog-api-dev
+                restart: always
+                environment:
+                  - DB_HOST=mysql
+                  - DB_PORT=3306
+                  - REDIS_HOST=redis
+                  - REDIS_PORT=6379
+                ports:
+                  - "127.0.0.1:8081:8080"
+                volumes:
+                  - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
+                  - /var/www/livrolog-dev/shared/.env.dev:/var/www/html/.env
+                networks:
+                  - dev-net
+                depends_on:
+                  mysql:
+                    condition: service_healthy
+                  redis:
+                    condition: service_healthy
+                healthcheck:
+                  test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 12
+                  start_period: 30s
+              web:
+                image: ${IMAGE_WEB}:${TAG}
+                container_name: livrolog-web-dev
+                restart: always
+                ports:
+                  - "127.0.0.1:8080:80"
+                networks:
+                  - dev-net
+                depends_on:
+                  api:
+                    condition: service_healthy
+                healthcheck:
+                  test: ["CMD", "sh", "-c", "curl -fsS http://localhost/healthz"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 6
+                  start_period: 15s
+            networks:
+              dev-net:
+                name: livrolog-dev-net
+                driver: bridge
+            EOF
+            
+            # Clean up and deploy
+            docker compose -f docker-compose.dev.yml down --remove-orphans 2>/dev/null || true
+            docker compose -f docker-compose.dev.yml pull
+            docker compose -f docker-compose.dev.yml up -d
+            
+            # Simple health check
+            echo "Waiting for services..."
+            sleep 60
+            
+            # Test endpoints
+            if curl -f http://localhost:8080/healthz >/dev/null 2>&1; then
+              echo "✅ Web service healthy"
+            else
+              echo "❌ Web service failed"
+              exit 1
+            fi
+            
+            if curl -f http://localhost:8081/healthz >/dev/null 2>&1; then
+              echo "✅ API service healthy"
+            else
+              echo "❌ API service failed"
+              exit 1
+            fi
+            
+            echo "🎉 Simple deployment completed successfully"
