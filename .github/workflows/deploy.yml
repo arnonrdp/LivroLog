@@ -898,19 +898,23 @@ jobs:
 
             # Test database connectivity from API
             echo "Testing database connectivity from API:"
-            if docker exec "$API_CONTAINER" php artisan tinker --execute="DB::connection()->getPdo(); echo 'DB OK';" >/dev/null 2>&1; then
+            DB_TEST_OUTPUT=$(docker exec "$API_CONTAINER" php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'DB_OK'; } catch (Exception \$e) { echo 'DB_FAIL'; exit(1); }" 2>&1)
+            if echo "$DB_TEST_OUTPUT" | grep -q "DB_OK"; then
               echo "✅ Database connection ok"
             else
               echo "❌ Database connection failed"
+              echo "Debug output: $DB_TEST_OUTPUT"
               exit 1
             fi
 
             # Test Redis connectivity
             echo "Testing Redis connectivity:"
-            if $COMPOSE exec -T redis redis-cli ping | grep -q "PONG"; then
+            REDIS_TEST_OUTPUT=$($COMPOSE exec -T redis redis-cli ping 2>&1)
+            if echo "$REDIS_TEST_OUTPUT" | grep -q "PONG"; then
               echo "✅ Redis connection ok"
             else
               echo "❌ Redis connection failed"
+              echo "Debug output: $REDIS_TEST_OUTPUT"
               exit 1
             fi
 
