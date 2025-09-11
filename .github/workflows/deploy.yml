@@ -202,6 +202,17 @@ jobs:
             # Setup APP_KEY for development environment (same logic as production)
             echo "🔧 Setting up APP_KEY for development environment..."
 
+            # Função POSIX para gerar APP_KEY compatível com Laravel (sem depender de imagens externas)
+            gen_app_key() {
+              if command -v head >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1; then
+                head -c 32 /dev/urandom | base64 | tr -d '\n' | awk '{print "base64:" $0}'
+              elif command -v openssl >/dev/null 2>&1; then
+                openssl rand -base64 32 | tr -d '\n' | awk '{print "base64:" $0}'
+              else
+                echo ""
+              fi
+            }
+
             # Use the same gen_app_key function and pattern as production
             APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
             APP_KEY_CAND="${APP_KEY:-}"
@@ -211,10 +222,8 @@ jobs:
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente para dev..."
               APP_KEY_CAND="$(gen_app_key || true)"
-              echo "🔧 Generated new APP_KEY for dev: [${#APP_KEY_CAND} chars]"
-            else
-              echo "✅ APP_KEY from secret is valid for dev"
             fi
+            echo "🔧 APP_KEY for dev: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ ($(printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN" && echo "valid" || echo "invalid"))}${APP_KEY_CAND:- (empty)}"
 
             # Setup .env.dev file with proper APP_KEY
             if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
@@ -404,9 +413,8 @@ jobs:
             if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
               echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
               APP_KEY_CAND="$(gen_app_key || true)"
-            else
-              echo "✅ APP_KEY from secret is valid"
             fi
+            echo "🔧 APP_KEY for prod: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ ($(printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN" && echo "valid" || echo "invalid"))}${APP_KEY_CAND:- (empty)}"
 
             # Save valid APP_KEY to .env
             if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
