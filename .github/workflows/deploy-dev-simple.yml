@@ -2,10 +2,12 @@ name: Simple Dev Deploy
 
 on:
   workflow_dispatch:
+  push:
+    branches: [dev]
 
 jobs:
-  docker-canary-dev:
-    name: docker-canary-dev
+  deploy:
+    name: deploy-dev-fast
     runs-on: ubuntu-latest
     env:
       ENVIRONMENT: Development
@@ -146,6 +148,9 @@ jobs:
                 name: livrolog-dev-net
                 driver: bridge
             EOF
+            
+            # Login to GitHub Container Registry
+            echo "${GHCR_PAT}" | docker login ghcr.io -u "${OWNER}" --password-stdin
             
             # Clean up and deploy
             docker compose -f docker-compose.dev.yml down --remove-orphans 2>/dev/null || true
