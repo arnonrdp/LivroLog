@@ -126,10 +126,78 @@ jobs:
             # Skip image pruning for dev - not critical
             echo "✅ Limpeza concluída"
 
-            # Gera compose dev
+            # Gera compose dev com MySQL e Redis containers
             cat > docker-compose.dev.yml << EOF
             name: livrolog_dev
             services:
+              mysql:
+                image: mysql:8.0
+                container_name: livrolog-mysql-dev
+                restart: always
+                environment:
+                  MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-supersecret}'
+                  MYSQL_DATABASE: '${DB_DATABASE:-livrolog_dev}'
+                  MYSQL_USER: '${DB_USERNAME:-livrolog}'
+                  MYSQL_PASSWORD: '${DB_PASSWORD:-supersecret}'
+                  MYSQL_ALLOW_EMPTY_PASSWORD: 1
+                ports:
+                  - "127.0.0.1:3307:3306"
+                volumes:
+                  - /var/www/livrolog-dev/shared/db:/var/lib/mysql
+                networks:
+                  - livrolog-dev-net
+                healthcheck:
+                  test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 10
+                  start_period: 30s
+              redis:
+                image: redis:7-alpine
+                container_name: livrolog-redis-dev
+                restart: always
+                ports:
+                  - "127.0.0.1:6380:6379"
+                networks:
+                  - livrolog-dev-net
+                healthcheck:
+                  test: ["CMD", "redis-cli", "ping"]
+                  interval: 5s
+                  timeout: 3s
+                  retries: 10
+                  start_period: 10s
+              api:
+                image: REPLACE_API_IMAGE
+                container_name: livrolog-api-dev
+                restart: always
+                env_file:
+                  - /var/www/livrolog-dev/shared/.env.dev
+                environment:
+                  - DB_HOST=mysql
+                  - DB_PORT=3306
+                  - DB_DATABASE=\${DB_DATABASE:-livrolog_dev}
+                  - DB_USERNAME=\${DB_USERNAME:-livrolog}
+                  - DB_PASSWORD=\${DB_PASSWORD:-supersecret}
+                  - REDIS_HOST=redis
+                  - REDIS_PORT=6379
+                ports:
+                  - "127.0.0.1:8081:8080"
+                volumes:
+                  - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
+                  - /var/www/livrolog-dev/shared/.env.dev:/var/www/html/.env
+                networks:
+                  - livrolog-dev-net
+                depends_on:
+                  mysql:
+                    condition: service_healthy
+                  redis:
+                    condition: service_healthy
+                healthcheck:
+                  test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+                  interval: 15s
+                  timeout: 5s
+                  retries: 15
+                  start_period: 60s
               web:
                 image: REPLACE_WEB_IMAGE
                 container_name: livrolog-web-dev
@@ -139,30 +207,18 @@ jobs:
                 healthcheck:
                   test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
                   interval: 15s
-                  timeout: 3s
-                  retries: 10
-                depends_on:
-                  - api
-              api:
-                image: REPLACE_API_IMAGE
-                container_name: livrolog-api-dev
-                restart: always
-                env_file:
-                  - /var/www/livrolog-dev/shared/.env.dev
-                environment:
-                  - DB_HOST=127.0.0.1
-                  - DB_PORT=3306
-                  - REDIS_HOST=127.0.0.1
-                  - REDIS_PORT=6379
-                network_mode: host
-                volumes:
-                  - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
-                healthcheck:
-                  test: ["CMD", "php", "artisan", "about"]
-                  interval: 10s
                   timeout: 5s
-                  retries: 30
-                  start_period: 60s
+                  retries: 10
+                  start_period: 30s
+                depends_on:
+                  api:
+                    condition: service_healthy
+                networks:
+                  - livrolog-dev-net
+            networks:
+              livrolog-dev-net:
+                name: livrolog-dev-net
+                driver: bridge
             EOF
 
             # Ler tag anterior para rollback real em caso de falha
@@ -227,9 +283,12 @@ jobs:
 
             # Setup .env.dev file with proper APP_KEY
             if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
-              # Ensure the dev shared directory and storage exist
+              # Ensure the dev shared directory, storage and database directories exist
               sudo mkdir -p /var/www/livrolog-dev/shared
               sudo mkdir -p /var/www/livrolog-dev/shared/storage
+              sudo mkdir -p /var/www/livrolog-dev/shared/db
+              # Set proper permissions for MySQL container (999:999)
+              sudo chown -R 999:999 /var/www/livrolog-dev/shared/db
               sudo chown -R bitnami:bitnami /var/www/livrolog-dev
               
               # Create/update the .env.dev file with APP_KEY
@@ -244,20 +303,20 @@ jobs:
               if [ ! -f /var/www/livrolog-dev/shared/.env.dev ]; then
                 {
                   echo "APP_NAME=LivroLog"
-                  echo "APP_ENV=production"
-                  echo "APP_DEBUG=false"
-                  echo "APP_URL=http://localhost"
+                  echo "APP_ENV=development"
+                  echo "APP_DEBUG=true"
+                  echo "APP_URL=http://localhost:8080"
                   echo ""
                   echo "LOG_CHANNEL=stack"
                   echo "LOG_DEPRECATIONS_CHANNEL=null"
                   echo "LOG_LEVEL=debug"
                   echo ""
                   echo "DB_CONNECTION=mysql"
-                  echo "DB_HOST=127.0.0.1"
+                  echo "DB_HOST=mysql"
                   echo "DB_PORT=3306"
-                  echo "DB_DATABASE=livrolog"
+                  echo "DB_DATABASE=livrolog_dev"
                   echo "DB_USERNAME=livrolog"
-                  echo "DB_PASSWORD="
+                  echo "DB_PASSWORD=supersecret"
                   echo ""
                   echo "BROADCAST_DRIVER=log"
                   echo "CACHE_DRIVER=redis"
@@ -266,7 +325,7 @@ jobs:
                   echo "SESSION_DRIVER=file"
                   echo "SESSION_LIFETIME=120"
                   echo ""
-                  echo "REDIS_HOST=127.0.0.1"
+                  echo "REDIS_HOST=redis"
                   echo "REDIS_PASSWORD=null"
                   echo "REDIS_PORT=6379"
                 } >> "$tmpfile"
@@ -279,9 +338,10 @@ jobs:
               exit 1
             fi
 
-            # Verificar .env e storage antes do up (fail-fast com mensagem clara)
+            # Verificar .env, storage e db antes do up (fail-fast com mensagem clara)
             test -f /var/www/livrolog-dev/shared/.env.dev || { echo "❌ /var/www/livrolog-dev/shared/.env.dev não existe"; exit 1; }
             test -d /var/www/livrolog-dev/shared/storage || { echo "❌ /var/www/livrolog-dev/shared/storage não existe"; exit 1; }
+            test -d /var/www/livrolog-dev/shared/db || { echo "❌ /var/www/livrolog-dev/shared/db não existe"; exit 1; }
 
             # Persistir porta escolhida para debug
             echo "$WEB_PORT" > .web_port_dev
@@ -290,18 +350,33 @@ jobs:
             $COMPOSE pull
             $COMPOSE up -d --remove-orphans
 
-            # Espera healthchecks (aumentado timeout para 180s)
-            echo "Waiting for services to be healthy (max 180s)…"
-            deadline=$((SECONDS+180))
+            # Espera healthchecks (aumentado timeout para 240s devido aos containers de banco)
+            echo "Waiting for services to be healthy (max 240s)…"
+            deadline=$((SECONDS+240))
             while true; do
-              web_ok=0; api_ok=0
+              web_ok=0; api_ok=0; mysql_ok=0; redis_ok=0
               curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
-              docker exec livrolog-api-dev php artisan about >/dev/null 2>&1 && api_ok=1
-              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then break; fi
+              curl -fsS "http://localhost:8081/healthz" >/dev/null 2>&1 && api_ok=1
+              docker exec livrolog-mysql-dev mysqladmin ping -h localhost >/dev/null 2>&1 && mysql_ok=1
+              docker exec livrolog-redis-dev redis-cli ping | grep -q PONG >/dev/null 2>&1 && redis_ok=1
+              
+              echo "Health status: web=$web_ok api=$api_ok mysql=$mysql_ok redis=$redis_ok"
+              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ] && [ "$mysql_ok" -eq 1 ] && [ "$redis_ok" -eq 1 ]; then 
+                echo "✅ All services healthy"
+                break; 
+              fi
               if [ $SECONDS -ge $deadline ]; then
                 echo "❌ Health checks failed, rolling back para tag anterior…"
                 echo "=== Diagnóstico de containers ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+                echo "=== Logs do MySQL (últimas 50 linhas) ==="
+                docker logs --tail=50 livrolog-mysql-dev || true
+                echo "=== Logs do Redis (últimas 30 linhas) ==="
+                docker logs --tail=30 livrolog-redis-dev || true
+                echo "=== Logs da API (últimas 80 linhas) ==="
+                docker logs --tail=80 livrolog-api-dev || true
+                echo "=== Logs da Web (últimas 50 linhas) ==="
+                docker logs --tail=50 livrolog-web-dev || true
                 echo "=== Health status da API ==="
                 if command -v jq >/dev/null 2>&1; then
                   docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
@@ -309,10 +384,6 @@ jobs:
                   echo "⚠️ jq não encontrado, exibindo JSON raw:"
                   docker inspect --format='{{json .State.Health}}' livrolog-api-dev || true
                 fi
-                echo "=== Logs da API (últimas 80 linhas) ==="
-                docker logs --tail=80 livrolog-api-dev || true
-                echo "=== Logs da Web (últimas 80 linhas) ==="
-                docker logs --tail=80 livrolog-web-dev || true
                 echo "=== Iniciando rollback para tag: ${PREV_TAG} ==="
                 export TAG="$PREV_TAG"
                 sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
