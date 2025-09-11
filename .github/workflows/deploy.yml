@@ -86,7 +86,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy development containers (LOCAL - NO SSH ISSUES!)
+      - name: Deploy development containers
         run: |
           set -euo pipefail
           
@@ -142,7 +142,7 @@ jobs:
                 - REDIS_PORT=6379
                 - APP_ENV=development
                 - APP_DEBUG=true
-                - APP_KEY=base64:$(openssl rand -base64 32)
+                - APP_KEY=base64:UGxhY2Vob2xkZXJLZXlGb3JEZXZlbG9wbWVudA==
               ports:
                 - "8081:8080"
               networks:
@@ -212,7 +212,7 @@ jobs:
           echo "Web status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ || echo 'FAIL')"
           
           echo ""
-          echo "🎉 DEVELOPMENT ENVIRONMENT IS WORKING! NO MORE SSH TIMEOUT!"
+          echo "🎉 Development environment is running successfully!"
 
   docker-canary-prod:
     name: docker-canary-prod
