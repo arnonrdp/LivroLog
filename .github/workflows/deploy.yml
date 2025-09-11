@@ -147,11 +147,11 @@ jobs:
                 networks:
                   - livrolog-dev-net
                 healthcheck:
-                  test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+                  test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
                   interval: 10s
-                  timeout: 5s
-                  retries: 10
-                  start_period: 30s
+                  timeout: 10s
+                  retries: 30
+                  start_period: 60s
               redis:
                 image: redis:7-alpine
                 container_name: livrolog-redis-dev
@@ -163,9 +163,9 @@ jobs:
                 healthcheck:
                   test: ["CMD", "redis-cli", "ping"]
                   interval: 5s
-                  timeout: 3s
-                  retries: 10
-                  start_period: 10s
+                  timeout: 5s
+                  retries: 20
+                  start_period: 30s
               api:
                 image: REPLACE_API_IMAGE
                 container_name: livrolog-api-dev
@@ -195,9 +195,9 @@ jobs:
                 healthcheck:
                   test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
                   interval: 15s
-                  timeout: 5s
-                  retries: 15
-                  start_period: 60s
+                  timeout: 10s
+                  retries: 30
+                  start_period: 120s
               web:
                 image: REPLACE_WEB_IMAGE
                 container_name: livrolog-web-dev
@@ -350,9 +350,9 @@ jobs:
             $COMPOSE pull
             $COMPOSE up -d --remove-orphans
 
-            # Espera healthchecks (aumentado timeout para 240s devido aos containers de banco)
-            echo "Waiting for services to be healthy (max 240s)…"
-            deadline=$((SECONDS+240))
+            # Espera healthchecks (aumentado timeout para 600s devido aos containers de banco)
+            echo "Waiting for services to be healthy (max 600s)…"
+            deadline=$((SECONDS+600))
             while true; do
               web_ok=0; api_ok=0; mysql_ok=0; redis_ok=0
               curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
