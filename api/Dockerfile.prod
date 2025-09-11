@@ -5,7 +5,11 @@
 # Build stage - Install dependencies
 FROM composer:2 AS vendor
 WORKDIR /app
+# Copy composer files first for better Docker layer caching
 COPY api/composer.json api/composer.lock ./
+# Copy application code so composer can scan for classes during autoload generation
+COPY api/app ./app
+COPY api/bootstrap ./bootstrap
 RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --optimize-autoloader --classmap-authoritative --no-scripts
 
 # Production stage - Optimized PHP-FPM runtime

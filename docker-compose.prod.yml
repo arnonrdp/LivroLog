@@ -22,7 +22,7 @@ services:
     volumes:
       # Mount shared storage and .env from existing deployment
       - /var/www/livrolog/shared/storage:/var/www/html/storage
-      - /var/www/livrolog/shared/.env:/var/www/html/.env:ro
+      - /var/www/livrolog/shared/.env:/var/www/html/.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
