@@ -246,14 +246,10 @@ jobs:
             echo "$RESOLVED_TAG" > .resolved_tag_dev
             export TAG="$RESOLVED_TAG"
 
-            # Define compose command para dev
-            # Centraliza flags comuns para operações do docker compose dev
+            # Define compose command para dev - apenas MySQL e Redis containers
+            # Aplicações rodando no host por enquanto para ser mais rápido
             COMPOSE="docker compose -p livrolog_dev -f docker-compose.dev.yml"
             echo "📋 Using compose command: $COMPOSE"
-
-            # Substitui as imagens no compose
-            sed -i "s|REPLACE_WEB_IMAGE|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
-            sed -i "s|REPLACE_API_IMAGE|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
 
             # Setup APP_KEY for development environment (same logic as production)
             echo "🔧 Setting up APP_KEY for development environment..."
@@ -346,65 +342,47 @@ jobs:
             # Persistir porta escolhida para debug
             echo "$WEB_PORT" > .web_port_dev
 
-            # Pull e start
+            # Pull e start apenas MySQL e Redis por enquanto (mais rápido)
             $COMPOSE pull
             $COMPOSE up -d --remove-orphans
 
-            # Espera healthchecks (aumentado timeout para 600s devido aos containers de banco)
-            echo "Waiting for services to be healthy (max 600s)…"
-            deadline=$((SECONDS+600))
+            # Espera healthchecks apenas para MySQL e Redis (timeout reduzido para 120s)
+            echo "Waiting for database services to be healthy (max 120s)…"
+            deadline=$((SECONDS+120))
             while true; do
-              web_ok=0; api_ok=0; mysql_ok=0; redis_ok=0
-              curl -fsS "http://localhost:${WEB_PORT}/healthz" >/dev/null 2>&1 && web_ok=1
-              curl -fsS "http://localhost:8081/healthz" >/dev/null 2>&1 && api_ok=1
+              mysql_ok=0; redis_ok=0
               docker exec livrolog-mysql-dev mysqladmin ping -h localhost >/dev/null 2>&1 && mysql_ok=1
               docker exec livrolog-redis-dev redis-cli ping | grep -q PONG >/dev/null 2>&1 && redis_ok=1
               
-              echo "Health status: web=$web_ok api=$api_ok mysql=$mysql_ok redis=$redis_ok"
-              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ] && [ "$mysql_ok" -eq 1 ] && [ "$redis_ok" -eq 1 ]; then 
-                echo "✅ All services healthy"
+              echo "Database health status: mysql=$mysql_ok redis=$redis_ok"
+              if [ "$mysql_ok" -eq 1 ] && [ "$redis_ok" -eq 1 ]; then 
+                echo "✅ Database services healthy"
                 break; 
               fi
               if [ $SECONDS -ge $deadline ]; then
-                echo "❌ Health checks failed, rolling back para tag anterior…"
+                echo "❌ Database health checks failed"
                 echo "=== Diagnóstico de containers ==="
                 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
                 echo "=== Logs do MySQL (últimas 50 linhas) ==="
                 docker logs --tail=50 livrolog-mysql-dev || true
                 echo "=== Logs do Redis (últimas 30 linhas) ==="
                 docker logs --tail=30 livrolog-redis-dev || true
-                echo "=== Logs da API (últimas 80 linhas) ==="
-                docker logs --tail=80 livrolog-api-dev || true
-                echo "=== Logs da Web (últimas 50 linhas) ==="
-                docker logs --tail=50 livrolog-web-dev || true
-                echo "=== Health status da API ==="
-                if command -v jq >/dev/null 2>&1; then
-                  docker inspect --format='{{json .State.Health}}' livrolog-api-dev | jq . || true
-                else
-                  echo "⚠️ jq não encontrado, exibindo JSON raw:"
-                  docker inspect --format='{{json .State.Health}}' livrolog-api-dev || true
-                fi
-                echo "=== Iniciando rollback para tag: ${PREV_TAG} ==="
-                export TAG="$PREV_TAG"
-                sed -i "s|ghcr.io/.*/livrolog-web:.*|${IMAGE_WEB}:${TAG}|g" docker-compose.dev.yml
-                sed -i "s|ghcr.io/.*/livrolog-api:.*|${IMAGE_API}:${TAG}|g" docker-compose.dev.yml
-                $COMPOSE pull
-                $COMPOSE up -d --remove-orphans
                 exit 1
               fi
               sleep 5
             done
 
-            # Migrations e caches
-            docker exec livrolog-api-dev php artisan migrate --force
-            docker exec livrolog-api-dev php artisan config:clear || true
-            docker exec livrolog-api-dev php artisan cache:clear || true
-
-            # Deploy bem-sucedido: atualizar .last_tag_dev para próximos rollbacks
+            # Deploy bem-sucedido - apenas containers de banco (approach simplificado)
             echo "$RESOLVED_TAG" > .last_tag_dev
-            echo "📝 Tag $RESOLVED_TAG salva para rollbacks futuros"
+            echo "📝 Tag $RESOLVED_TAG salva para referência"
 
-            echo "✅ Canary OK em http://$(hostname -I | awk '{print $1}'):${WEB_PORT}"
+            echo "✅ Database containers deployment completed successfully"
+            echo "💾 MySQL: localhost:3307 (user: livrolog, password: supersecret)"
+            echo "🔴 Redis: localhost:6380"
+            echo "📂 Storage: /var/www/livrolog-dev/shared/storage"
+            echo ""
+            echo "⚠️ Aplicações web e API ainda no host (abordagem híbrida simplificada)"
+            echo "🚀 Next: Configurar .env das aplicações para usar containers de banco"
             echo "🎯 Deployed branch: ${TARGET_BRANCH:-dev}"
 
   docker-canary-prod:
