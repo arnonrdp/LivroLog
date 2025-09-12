@@ -1,0 +1,142 @@
+name: Fix Development Environment
+
+on:
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  fix-dev-env:
+    name: fix-dev-env
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fix development environment file and restart containers
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/fix_key
+          chmod 600 ~/.ssh/fix_key
+          
+          # SSH Config
+          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/fix_key" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          # Fix environment file and restart services
+          ssh ${{ secrets.SERVER_HOST }} << 'FIX_SCRIPT'
+            echo "=== Fixing Development Environment ==="
+            date
+            
+            # Backup corrupted file
+            if [ -f /var/www/livrolog-dev/shared/.env.dev ]; then
+              echo "📋 Backing up corrupted .env.dev file..."
+              sudo cp /var/www/livrolog-dev/shared/.env.dev /var/www/livrolog-dev/shared/.env.dev.corrupted.$(date +%Y%m%d_%H%M%S)
+            fi
+            
+            # Create clean environment file
+            echo "📝 Creating clean .env.dev file..."
+            sudo tee /var/www/livrolog-dev/shared/.env.dev > /dev/null << 'ENV_EOF'
+APP_NAME=LivroLog
+APP_ENV=development
+APP_KEY=base64:UGxhY2Vob2xkZXJLZXlGb3JEZXZlbG9wbWVudA==
+APP_DEBUG=true
+APP_TIMEZONE=UTC
+
+# Database (containerized MySQL)
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=livrolog_dev
+DB_USERNAME=livrolog
+DB_PASSWORD=supersecret
+
+# Redis (containerized)  
+REDIS_CLIENT=predis
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+# Queue
+QUEUE_CONNECTION=redis
+
+# Session
+SESSION_DRIVER=redis
+SESSION_LIFETIME=120
+
+# Cache
+CACHE_DRIVER=redis
+
+# Mail
+MAIL_MAILER=log
+
+# Logging
+LOG_CHANNEL=stack
+LOG_LEVEL=debug
+ENV_EOF
+            
+            # Set proper permissions
+            sudo chown ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} /var/www/livrolog-dev/shared/.env.dev
+            chmod 644 /var/www/livrolog-dev/shared/.env.dev
+            
+            # Verify file was created correctly
+            echo "✅ New .env.dev file created:"
+            ls -la /var/www/livrolog-dev/shared/.env.dev
+            echo "📋 File content validation:"
+            head -5 /var/www/livrolog-dev/shared/.env.dev
+            
+            # Navigate to docker directory and restart API container
+            echo "🔄 Restarting API container to apply new environment..."
+            cd /var/www/livrolog-dev/docker
+            
+            # Restart API container specifically
+            docker restart livrolog-api-dev
+            
+            # Wait for container to restart
+            echo "⏳ Waiting for API container to restart..."
+            sleep 30
+            
+            # Check if API container is healthy
+            echo "🔍 Checking API container status..."
+            docker logs livrolog-api-dev --tail=10
+            
+            # Test API health endpoint locally
+            echo "🧪 Testing API health endpoint..."
+            for i in {1..6}; do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8081/healthz 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ API health endpoint responding (HTTP $HTTP_CODE) - attempt $i"
+                break
+              elif [ $i -eq 6 ]; then
+                echo "❌ API health endpoint still failing after 6 attempts (HTTP $HTTP_CODE)"
+                echo "=== API Container Logs ==="
+                docker logs livrolog-api-dev --tail=20
+              else
+                echo "⏳ API not ready yet (HTTP $HTTP_CODE, attempt $i/6), waiting 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            # Test with actual API call
+            echo "🧪 Testing actual API endpoint..."
+            API_TEST=$(curl -s -w "HTTP_CODE:%{http_code}" http://127.0.0.1:8081/books?sort_by=popular 2>/dev/null | tail -1)
+            echo "Books API test result: $API_TEST"
+            
+            # Final status
+            echo "📊 Final container status:"
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep livrolog
+            
+            echo "✅ Fix completed!"
+            
+          FIX_SCRIPT
