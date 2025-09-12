@@ -1,0 +1,34 @@
+name: Fix Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix-env:
+    name: fix-env
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Execute fix script on server
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/fix_key
+          chmod 600 ~/.ssh/fix_key
+          
+          # SSH Config
+          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/fix_key" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          # Copy and execute script
+          scp scripts/fix-dev-env.sh ${{ secrets.SERVER_HOST }}:/tmp/fix-dev-env.sh
+          ssh ${{ secrets.SERVER_HOST }} "chmod +x /tmp/fix-dev-env.sh && /tmp/fix-dev-env.sh"
