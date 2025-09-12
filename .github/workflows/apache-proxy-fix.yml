@@ -1,0 +1,89 @@
+name: Apache Proxy Fix
+
+on:
+  push:
+    branches: [dev]
+    paths: ['.github/workflows/apache-proxy-fix.yml']
+
+jobs:
+  apache-proxy:
+    name: apache-proxy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Configure Apache proxy for Docker containers
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/apache_key
+          chmod 600 ~/.ssh/apache_key
+          
+          # SSH Config
+          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/apache_key" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          # Execute Apache configuration
+          ssh ${{ secrets.SERVER_HOST }} << 'EOF'
+            echo "=== Apache Proxy Configuration ==="
+            
+            # Create Apache virtual host configuration
+            sudo tee /opt/bitnami/apache/conf/vhosts/livrolog-dev.conf > /dev/null << 'VHOST'
+# Load required modules
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule rewrite_module modules/mod_rewrite.so
+
+# API Virtual Host
+<VirtualHost *:80>
+    ServerName api.dev.livrolog.com
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:8081/
+    ProxyPassReverse / http://127.0.0.1:8081/
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    ErrorLog /opt/bitnami/apache/logs/api-dev-error.log
+    CustomLog /opt/bitnami/apache/logs/api-dev-access.log combined
+</VirtualHost>
+
+# Web Virtual Host  
+<VirtualHost *:80>
+    ServerName dev.livrolog.com
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
+    ErrorLog /opt/bitnami/apache/logs/dev-error.log
+    CustomLog /opt/bitnami/apache/logs/dev-access.log combined
+</VirtualHost>
+VHOST
+            
+            # Add include to main config if not present
+            if ! grep -q "livrolog-dev.conf" /opt/bitnami/apache/conf/httpd.conf; then
+              echo "Include conf/vhosts/livrolog-dev.conf" | sudo tee -a /opt/bitnami/apache/conf/httpd.conf
+            fi
+            
+            # Test and restart Apache
+            if sudo /opt/bitnami/apache/bin/httpd -t; then
+              echo "✅ Apache config test passed"
+              sudo pkill -f httpd || true
+              sleep 2
+              sudo /opt/bitnami/apache/bin/httpd &
+              sleep 5
+              
+              # Test proxy
+              echo "Testing API proxy..."
+              curl -s -H "Host: api.dev.livrolog.com" http://127.0.0.1/healthz | head -1
+              
+              echo "✅ Apache proxy configured successfully"
+            else
+              echo "❌ Apache config test failed"
+              exit 1
+            fi
+          EOF
