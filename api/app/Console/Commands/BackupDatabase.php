@@ -52,7 +52,7 @@ class BackupDatabase extends Command
         $dumpCommand = ($returnCode === 0) ? 'mariadb-dump' : 'mysqldump';
 
         $command = sprintf(
-            '%s --single-transaction --routines --triggers --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
+            '%s --single-transaction --routines --triggers --skip-ssl --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
             $dumpCommand,
             escapeshellarg($host),
             escapeshellarg($port),
