@@ -16,7 +16,7 @@ on:
       branch:
         description: 'Target branch to deploy'
         required: false
-        default: ''
+        default: 'dev'
         type: choice
         options:
           - 'main'
