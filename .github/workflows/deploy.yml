@@ -70,118 +70,324 @@ jobs:
 
     env:
       ENVIRONMENT: Development
-      DEPLOY_PATH: /var/www/livrolog-dev
-      GHCR_PAT: ${{ secrets.GHCR_PAT }}
       TARGET_BRANCH: dev
+      DEPLOY_PATH: /var/www/livrolog-dev
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_SHA: ${{ github.sha }}
+      GITHUB_REF_NAME: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code for compose file
         uses: actions/checkout@v4
-
-      - name: Copy docker-compose.dev.yml to server
-        uses: appleboy/scp-action@v0.1.0
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: docker-compose.dev.yml
-          target: /var/www/livrolog-dev/docker/
-          overwrite: true
-          rm: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy development containers
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,TARGET_BRANCH
-          command_timeout: 15m
-          script: |
-            set -euo pipefail +x
-            DOCKER_DIR="/var/www/livrolog-dev/docker"
-            OWNER="arnonrdp"
+      - name: Validate required secrets
+        run: |
+          echo "🔍 Validating required secrets and environment variables..."
+          
+          # Check required secrets
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            echo "❌ SERVER_HOST secret is not configured"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            echo "❌ SERVER_USER secret is not configured" 
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            echo "❌ SERVER_SSH_KEY secret is not configured"
+            exit 1
+          fi
+          
+          # GHCR_PAT is optional for public images, but warn if missing
+          if [ -z "${{ secrets.GHCR_PAT }}" ]; then
+            echo "⚠️ GHCR_PAT secret not found - will attempt to pull public images"
+          fi
+          
+          echo "✅ Secret validation completed"
+
+      - name: Setup SSH key and test connection
+        run: |
+          echo "🔐 Setting up SSH connection..."
+          
+          # Create SSH directory and set permissions
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Create SSH private key file
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/livrolog_key
+          chmod 600 ~/.ssh/livrolog_key
+          
+          # Disable host key checking for this deployment (AWS instances change IPs)
+          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/livrolog_key" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          echo "  LogLevel QUIET" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          # Test SSH connection
+          echo "🔍 Testing SSH connection to ${{ secrets.SERVER_HOST }}..."
+          if ssh ${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"; then
+            echo "✅ SSH connection test passed"
+          else
+            echo "❌ SSH connection test failed"
+            echo "Debug information:"
+            echo "  Host: ${{ secrets.SERVER_HOST }}"
+            echo "  User: ${{ secrets.SERVER_USER }}"
+            echo "  Key length: ${#{{ secrets.SERVER_SSH_KEY }}}"
+            exit 1
+          fi
+
+      - name: Copy compose file to server
+        run: |
+          echo "📁 Copying docker-compose.dev.yml to server..."
+          
+          # Create target directory on server
+          ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
+          
+          # Copy compose file
+          scp -o StrictHostKeyChecking=no docker-compose.dev.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
+          
+          echo "✅ Docker compose file copied successfully"
+
+      - name: Deploy development containers  
+        run: |
+          ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
+            set -euo pipefail
+            
+            # Configuration
+            DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
+            SHARED_DIR="${{ env.DEPLOY_PATH }}/shared"
+            OWNER="${{ env.GITHUB_REPOSITORY_OWNER }}"
+            TAG="dev"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
             IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
-
-            # Display deployment configuration
+            
             echo "=================================================="
-            echo "🚀 Starting development deployment (branch: ${TARGET_BRANCH:-dev})"  
-            echo "Using containerized MySQL 8.0 + Redis 7-alpine (self-contained)"
+            echo "🚀 LivroLog Development Deployment"
+            echo "Branch: ${{ env.TARGET_BRANCH }}"
+            echo "SHA: ${{ env.GITHUB_SHA }}"
+            echo "Images: ${IMAGE_API}:${TAG}, ${IMAGE_WEB}:${TAG}"
+            echo "Deploy Path: ${{ env.DEPLOY_PATH }}"
             echo "=================================================="
-
-            # Create all required directories
-            echo "📁 Creating required directories..."
-            sudo mkdir -p "$DOCKER_DIR"
-            sudo mkdir -p /var/www/livrolog-dev/shared/{storage,db}
-
-            # Set proper permissions (999:999 is the default MySQL container user)
-            sudo chown -R 999:999 /var/www/livrolog-dev/shared/db
-            sudo chown -R www-data:www-data /var/www/livrolog-dev/shared/storage
-
-            # Create development .env file
+            
+            # Create required directories with proper permissions
+            echo "📁 Setting up directories and permissions..."
+            sudo mkdir -p "${SHARED_DIR}"/{storage,db}
+            sudo mkdir -p "${DOCKER_DIR}"
+            
+            # Set MySQL data directory permissions (UID 999)
+            sudo chown -R 999:999 "${SHARED_DIR}/db"
+            
+            # Set Laravel storage permissions (www-data)
+            sudo chown -R www-data:www-data "${SHARED_DIR}/storage" 2>/dev/null || sudo chown -R 82:82 "${SHARED_DIR}/storage"
+            
+            # Set deployment directory permissions
+            sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} "${{ env.DEPLOY_PATH }}"
+            
+            # Create development environment file
             echo "📝 Creating development .env file..."
-            cat > /var/www/livrolog-dev/shared/.env.dev << EOF
+            cat > "${SHARED_DIR}/.env.dev" << 'ENV_EOF'
             APP_NAME=LivroLog
-            APP_ENV=development
+            APP_ENV=development  
             APP_KEY=base64:UGxhY2Vob2xkZXJLZXlGb3JEZXZlbG9wbWVudA==
             APP_DEBUG=true
             APP_TIMEZONE=UTC
-
+            
+            # Database (containerized MySQL)
             DB_CONNECTION=mysql
             DB_HOST=mysql
             DB_PORT=3306
             DB_DATABASE=livrolog_dev
             DB_USERNAME=livrolog
             DB_PASSWORD=supersecret
-
+            
+            # Redis (containerized)  
             REDIS_CLIENT=predis
             REDIS_HOST=redis
             REDIS_PASSWORD=null
             REDIS_PORT=6379
-            EOF
-
+            
+            # Queue
+            QUEUE_CONNECTION=redis
+            
+            # Session
+            SESSION_DRIVER=redis
+            SESSION_LIFETIME=120
+            
+            # Cache
+            CACHE_DRIVER=redis
+            ENV_EOF
+            
+            echo "✅ Environment file created"
+            
             # Navigate to docker directory
-            cd "$DOCKER_DIR"
-
-            # docker-compose.dev.yml already copied by SCP action
-            echo "📋 Using docker-compose.dev.yml from repository..."
-
-            # Authenticate with GHCR
-            echo "🔐 Authenticating with GitHub Container Registry..."
-            echo "$GHCR_PAT" | docker login ghcr.io -u "arnonrdp" --password-stdin
-
-            # Pull the latest images
+            cd "${DOCKER_DIR}"
+            
+            # Login to GitHub Container Registry if PAT available
+            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "🔐 Authenticating with GitHub Container Registry..."
+              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ env.GITHUB_REPOSITORY_OWNER }}" --password-stdin
+            else
+              echo "⚠️ No GHCR_PAT provided - attempting to pull public images"
+            fi
+            
+            # Pull latest images with error handling
             echo "📦 Pulling latest Docker images..."
-            docker pull "${IMAGE_API}:dev" || echo "Failed to pull API image, will use existing/build"
-            docker pull "${IMAGE_WEB}:dev" || echo "Failed to pull WEB image, will use existing/build"
-
-            # Stop existing containers
-            echo "🛑 Stopping existing containers..."
-            docker compose -f docker-compose.dev.yml down || echo "No containers to stop"
-
-            # Start new containers
+            if ! docker pull "${IMAGE_API}:${TAG}"; then
+              echo "⚠️ Failed to pull API image ${IMAGE_API}:${TAG}"
+              echo "Available API tags:"
+              docker images | grep livrolog-api || echo "No local API images found"
+            fi
+            
+            if ! docker pull "${IMAGE_WEB}:${TAG}"; then
+              echo "⚠️ Failed to pull Web image ${IMAGE_WEB}:${TAG}"
+              echo "Available Web tags:"
+              docker images | grep livrolog-web || echo "No local Web images found"
+            fi
+            
+            # Stop existing containers gracefully
+            echo "🛑 Stopping existing development containers..."
+            if docker compose -f docker-compose.dev.yml ps --services --filter "status=running" | grep -q .; then
+              docker compose -f docker-compose.dev.yml down --timeout 30
+              echo "✅ Existing containers stopped"
+            else
+              echo "ℹ️ No running containers to stop"
+            fi
+            
+            # Clean up orphaned containers and networks
+            echo "🧹 Cleaning up orphaned resources..."
+            docker container prune -f --filter "label=com.docker.compose.project=livrolog_dev" || true
+            docker network prune -f || true
+            
+            # Export environment variables for docker-compose
+            export GITHUB_REPOSITORY_OWNER="${OWNER}"
+            export TAG="${TAG}"
+            export DB_DATABASE="livrolog_dev"
+            export DB_USERNAME="livrolog"
+            export DB_PASSWORD="supersecret"
+            
+            # Start containers with health checks
             echo "🚀 Starting development containers..."
-            docker compose -f docker-compose.dev.yml up -d
-
-            # Wait for containers to be ready
-            echo "⏳ Waiting for containers to be ready..."
-            sleep 30
-
-            # Show container status
+            if ! docker compose -f docker-compose.dev.yml up -d --remove-orphans; then
+              echo "❌ Failed to start containers"
+              echo "=== Docker Compose Logs ==="
+              docker compose -f docker-compose.dev.yml logs --tail=50
+              exit 1
+            fi
+            
+            echo "✅ Containers started successfully"
+            
+            # Wait for containers to initialize
+            echo "⏳ Waiting for containers to initialize (60 seconds)..."
+            sleep 60
+            
+            # Health checks with detailed status
+            echo "🔍 Performing health checks..."
+            
+            # Check container status
             echo "📊 Container Status:"
             docker compose -f docker-compose.dev.yml ps
+            
+            # Check MySQL connectivity
+            echo "🔍 Testing MySQL connectivity..."
+            for i in {1..12}; do
+              if docker exec livrolog-mysql-dev mysqladmin ping -u root -psupersecret --silent 2>/dev/null; then
+                echo "✅ MySQL is responding (attempt $i)"
+                break
+              elif [ $i -eq 12 ]; then
+                echo "❌ MySQL health check failed after 12 attempts"
+                docker logs livrolog-mysql-dev --tail=20
+                exit 1
+              else
+                echo "⏳ MySQL not ready yet (attempt $i/12), waiting 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            # Check Redis connectivity  
+            echo "🔍 Testing Redis connectivity..."
+            if docker exec livrolog-redis-dev redis-cli ping >/dev/null 2>&1; then
+              echo "✅ Redis is responding"
+            else
+              echo "❌ Redis health check failed"
+              docker logs livrolog-redis-dev --tail=20
+              exit 1
+            fi
+            
+            # Check API health endpoint
+            echo "🔍 Testing API health endpoint..."
+            for i in {1..24}; do  
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8081/healthz 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ API health endpoint responding (HTTP $HTTP_CODE)"
+                break
+              elif [ $i -eq 24 ]; then
+                echo "❌ API health endpoint failed after 24 attempts (HTTP $HTTP_CODE)"
+                echo "=== API Container Logs ==="
+                docker logs livrolog-api-dev --tail=30
+                exit 1
+              else
+                echo "⏳ API not ready yet (HTTP $HTTP_CODE, attempt $i/24), waiting 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            # Check Web frontend
+            echo "🔍 Testing Web frontend..."  
+            for i in {1..12}; do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ Web frontend responding (HTTP $HTTP_CODE)"
+                break
+              elif [ $i -eq 12 ]; then
+                echo "❌ Web frontend failed after 12 attempts (HTTP $HTTP_CODE)"
+                echo "=== Web Container Logs ==="
+                docker logs livrolog-web-dev --tail=30
+                exit 1
+              else
+                echo "⏳ Web not ready yet (HTTP $HTTP_CODE, attempt $i/12), waiting 5 seconds..."
+                sleep 5
+              fi
+            done
+            
+            echo "=================================================="
+            echo "🎉 Development deployment completed successfully!"
+            echo "📍 Services:"
+            echo "  • Web Frontend: http://127.0.0.1:8080 (dev.livrolog.com)"
+            echo "  • API Backend: http://127.0.0.1:8081 (api.dev.livrolog.com)"
+            echo "  • MySQL: 127.0.0.1:3307"
+            echo "  • Redis: 127.0.0.1:6380"
+            echo "=================================================="
+            
+          DEPLOY_SCRIPT
 
-            # Basic health checks
-            echo "🔍 Basic health checks:"
-            echo "MySQL status: $(docker exec livrolog-mysql-dev mysqladmin ping -u root -psupersecret 2>/dev/null && echo 'OK' || echo 'FAIL')"
-            echo "Redis status: $(docker exec livrolog-redis-dev redis-cli ping 2>/dev/null || echo 'FAIL')"
-            echo "API status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/healthz || echo 'FAIL')"
-            echo "Web status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ || echo 'FAIL')"
-
-            echo "🎉 Development deployment completed!"
-            echo "  Frontend: Available on port 8080"
-            echo "  API: Available on port 8081"
+      - name: Post-deployment verification
+        run: |
+          echo "🔍 Running post-deployment verification..."
+          
+          # Final connectivity tests
+          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:8081/healthz || echo "FAIL")
+          WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:8080/ || echo "FAIL")
+          
+          echo "Final Status Check:"
+          echo "  API Health: $API_STATUS"
+          echo "  Web Status: $WEB_STATUS"
+          
+          if [ "$API_STATUS" = "200" ] && [ "$WEB_STATUS" = "200" ]; then
+            echo "✅ All services are healthy and accessible"
+          else
+            echo "⚠️ Some services may not be fully ready yet"
+            echo "This is normal for large applications and they should be ready shortly"
+          fi
+          
+          echo "🎯 Development deployment verification completed"
 
   docker-canary-prod:
     name: docker-canary-prod
