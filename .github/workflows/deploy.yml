@@ -159,8 +159,8 @@ jobs:
       - name: Deploy development containers  
         run: |
           ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
-set -euo pipefail
-# Configuration
+            set -euo pipefail
+            # Configuration
             DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
             SHARED_DIR="${{ env.DEPLOY_PATH }}/shared"
             OWNER="${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -193,32 +193,32 @@ set -euo pipefail
             # Create development environment file (fixed format)
             echo "📝 Creating development .env file..."
             cat > "${SHARED_DIR}/.env.dev" << 'ENV_EOF'
-APP_NAME=LivroLog
-APP_ENV=development
-APP_KEY=base64:UGxhY2Vob2xkZXJLZXlGb3JEZXZlbG9wbWVudA==
-APP_DEBUG=true
-APP_TIMEZONE=UTC
-
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=livrolog_dev
-DB_USERNAME=livrolog
-DB_PASSWORD=supersecret
-
-REDIS_CLIENT=predis
-REDIS_HOST=redis
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-QUEUE_CONNECTION=redis
-SESSION_DRIVER=redis
-SESSION_LIFETIME=120
-CACHE_DRIVER=redis
-MAIL_MAILER=log
-LOG_CHANNEL=stack
-LOG_LEVEL=debug
-ENV_EOF
+            APP_NAME=LivroLog
+            APP_ENV=development
+            APP_KEY=base64:UGxhY2Vob2xkZXJLZXlGb3JEZXZlbG9wbWVudA==
+            APP_DEBUG=true
+            APP_TIMEZONE=UTC
+            
+            DB_CONNECTION=mysql
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_DATABASE=livrolog_dev
+            DB_USERNAME=livrolog
+            DB_PASSWORD=supersecret
+            
+            REDIS_CLIENT=predis
+            REDIS_HOST=redis
+            REDIS_PASSWORD=null
+            REDIS_PORT=6379
+            
+            QUEUE_CONNECTION=redis
+            SESSION_DRIVER=redis
+            SESSION_LIFETIME=120
+            CACHE_DRIVER=redis
+            MAIL_MAILER=log
+            LOG_CHANNEL=stack
+            LOG_LEVEL=debug
+            ENV_EOF
             
             echo "✅ Environment file created"
             
@@ -633,8 +633,8 @@ ENV_EOF
       - name: Deploy production containers  
         run: |
           ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
-set -euo pipefail
-# Configuration
+            set -euo pipefail
+            # Configuration
             DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
             SHARED_DIR="${{ env.DEPLOY_PATH }}/shared"
             OWNER="${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -667,32 +667,32 @@ set -euo pipefail
             # Create production environment file
             echo "📝 Creating production .env file..."
             cat > "${SHARED_DIR}/.env.prod" << 'ENV_EOF'
-APP_NAME=LivroLog
-APP_ENV=production
-APP_KEY=${{ secrets.APP_KEY }}
-APP_DEBUG=false
-APP_TIMEZONE=UTC
-
-DB_CONNECTION=mysql
-DB_HOST=mariadb
-DB_PORT=3306
-DB_DATABASE=livrolog
-DB_USERNAME=root
-DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-
-REDIS_CLIENT=predis
-REDIS_HOST=redis
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-QUEUE_CONNECTION=redis
-SESSION_DRIVER=redis
-SESSION_LIFETIME=120
-CACHE_DRIVER=redis
-MAIL_MAILER=log
-LOG_CHANNEL=stack
-LOG_LEVEL=error
-ENV_EOF
+            APP_NAME=LivroLog
+            APP_ENV=production
+            APP_KEY=${{ secrets.APP_KEY }}
+            APP_DEBUG=false
+            APP_TIMEZONE=UTC
+            
+            DB_CONNECTION=mysql
+            DB_HOST=mariadb
+            DB_PORT=3306
+            DB_DATABASE=livrolog
+            DB_USERNAME=root
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            
+            REDIS_CLIENT=predis
+            REDIS_HOST=redis
+            REDIS_PASSWORD=null
+            REDIS_PORT=6379
+            
+            QUEUE_CONNECTION=redis
+            SESSION_DRIVER=redis
+            SESSION_LIFETIME=120
+            CACHE_DRIVER=redis
+            MAIL_MAILER=log
+            LOG_CHANNEL=stack
+            LOG_LEVEL=error
+            ENV_EOF
             
             echo "✅ Environment file created"
 
