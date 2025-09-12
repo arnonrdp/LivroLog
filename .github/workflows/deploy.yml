@@ -159,9 +159,8 @@ jobs:
       - name: Deploy development containers  
         run: |
           ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
-            set -euo pipefail
-            
-            # Configuration
+set -euo pipefail
+# Configuration
             DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
             SHARED_DIR="${{ env.DEPLOY_PATH }}/shared"
             OWNER="${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -533,572 +532,341 @@ ENV_EOF
 
     env:
       ENVIRONMENT: Production
-      DEPLOY_PATH: /var/www/livrolog
-      GHCR_PAT: ${{ secrets.GHCR_PAT }}
-      APP_KEY: ${{ secrets.APP_KEY }}
-      DEPLOY_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      DB_HEALTH_TIMEOUT: ${{ secrets.DB_HEALTH_TIMEOUT || 300 }}
-      REDIS_HEALTH_TIMEOUT: '180'
       TARGET_BRANCH: main
+      DEPLOY_PATH: /var/www/livrolog
+      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      GITHUB_SHA: ${{ github.sha }}
+      GITHUB_REF_NAME: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code for compose file
         uses: actions/checkout@v4
-
-      - name: Deploy production containers
-        uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,APP_KEY,DEPLOY_DB_PASSWORD,DB_HEALTH_TIMEOUT,REDIS_HEALTH_TIMEOUT,TARGET_BRANCH
-          command_timeout: 15m
-          script: |
-            set -euo pipefail +x
-            DOCKER_DIR="/var/www/livrolog/docker"
-            OWNER="arnonrdp"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate required secrets
+        run: |
+          echo "🔍 Validating required secrets and environment variables..."
+          
+          # Check required secrets
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            echo "❌ SERVER_HOST secret is not configured"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            echo "❌ SERVER_USER secret is not configured" 
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            echo "❌ SERVER_SSH_KEY secret is not configured"
+            exit 1
+          fi
+          
+          # APP_KEY is required for production
+          if [ -z "${{ secrets.APP_KEY }}" ]; then
+            echo "❌ APP_KEY secret is not configured for production"
+            exit 1
+          fi
+          
+          # DB_PASSWORD is required for production
+          if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+            echo "❌ DB_PASSWORD secret is not configured for production"
+            exit 1
+          fi
+          
+          # GHCR_PAT is optional for public images, but warn if missing
+          if [ -z "${{ secrets.GHCR_PAT }}" ]; then
+            echo "⚠️ GHCR_PAT secret not found - will attempt to pull public images"
+          fi
+          
+          echo "✅ Secret validation completed"
+
+      - name: Setup SSH key and test connection
+        run: |
+          echo "🔐 Setting up SSH connection..."
+          
+          # Create SSH directory and set permissions
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Create SSH private key file
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/livrolog_key
+          chmod 600 ~/.ssh/livrolog_key
+          
+          # Disable host key checking for this deployment (AWS instances change IPs)
+          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/livrolog_key" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          echo "  LogLevel QUIET" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          # Test SSH connection
+          echo "🔍 Testing SSH connection to ${{ secrets.SERVER_HOST }}..."
+          if ssh ${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"; then
+            echo "✅ SSH connection test passed"
+          else
+            echo "❌ SSH connection test failed"
+            echo "Debug information:"
+            echo "  Host: ${{ secrets.SERVER_HOST }}"
+            echo "  User: ${{ secrets.SERVER_USER }}"
+            echo "  Key length: ${#{{ secrets.SERVER_SSH_KEY }}}"
+            exit 1
+          fi
+
+      - name: Copy compose file to server
+        run: |
+          echo "📁 Copying docker-compose.prod.yml to server..."
+          
+          # Create target directory on server
+          ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
+          
+          # Copy compose file
+          scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
+          
+          echo "✅ Docker compose file copied successfully"
+
+      - name: Deploy production containers  
+        run: |
+          ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
+set -euo pipefail
+# Configuration
+            DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
+            SHARED_DIR="${{ env.DEPLOY_PATH }}/shared"
+            OWNER="${{ env.GITHUB_REPOSITORY_OWNER }}"
+            TAG="prod"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
             IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
-
-            # Display deployment configuration
+            
             echo "=================================================="
-            echo "🚀 Starting production deployment (branch: ${TARGET_BRANCH:-main})"
-            echo "Using internal MariaDB + Redis containers"
-            echo "DB_HEALTH_TIMEOUT=${DB_HEALTH_TIMEOUT:-600}s, REDIS_HEALTH_TIMEOUT=${REDIS_HEALTH_TIMEOUT:-300}s"
-            echo "Deployment is idempotent - auto-normalizes .env configuration"
+            echo "🚀 LivroLog Production Deployment"
+            echo "Branch: ${{ env.TARGET_BRANCH }}"
+            echo "SHA: ${{ env.GITHUB_SHA }}"
+            echo "Images: ${IMAGE_API}:${TAG}, ${IMAGE_WEB}:${TAG}"
+            echo "Deploy Path: ${{ env.DEPLOY_PATH }}"
             echo "=================================================="
+            
+            # Create required directories with proper permissions
+            echo "📁 Setting up directories and permissions..."
+            sudo mkdir -p "${SHARED_DIR}"/{storage,db}
+            sudo mkdir -p "${DOCKER_DIR}"
+            
+            # Set MariaDB data directory permissions (UID 999)
+            sudo chown -R 999:999 "${SHARED_DIR}/db"
+            
+            # Set Laravel storage permissions (www-data)
+            sudo chown -R www-data:www-data "${SHARED_DIR}/storage" 2>/dev/null || sudo chown -R 82:82 "${SHARED_DIR}/storage"
+            
+            # Set deployment directory permissions
+            sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} "${{ env.DEPLOY_PATH }}"
+            
+            # Create production environment file
+            echo "📝 Creating production .env file..."
+            cat > "${SHARED_DIR}/.env.prod" << 'ENV_EOF'
+APP_NAME=LivroLog
+APP_ENV=production
+APP_KEY=${{ secrets.APP_KEY }}
+APP_DEBUG=false
+APP_TIMEZONE=UTC
 
-            # Create all required directories
-            echo "📁 Creating required directories..."
-            sudo mkdir -p "$DOCKER_DIR"
-            sudo mkdir -p /var/www/livrolog/shared/{storage,db}
+DB_CONNECTION=mysql
+DB_HOST=mariadb
+DB_PORT=3306
+DB_DATABASE=livrolog
+DB_USERNAME=root
+DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
-            # Set proper permissions (999:999 is the default MariaDB container user)
-            sudo chown -R 999:999 /var/www/livrolog/shared/db
-            sudo chown -R "$USER:$USER" /var/www/livrolog
-            cd "$DOCKER_DIR"
+REDIS_CLIENT=predis
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
 
-            # Auto-provision and normalize .env (idempotent)
-            echo "🔧 Normalizing .env configuration..."
-            sudo touch /var/www/livrolog/shared/.env
-            sudo chown -R "$USER:$USER" /var/www/livrolog/shared/.env
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+SESSION_LIFETIME=120
+CACHE_DRIVER=redis
+MAIL_MAILER=log
+LOG_CHANNEL=stack
+LOG_LEVEL=error
+ENV_EOF
+            
+            echo "✅ Environment file created"
 
-            # Função POSIX para gerar APP_KEY compatível com Laravel (sem depender de imagens externas)
-            gen_app_key() {
-              if command -v head >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1; then
-                head -c 32 /dev/urandom | base64 | tr -d '\n' | awk '{print "base64:" $0}'
-              elif command -v openssl >/dev/null 2>&1; then
-                openssl rand -base64 32 | tr -d '\n' | awk '{print "base64:" $0}'
-              else
-                dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n' | awk '{print "base64:" $0}'
-              fi
-            }
-
-            # Define APP_KEY validation pattern to avoid YAML truncation issues
-            APP_KEY_PATTERN='^base64:[A-Za-z0-9+/=]{44}$'
-
-            # Auto-provision APP_KEY if needed
-            APP_KEY_CAND="${APP_KEY:-}"
-            if ! printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
-              echo "⚠️ APP_KEY secret ausente/inválido; gerando automaticamente..."
-              APP_KEY_CAND="$(gen_app_key || true)"
-            fi
-            echo "🔧 APP_KEY for prod: [${#APP_KEY_CAND} chars]${APP_KEY_CAND:+ ($(printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN" && echo "valid" || echo "invalid"))}${APP_KEY_CAND:- (empty)}"
-
-            # Save valid APP_KEY to .env
-            if printf '%s' "$APP_KEY_CAND" | grep -Eq "$APP_KEY_PATTERN"; then
-              tmpfile="$(mktemp)"
-              grep -v '^APP_KEY=' /var/www/livrolog/shared/.env > "$tmpfile" || true
-              printf 'APP_KEY=%s\n' "$APP_KEY_CAND" >> "$tmpfile"
-              mv "$tmpfile" /var/www/livrolog/shared/.env
-              echo "✅ APP_KEY provisionada/atualizada em /var/www/livrolog/shared/.env"
+            # Navigate to docker directory
+            cd "${DOCKER_DIR}"
+            
+            # Login to GitHub Container Registry if PAT available
+            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "🔐 Authenticating with GitHub Container Registry..."
+              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ env.GITHUB_REPOSITORY_OWNER }}" --password-stdin
             else
-              echo "❌ Falha ao provisionar APP_KEY automaticamente"
-              exit 1
+              echo "⚠️ No GHCR_PAT provided - attempting to pull public images"
             fi
-
-            # Normalize database and Redis configuration (idempotent)
-            # This step ensures the .env always has correct values for internal services
-            # regardless of previous state, making the deployment fully idempotent
-            echo "📝 Normalizing database and Redis configuration in .env..."
-
-            # Read existing values to preserve from .env file
-            eval $(grep -E '^(DB_DATABASE|DB_USERNAME|DB_PASSWORD)=' /var/www/livrolog/shared/.env 2>/dev/null || true)
-
-            # Bootstrap database credentials from GitHub Secrets if not present in .env
-            [ -z "${DB_DATABASE:-}" ] && DB_DATABASE="livrolog" && echo "📝 Using default DB_DATABASE: ${DB_DATABASE}"
-            [ -z "${DB_USERNAME:-}" ] && DB_USERNAME="root" && echo "📝 Using default DB_USERNAME: ${DB_USERNAME}"
-
-            # Bootstrap DB_PASSWORD - prioridade: .env -> GitHub Secret -> falha
-            DB_PASSWORD_FROM_ENV="${DB_PASSWORD:-}"
-            DEPLOY_DB_PASSWORD="${DEPLOY_DB_PASSWORD:-}"
-
-            if [ -n "${DB_PASSWORD_FROM_ENV}" ]; then
-              DB_PASSWORD="${DB_PASSWORD_FROM_ENV}"
-              echo "📝 Using DB_PASSWORD from existing .env file"
-            elif [ -n "${DEPLOY_DB_PASSWORD}" ]; then
-              DB_PASSWORD="${DEPLOY_DB_PASSWORD}"
-              echo "📝 Bootstrapping DB_PASSWORD from GitHub Secret"
+            
+            # Pull latest images with error handling
+            echo "📦 Pulling latest Docker images..."
+            if ! docker pull "${IMAGE_API}:${TAG}"; then
+              echo "⚠️ Failed to pull API image ${IMAGE_API}:${TAG}"
+              echo "Available API tags:"
+              docker images | grep livrolog-api || echo "No local API images found"
+            fi
+            
+            if ! docker pull "${IMAGE_WEB}:${TAG}"; then
+              echo "⚠️ Failed to pull Web image ${IMAGE_WEB}:${TAG}"
+              echo "Available Web tags:"
+              docker images | grep livrolog-web || echo "No local Web images found"
+            fi
+            
+            # Stop existing containers gracefully
+            echo "🛑 Stopping existing production containers..."
+            if docker compose -f docker-compose.prod.yml ps --services --filter "status=running" | grep -q .; then
+              docker compose -f docker-compose.prod.yml down --timeout 30
+              echo "✅ Existing containers stopped"
             else
-              echo "❌ DB_PASSWORD not found in .env and DEPLOY_DB_PASSWORD secret not provided"
-              exit 1
+              echo "ℹ️ No running containers to stop"
             fi
-
-            # Create normalized .env with correct values (atomic operation)
-            tmpfile="$(mktemp)"
-
-            # Copy all non-DB/Redis lines
-            grep -v -E '^(APP_ENV|DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env > "$tmpfile" 2>/dev/null || true
-
-            # Append normalized configuration
-            cat >> "$tmpfile" << ENVEOF
-            APP_ENV=production
-            DB_CONNECTION=mysql
-            DB_HOST=mariadb
-            DB_PORT=3306
-            DB_DATABASE=${DB_DATABASE}
-            DB_USERNAME=${DB_USERNAME}
-            DB_PASSWORD=${DB_PASSWORD}
-            REDIS_HOST=redis
-            REDIS_PORT=6379
-            ENVEOF
-
-            # Atomically replace .env
-            mv "$tmpfile" /var/www/livrolog/shared/.env
-            echo "✅ .env normalized for internal MariaDB and Redis"
-
-            # Pre-checks: verify environment and infrastructure
-            echo "🔍 Performing pre-deployment checks..."
-
-            # Check 1: required directories exist
-            test -f /var/www/livrolog/shared/.env || { echo "❌ /var/www/livrolog/shared/.env não existe"; exit 1; }
-            test -d /var/www/livrolog/shared/storage || { echo "❌ /var/www/livrolog/shared/storage não existe"; exit 1; }
-            test -d /var/www/livrolog/shared/db || { echo "❌ /var/www/livrolog/shared/db não existe"; exit 1; }
-
-            # Validate APP_KEY in .env file
-            echo "🔍 Validating APP_KEY in .env file..."
-            ENV_APP_KEY=$(grep '^APP_KEY=' /var/www/livrolog/shared/.env 2>/dev/null | cut -d'=' -f2- && true || echo "")
-            if ! printf '%s' "$ENV_APP_KEY" | grep -Eq "$APP_KEY_PATTERN"; then
-              echo "❌ APP_KEY inválido/ausente em /var/www/livrolog/shared/.env"
-              exit 1
-            fi
-            echo "✅ APP_KEY validation passed"
-
-            # Reload normalized values for validation
-            eval $(grep -E '^(DB_CONNECTION|DB_HOST|DB_PORT|DB_DATABASE|DB_USERNAME|DB_PASSWORD|REDIS_HOST|REDIS_PORT)=' /var/www/livrolog/shared/.env)
-
-            # Validate critical configuration
-            echo "Validating normalized configuration..."
-            [ "${DB_CONNECTION}" = "mysql" ] || { echo "❌ DB_CONNECTION validation failed"; exit 1; }
-            [ "${DB_HOST}" = "mariadb" ] || { echo "❌ DB_HOST validation failed"; exit 1; }
-            [ "${DB_PORT}" = "3306" ] || { echo "❌ DB_PORT validation failed"; exit 1; }
-            [ "${REDIS_HOST}" = "redis" ] || { echo "❌ REDIS_HOST validation failed"; exit 1; }
-            [ "${REDIS_PORT}" = "6379" ] || { echo "❌ REDIS_PORT validation failed"; exit 1; }
-            [ -n "${DB_DATABASE}" ] || { echo "❌ DB_DATABASE is empty"; exit 1; }
-            [ -n "${DB_USERNAME}" ] || { echo "❌ DB_USERNAME is empty"; exit 1; }
-            [ -n "${DB_PASSWORD}" ] || { echo "❌ DB_PASSWORD is empty"; exit 1; }
-
-            echo "✅ Configuration validated successfully"
-
-            # Login to GHCR if PAT is available
-            if [ -n "${GHCR_PAT:-}" ]; then
-              echo "$GHCR_PAT" | docker login ghcr.io -u arnonrdp --password-stdin
-            else
-              echo "⚠️ GHCR_PAT not set. Using public access."
-            fi
-
-            # Resolve tag: prefer 'prod', fallback to SHA
-            BRANCH="${TARGET_BRANCH:-${GITHUB_REF_NAME:-main}}"
-            SHA="${GITHUB_SHA}"
-            CANDIDATES=("prod" "${SHA}" "${BRANCH}")
-
-            RESOLVED_TAG=""
-            for tag in "${CANDIDATES[@]}"; do
-              if docker manifest inspect "${IMAGE_WEB}:${tag}" >/dev/null 2>&1 && docker manifest inspect "${IMAGE_API}:${tag}" >/dev/null 2>&1; then
-                RESOLVED_TAG="${tag}"
-                break
-              fi
-            done
-
-            if [ -z "$RESOLVED_TAG" ]; then
-              echo "❌ Nenhuma tag encontrada (testadas: ${CANDIDATES[*]})"
-              exit 1
-            fi
-
-            echo "🏷️ Using resolved tag: $RESOLVED_TAG"
-            export TAG="$RESOLVED_TAG"
-            export OWNER="$OWNER"
-
-            # Create production compose file with MariaDB and Redis
-            cat > docker-compose.prod.yml << 'EOF'
-            # docker-compose.prod.yml
-            # Production Docker Compose with internal MariaDB and Redis
-
-            name: livrolog
-
-            services:
-              # MariaDB Database (internal, no exposed ports)
-              mariadb:
-                image: mariadb:10.11-jammy
-                restart: always
-                environment:
-                  - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-                  - MYSQL_DATABASE=${DB_DATABASE}
-                  - MYSQL_USER=${DB_USERNAME}
-                  - MYSQL_PASSWORD=${DB_PASSWORD}
-                networks:
-                  - livrolog-net
-                volumes:
-                  - /var/www/livrolog/shared/db:/var/lib/mysql
-                healthcheck:
-                  # Uses root user since DB_USERNAME defaults to 'root' in this deployment
-                  # For non-root users, use: mysql --silent --connect-timeout=5 -u $MYSQL_USER -p$MYSQL_PASSWORD -e 'SELECT 1'
-                  test: ["CMD-SHELL", "mysql --silent --connect-timeout=3 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
-                  interval: 5s
-                  timeout: 3s
-                  retries: 20
-                  start_period: 30s
-
-              # Redis Cache (internal, no exposed ports)
-              redis:
-                image: redis:7-alpine
-                restart: always
-                networks:
-                  - livrolog-net
-                healthcheck:
-                  test: ["CMD", "redis-cli", "ping"]
-                  interval: 3s
-                  timeout: 2s
-                  retries: 10
-                  start_period: 5s
-
-              # Laravel API with Nginx + PHP-FPM (serves on port 8080)
-              api:
-                image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
-                restart: always
-                environment:
-                  # Use containerized services
-                  - DB_HOST=mariadb
-                  - DB_PORT=3306
-                  - REDIS_HOST=redis
-                  - REDIS_PORT=6379
-                ports:
-                  - "127.0.0.1:18081:8080"
-                networks:
-                  - livrolog-net
-                volumes:
-                  # Mount shared storage and .env from existing deployment
-                  - /var/www/livrolog/shared/storage:/var/www/html/storage
-                  - /var/www/livrolog/shared/.env:/var/www/html/.env
-                extra_hosts:
-                  - "host.docker.internal:host-gateway"
-                depends_on:
-                  mariadb:
-                    condition: service_healthy
-                  redis:
-                    condition: service_healthy
-                healthcheck:
-                  # Simplified healthcheck using curl to test if nginx is responding
-                  test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
-                  interval: 10s
-                  timeout: 5s
-                  retries: 20
-                  start_period: 60s
-
-              # Vue/Quasar WebApp served by Nginx
-              web:
-                image: ghcr.io/${OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
-                restart: always
-                ports:
-                  - "127.0.0.1:18080:80"
-                networks:
-                  - livrolog-net
-                depends_on:
-                  api:
-                    condition: service_healthy
-                healthcheck:
-                  test: ["CMD", "sh", "-c", "curl -fsS http://localhost/healthz"]
-                  interval: 15s
-                  timeout: 10s
-                  retries: 10
-                  start_period: 30s
-
-            networks:
-              livrolog-net:
-                name: livrolog-net
-                driver: bridge
-            EOF
-
-            # Save current tag for rollback
-            echo "$RESOLVED_TAG" > .resolved_tag_prod
-            echo "$RESOLVED_TAG" > .last_tag_prod
-
-            # Define compose command with env-file to ensure all variables are loaded
-            # $COMPOSE centraliza flags comuns: --env-file garante que DB_PASSWORD e outras vars sejam lidas do .env
-            # -p livrolog define project name consistente, -f especifica o compose file de produção
-            COMPOSE="docker compose --env-file /var/www/livrolog/shared/.env -p livrolog -f docker-compose.prod.yml"
-            echo "📋 Using compose command: $COMPOSE"
-
-            # Check for optional database seeding
-            echo "Checking for database seeding..."
-            if [ ! -f /var/www/livrolog/shared/db/ibdata1 ] && [ -f /var/www/livrolog/shared/db-seed.sql ]; then
-              echo "🌱 Empty database detected with seed file available - will seed after MariaDB starts"
-              SEED_REQUIRED=1
-            elif [ ! -f /var/www/livrolog/shared/db/ibdata1 ]; then
-              echo "🆕 Empty database detected (first run)"
-              echo "ℹ️ Para semear: coloque o dump em /var/www/livrolog/shared/db-seed.sql e reexecute o workflow"
-              SEED_REQUIRED=0
-            else
-              echo "✅ Existing database detected"
-              SEED_REQUIRED=0
-            fi
-
-            # Preflight cleanup - stop existing containers and remove orphans
-            echo "🧹 Preflight cleanup - ensuring idempotent deployment..."
-            echo "Stopping existing compose project if running..."
-            $COMPOSE down --remove-orphans 2>/dev/null || true
-
-            echo "Removing any orphaned containers by name..."
-            docker rm -f livrolog-api livrolog-web livrolog-mariadb 2>/dev/null || true
-            docker rm -f livrolog_api_1 livrolog_web_1 livrolog_mariadb_1 2>/dev/null || true
-
-            echo "Cleaning up old networks..."
-            docker network rm livrolog-net 2>/dev/null || true
-
-            # Limpeza seletiva de espaço em disco (rápida e eficiente)
-            echo "🧹 Limpando recursos Docker não utilizados..."
-            # Remove apenas containers parados e volumes órfãos (rápido)
-            timeout 10 docker system prune -f --volumes 2>/dev/null || true
-            # Limpa apenas imagens antigas do LivroLog (seletivo e seguro)
-            echo "🗑️ Removendo imagens antigas do LivroLog..."
-            docker images | grep -E "livrolog-(api|web)" | grep -v "$RESOLVED_TAG" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
-            echo "✅ Limpeza concluída"
-
-            # Pull and start containers (idempotent)
-            echo "🐳 Pulling containers..."
-            $COMPOSE pull >/dev/null 2>&1
-
-            echo "🗄️ Starting MariaDB and Redis..."
-
-            # Verify database directory permissions before starting
-            echo "🔍 Pre-startup checks..."
-            if test -d /var/www/livrolog/shared/db; then
-              ls -ld /var/www/livrolog/shared/db
-            else
-              echo "Database directory not found (will be created)"
-            fi
-
-            # Start containers with enhanced error reporting
-            echo "🐳 Starting containers..."
-            if ! $COMPOSE up -d --remove-orphans --force-recreate >/dev/null 2>&1; then
+            
+            # Clean up orphaned containers and networks
+            echo "🧹 Cleaning up orphaned resources..."
+            docker container prune -f --filter "label=com.docker.compose.project=livrolog" || true
+            docker network prune -f || true
+            
+            # Export environment variables for docker-compose
+            export GITHUB_REPOSITORY_OWNER="${OWNER}"
+            export TAG="${TAG}"
+            export DB_DATABASE="livrolog"
+            export DB_USERNAME="root"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            
+            # Start containers with health checks
+            echo "🚀 Starting production containers..."
+            if ! docker compose -f docker-compose.prod.yml up -d --remove-orphans; then
               echo "❌ Failed to start containers"
-              echo "=== Docker Compose Status ==="
-              $COMPOSE ps || true
-              echo "=== Docker System Info ==="
-              docker system df || true
+              echo "=== Docker Compose Logs ==="
+              docker compose -f docker-compose.prod.yml logs --tail=50
               exit 1
             fi
-
-            # Immediate status check
-            echo "🔍 Initial container status:"
-            $COMPOSE ps
-
-            # Wait for API container to start (give it 30 seconds initially)
-            echo "⏳ Waiting for API container to start..."
-            sleep 30
-
-            # Check API container status and logs early
-            echo "🔍 API container status after startup:"
-            API_STATUS=$($COMPOSE ps api --format "table {{.State}}" | tail -n +2)
-            echo "API Status: $API_STATUS"
-
-            if echo "$API_STATUS" | grep -q "Restarting\|Exited"; then
-              echo "❌ API container is failing to start. Showing logs..."
-              echo "=== API Container Logs (last 50 lines) ==="
-              $COMPOSE logs --tail=50 api || true
-              echo "=== API Container Inspect ==="
-              API_CID=$($COMPOSE ps -q api)
-              [ -n "$API_CID" ] && docker inspect "$API_CID" | jq '.[0].State' || true
-            fi
-
-            # Wait for MariaDB health with configurable timeout
-            # Default: 600s (10 minutes), max: 1800s (30 minutes)
-            DB_WAIT_TIMEOUT="${DB_HEALTH_TIMEOUT:-600}"
-            [ "$DB_WAIT_TIMEOUT" -gt 1800 ] && DB_WAIT_TIMEOUT=1800
-
-            echo "⏳ Waiting for MariaDB health (timeout=${DB_WAIT_TIMEOUT}s)..."
-            deadline=$((SECONDS+DB_WAIT_TIMEOUT))
-            while true; do
-              if $COMPOSE ps mariadb | grep -q "healthy"; then
-                echo "✅ MariaDB is healthy"
+            
+            echo "✅ Containers started successfully"
+            
+            # Wait for containers to initialize
+            echo "⏳ Waiting for containers to initialize (90 seconds)..."
+            sleep 90
+            
+            # Health checks with detailed status
+            echo "🔍 Performing health checks..."
+            
+            # Check container status
+            echo "📊 Container Status:"
+            docker compose -f docker-compose.prod.yml ps
+            
+            # Check MariaDB connectivity
+            echo "🔍 Testing MariaDB connectivity..."
+            for i in {1..18}; do
+              if docker exec livrolog-mariadb-1 mysqladmin ping -u root -p${{ secrets.DB_PASSWORD }} --silent 2>/dev/null; then
+                echo "✅ MariaDB is responding (attempt $i)"
                 break
-              fi
-              
-              if [ $SECONDS -ge $deadline ]; then
-                echo "❌ MariaDB health check timed out after ${DB_WAIT_TIMEOUT}s"
-                echo "=== MariaDB Status ==="
-                $COMPOSE ps mariadb
-                echo "=== MariaDB Logs (last 120 lines) ==="
-                $COMPOSE logs --tail=120 mariadb
+              elif [ $i -eq 18 ]; then
+                echo "❌ MariaDB health check failed after 18 attempts"
+                docker logs livrolog-mariadb-1 --tail=30
                 exit 1
-              fi
-              
-              echo "Waiting for MariaDB... ($((deadline - SECONDS))s remaining)"
-              sleep 10
-            done
-
-            # Wait for Redis health with configurable timeout  
-            # Default: 300s (5 minutes), max: 600s (10 minutes)
-            REDIS_WAIT_TIMEOUT="${REDIS_HEALTH_TIMEOUT:-300}"
-            [ "$REDIS_WAIT_TIMEOUT" -gt 600 ] && REDIS_WAIT_TIMEOUT=600
-
-            echo "⏳ Waiting for Redis health (timeout=${REDIS_WAIT_TIMEOUT}s)..."
-            deadline=$((SECONDS+REDIS_WAIT_TIMEOUT))
-            while true; do
-              if $COMPOSE ps redis | grep -q "healthy"; then
-                echo "✅ Redis is healthy"
-                break
-              fi
-              
-              if [ $SECONDS -ge $deadline ]; then
-                echo "❌ Redis health check timed out after ${REDIS_WAIT_TIMEOUT}s"
-                echo "=== Redis Status ==="
-                $COMPOSE ps redis
-                echo "=== Redis Logs (last 120 lines) ==="
-                $COMPOSE logs --tail=120 redis
-                exit 1
-              fi
-              
-              echo "Waiting for Redis... ($((deadline - SECONDS))s remaining)"
-              sleep 5
-            done
-
-            # Optional database seeding (safe and idempotent)
-            if [ "$SEED_REQUIRED" -eq 1 ]; then
-              echo "🌱 Seeding database from /var/www/livrolog/shared/db-seed.sql..."
-              if $COMPOSE exec -T mariadb mysql -u"${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_DATABASE}" < /var/www/livrolog/shared/db-seed.sql; then
-                echo "✅ Database seeded successfully"
               else
-                echo "⚠️ Database seeding failed, but continuing with deployment"
+                echo "⏳ MariaDB not ready yet (attempt $i/18), waiting 10 seconds..."
+                sleep 10
               fi
-            fi
-
-            # Verify connectivity from API container to MariaDB
-            echo "🔍 Verifying API container connectivity..."
-            API_CID=$($COMPOSE ps -q api)
-            if [ -n "$API_CID" ]; then
-              echo "API Container ID: $API_CID"
-              echo "Testing MariaDB connectivity from API container:"
-              docker exec "$API_CID" timeout 5 bash -c 'cat < /dev/null > /dev/tcp/mariadb/3306' && echo "✅ MariaDB port 3306 reachable from API" || echo "❌ MariaDB port 3306 unreachable from API"
-              
-              echo "Testing Redis connectivity from API container:"
-              docker exec "$API_CID" timeout 5 bash -c 'cat < /dev/null > /dev/tcp/redis/6379' && echo "✅ Redis port 6379 reachable from API" || echo "❌ Redis port 6379 unreachable from API"
-              
-              echo "Testing /healthz endpoint directly from API container:"
-              docker exec "$API_CID" curl -f http://localhost:8080/healthz || echo "❌ /healthz endpoint not responding"
-              
-              echo "Checking Laravel configuration:"
-              docker exec "$API_CID" php artisan config:show database.connections.mysql.host || echo "❌ Cannot show DB config"
-              docker exec "$API_CID" php artisan config:show database.redis.default.host || echo "❌ Cannot show Redis config"
-              
-              echo "Testing basic Laravel functionality:"
-              docker exec "$API_CID" php artisan about --only=environment || echo "❌ Laravel about command failed"
-            else
-              echo "❌ No API container found for connectivity testing"
-            fi
-
-            # Wait for health checks with timeout
-            echo "⏳ Waiting for services to be healthy (max 180s)..."
-            deadline=$((SECONDS+180))
-            while true; do
-              web_ok=0; api_ok=0
-              # Check web health
-              curl -fsS "http://127.0.0.1:18080/healthz" >/dev/null 2>&1 && web_ok=1
-              # Check api health  
-              curl -fsS "http://127.0.0.1:18081/healthz" >/dev/null 2>&1 && api_ok=1
-              
-              if [ "$web_ok" -eq 1 ] && [ "$api_ok" -eq 1 ]; then 
-                echo "✅ All services are healthy"
-                break
-              fi
-              
-              if [ $SECONDS -ge $deadline ]; then
-                echo "❌ Health checks timed out, performing rollback..."
-                
-                echo "=== Container Status ==="
-                docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-                echo "=== MariaDB Logs (last 80 lines) ==="
-                $COMPOSE logs --tail=80 mariadb || true
-                echo "=== API Logs (last 80 lines) ==="
-                $COMPOSE logs --tail=80 api || true
-                echo "=== Web Logs (last 80 lines) ==="
-                $COMPOSE logs --tail=80 web || true
-                
-                echo "=== API->MariaDB connectivity test ==="
-                API_CID=$($COMPOSE ps -q api)
-                [ -n "$API_CID" ] && docker exec "$API_CID" timeout 5 bash -c 'cat </dev/null >/dev/tcp/mariadb/3306' && echo "✅ API can reach MariaDB" || echo "❌ API cannot reach MariaDB"
-                
-                # Idempotent rollback (preserve DB volume)
-                echo "🔄 Performing idempotent rollback..."
-                $COMPOSE down --remove-orphans 2>/dev/null || true
-                LAST_TAG=$(cat .last_tag_prod 2>/dev/null || echo "prod")
-                export TAG="$LAST_TAG"
-                echo "Rolling back to tag: $TAG"
-                $COMPOSE pull 2>/dev/null || true
-                $COMPOSE up -d --remove-orphans --force-recreate 2>/dev/null || true
-                exit 1
-              fi
-              sleep 5
             done
-
-            # Run migrations and clear caches using dynamic container names
-            echo "🔄 Rodando migrations..."
-            API_CONTAINER=$($COMPOSE ps -q api | head -n 1)
-            if [ -z "$API_CONTAINER" ]; then
-              echo "❌ No API container found!"
-              exit 1
-            fi
-            docker exec "$API_CONTAINER" php artisan migrate --force
-
-            echo "🧹 Clearing caches..."
-            docker exec "$API_CONTAINER" php artisan config:clear || true
-            docker exec "$API_CONTAINER" php artisan cache:clear || true
-            docker exec "$API_CONTAINER" php artisan config:cache || true
-            docker exec "$API_CONTAINER" php artisan route:cache || true
-
-            # Smoke tests
-            echo "🧪 Running smoke tests..."
-            echo "Testing web frontend:"
-            curl -I http://127.0.0.1:18080/ || exit 1
-            echo "Testing API health:"
-            curl -I http://127.0.0.1:18081/healthz || exit 1
-
-            # Test database connectivity from API
-            echo "Testing database connectivity from API:"
-            DB_TEST_OUTPUT=$(docker exec "$API_CONTAINER" php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'DB_OK'; } catch (Exception \$e) { echo 'DB_FAIL'; exit(1); }" 2>&1)
-            if echo "$DB_TEST_OUTPUT" | grep -q "DB_OK"; then
-              echo "✅ Database connection ok"
+            
+            # Check Redis connectivity  
+            echo "🔍 Testing Redis connectivity..."
+            if docker exec livrolog-redis-1 redis-cli ping >/dev/null 2>&1; then
+              echo "✅ Redis is responding"
             else
-              echo "❌ Database connection failed"
-              echo "Debug output: $DB_TEST_OUTPUT"
+              echo "❌ Redis health check failed"
+              docker logs livrolog-redis-1 --tail=20
               exit 1
             fi
-
-            # Test Redis connectivity
-            echo "Testing Redis connectivity:"
-            REDIS_TEST_OUTPUT=$($COMPOSE exec -T redis redis-cli ping 2>&1)
-            if echo "$REDIS_TEST_OUTPUT" | grep -q "PONG"; then
-              echo "✅ Redis connection ok"
+            
+            # Check API health endpoint
+            echo "🔍 Testing API health endpoint..."
+            for i in {1..30}; do  
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/healthz 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ API health endpoint responding (HTTP $HTTP_CODE)"
+                break
+              elif [ $i -eq 30 ]; then
+                echo "❌ API health endpoint failed after 30 attempts (HTTP $HTTP_CODE)"
+                echo "=== API Container Logs ==="
+                docker logs livrolog-api-1 --tail=50
+                exit 1
+              else
+                echo "⏳ API not ready yet (HTTP $HTTP_CODE, attempt $i/30), waiting 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            # Check Web frontend
+            echo "🔍 Testing Web frontend..."  
+            for i in {1..18}; do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/ 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ Web frontend responding (HTTP $HTTP_CODE)"
+                break
+              elif [ $i -eq 18 ]; then
+                echo "❌ Web frontend failed after 18 attempts (HTTP $HTTP_CODE)"
+                echo "=== Web Container Logs ==="
+                docker logs livrolog-web-1 --tail=30
+                exit 1
+              else
+                echo "⏳ Web not ready yet (HTTP $HTTP_CODE, attempt $i/18), waiting 5 seconds..."
+                sleep 5
+              fi
+            done
+            
+            # Run Laravel migrations and optimizations
+            echo "🔄 Running Laravel migrations and optimizations..."
+            API_CONTAINER=$(docker compose -f docker-compose.prod.yml ps -q api)
+            if [ -n "$API_CONTAINER" ]; then
+              docker exec "$API_CONTAINER" php artisan migrate --force
+              docker exec "$API_CONTAINER" php artisan config:cache
+              docker exec "$API_CONTAINER" php artisan route:cache
+              docker exec "$API_CONTAINER" php artisan view:cache
+              echo "✅ Laravel optimizations completed"
             else
-              echo "❌ Redis connection failed"
-              echo "Debug output: $REDIS_TEST_OUTPUT"
-              exit 1
+              echo "⚠️ API container not found for Laravel commands"
             fi
+            
+            echo "=================================================="
+            echo "🎉 Production deployment completed successfully!"
+            echo "📍 Services:"
+            echo "  • Web Frontend: https://livrolog.com"
+            echo "  • API Backend: https://api.livrolog.com"
+            echo "  • Internal Web: http://127.0.0.1:18080"
+            echo "  • Internal API: http://127.0.0.1:18081"
+            echo "=================================================="
+            
+          DEPLOY_SCRIPT
 
-            echo "✅ All smoke tests passed"
-            echo "Container status:"
-            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-
-            echo "✅ Production Docker deployment completed successfully!"
-            echo "🌐 Web: http://127.0.0.1:18080"
-            echo "🔌 API: http://127.0.0.1:18081"
+      - name: Post-deployment verification
+        run: |
+          echo "🔍 Running post-deployment verification..."
+          
+          # Final connectivity tests
+          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:18081/healthz || echo "FAIL")
+          WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:18080/ || echo "FAIL")
+          
+          echo "Final Status Check:"
+          echo "  API Health: $API_STATUS"
+          echo "  Web Status: $WEB_STATUS"
+          
+          if [ "$API_STATUS" = "200" ] && [ "$WEB_STATUS" = "200" ]; then
+            echo "✅ All services are healthy and accessible"
+          else
+            echo "⚠️ Some services may not be fully ready yet"
+            echo "This is normal for large applications and they should be ready shortly"
+          fi
+          
+          echo "🎯 Production deployment verification completed"

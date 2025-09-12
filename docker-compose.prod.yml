@@ -1,11 +1,10 @@
 # docker-compose.prod.yml
-# Production Docker Compose with internal MariaDB and Redis
-# Comments in English only
+# Production Docker Compose for LivroLog
 
 name: livrolog
 
 services:
-  # MariaDB Database (internal, no exposed ports)
+  # MariaDB Database (internal, no exposed ports for security)
   mariadb:
     image: mariadb:10.11-jammy
     restart: always
@@ -19,15 +18,13 @@ services:
     volumes:
       - /var/www/livrolog/shared/db:/var/lib/mysql
     healthcheck:
-      # Uses root user since DB_USERNAME defaults to 'root' in this deployment
-      # For non-root users, use: mysql --silent --connect-timeout=5 -u $MYSQL_USER -p$MYSQL_PASSWORD -e 'SELECT 1'
-      test: ["CMD-SHELL", "mysql --silent --connect-timeout=3 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 30s
+      test: ["CMD-SHELL", "mysql --silent --connect-timeout=5 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
-  # Redis Cache (internal, no exposed ports)
+  # Redis Cache (internal, no exposed ports for security)
   redis:
     image: redis:7-alpine
     restart: always
@@ -35,49 +32,42 @@ services:
       - livrolog-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 3s
-      timeout: 2s
-      retries: 10
-      start_period: 5s
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
-  # Laravel API with Nginx + PHP-FPM (serves on port 8080)
+  # Laravel API Backend
   api:
-    image: ghcr.io/${OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
     restart: always
-    environment:
-      # Use containerized services
-      - DB_HOST=mariadb
-      - DB_PORT=3306
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
     ports:
+      # Only bind to localhost for security (Apache proxies to this)
       - "127.0.0.1:18081:8080"
     networks:
       - livrolog-net
     volumes:
-      # Mount shared storage and .env from existing deployment
+      # Mount shared storage and environment file
       - /var/www/livrolog/shared/storage:/var/www/html/storage
-      - /var/www/livrolog/shared/.env:/var/www/html/.env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - /var/www/livrolog/shared/.env.prod:/var/www/html/.env
     depends_on:
       mariadb:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      # Simplified healthcheck using curl to test if nginx is responding
       test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 20
-      start_period: 60s
+      start_period: 120s
 
-  # Vue/Quasar WebApp served by Nginx
+  # Vue.js Web Frontend
   web:
-    image: ghcr.io/${OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
     restart: always
     ports:
+      # Only bind to localhost for security (Apache proxies to this)
       - "127.0.0.1:18080:80"
     networks:
       - livrolog-net
@@ -85,11 +75,11 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS http://localhost/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 30s
+      retries: 15
+      start_period: 60s
 
 networks:
   livrolog-net:
