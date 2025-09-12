@@ -86,7 +86,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: docker-compose.dev.yml
           target: /var/www/livrolog-dev/docker/
-          fingerprint: sha256:yfXQlOv0X7e35Ja3TWtN/F4qiNl2pwOrkbOdLf0W++Q
           overwrite: true
           rm: true
 
@@ -98,7 +97,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           envs: GHCR_PAT,GITHUB_SHA,GITHUB_REF_NAME,TARGET_BRANCH
           command_timeout: 15m
-          fingerprint: sha256:yfXQlOv0X7e35Ja3TWtN/F4qiNl2pwOrkbOdLf0W++Q
           script: |
             set -euo pipefail +x
             DOCKER_DIR="/var/www/livrolog-dev/docker"
