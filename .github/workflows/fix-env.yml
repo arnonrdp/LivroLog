@@ -29,6 +29,32 @@ jobs:
           echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
           
-          # Copy and execute script
+          # Copy and execute scripts
           scp scripts/fix-dev-env.sh ${{ secrets.SERVER_HOST }}:/tmp/fix-dev-env.sh
-          ssh ${{ secrets.SERVER_HOST }} "chmod +x /tmp/fix-dev-env.sh && /tmp/fix-dev-env.sh"
+          scp scripts/fix-proxy-config.sh ${{ secrets.SERVER_HOST }}:/tmp/fix-proxy-config.sh
+          
+          ssh ${{ secrets.SERVER_HOST }} << 'EXEC_SCRIPT'
+            # Fix environment first
+            chmod +x /tmp/fix-dev-env.sh
+            echo "=== Running Environment Fix ==="
+            /tmp/fix-dev-env.sh
+            
+            echo ""
+            echo "=== Running Proxy Configuration Fix ==="
+            chmod +x /tmp/fix-proxy-config.sh
+            /tmp/fix-proxy-config.sh
+            
+            echo ""
+            echo "=== Final Status Check ==="
+            echo "Container Status:"
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep livrolog
+            
+            echo ""
+            echo "Apache Status:"
+            systemctl status apache2 --no-pager -l | head -10
+            
+            echo ""
+            echo "Final API Test:"
+            curl -s -I -H "Host: api.dev.livrolog.com" http://127.0.0.1/healthz
+            
+          EXEC_SCRIPT
