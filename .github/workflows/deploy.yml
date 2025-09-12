@@ -104,8 +104,8 @@ jobs:
 
             # Display deployment configuration
             echo "=================================================="
-            echo "🚀 Starting development deployment (branch: ${TARGET_BRANCH:-dev})"
-            echo "Using containerized MySQL 8.0 + Redis 7-alpine"
+            echo "🚀 Starting development deployment (branch: ${TARGET_BRANCH:-dev})"  
+            echo "Using containerized MySQL 8.0 + Redis 7-alpine (self-contained)"
             echo "=================================================="
 
             # Create all required directories

@@ -22,12 +22,6 @@ services:
       - /var/www/livrolog-dev/shared/db:/var/lib/mysql
     networks:
       - livrolog-dev-net
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 10s
-      retries: 30
-      start_period: 60s
 
   # Redis Cache (development)
   redis:
@@ -38,12 +32,6 @@ services:
       - "127.0.0.1:6380:6379" # Different port to avoid conflicts
     networks:
       - livrolog-dev-net
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
 
   # Laravel API with PHP-FPM
   api:
@@ -70,16 +58,8 @@ services:
     networks:
       - livrolog-dev-net
     depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
-      interval: 15s
-      timeout: 10s
-      retries: 30
-      start_period: 120s
+      - mysql
+      - redis
 
   # Vue/Quasar WebApp served by Nginx
   web:
@@ -88,15 +68,8 @@ services:
     restart: always
     ports:
       - "127.0.0.1:8080:80" # Development web port
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     networks:
       - livrolog-dev-net
 
