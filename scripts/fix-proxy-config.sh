@@ -4,10 +4,11 @@ set -euo pipefail
 echo "=== Fixing Apache Proxy Configuration for Docker Containers ==="
 date
 
-# Check if Apache is running
-if ! systemctl is-active --quiet apache2; then
-    echo "❌ Apache is not running"
-    exit 1
+# Check if Apache is running (Bitnami setup)
+if ! pgrep -f "httpd" > /dev/null; then
+    echo "🚀 Apache is not running, starting it..."
+    sudo /opt/bitnami/apache/bin/httpd -D FOREGROUND &
+    sleep 5
 fi
 
 echo "✅ Apache is running"
@@ -80,19 +81,19 @@ fi
 
 echo "✅ Apache configuration test passed"
 
-# Restart Apache
+# Restart Apache (Bitnami way)
 echo "🔄 Restarting Apache..."
-sudo systemctl restart apache2 || sudo systemctl restart bitnami
-
-# Wait for Apache to restart
+sudo pkill -f httpd || true
+sleep 2
+sudo /opt/bitnami/apache/bin/httpd -D FOREGROUND &
 sleep 5
 
 # Check if Apache is running after restart
-if systemctl is-active --quiet apache2; then
+if pgrep -f "httpd" > /dev/null; then
     echo "✅ Apache restarted successfully"
 else
     echo "❌ Apache failed to restart"
-    sudo systemctl status apache2
+    ps aux | grep httpd | grep -v grep || echo "No httpd processes found"
     exit 1
 fi
 
@@ -117,7 +118,7 @@ if [ "$API_STATUS" = "200" ]; then
 fi
 
 echo "📊 Final Apache status:"
-systemctl status apache2 --no-pager -l
+ps aux | grep httpd | grep -v grep || echo "No httpd processes found"
 
 echo "✅ Proxy configuration fix completed!"
 echo "📍 Services should now be accessible via:"

@@ -51,7 +51,7 @@ jobs:
             
             echo ""
             echo "Apache Status:"
-            systemctl status apache2 --no-pager -l | head -10
+            ps aux | grep httpd | grep -v grep || echo "No httpd processes found"
             
             echo ""
             echo "Final API Test:"
