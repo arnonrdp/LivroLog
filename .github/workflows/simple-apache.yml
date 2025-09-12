@@ -1,0 +1,48 @@
+name: Simple Apache Fix
+
+on:
+  push:
+    branches: [dev]
+    paths: ['.github/workflows/simple-apache.yml']
+
+jobs:
+  apache:
+    name: apache
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/key && chmod 600 ~/.ssh/key
+          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config  
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/key" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
+          ssh ${{ secrets.SERVER_HOST }} << 'CMD'
+          # Apache proxy config
+          sudo tee /opt/bitnami/apache/conf/vhosts/dev.conf << 'VHOST'
+          LoadModule proxy_module modules/mod_proxy.so
+          LoadModule proxy_http_module modules/mod_proxy_http.so
+          LoadModule headers_module modules/mod_headers.so
+          <VirtualHost *:80>
+              ServerName api.dev.livrolog.com
+              ProxyPass / http://127.0.0.1:8081/
+              ProxyPassReverse / http://127.0.0.1:8081/
+              Header set Access-Control-Allow-Origin "*"
+          </VirtualHost>
+          <VirtualHost *:80>
+              ServerName dev.livrolog.com
+              ProxyPass / http://127.0.0.1:8080/
+              ProxyPassReverse / http://127.0.0.1:8080/
+          </VirtualHost>
+          VHOST
+          
+          # Include and restart
+          echo "Include conf/vhosts/dev.conf" | sudo tee -a /opt/bitnami/apache/conf/httpd.conf
+          sudo pkill httpd || true
+          sudo /opt/bitnami/apache/bin/httpd &
+          sleep 5
+          curl -H "Host: api.dev.livrolog.com" http://127.0.0.1/healthz
+          CMD
