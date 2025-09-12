@@ -381,7 +381,7 @@ jobs:
             
             # Create HTTP virtual host configuration (no CORS headers - Laravel handles CORS)
             sudo tee /opt/bitnami/apache/conf/vhosts/docker-proxy.conf > /dev/null << 'HTTP_VHOST'
-            # HTTP Virtual Hosts for Docker Development Containers
+            # HTTP Virtual Hosts for Docker Containers
             <VirtualHost *:80>
                 ServerName api.dev.livrolog.com
                 ProxyPreserveHost On
@@ -399,11 +399,29 @@ jobs:
                 ErrorLog /opt/bitnami/apache/logs/dev-error.log
                 CustomLog /opt/bitnami/apache/logs/dev-access.log combined
             </VirtualHost>
+            
+            <VirtualHost *:80>
+                ServerName api.livrolog.com
+                ProxyPreserveHost On
+                ProxyPass / http://127.0.0.1:18081/
+                ProxyPassReverse / http://127.0.0.1:18081/
+                ErrorLog /opt/bitnami/apache/logs/api-prod-error.log
+                CustomLog /opt/bitnami/apache/logs/api-prod-access.log combined
+            </VirtualHost>
+            
+            <VirtualHost *:80>
+                ServerName livrolog.com
+                ProxyPreserveHost On
+                ProxyPass / http://127.0.0.1:18080/
+                ProxyPassReverse / http://127.0.0.1:18080/
+                ErrorLog /opt/bitnami/apache/logs/prod-error.log
+                CustomLog /opt/bitnami/apache/logs/prod-access.log combined
+            </VirtualHost>
             HTTP_VHOST
             
             # Create HTTPS virtual host configuration (no CORS headers - Laravel handles CORS)
             sudo tee /opt/bitnami/apache/conf/bitnami/bitnami-ssl.conf > /dev/null << 'HTTPS_VHOST'
-            # HTTPS Virtual Hosts for LivroLog Development
+            # HTTPS Virtual Hosts for LivroLog
             
             <VirtualHost *:443>
                 ServerName dev.livrolog.com
@@ -438,7 +456,7 @@ jobs:
                 CustomLog /opt/bitnami/apache/logs/api-dev-ssl-access.log combined
             </VirtualHost>
             
-            # Keep production SSL configs (api.livrolog.com and livrolog.com)
+            # Production SSL configs
             <VirtualHost *:443>
                 ServerName api.livrolog.com
             
@@ -447,36 +465,30 @@ jobs:
                 SSLCertificateKeyFile /etc/letsencrypt/live/livrolog.com/privkey.pem
                 SSLCertificateChainFile /etc/letsencrypt/live/livrolog.com/chain.pem
             
-                # Enable proxy modules
+                # Proxy to production API container
                 ProxyPreserveHost On
                 ProxyPass / http://127.0.0.1:18081/
                 ProxyPassReverse / http://127.0.0.1:18081/
             
                 ErrorLog /opt/bitnami/apache/logs/api-livrolog_error.log
                 CustomLog /opt/bitnami/apache/logs/api-livrolog_access.log combined
-            
-                # Redirect HTTP to HTTPS
-                RewriteEngine On
-                RewriteCond %{HTTPS} !=on
-                RewriteRule ^/(.*) https://%{SERVER_NAME}/ [R,L]
             </VirtualHost>
             
             <VirtualHost *:443>
                 ServerName livrolog.com
                 ServerAlias www.livrolog.com
-                DocumentRoot /var/www/livrolog/current/webapp
             
                 SSLEngine on
                 SSLCertificateFile /etc/letsencrypt/live/livrolog.com/fullchain.pem
                 SSLCertificateKeyFile /etc/letsencrypt/live/livrolog.com/privkey.pem
             
-                Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self' https://api.dev.livrolog.com https://api.livrolog.com https://accounts.google.com https://www.googleapis.com https://www.google-analytics.com https://analytics.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'"
+                # Proxy to production Web container
+                ProxyPreserveHost On
+                ProxyPass / http://127.0.0.1:18080/
+                ProxyPassReverse / http://127.0.0.1:18080/
             
-                <Directory "/var/www/livrolog/current/webapp">
-                    Options Indexes FollowSymLinks
-                    AllowOverride All
-                    Require all granted
-                </Directory>
+                ErrorLog /opt/bitnami/apache/logs/prod-ssl-error.log
+                CustomLog /opt/bitnami/apache/logs/prod-ssl-access.log combined
             </VirtualHost>
             HTTPS_VHOST
             
