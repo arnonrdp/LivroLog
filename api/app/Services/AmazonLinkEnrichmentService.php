@@ -9,19 +9,23 @@ class AmazonLinkEnrichmentService
     private array $regionConfig = [
         'US' => [
             'domain' => 'amazon.com',
-            'search_url' => 'https://www.amazon.com/s'
+            'search_url' => 'https://www.amazon.com/s',
+            'associate_tag' => 'livrolog-20'
         ],
         'BR' => [
             'domain' => 'amazon.com.br',
-            'search_url' => 'https://www.amazon.com.br/s'
+            'search_url' => 'https://www.amazon.com.br/s',
+            'associate_tag' => 'livrolog01-20'
         ],
         'UK' => [
             'domain' => 'amazon.co.uk',
-            'search_url' => 'https://www.amazon.co.uk/s'
+            'search_url' => 'https://www.amazon.co.uk/s',
+            'associate_tag' => 'livrolog-20'
         ],
         'CA' => [
             'domain' => 'amazon.ca',
-            'search_url' => 'https://www.amazon.ca/s'
+            'search_url' => 'https://www.amazon.ca/s',
+            'associate_tag' => 'livrolog-20'
         ]
     ];
 
@@ -32,15 +36,19 @@ class AmazonLinkEnrichmentService
         }
 
         $region = $this->detectOptimalRegion($options);
-        $associateTag = config('services.amazon.associate_tag');
+        $associateTag = $this->regionConfig[$region]['associate_tag'];
 
         if (!$associateTag) {
             return $books;
         }
 
         foreach ($books as &$book) {
-            $book['amazon_buy_link'] = $this->generateAmazonLink($book, $region, $associateTag);
-            $book['amazon_region'] = $region;
+            // Detect region based on book language, fallback to user preference
+            $bookRegion = $this->detectBookRegion($book, $region);
+            $bookAssociateTag = $this->regionConfig[$bookRegion]['associate_tag'];
+
+            $book['amazon_buy_link'] = $this->generateAmazonLink($book, $bookRegion, $bookAssociateTag);
+            $book['amazon_region'] = $bookRegion;
         }
 
         return $books;
@@ -96,12 +104,74 @@ class AmazonLinkEnrichmentService
             }
         }
 
-        return 'US';
+        return 'US'; // Default to US for English content
+    }
+
+    /**
+     * Detect the best Amazon region for a book based on its language/content
+     */
+    private function detectBookRegion(array $book, string $fallbackRegion): string
+    {
+        $title = $book['title'] ?? '';
+        $description = $book['description'] ?? '';
+        $language = $book['language'] ?? '';
+
+        // Check explicit language field first
+        if (!empty($language)) {
+            if (str_starts_with(strtolower($language), 'pt')) {
+                return 'BR';
+            }
+            if (str_starts_with(strtolower($language), 'en')) {
+                return 'US';
+            }
+        }
+
+        // Analyze title and description for language indicators
+        $content = strtolower($title . ' ' . $description);
+
+        // Portuguese indicators
+        $portugueseWords = [
+            'livro', 'edição', 'história', 'português', 'brasil', 'brazilian',
+            'coleção', 'volume', 'capítulo', 'página', 'páginas',
+            'português', 'brasileira', 'nacional'
+        ];
+
+        $portugueseCount = 0;
+        foreach ($portugueseWords as $word) {
+            if (strpos($content, $word) !== false) {
+                $portugueseCount++;
+            }
+        }
+
+        // English indicators
+        $englishWords = [
+            'edition', 'english', 'book', 'story', 'novel', 'collection',
+            'volume', 'chapter', 'page', 'pages', 'american', 'british'
+        ];
+
+        $englishCount = 0;
+        foreach ($englishWords as $word) {
+            if (strpos($content, $word) !== false) {
+                $englishCount++;
+            }
+        }
+
+        // If Portuguese indicators are stronger, use Brazil
+        if ($portugueseCount > $englishCount && $portugueseCount >= 1) {
+            return 'BR';
+        }
+
+        // If English indicators are stronger, use US
+        if ($englishCount > $portugueseCount && $englishCount >= 1) {
+            return 'US';
+        }
+
+        // Fallback to user's preferred region
+        return $fallbackRegion;
     }
 
     private function isEnabled(): bool
     {
-        return config('services.amazon.sitestripe_enabled', false)
-            && !empty(config('services.amazon.associate_tag'));
+        return config('services.amazon.sitestripe_enabled', false);
     }
 }

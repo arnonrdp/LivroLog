@@ -447,26 +447,34 @@ const amazonBuyLink = computed(() => {
 
 const shouldShowAmazonButton = computed(() => {
   if (!book.value) return false
-  return (
-    !!book.value.amazon_asin ||
-    book.value.asin_status === 'pending' ||
-    book.value.asin_status === 'processing' ||
-    book.value.asin_status === 'completed' ||
-    book.value.asin_status === 'failed'
-  )
+
+  // Show button if book has Amazon data or is being processed
+  return !!(book.value.amazon_asin || book.value.amazon_buy_link || book.value.asin_status)
 })
 
 const amazonButtonColor = computed(() => {
   if (!book.value) return 'grey-6'
-  if (book.value.amazon_asin) return 'orange'
+
+  // Orange if we have Amazon data available
+  if (book.value.amazon_asin || book.value.amazon_buy_link) return 'orange'
+
+  // Grey variations for processing states
   if (book.value.asin_status === 'processing') return 'grey-6'
   if (book.value.asin_status === 'pending') return 'grey-5'
   if (book.value.asin_status === 'failed') return 'grey-4'
+
   return 'grey-6'
 })
 
 const amazonButtonHref = computed(() => {
-  return book.value?.asin_status === 'completed' ? amazonBuyLink.value : null
+  if (!book.value) return null
+
+  // Return link if we have Amazon data or processing is completed
+  if (book.value.amazon_buy_link || book.value.amazon_asin || book.value.asin_status === 'completed') {
+    return amazonBuyLink.value
+  }
+
+  return null
 })
 
 const amazonTooltipText = computed(() => {

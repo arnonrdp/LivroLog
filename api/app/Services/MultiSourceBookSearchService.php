@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\BookSearchProvider;
+use App\Services\Providers\AmazonBooksProvider;
 use App\Services\Providers\GoogleBooksProvider;
 use App\Services\Providers\OpenLibraryProvider;
 use App\Transformers\BookTransformer;
@@ -15,6 +16,8 @@ class MultiSourceBookSearchService
     private const CACHE_TTL_SUCCESS = 604800; // 7 days for successful results (more stable)
 
     private const CACHE_TTL_FAILURE = 86400;  // 24 hours for failed results
+
+    private const CACHE_TTL_AMAZON_FAILURE = 3600; // 1 hour for Amazon rate limit failures
 
     public function __construct()
     {
@@ -85,6 +88,13 @@ class MultiSourceBookSearchService
                     'total_found' => 0,
                     'message' => 'Provider error: '.$e->getMessage(),
                 ];
+
+                // Special handling for Amazon rate limiting
+                if ($provider->getName() === 'Amazon Books' && str_contains($e->getMessage(), '429')) {
+                    // Cache this specific failure to avoid hitting Amazon again soon
+                    $amazonCacheKey = 'amazon_rate_limited_' . md5($query);
+                    Cache::put($amazonCacheKey, true, self::CACHE_TTL_AMAZON_FAILURE);
+                }
             }
         }
 
@@ -159,10 +169,10 @@ class MultiSourceBookSearchService
     private function initializeProviders(): void
     {
         $this->providers = [
+            new AmazonBooksProvider,
             new GoogleBooksProvider,
             new OpenLibraryProvider,
             // Future providers:
-            // new AmazonBooksProvider, // PA-API - when approved
             // new ISBNdbProvider(),
         ];
 
