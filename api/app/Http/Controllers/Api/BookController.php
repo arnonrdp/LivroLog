@@ -860,6 +860,9 @@ class BookController extends Controller
      */
     private function getLocaleFromRequest(Request $request): string
     {
+        // TEMPORARY: Force pt-BR for testing Amazon Books integration
+        return 'pt-BR';
+
         // Priority: authenticated user's locale > Accept-Language header > default
         $user = $request->user();
         if ($user && $user->locale) {
