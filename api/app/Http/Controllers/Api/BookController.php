@@ -860,6 +860,12 @@ class BookController extends Controller
      */
     private function getLocaleFromRequest(Request $request): string
     {
+        // Priority: authenticated user's locale > Accept-Language header > default
+        $user = $request->user();
+        if ($user && $user->locale) {
+            return $user->locale;
+        }
+
         $acceptLanguage = $request->header('Accept-Language', 'en-US,en;q=0.9');
 
         // Parse Accept-Language header to get primary locale
