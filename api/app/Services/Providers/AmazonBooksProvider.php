@@ -111,27 +111,14 @@ class AmazonBooksProvider implements BookSearchProvider
 
     private function detectOptimalRegion(array $options): string
     {
-        // Priority order: user preference > browser locale > default
+        // Priority order: user preference > Brazil (most reliable) > locale-based fallback
         if (isset($options['region']) && isset($this->regionConfig[$options['region']])) {
             return $options['region'];
         }
 
-        if (isset($options['locale'])) {
-            $locale = strtolower($options['locale']);
-            if (str_starts_with($locale, 'pt-br') || str_starts_with($locale, 'pt_br') || $locale === 'pt') {
-                return 'BR';
-            } elseif (str_starts_with($locale, 'en-gb') || str_starts_with($locale, 'en_gb')) {
-                return 'UK';
-            } elseif (str_starts_with($locale, 'en-ca') || str_starts_with($locale, 'en_ca')) {
-                return 'CA';
-            } elseif (str_starts_with($locale, 'de') || str_starts_with($locale, 'de_de')) {
-                return 'DE';
-            } elseif (str_starts_with($locale, 'fr') || str_starts_with($locale, 'fr_fr')) {
-                return 'FR';
-            }
-        }
-
-        return 'US'; // Default to US for English content
+        // Always prefer Brazil region first as it has the most reliable credentials
+        // This ensures Amazon Books provider works consistently regardless of locale
+        return 'BR';
     }
 
     private function performSearch(string $searchQuery, string $region, array $options): array
