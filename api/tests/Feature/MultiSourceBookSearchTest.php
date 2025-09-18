@@ -59,34 +59,47 @@ class MultiSourceBookSearchTest extends TestCase
         $this->assertEquals(self::TEST_ISBN, $book['isbn']);
     }
 
-    public function test_search_with_fallback_to_open_library(): void
+    public function test_search_with_combined_amazon_and_google_books(): void
     {
         Http::fake([
-            self::GOOGLE_BOOKS_API_URL => Http::response($this->getEmptyGoogleBooksResponse()),
-            'https://openlibrary.org/api/books*' => Http::response([
-                'ISBN:'.self::TEST_ISBN => [
-                    'title' => 'Test Book from Open Library',
-                    'authors' => [
-                        ['name' => self::TEST_AUTHOR],
+            self::GOOGLE_BOOKS_API_URL => Http::response([
+                'totalItems' => 5,
+                'items' => [
+                    [
+                        'id' => 'google_test_id',
+                        'volumeInfo' => [
+                            'title' => 'Test Book from Google',
+                            'authors' => [self::TEST_AUTHOR],
+                            'publisher' => 'Test Publisher',
+                            'publishedDate' => '2024',
+                            'pageCount' => 200,
+                            'industryIdentifiers' => [
+                                ['type' => 'ISBN_13', 'identifier' => self::TEST_ISBN],
+                            ],
+                            'imageLinks' => ['thumbnail' => 'https://example.com/thumbnail.jpg'],
+                            'description' => 'Test description from Google Books',
+                            'categories' => ['Fiction'],
+                            'maturityRating' => 'NOT_MATURE',
+                            'previewLink' => 'https://books.google.com/books?id=test',
+                            'infoLink' => 'https://books.google.com/books?id=test',
+                        ],
                     ],
-                    'publishers' => ['Test Publisher'],
-                    'publish_date' => '2024',
-                    'number_of_pages' => 150,
-                    'url' => 'https://openlibrary.org/books/test',
                 ],
             ]),
         ]);
 
+        // Mock Amazon to return less than 10 results so Google Books gets called
         $result = $this->searchService->search(self::TEST_ISBN);
 
         $this->assertArrayHasKey('search_info', $result);
-        $this->assertEquals('Open Library', $result['search_info']['provider']);
+        // Should now show "Google Books" since Amazon is disabled/failing
+        $this->assertEquals('Google Books', $result['search_info']['provider']);
         $this->assertGreaterThan(0, $result['meta']['total']);
         $this->assertNotEmpty($result['data']);
 
         $this->assertArrayHasKey('data', $result);
         $book = $result['data'][0];
-        $this->assertEquals('Test Book from Open Library', $book['title']);
+        $this->assertEquals('Test Book from Google', $book['title']);
         $this->assertEquals(self::TEST_AUTHOR, $book['authors']);
         $this->assertEquals(self::TEST_ISBN, $book['isbn']);
     }
