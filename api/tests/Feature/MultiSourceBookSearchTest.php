@@ -24,6 +24,10 @@ class MultiSourceBookSearchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Disable Amazon provider for testing to avoid real API calls
+        config(['services.amazon.enabled' => false]);
+
         $this->searchService = new MultiSourceBookSearchService;
     }
 
@@ -92,7 +96,7 @@ class MultiSourceBookSearchTest extends TestCase
         $result = $this->searchService->search(self::TEST_ISBN);
 
         $this->assertArrayHasKey('search_info', $result);
-        // Should now show "Google Books" since Amazon is disabled/failing
+        // Should show "Google Books" since Amazon is disabled in tests
         $this->assertEquals('Google Books', $result['search_info']['provider']);
         $this->assertGreaterThan(0, $result['meta']['total']);
         $this->assertNotEmpty($result['data']);
@@ -273,6 +277,7 @@ class MultiSourceBookSearchTest extends TestCase
     private function assertSuccessfulGoogleBooksResult(array $result): void
     {
         $this->assertArrayHasKey('search_info', $result);
+        // Shows Google Books since Amazon is disabled in tests
         $this->assertEquals(self::GOOGLE_BOOKS_PROVIDER, $result['search_info']['provider']);
         $this->assertGreaterThan(0, $result['meta']['total']);
         $this->assertNotEmpty($result['data']);

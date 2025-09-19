@@ -22,32 +22,38 @@ class AmazonBooksProvider implements BookSearchProvider
 
     private const RATE_LIMIT_DELAY = 1; // Reduce to 1 second between requests for faster response
 
-    private array $regionConfig = [
-        'US' => [
-            'host' => 'webservices.amazon.com',
-            'region' => 'us-east-1',
-            'marketplace' => 'www.amazon.com',
-            'associate_tag' => 'livrolog-20',
-        ],
-        'BR' => [
-            'host' => 'webservices.amazon.com.br',
-            'region' => 'us-east-1',
-            'marketplace' => 'www.amazon.com.br',
-            'associate_tag' => 'livrolog01-20',
-        ],
-        'UK' => [
-            'host' => 'webservices.amazon.co.uk',
-            'region' => 'eu-west-1',
-            'marketplace' => 'www.amazon.co.uk',
-            'associate_tag' => 'livrolog-20', // Use same tag as US for now
-        ],
-        'CA' => [
-            'host' => 'webservices.amazon.ca',
-            'region' => 'us-east-1',
-            'marketplace' => 'www.amazon.ca',
-            'associate_tag' => 'livrolog-20', // Use same tag as US for now
-        ],
-    ];
+    private function getRegionConfig(): array
+    {
+        $amazonConfig = config('services.amazon.regions', []);
+        $defaultTag = config('services.amazon.associate_tag', 'livrolog01-20');
+
+        return [
+            'US' => [
+                'host' => 'webservices.amazon.com',
+                'region' => 'us-east-1',
+                'marketplace' => $amazonConfig['US']['marketplace'] ?? 'www.amazon.com',
+                'associate_tag' => $amazonConfig['US']['tag'] ?? $defaultTag,
+            ],
+            'BR' => [
+                'host' => 'webservices.amazon.com.br',
+                'region' => 'us-east-1',
+                'marketplace' => $amazonConfig['BR']['marketplace'] ?? 'www.amazon.com.br',
+                'associate_tag' => $amazonConfig['BR']['tag'] ?? $defaultTag,
+            ],
+            'UK' => [
+                'host' => 'webservices.amazon.co.uk',
+                'region' => 'eu-west-1',
+                'marketplace' => $amazonConfig['UK']['marketplace'] ?? 'www.amazon.co.uk',
+                'associate_tag' => $amazonConfig['UK']['tag'] ?? $defaultTag,
+            ],
+            'CA' => [
+                'host' => 'webservices.amazon.ca',
+                'region' => 'us-east-1',
+                'marketplace' => $amazonConfig['CA']['marketplace'] ?? 'www.amazon.ca',
+                'associate_tag' => $amazonConfig['CA']['tag'] ?? $defaultTag,
+            ],
+        ];
+    }
 
     public function search(string $query, array $options = []): array
     {
@@ -112,7 +118,8 @@ class AmazonBooksProvider implements BookSearchProvider
     private function detectOptimalRegion(array $options): string
     {
         // Priority order: user preference > Brazil (most reliable) > locale-based fallback
-        if (isset($options['region']) && isset($this->regionConfig[$options['region']])) {
+        $regionConfig = $this->getRegionConfig();
+        if (isset($options['region']) && isset($regionConfig[$options['region']])) {
             return $options['region'];
         }
 
@@ -188,8 +195,9 @@ class AmazonBooksProvider implements BookSearchProvider
         $config = Configuration::getDefaultConfiguration();
         $config->setAccessKey(config('services.amazon.pa_api_key'));
         $config->setSecretKey(config('services.amazon.pa_secret_key'));
-        $config->setHost($this->regionConfig[$region]['host']);
-        $config->setRegion($this->regionConfig[$region]['region']);
+        $regionConfig = $this->getRegionConfig();
+        $config->setHost($regionConfig[$region]['host']);
+        $config->setRegion($regionConfig[$region]['region']);
 
         return new DefaultApi(new Client, $config);
     }
@@ -200,9 +208,10 @@ class AmazonBooksProvider implements BookSearchProvider
         $searchItemsRequest->setSearchIndex('Books');
         $searchItemsRequest->setKeywords($searchQuery);
         $searchItemsRequest->setItemCount($options['maxResults'] ?? self::MAX_RESULTS);
-        $searchItemsRequest->setPartnerTag($this->regionConfig[$region]['associate_tag']);
+        $regionConfig = $this->getRegionConfig();
+        $searchItemsRequest->setPartnerTag($regionConfig[$region]['associate_tag']);
         $searchItemsRequest->setPartnerType(PartnerType::ASSOCIATES);
-        $searchItemsRequest->setMarketplace($this->regionConfig[$region]['marketplace']);
+        $searchItemsRequest->setMarketplace($regionConfig[$region]['marketplace']);
 
         // Request comprehensive book information (constant names per thewirecutter/paapi5-php-sdk)
         $searchItemsRequest->setResources([
@@ -532,6 +541,11 @@ class AmazonBooksProvider implements BookSearchProvider
 
     public function isEnabled(): bool
     {
+        // Check explicit configuration flag first
+        if (! config('services.amazon.enabled', true)) {
+            return false;
+        }
+
         // Auto-enable if all credentials are present
         return ! empty(config('services.amazon.pa_api_key'))
             && ! empty(config('services.amazon.pa_secret_key'));
