@@ -170,6 +170,47 @@ class AmazonLinkEnrichmentService
         return $fallbackRegion;
     }
 
+    /**
+     * Generate Amazon links for all supported regions
+     */
+    public function generateAllRegionLinks(array $book): array
+    {
+        if (!$this->isEnabled()) {
+            return [];
+        }
+
+        $links = [];
+
+        foreach ($this->regionConfig as $region => $config) {
+            $associateTag = $config['associate_tag'];
+            $link = $this->generateAmazonLink($book, $region, $associateTag);
+
+            $links[] = [
+                'region' => $region,
+                'label' => $this->getRegionLabel($region),
+                'url' => $link,
+                'domain' => $config['domain']
+            ];
+        }
+
+        return $links;
+    }
+
+    /**
+     * Get human-readable label for region
+     */
+    private function getRegionLabel(string $region): string
+    {
+        $labels = [
+            'BR' => 'Amazon Brazil',
+            'US' => 'Amazon United States',
+            'UK' => 'Amazon United Kingdom',
+            'CA' => 'Amazon Canada'
+        ];
+
+        return $labels[$region] ?? "Amazon {$region}";
+    }
+
     private function isEnabled(): bool
     {
         return config('services.amazon.sitestripe_enabled', false);

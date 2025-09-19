@@ -10,9 +10,15 @@ const api = axios.create({
   }
 })
 
-// No Authorization header; use HTTP-only cookies (Sanctum stateful)
+// Add Authorization header if token exists
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = LocalStorage.getItem('access_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
   (error) => Promise.reject(error)
 )
 
@@ -20,8 +26,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear all auth data (session-based)
+      // Clear all auth data
       LocalStorage.remove('user')
+      LocalStorage.remove('access_token')
 
       // Clear auth store to prevent redirect loop
       const authStore = localStorage.getItem('auth')

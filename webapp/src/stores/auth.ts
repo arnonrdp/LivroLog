@@ -108,7 +108,10 @@ export const useAuthStore = defineStore('auth', {
         .post('/auth/register', { ...data, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
-          // Using HTTP-only cookies; just persist user
+          // Store both token and user data
+          if (authData.access_token) {
+            LocalStorage.set('access_token', authData.access_token)
+          }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           router.push('/')
@@ -129,7 +132,10 @@ export const useAuthStore = defineStore('auth', {
         .post('/auth/login', { email, password, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
-          // Using HTTP-only cookies; just persist user
+          // Store both token and user data
+          if (authData.access_token) {
+            LocalStorage.set('access_token', authData.access_token)
+          }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           router.push('/')
@@ -214,7 +220,10 @@ export const useAuthStore = defineStore('auth', {
         .post('/auth/google', { id_token: idToken, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
-          // Using HTTP-only cookies
+          // Store both token and user data
+          if (authData.access_token) {
+            LocalStorage.set('access_token', authData.access_token)
+          }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           Notify.create({ message: 'Login with Google successful!', type: 'positive' })

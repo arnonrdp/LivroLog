@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Services\UnifiedBookEnrichmentService;
 use App\Services\HybridBookSearchService;
+use App\Services\AmazonLinkEnrichmentService;
 use App\Transformers\BookTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -914,5 +916,59 @@ class BookController extends Controller
         $primaryLanguage = trim(explode(';', $languages[0])[0]);
 
         return $primaryLanguage ?: 'en-US';
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/books/{book}/amazon-links",
+     *     operationId="getBookAmazonLinks",
+     *     tags={"Books"},
+     *     summary="Get Amazon purchase links for all regions",
+     *     description="Returns Amazon purchase links for the book across different regions (BR, US, UK, CA) with proper affiliate tags",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Amazon links for all regions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="links", type="array", @OA\Items(
+     *                 @OA\Property(property="region", type="string", example="BR"),
+     *                 @OA\Property(property="label", type="string", example="Amazon Brazil"),
+     *                 @OA\Property(property="url", type="string", example="https://www.amazon.com.br/dp/123456789?tag=livrolog01-20"),
+     *                 @OA\Property(property="domain", type="string", example="amazon.com.br")
+     *             ))
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=503, description="Amazon integration disabled")
+     * )
+     */
+    public function getAmazonLinks(Book $book, AmazonLinkEnrichmentService $amazonService): JsonResponse
+    {
+        $bookData = $book->toArray();
+        $links = $amazonService->generateAllRegionLinks($bookData);
+
+        if (empty($links)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Amazon integration is currently disabled',
+                'links' => []
+            ], 503);
+        }
+
+        return response()->json([
+            'success' => true,
+            'links' => $links
+        ]);
     }
 }
