@@ -69,6 +69,8 @@ class HealthController extends Controller
             'cache' => $this->checkCache(),
             'google_books_api' => $this->checkGoogleBooksApi(),
             'storage' => $this->checkStorage(),
+            'gd' => $this->checkGd(),
+            'og_textures' => $this->checkOgTextures(),
         ];
 
         $isHealthy = ! in_array(false, $services, true);
@@ -149,6 +151,29 @@ class HealthController extends Controller
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    private function checkGd(): bool
+    {
+        return extension_loaded('gd');
+    }
+
+    private function checkOgTextures(): bool
+    {
+        $base = public_path('og/textures');
+        $files = [
+            $base.'/shelfleft.jpg',
+            $base.'/shelfright.jpg',
+            $base.'/shelfcenter.jpg',
+        ];
+
+        foreach ($files as $f) {
+            if (! file_exists($f)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function getUptime(): array

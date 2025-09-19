@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import { VitePWA } from 'vite-plugin-pwa'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vitejs.dev/config/
@@ -59,6 +60,16 @@ export default defineConfig(({ mode }) => {
       }),
 
       vueDevTools(),
+
+      // Copy OG wood textures to stable paths (avoid hashed filenames)
+      // Use the new smaller shelf textures under src/assets/textures
+      viteStaticCopy({
+        targets: [
+          { src: 'src/assets/textures/shelfleft.jpg', dest: 'og/textures' },
+          { src: 'src/assets/textures/shelfright.jpg', dest: 'og/textures' },
+          { src: 'src/assets/textures/shelfcenter.jpg', dest: 'og/textures' }
+        ]
+      }),
 
       VitePWA({
         registerType: 'autoUpdate',

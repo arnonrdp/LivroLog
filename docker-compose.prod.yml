@@ -1,0 +1,87 @@
+# docker-compose.prod.yml
+# Production Docker Compose for LivroLog
+
+name: livrolog
+
+services:
+  # MariaDB Database (internal, no exposed ports for security)
+  mariadb:
+    image: mariadb:10.11-jammy
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    networks:
+      - livrolog-net
+    volumes:
+      - /var/www/livrolog/shared/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysql --silent --connect-timeout=5 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # Redis Cache (internal, no exposed ports for security)
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - livrolog-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  # Laravel API Backend
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-arnonrdp}/livrolog-api:${TAG:-prod}
+    restart: always
+    ports:
+      # Only bind to localhost for security (Apache proxies to this)
+      - "127.0.0.1:18081:8080"
+    networks:
+      - livrolog-net
+    volumes:
+      # Mount shared storage and environment file
+      - /var/www/livrolog/shared/storage:/var/www/html/storage
+      - /var/www/livrolog/shared/.env.prod:/var/www/html/.env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+
+  # Vue.js Web Frontend
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-arnonrdp}/livrolog-web:${TAG:-prod}
+    restart: always
+    ports:
+      # Only bind to localhost for security (Apache proxies to this)
+      - "127.0.0.1:18080:80"
+    networks:
+      - livrolog-net
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+
+networks:
+  livrolog-net:
+    name: livrolog-net
+    driver: bridge

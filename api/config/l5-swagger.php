@@ -18,6 +18,7 @@ return [
                 /*
                  * Edit to include full URL in ui for assets
                  */
+                // Use absolute paths so Swagger UI at /documentation fetches /docs (not /documentation/docs)
                 'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
 
                 /*

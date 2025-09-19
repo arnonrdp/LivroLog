@@ -6,186 +6,106 @@ on:
       environment:
         type: string
         required: true
-    outputs:
-      api-artifact:
-        description: 'API build artifact name'
-        value: api-build-${{ github.sha }}
-      webapp-artifact:
-        description: 'Webapp build artifact name'
-        value: webapp-build-${{ github.sha }}
 
 env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '20'
 
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+
 jobs:
-  api:
-    name: api
+  docker-api:
+    name: docker-api
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    outputs:
-      artifact: api-build-${{ github.sha }}
-
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          ref: ${{ github.ref }}
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json, bcmath
-          tools: composer:v2
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
+          images: ghcr.io/${{ github.repository_owner }}/livrolog-api
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=raw,value=prod,enable=${{ github.ref == 'refs/heads/main' }}
+      
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
         with:
-          path: |
-            api/vendor
-            ~/.composer/cache
-          key: composer-deploy-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
-          restore-keys: |
-            composer-deploy-${{ runner.os }}-
-            composer-${{ runner.os }}-
+          context: .
+          file: ./api/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build API (optimized)
-        working-directory: ./api
-        run: |
-          mkdir -p bootstrap/cache
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --classmap-authoritative --ignore-platform-reqs
-
-          # Pre-warm caches
-          cp .env.example .env
-          php artisan key:generate --force
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache || true
-
-          # Generate Swagger documentation
-          php artisan l5-swagger:generate
-
-          # Remove .env (will be symlinked on server)
-          rm .env
-
-      - name: Create API artifact
-        run: |
-          cd api
-          tar -czf ../api-build.tar.gz \
-            --exclude='.env*' \
-            --exclude='storage/logs/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/cache/*' \
-            .
-
-      - name: Upload API artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-build-${{ github.sha }}
-          path: api-build.tar.gz
-          retention-days: 1
-
-  webapp:
-    name: webapp
+  docker-web:
+    name: docker-web
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    outputs:
-      artifact: webapp-build-${{ github.sha }}
-
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          ref: ${{ github.ref }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'yarn'
-          cache-dependency-path: webapp/yarn.lock
-
-      - name: Install dependencies with retry
-        working-directory: ./webapp
-        run: |
-          # Try yarn first with multiple registries and retry logic
-          for i in {1..5}; do
-            echo "📦 Attempt $i/5: Installing dependencies..."
-            
-            if [ $i -eq 1 ]; then
-              # First attempt with default registry
-              yarn install --frozen-lockfile --prefer-offline --network-timeout 100000 && break
-            elif [ $i -eq 2 ]; then
-              # Second attempt with npm registry
-              yarn install --frozen-lockfile --prefer-offline --network-timeout 100000 --registry https://registry.npmjs.org/ && break
-            elif [ $i -eq 3 ]; then
-              # Third attempt: clear cache and retry
-              yarn cache clean
-              yarn install --frozen-lockfile --prefer-offline --network-timeout 100000 && break
-            elif [ $i -eq 4 ]; then
-              # Fourth attempt: fallback to npm ci
-              echo "🔄 Falling back to npm..."
-              npm ci --prefer-offline --no-audit --legacy-peer-deps && break
-            else
-              # Final attempt: npm with different registry
-              npm install --prefer-offline --no-audit --legacy-peer-deps --registry https://registry.npmjs.org/ && break
-            fi
-            
-            echo "❌ Attempt $i failed. Waiting 30 seconds before retry..."
-            sleep 30
-          done
-          
-          if [ $i -eq 6 ]; then
-            echo "❌ All installation attempts failed"
-            exit 1
-          fi
-          
-          echo "✅ Dependencies installed successfully on attempt $i"
-
-      - name: Build webapp (optimized)
-        working-directory: ./webapp
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-        run: |
-
-          # Set API URL and Google Client ID based on environment
-          if [[ "${{ inputs.environment }}" == "Production" ]]; then
-            echo "VITE_API_URL=https://api.livrolog.com" > .env.production
-            echo "VITE_FRONTEND_URL=https://livrolog.com" >> .env.production
-            echo "VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env.production
-            echo "VITE_APP_NAME=LivroLog" >> .env.production
-            yarn build --mode production
-          else
-            echo "VITE_API_URL=https://api.dev.livrolog.com" > .env.development
-            echo "VITE_FRONTEND_URL=https://dev.livrolog.com" >> .env.development
-            echo "VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> .env.development
-            echo "VITE_APP_NAME=LivroLog" >> .env.development
-            yarn build --mode development
-          fi
-
-          # Create .htaccess for SPA fallback
-          cat > dist/.htaccess << 'EOF'
-          # SPA Fallback
-          RewriteEngine On
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule ^(.*)$ /index.html [L]
-
-          # Cache static assets for 1 year
-          <filesMatch "\.(css|js|woff|woff2|ttf|svg|jpg|jpeg|png|gif|ico|webp)$">
-            ExpiresActive On
-            ExpiresDefault "access plus 1 year"
-          </filesMatch>
-          EOF
-
-      - name: Create webapp artifact
-        working-directory: ./webapp
-        run: tar -czf ../webapp-build.tar.gz dist/
-
-      - name: Upload webapp artifact
-        uses: actions/upload-artifact@v4
+          images: ghcr.io/${{ github.repository_owner }}/livrolog-web
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=raw,value=prod,enable=${{ github.ref == 'refs/heads/main' }}
+      
+      - name: Build and push Web image
+        uses: docker/build-push-action@v5
         with:
-          name: webapp-build-${{ github.sha }}
-          path: webapp-build.tar.gz
-          retention-days: 1
+          context: .
+          file: ./webapp/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ENVIRONMENT=${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+            API_URL=${{ github.ref == 'refs/heads/main' && 'https://api.livrolog.com' || 'https://api.dev.livrolog.com' }}
+            FRONTEND_URL=${{ github.ref == 'refs/heads/main' && 'https://livrolog.com' || 'https://dev.livrolog.com' }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            APP_NAME=LivroLog
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

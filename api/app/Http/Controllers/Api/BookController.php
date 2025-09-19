@@ -110,9 +110,13 @@ class BookController extends Controller
             $searchQuery = $request->input('search');
             $perPage = min($request->get('per_page', 20), 40); // Max 40 for search
 
+            // Get locale from Accept-Language header for proper Amazon region
+            $locale = $this->getLocaleFromRequest($request);
+
             $result = $hybridSearchService->search($searchQuery, [
                 'maxResults' => $perPage,
                 'includes' => $includes,
+                'locale' => $locale,
             ]);
 
             return response()->json($result);
@@ -890,5 +894,25 @@ class BookController extends Controller
 
             return null;
         }
+    }
+
+    /**
+     * Get locale from request headers for proper Amazon region detection
+     */
+    private function getLocaleFromRequest(Request $request): string
+    {
+        // Priority: authenticated user's locale > Accept-Language header > default
+        $user = $request->user();
+        if ($user && $user->locale) {
+            return $user->locale;
+        }
+
+        $acceptLanguage = $request->header('Accept-Language', 'en-US,en;q=0.9');
+
+        // Parse Accept-Language header to get primary locale
+        $languages = explode(',', $acceptLanguage);
+        $primaryLanguage = trim(explode(';', $languages[0])[0]);
+
+        return $primaryLanguage ?: 'en-US';
     }
 }

@@ -52,9 +52,10 @@ return [
 
     // Amazon integration
     'amazon' => [
+        'enabled' => env('AMAZON_PROVIDER_ENABLED', true),
+        'associate_tag' => env('AMAZON_ASSOCIATE_TAG', 'livrolog01-20'),
         'pa_api_key' => env('AMAZON_PA_API_KEY'),
         'pa_secret_key' => env('AMAZON_PA_SECRET_KEY'),
-        'enabled' => env('AMAZON_PA_API_ENABLED', false),
         'sitestripe_enabled' => env('AMAZON_SITESTRIPE_ENABLED', false),
 
         // Regional configurations with hardcoded associate tags

@@ -61,7 +61,6 @@ jobs:
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || '' }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
 
-            AMAZON_PA_API_ENABLED=false
             AMAZON_SITESTRIPE_ENABLED=true
             OPEN_LIBRARY_ENABLED=true
             EOF
@@ -69,11 +68,10 @@ jobs:
             # Fix Apache ServerName
             sudo sed -i "s/ServerName .*/ServerName ${{ secrets.SERVER_HOST }}/" /opt/bitnami/apache2/conf/vhosts/livrolog.conf
 
-            # Clear caches
-            cd /var/www/livrolog/current/api
-            php artisan cache:clear
-            php artisan books:cache-clear
-            php artisan config:clear
+            # Clear caches (Docker containers)
+            docker exec livrolog-api php artisan cache:clear || true
+            docker exec livrolog-api php artisan books:cache-clear || true
+            docker exec livrolog-api php artisan config:clear || true
 
       - name: Configure Development Environment
         if: inputs.environment == 'Development'
@@ -123,17 +121,14 @@ jobs:
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || '' }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
 
-            AMAZON_PA_API_ENABLED=false
             AMAZON_SITESTRIPE_ENABLED=true
             OPEN_LIBRARY_ENABLED=true
             EOF
 
-            # Clear caches
-            cd /var/www/livrolog-dev/current/api
-            php artisan cache:clear
-            php artisan books:cache-clear
-            php artisan config:clear
-
+            # Clear caches (Docker containers)
+            docker exec livrolog-api-dev php artisan cache:clear || true
+            docker exec livrolog-api-dev php artisan books:cache-clear || true
+            docker exec livrolog-api-dev php artisan config:clear || true
 
       - name: Restart Apache
         uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
@@ -143,3 +138,48 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             sudo /opt/bitnami/ctlscript.sh restart apache
+
+  restart-queue-workers:
+    name: Restart Queue Workers
+    runs-on: ubuntu-latest
+    needs: [configure]
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Restart Laravel queue workers (Production)
+        if: inputs.environment == 'Production'
+        uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            if docker ps | grep -q "livrolog-api"; then
+              echo "🔄 Restarting Production queue workers..."
+              docker exec livrolog-api php artisan queue:restart || true
+              echo "✅ Queue restart signal sent"
+              echo "📋 Docker container status:"
+              docker ps --filter "name=livrolog-api" --format "table {{.Names}}\t{{.Status}}"
+            else
+              echo "⚠️ Production container not found: livrolog-api"
+            fi
+
+      - name: Restart Laravel queue workers (Development)
+        if: inputs.environment == 'Development'
+        uses: appleboy/ssh-action@f9010ff7f1bbd7db1a0b4bab661437550cea20c0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            if docker ps | grep -q "livrolog-api-dev"; then
+              echo "🔄 Restarting Development queue workers..."
+              docker exec livrolog-api-dev php artisan queue:restart || true
+              echo "✅ Queue restart signal sent"
+              echo "📋 Docker container status:"
+              docker ps --filter "name=livrolog-api-dev" --format "table {{.Names}}\t{{.Status}}"
+            else
+              echo "⚠️ Development container not found: livrolog-api-dev"
+            fi

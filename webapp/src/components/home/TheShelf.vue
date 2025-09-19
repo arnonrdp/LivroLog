@@ -15,6 +15,11 @@
     </figure>
   </section>
 
+  <!-- Amazon Associates disclosure placed under the shelf -->
+  <div class="text-caption text-grey-7 q-mt-xs q-mb-md">
+    {{ $t('affiliate-disclosure') }}
+  </div>
+
   <!-- Book Dialog -->
   <BookDialog v-model="showBookDialog" :book-id="selectedBookId" :user-identifier="props.userIdentifier" />
 </template>
@@ -45,17 +50,17 @@ function openBookDialog(book: Book) {
 
 <style scoped lang="sass">
 section
-  background-image: url('@/assets/shelfleft.jpg'), url('@/assets/shelfright.jpg'), url('@/assets/shelfcenter.jpg')
+  background-image: url('@/assets/textures/shelfleft.jpg'), url('@/assets/textures/shelfright.jpg'), url('@/assets/textures/shelfcenter.jpg')
   background-repeat: repeat-y, repeat-y, repeat
   background-position: top left, top right, 240px 0
   border-radius: 6px
   min-height: 302px
-  padding: 0 3rem 1rem
+  padding: 0 3rem 2.2rem
 
 section figure
   align-items: flex-end
   display: flex
-  height: 143.5px
+  height: 146px
   margin: 0 1.5rem
   position: relative
 
@@ -78,16 +83,6 @@ section figure
   transition: transform 0.2s ease
   &:hover
     transform: scale(1.05)
-    .amazon-buy-overlay
-      opacity: 1
-
-.amazon-buy-overlay
-  position: absolute
-  top: 0.5rem
-  right: 0.5rem
-  opacity: 0
-  transition: opacity 0.2s ease
-  z-index: 2
 
 img
   height: 115px

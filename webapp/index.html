@@ -1,42 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Environment variables -->
-    <meta name="api-url" content="%VITE_API_URL%" />
-
-    <!-- Social Media Crawler Redirect -->
-    <script>
-      // Detect social media crawlers and redirect to API for proper meta tags
-      ;(function () {
-        const userAgent = navigator.userAgent.toLowerCase()
-        const crawlers = [
-          'facebookexternalhit',
-          'twitterbot',
-          'linkedinbot',
-          'whatsapp',
-          'telegrambot',
-          'slackbot',
-          'discordbot',
-          'skypeuripreview',
-          'applebot',
-          'googlebot',
-          'bingbot',
-          'yahoo',
-          'pinterest',
-          'redditbot'
-        ]
-
-        const isCrawler = crawlers.some((crawler) => userAgent.includes(crawler))
-
-        if (isCrawler) {
-          // Get API URL from meta tag
-          const apiUrl = document.querySelector('meta[name="api-url"]').getAttribute('content') + window.location.pathname + window.location.search
-          window.location.replace(apiUrl)
-          return
-        }
-      })()
-    </script>
-
     <!-- Google Tag Manager -->
     <script>
       ;(function (w, d, s, l, i) {

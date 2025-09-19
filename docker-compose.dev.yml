@@ -1,0 +1,79 @@
+# docker-compose.dev.yml
+# Development Docker Compose with internal MySQL and Redis containers
+# Comments in English only
+
+name: livrolog_dev
+
+services:
+  # MySQL Database (development)
+  mysql:
+    image: mysql:8.0
+    container_name: livrolog-mysql-dev
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-supersecret}'
+      MYSQL_DATABASE: '${DB_DATABASE:-livrolog_dev}'
+      MYSQL_USER: '${DB_USERNAME:-livrolog}'
+      MYSQL_PASSWORD: '${DB_PASSWORD:-supersecret}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    ports:
+      - "127.0.0.1:3307:3306" # Different port to avoid conflicts
+    volumes:
+      - /var/www/livrolog-dev/shared/db:/var/lib/mysql
+    networks:
+      - livrolog-dev-net
+
+  # Redis Cache (development)
+  redis:
+    image: redis:7-alpine
+    container_name: livrolog-redis-dev
+    restart: always
+    ports:
+      - "127.0.0.1:6380:6379" # Different port to avoid conflicts
+    networks:
+      - livrolog-dev-net
+
+  # Laravel API with PHP-FPM
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-owner}/livrolog-api:${TAG:-dev}
+    container_name: livrolog-api-dev
+    restart: always
+    env_file:
+      - /var/www/livrolog-dev/shared/.env.dev # Development env file
+    environment:
+      # Use containerized services
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-livrolog_dev}
+      - DB_USERNAME=${DB_USERNAME:-livrolog}
+      - DB_PASSWORD=${DB_PASSWORD:-supersecret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      # Mount shared storage from dev deployment
+      - /var/www/livrolog-dev/shared/storage:/var/www/html/storage
+      - /var/www/livrolog-dev/shared/.env.dev:/var/www/html/.env
+    networks:
+      - livrolog-dev-net
+    depends_on:
+      - mysql
+      - redis
+
+  # Vue/Quasar WebApp served by Nginx
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-owner}/livrolog-web:${TAG:-dev}
+    container_name: livrolog-web-dev
+    restart: always
+    ports:
+      - "127.0.0.1:8080:80" # Development web port
+    depends_on:
+      - api
+    networks:
+      - livrolog-dev-net
+
+networks:
+  livrolog-dev-net:
+    name: livrolog-dev-net
+    driver: bridge

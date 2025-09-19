@@ -1,0 +1,82 @@
+# api/Dockerfile.prod
+# Multi-stage build for Laravel API production deployment
+# Comments in English only
+
+# Build stage - Install dependencies
+FROM composer:2 AS vendor
+WORKDIR /app
+# Copy composer files first for better Docker layer caching
+COPY api/composer.json api/composer.lock ./
+# Copy application code so composer can scan for classes during autoload generation
+COPY api/app ./app
+COPY api/bootstrap ./bootstrap
+RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --optimize-autoloader --classmap-authoritative --no-scripts
+
+# Production stage - Optimized PHP-FPM runtime
+FROM php:8.3-fpm AS app
+
+# Install system dependencies, Nginx and PHP extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    nginx \
+    supervisor \
+    libicu-dev \
+    libonig-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libxml2-dev \
+    libzip-dev \
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath zip intl gd opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configure PHP for production
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.max_accelerated_files=10000" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
+
+# Set PHP limits for production
+RUN echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/99-upload-limits.ini \
+    && echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/99-upload-limits.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/99-upload-limits.ini \
+    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/99-upload-limits.ini
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy application code
+COPY api/ ./
+
+# Copy optimized vendor from composer stage
+COPY --from=vendor /app/vendor ./vendor
+
+# Create required directories
+RUN mkdir -p bootstrap/cache storage/logs storage/framework/{cache,sessions,testing,views} \
+    && chown -R www-data:www-data bootstrap/cache storage \
+    && chmod -R 775 bootstrap/cache storage
+
+# Configure Nginx
+RUN rm /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+COPY api/docker/nginx.conf /etc/nginx/sites-available/laravel
+RUN ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/laravel
+
+# Configure Supervisor to run both PHP-FPM and Nginx
+COPY api/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy and make entrypoint executable
+COPY api/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose port 8080 for Nginx
+EXPOSE 8080
+
+# Use entrypoint to run Laravel optimizations, then start supervisor
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf", "-n"]
