@@ -289,10 +289,13 @@ class FollowService
                 $followingCount = $user->following()->count();
 
                 if ($user->followers_count !== $followersCount || $user->following_count !== $followingCount) {
-                    $user->update([
-                        'followers_count' => $followersCount,
-                        'following_count' => $followingCount,
-                    ]);
+                    // Use direct database update since these fields aren't mass assignable
+                    DB::table('users')
+                        ->where('id', $user->id)
+                        ->update([
+                            'followers_count' => $followersCount,
+                            'following_count' => $followingCount,
+                        ]);
                     $updated++;
                 }
             }
