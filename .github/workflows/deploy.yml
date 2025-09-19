@@ -231,7 +231,7 @@ jobs:
             
             # Navigate to docker directory
             cd "${DOCKER_DIR}"
-            
+
             # Login to GitHub Container Registry if PAT available
             if [ -n "${{ secrets.GHCR_PAT }}" ]; then
               echo "🔐 Authenticating with GitHub Container Registry..."
@@ -239,21 +239,29 @@ jobs:
             else
               echo "⚠️ No GHCR_PAT provided - attempting to pull public images"
             fi
-            
+
             # Pull latest images with error handling
             echo "📦 Pulling latest Docker images..."
+
+            # Force pull latest images using compose first
+            docker compose -f docker-compose.dev.yml pull || echo "⚠️ Compose pull failed, trying individual pulls"
+
             if ! docker pull "${IMAGE_API}:${TAG}"; then
               echo "⚠️ Failed to pull API image ${IMAGE_API}:${TAG}"
               echo "Available API tags:"
               docker images | grep livrolog-api || echo "No local API images found"
             fi
-            
+
             if ! docker pull "${IMAGE_WEB}:${TAG}"; then
               echo "⚠️ Failed to pull Web image ${IMAGE_WEB}:${TAG}"
               echo "Available Web tags:"
               docker images | grep livrolog-web || echo "No local Web images found"
             fi
-            
+
+            # Clean up old images to force using new ones
+            echo "🧹 Cleaning up old images..."
+            docker image prune -f --filter "label=org.opencontainers.image.source=https://github.com/arnonrdp/LivroLog" || true
+
             # Stop existing containers gracefully
             echo "🛑 Stopping existing development containers..."
             if docker compose -f docker-compose.dev.yml ps --services --filter "status=running" | grep -q .; then
@@ -710,7 +718,7 @@ jobs:
 
             # Navigate to docker directory
             cd "${DOCKER_DIR}"
-            
+
             # Login to GitHub Container Registry if PAT available
             if [ -n "${{ secrets.GHCR_PAT }}" ]; then
               echo "🔐 Authenticating with GitHub Container Registry..."
@@ -718,21 +726,29 @@ jobs:
             else
               echo "⚠️ No GHCR_PAT provided - attempting to pull public images"
             fi
-            
+
             # Pull latest images with error handling
             echo "📦 Pulling latest Docker images..."
+
+            # Force pull latest images using compose first
+            docker compose -f docker-compose.prod.yml pull || echo "⚠️ Compose pull failed, trying individual pulls"
+
             if ! docker pull "${IMAGE_API}:${TAG}"; then
               echo "⚠️ Failed to pull API image ${IMAGE_API}:${TAG}"
               echo "Available API tags:"
               docker images | grep livrolog-api || echo "No local API images found"
             fi
-            
+
             if ! docker pull "${IMAGE_WEB}:${TAG}"; then
               echo "⚠️ Failed to pull Web image ${IMAGE_WEB}:${TAG}"
               echo "Available Web tags:"
               docker images | grep livrolog-web || echo "No local Web images found"
             fi
-            
+
+            # Clean up old images to force using new ones
+            echo "🧹 Cleaning up old images..."
+            docker image prune -f --filter "label=org.opencontainers.image.source=https://github.com/arnonrdp/LivroLog" || true
+
             # Stop existing containers gracefully
             echo "🛑 Stopping existing production containers..."
             if docker compose -f docker-compose.prod.yml ps --services --filter "status=running" | grep -q .; then
