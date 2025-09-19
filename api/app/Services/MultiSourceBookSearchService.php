@@ -69,6 +69,10 @@ class MultiSourceBookSearchService
 
                 if ($amazonResult['success'] && !empty($amazonResult['books'])) {
                     $transformedBooks = $transformer->transform($amazonResult['books'], $includes);
+
+                    // Enrich Amazon results with Google IDs for easier book creation
+                    $transformedBooks = $this->enrichAmazonBooksWithGoogleIds($transformedBooks);
+
                     $allBooks = array_merge($allBooks, $transformedBooks);
 
                     // Track ISBNs to avoid duplicates
@@ -448,5 +452,60 @@ class MultiSourceBookSearchService
         }
 
         return $suggestions;
+    }
+
+    /**
+     * Enrich Amazon book results with Google IDs for easier book creation
+     * This allows users to add books from Amazon search results to their library
+     */
+    private function enrichAmazonBooksWithGoogleIds(array $books): array
+    {
+        $enrichedBooks = [];
+
+        foreach ($books as $book) {
+            $enrichedBook = $book;
+
+            // Only try to find Google ID if book doesn't already have one and has an ISBN
+            if (empty($book['google_id']) && !empty($book['isbn'])) {
+                $googleId = $this->findGoogleIdByIsbn($book['isbn']);
+                if ($googleId) {
+                    $enrichedBook['google_id'] = $googleId;
+                }
+            }
+
+            $enrichedBooks[] = $enrichedBook;
+        }
+
+        return $enrichedBooks;
+    }
+
+    /**
+     * Find Google Books ID by ISBN using a quick API lookup
+     */
+    private function findGoogleIdByIsbn(string $isbn): ?string
+    {
+        try {
+            // Use Google Books API to find the book by ISBN
+            $response = \Illuminate\Support\Facades\Http::timeout(3)->get('https://www.googleapis.com/books/v1/volumes', [
+                'q' => "isbn:{$isbn}",
+                'maxResults' => 1,
+                'key' => config('services.google_books.api_key'),
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (!empty($data['items'][0]['id'])) {
+                    return $data['items'][0]['id'];
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently fail - we don't want to break the search if Google Books lookup fails
+            \Illuminate\Support\Facades\Log::info('Failed to find Google ID for ISBN', [
+                'isbn' => $isbn,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return null;
     }
 }
