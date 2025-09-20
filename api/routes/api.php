@@ -84,7 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Books
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
-    Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']);
+    Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']); // Amazon links endpoint
     Route::apiResource('books', BookController::class)->except(['index']);
 
     // User's books (Personal Library Management)
