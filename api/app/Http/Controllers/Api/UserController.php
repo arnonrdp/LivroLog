@@ -150,6 +150,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', \App\Models\User::class);
         $request->validate([
             'display_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -307,6 +308,7 @@ class UserController extends Controller
     public function update(Request $request, string $id)
     {
         $user = User::findOrFail($id);
+        $this->authorize('update', $user);
 
         $request->validate([
             'display_name' => 'required|string|max:255',
@@ -355,6 +357,7 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
+        $this->authorize('delete', $user);
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
@@ -784,6 +787,10 @@ class UserController extends Controller
     private function loadImageFromUrl($url)
     {
         try {
+            if (!$this->isAllowedDomain($url)) {
+                return null;
+            }
+
             // Local cache for remote covers (TTL 7 days)
             $cacheDir = storage_path('app/cache/covers');
             if (!is_dir($cacheDir)) {
@@ -808,6 +815,38 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Basic allowlist validation to prevent SSRF when fetching external images
+     */
+    private function isAllowedDomain(string $url): bool
+    {
+        $allowed = [
+            'books.google.com',
+            'books.googleapis.com',
+            'lh3.googleusercontent.com',
+            'ssl.gstatic.com',
+        ];
+
+        $parsed = parse_url($url);
+        if (!isset($parsed['host']) || !isset($parsed['scheme'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+        $scheme = strtolower($parsed['scheme']);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return false;
+        }
+
+        foreach ($allowed as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

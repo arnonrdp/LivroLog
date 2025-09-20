@@ -168,6 +168,9 @@ class FollowSystemTest extends TestCase
 
     public function test_follow_counts_reconciliation()
     {
+        // Clean any existing follows that might interfere with the test
+        Follow::query()->delete();
+
         $user = User::factory()->create([
             'followers_count' => 5, // Wrong count
             'following_count' => 3, // Wrong count
@@ -178,9 +181,21 @@ class FollowSystemTest extends TestCase
         $follower2 = User::factory()->create();
         $following1 = User::factory()->create();
 
-        Follow::create(['follower_id' => $follower1->id, 'followed_id' => $user->id]);
-        Follow::create(['follower_id' => $follower2->id, 'followed_id' => $user->id]);
-        Follow::create(['follower_id' => $user->id, 'followed_id' => $following1->id]);
+        Follow::create([
+            'follower_id' => $follower1->id,
+            'followed_id' => $user->id,
+            'status' => 'accepted'
+        ]);
+        Follow::create([
+            'follower_id' => $follower2->id,
+            'followed_id' => $user->id,
+            'status' => 'accepted'
+        ]);
+        Follow::create([
+            'follower_id' => $user->id,
+            'followed_id' => $following1->id,
+            'status' => 'accepted'
+        ]);
 
         $result = $this->followService->recalculateFollowCounts($user);
 

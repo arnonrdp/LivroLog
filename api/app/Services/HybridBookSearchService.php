@@ -44,8 +44,9 @@ class HybridBookSearchService
         // Step 3: Remove duplicates by ISBN and merge results
         $combinedBooks = $this->mergeAndDeduplicateResults($localBooks, $externalBooks);
 
-        // Step 4: Limit to requested maxResults
-        $finalBooks = array_slice($combinedBooks, 0, $maxResults);
+        // Step 4: Limit to requested maxResults (with minimum to show Amazon results)
+        $effectiveLimit = max($maxResults, 30); // Ensure we show at least 30 results to display Amazon books
+        $finalBooks = array_slice($combinedBooks, 0, $effectiveLimit);
 
         // Step 5: Enrich with Amazon purchase links
         $finalBooks = $this->amazonEnrichmentService->enrichBooksWithAmazonLinks($finalBooks, $options);
