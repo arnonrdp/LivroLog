@@ -1,5 +1,6 @@
 import { useAuthStore, useUserStore } from '@/stores'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { LocalStorage } from 'quasar'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -58,16 +59,27 @@ router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
 
-  // If no user loaded, try to restore session via /auth/me (cookie-based)
+  // Check if we have a user loaded and a valid token
   const hasUser = Boolean(userStore.me.id)
-  if (!hasUser) {
+  const hasToken = Boolean(LocalStorage.getItem('access_token'))
+
+  // Only call /me if we have a token but no user data loaded
+  if (!hasUser && hasToken) {
     try {
-      // Get user data including books in one call
+      // Try to restore session from server
       await authStore.getMe()
-      // userStore.me is already populated by authStore.getMe(), no need for additional call
     } catch (error) {
       console.error('Failed to restore session:', error)
-      // Clear store to ensure clean state
+      // Clear invalid auth data
+      LocalStorage.remove('access_token')
+      LocalStorage.remove('user')
+      authStore.$reset()
+    }
+  } else if (!hasUser && !hasToken) {
+    // No token and no user - try to restore from localStorage first
+    const restored = authStore.restoreSession()
+    if (!restored) {
+      // Clear any stale data
       authStore.$reset()
     }
   }
