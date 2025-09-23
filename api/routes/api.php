@@ -51,6 +51,9 @@ Route::get('/image-proxy/stats', [ImageProxyController::class, 'stats']);
 // User shelf images for social sharing (public)
 Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
+// Public user profiles
+Route::get('/users/{identifier}', [UserController::class, 'show']);
+
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
     // Admin-only routes
@@ -80,7 +83,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Users (read-only for authenticated users)
     Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{identifier}', [UserController::class, 'show']);
 
     // Books
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);

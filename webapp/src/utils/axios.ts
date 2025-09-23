@@ -42,8 +42,13 @@ api.interceptors.response.use(
         }
       }
 
-      // Only redirect if not already on login page
-      if (window.location.pathname !== '/login') {
+      // Public routes that don't require authentication
+      const publicRoutes = ['/login', '/reset-password']
+      const isPublicUserProfile = /^\/[a-zA-Z0-9_-]+$/.test(window.location.pathname)
+      const isCurrentlyOnPublicRoute = publicRoutes.includes(window.location.pathname) || isPublicUserProfile
+
+      // Only redirect if not already on login page and not on a public route
+      if (!isCurrentlyOnPublicRoute) {
         window.location.href = '/login'
       }
     }
