@@ -245,8 +245,8 @@ jobs:
             BROADCAST_CONNECTION=log
             FILESYSTEM_DISK=local
             PHP_CLI_SERVER_WORKERS=4
-            ENV_EOF
-            
+ENV_EOF
+
             echo "✅ Environment file created"
             
             # Check if containers are already running and restart API if needed
