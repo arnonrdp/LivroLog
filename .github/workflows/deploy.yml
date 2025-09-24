@@ -240,6 +240,9 @@ jobs:
               echo "⚠️ No GHCR_PAT provided - attempting to pull public images"
             fi
 
+            # Change to deployment directory where docker-compose.dev.yml is located
+            cd "${DOCKER_DIR}"
+
             # Pull latest images with error handling
             echo "📦 Pulling latest Docker images..."
 
