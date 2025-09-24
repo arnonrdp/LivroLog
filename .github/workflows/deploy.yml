@@ -227,21 +227,20 @@ jobs:
             LOG_LEVEL=debug
 
             # Google Services Configuration
-            GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
-            GOOGLE_BOOKS_LOCATION_IP=${{ secrets.GOOGLE_BOOKS_LOCATION_IP }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY || 'AIzaSyBsjbzLfgK5rIMAmea6ix_DhkbWMjiSXfI' }}
+            GOOGLE_BOOKS_LOCATION_IP=177.37.0.0
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || '' }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
             GOOGLE_REDIRECT_URI=https://api.dev.livrolog.com/auth/google/callback
 
             # Amazon Product Advertising API
-            AMAZON_PROVIDER_ENABLED=${{ secrets.AMAZON_PROVIDER_ENABLED }}
-            AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}
-            AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}
-            AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}
-            AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}
+            AMAZON_ASSOCIATE_TAG=livrolog01-20
+            AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY || '' }}
+            AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY || '' }}
+            AMAZON_SITESTRIPE_ENABLED=true
 
             # Other Services
-            OPEN_LIBRARY_ENABLED=${{ secrets.OPEN_LIBRARY_ENABLED }}
+            OPEN_LIBRARY_ENABLED=true
             BCRYPT_ROUNDS=12
             BROADCAST_CONNECTION=log
             FILESYSTEM_DISK=local

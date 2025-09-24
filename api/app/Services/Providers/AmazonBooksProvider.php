@@ -541,12 +541,7 @@ class AmazonBooksProvider implements BookSearchProvider
 
     public function isEnabled(): bool
     {
-        // Check explicit configuration flag first
-        if (! config('services.amazon.enabled', true)) {
-            return false;
-        }
-
-        // Auto-enable if all credentials are present
+        // Amazon provider is always enabled if credentials are present
         return ! empty(config('services.amazon.pa_api_key'))
             && ! empty(config('services.amazon.pa_secret_key'));
     }
