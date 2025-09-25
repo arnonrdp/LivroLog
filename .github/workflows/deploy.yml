@@ -156,7 +156,7 @@ jobs:
           
           echo "✅ Docker compose file copied successfully"
 
-      - name: Deploy development containers  
+      - name: Deploy development containers
         run: |
           ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
             set -euo pipefail
@@ -227,7 +227,7 @@ LOG_CHANNEL=stack
 LOG_LEVEL=debug
 
 # Google Services Configuration
-GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY || 'AIzaSyBsjbzLfgK5rIMAmea6ix_DhkbWMjiSXfI' }}
+GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY || '' }}
 GOOGLE_BOOKS_LOCATION_IP=177.37.0.0
 GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || '' }}
 GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || '' }}
