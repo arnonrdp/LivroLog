@@ -164,7 +164,12 @@ jobs:
           ssh ${{ secrets.SERVER_HOST }} "mkdir -p ${{ env.DEPLOY_PATH }}/scripts"
           scp -o StrictHostKeyChecking=no .github/scripts/create-env.sh ${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/scripts/
           scp -o StrictHostKeyChecking=no .github/scripts/deploy-dev.sh ${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/scripts/
-          ssh ${{ secrets.SERVER_HOST }} "chmod +x ${{ env.DEPLOY_PATH }}/scripts/*.sh"
+
+          # Copy backup scripts
+          scp -o StrictHostKeyChecking=no scripts/backup_database.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
+          scp -o StrictHostKeyChecking=no scripts/setup_backup_cron.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
+
+          ssh ${{ secrets.SERVER_HOST }} "chmod +x ${{ env.DEPLOY_PATH }}/scripts/*.sh /home/bitnami/*.sh"
           echo "✅ Deployment scripts copied successfully"
 
       - name: Deploy development containers
@@ -184,6 +189,11 @@ jobs:
             cd '${{ env.DEPLOY_PATH }}/scripts'
             ./deploy-dev.sh
           "
+
+      - name: Setup backup automation
+        run: |
+          echo "⚙️ Setting up backup automation..."
+          ssh ${{ secrets.SERVER_HOST }} "/home/bitnami/setup_backup_cron.sh"
 
       - name: Configure Apache proxy for development containers
         run: |
@@ -455,7 +465,12 @@ jobs:
           # Copy compose file
           scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
 
-          echo "✅ Docker compose file copied successfully"
+          # Copy backup scripts
+          scp -o StrictHostKeyChecking=no scripts/backup_database.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
+          scp -o StrictHostKeyChecking=no scripts/setup_backup_cron.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
+          ssh ${{ secrets.SERVER_HOST }} "chmod +x /home/bitnami/*.sh"
+
+          echo "✅ Docker compose file and backup scripts copied successfully"
 
       - name: Deploy production containers
         run: |
@@ -684,6 +699,11 @@ jobs:
             echo "=================================================="
             
           DEPLOY_SCRIPT
+
+      - name: Setup backup automation
+        run: |
+          echo "⚙️ Setting up backup automation for production..."
+          ssh ${{ secrets.SERVER_HOST }} "/home/bitnami/setup_backup_cron.sh"
 
       - name: Post-deployment verification
         run: |
