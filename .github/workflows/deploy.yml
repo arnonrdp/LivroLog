@@ -87,42 +87,42 @@ jobs:
       - name: Validate required secrets
         run: |
           echo "🔍 Validating required secrets and environment variables..."
-          
+
           # Check required secrets
           if [ -z "${{ secrets.SERVER_HOST }}" ]; then
             echo "❌ SERVER_HOST secret is not configured"
             exit 1
           fi
-          
+
           if [ -z "${{ secrets.SERVER_USER }}" ]; then
             echo "❌ SERVER_USER secret is not configured" 
             exit 1
           fi
-          
+
           if [ -z "${{ secrets.SERVER_SSH_KEY }}" ]; then
             echo "❌ SERVER_SSH_KEY secret is not configured"
             exit 1
           fi
-          
+
           # GHCR_PAT is optional for public images, but warn if missing
           if [ -z "${{ secrets.GHCR_PAT }}" ]; then
             echo "⚠️ GHCR_PAT secret not found - will attempt to pull public images"
           fi
-          
+
           echo "✅ Secret validation completed"
 
       - name: Setup SSH key and test connection
         run: |
           echo "🔐 Setting up SSH connection..."
-          
+
           # Create SSH directory and set permissions
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
+
           # Create SSH private key file
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/livrolog_key
           chmod 600 ~/.ssh/livrolog_key
-          
+
           # Disable host key checking for this deployment (AWS instances change IPs)
           echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
           echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
@@ -132,7 +132,7 @@ jobs:
           echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
           echo "  LogLevel QUIET" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
-          
+
           # Test SSH connection
           echo "🔍 Testing SSH connection to ${{ secrets.SERVER_HOST }}..."
           if ssh ${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"; then
@@ -149,13 +149,13 @@ jobs:
       - name: Copy compose file to server
         run: |
           echo "📁 Copying docker-compose.dev.yml to server..."
-          
+
           # Create target directory on server
           ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
-          
+
           # Copy compose file
           scp -o StrictHostKeyChecking=no docker-compose.dev.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
-          
+
           echo "✅ Docker compose file copied successfully"
 
       - name: Copy deployment scripts to server
@@ -169,25 +169,26 @@ jobs:
 
       - name: Deploy development containers
         run: |
-          ssh ${{ secrets.SERVER_HOST }} \
-            "export DEPLOY_PATH='${{ env.DEPLOY_PATH }}' && \
-             export TARGET_BRANCH='${{ env.TARGET_BRANCH }}' && \
-             export GITHUB_SHA='${{ env.GITHUB_SHA }}' && \
-             export GITHUB_REPOSITORY_OWNER='${{ env.GITHUB_REPOSITORY_OWNER }}' && \
-             export SERVER_USER='${{ secrets.SERVER_USER }}' && \
-             export GHCR_PAT='${{ secrets.GHCR_PAT }}' && \
-             export GOOGLE_BOOKS_API_KEY='${{ secrets.GOOGLE_BOOKS_API_KEY || '' }}' && \
-             export GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID || '' }}' && \
-             export GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET || '' }}' && \
-             export AMAZON_PA_API_KEY='${{ secrets.AMAZON_PA_API_KEY || '' }}' && \
-             export AMAZON_PA_SECRET_KEY='${{ secrets.AMAZON_PA_SECRET_KEY || '' }}' && \
-             cd '${{ env.DEPLOY_PATH }}/scripts' && \
-             ./deploy-dev.sh"
+          ssh ${{ secrets.SERVER_HOST }} "
+            export DEPLOY_PATH='${{ env.DEPLOY_PATH }}'
+            export TARGET_BRANCH='${{ env.TARGET_BRANCH }}'
+            export GITHUB_SHA='${{ env.GITHUB_SHA }}'
+            export GITHUB_REPOSITORY_OWNER='${{ env.GITHUB_REPOSITORY_OWNER }}'
+            export SERVER_USER='${{ secrets.SERVER_USER }}'
+            export GHCR_PAT='${{ secrets.GHCR_PAT }}'
+            export GOOGLE_BOOKS_API_KEY='${{ secrets.GOOGLE_BOOKS_API_KEY || '' }}'
+            export GOOGLE_CLIENT_ID='${{ secrets.GOOGLE_CLIENT_ID || '' }}'
+            export GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET || '' }}'
+            export AMAZON_PA_API_KEY='${{ secrets.AMAZON_PA_API_KEY || '' }}'
+            export AMAZON_PA_SECRET_KEY='${{ secrets.AMAZON_PA_SECRET_KEY || '' }}'
+            cd '${{ env.DEPLOY_PATH }}/scripts'
+            ./deploy-dev.sh
+          "
 
       - name: Configure Apache proxy for development containers
         run: |
           echo "🔧 Configuring Apache proxy for development containers..."
-          
+
           ssh ${{ secrets.SERVER_HOST }} << 'APACHE_CONFIG'
             set -euo pipefail
             
@@ -196,7 +197,7 @@ jobs:
             # Create HTTP virtual host configuration (no CORS headers - Laravel handles CORS)
             sudo tee /opt/bitnami/apache/conf/vhosts/docker-proxy.conf > /dev/null << 'HTTP_VHOST'
             # HTTP Virtual Hosts for Docker Containers
-            <VirtualHost *:80>
+
                 ServerName api.dev.livrolog.com
                 ProxyPreserveHost On
                 ProxyPass / http://127.0.0.1:8081/
@@ -332,22 +333,22 @@ jobs:
       - name: Post-deployment verification
         run: |
           echo "🔍 Running post-deployment verification..."
-          
+
           # Final connectivity tests
           API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:8081/healthz || echo "FAIL")
           WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:8080/ || echo "FAIL")
-          
+
           echo "Final Status Check:"
           echo "  API Health: $API_STATUS"
           echo "  Web Status: $WEB_STATUS"
-          
+
           if [ "$API_STATUS" = "200" ] && [ "$WEB_STATUS" = "200" ]; then
             echo "✅ All services are healthy and accessible"
           else
             echo "⚠️ Some services may not be fully ready yet"
             echo "This is normal for large applications and they should be ready shortly"
           fi
-          
+
           echo "🎯 Development deployment verification completed"
 
   docker-canary-prod:
@@ -373,54 +374,54 @@ jobs:
       - name: Validate required secrets
         run: |
           echo "🔍 Validating required secrets and environment variables..."
-          
+
           # Check required secrets
           if [ -z "${{ secrets.SERVER_HOST }}" ]; then
             echo "❌ SERVER_HOST secret is not configured"
             exit 1
           fi
-          
+
           if [ -z "${{ secrets.SERVER_USER }}" ]; then
             echo "❌ SERVER_USER secret is not configured" 
             exit 1
           fi
-          
+
           if [ -z "${{ secrets.SERVER_SSH_KEY }}" ]; then
             echo "❌ SERVER_SSH_KEY secret is not configured"
             exit 1
           fi
-          
+
           # APP_KEY is required for production
           if [ -z "${{ secrets.APP_KEY }}" ]; then
             echo "❌ APP_KEY secret is not configured for production"
             exit 1
           fi
-          
+
           # DB_PASSWORD is required for production
           if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
             echo "❌ DB_PASSWORD secret is not configured for production"
             exit 1
           fi
-          
+
           # GHCR_PAT is optional for public images, but warn if missing
           if [ -z "${{ secrets.GHCR_PAT }}" ]; then
             echo "⚠️ GHCR_PAT secret not found - will attempt to pull public images"
           fi
-          
+
           echo "✅ Secret validation completed"
 
       - name: Setup SSH key and test connection
         run: |
           echo "🔐 Setting up SSH connection..."
-          
+
           # Create SSH directory and set permissions
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
+
           # Create SSH private key file
           echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/livrolog_key
           chmod 600 ~/.ssh/livrolog_key
-          
+
           # Disable host key checking for this deployment (AWS instances change IPs)
           echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
           echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
@@ -430,7 +431,7 @@ jobs:
           echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
           echo "  LogLevel QUIET" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
-          
+
           # Test SSH connection
           echo "🔍 Testing SSH connection to ${{ secrets.SERVER_HOST }}..."
           if ssh ${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"; then
@@ -447,16 +448,16 @@ jobs:
       - name: Copy compose file to server
         run: |
           echo "📁 Copying docker-compose.prod.yml to server..."
-          
+
           # Create target directory on server
           ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
-          
+
           # Copy compose file
           scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
-          
+
           echo "✅ Docker compose file copied successfully"
 
-      - name: Deploy production containers  
+      - name: Deploy production containers
         run: |
           ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
             set -euo pipefail
@@ -687,20 +688,20 @@ jobs:
       - name: Post-deployment verification
         run: |
           echo "🔍 Running post-deployment verification..."
-          
+
           # Final connectivity tests
           API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:18081/healthz || echo "FAIL")
           WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:18080/ || echo "FAIL")
-          
+
           echo "Final Status Check:"
           echo "  API Health: $API_STATUS"
           echo "  Web Status: $WEB_STATUS"
-          
+
           if [ "$API_STATUS" = "200" ] && [ "$WEB_STATUS" = "200" ]; then
             echo "✅ All services are healthy and accessible"
           else
             echo "⚠️ Some services may not be fully ready yet"
             echo "This is normal for large applications and they should be ready shortly"
           fi
-          
+
           echo "🎯 Production deployment verification completed"
