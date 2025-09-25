@@ -197,7 +197,7 @@ jobs:
             # Create HTTP virtual host configuration (no CORS headers - Laravel handles CORS)
             sudo tee /opt/bitnami/apache/conf/vhosts/docker-proxy.conf > /dev/null << 'HTTP_VHOST'
             # HTTP Virtual Hosts for Docker Containers
-
+            <VirtualHost *:80>
                 ServerName api.dev.livrolog.com
                 ProxyPreserveHost On
                 ProxyPass / http://127.0.0.1:8081/
