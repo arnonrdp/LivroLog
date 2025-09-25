@@ -221,6 +221,15 @@ class SocialMediaCrawlerMiddleware
                 $metaTags .= '<meta name="' . $property . '" content="' . htmlspecialchars($content) . '">' . "\n    ";
             }
         }
+
+        // Add canonical URL pointing to frontend (let frontend be the canonical source)
+        $frontendUrl = config('app.frontend_url');
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+        $canonicalUrl = rtrim($frontendUrl, '/') . $requestUri;
+        $metaTags .= '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl, ENT_QUOTES) . '">' . "\n    ";
+
+        // Tell search engines not to index this API-served version
+        $metaTags .= '<meta name="robots" content="noindex, follow">' . "\n    ";
         $frontendUrl = config('app.frontend_url');
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
         $safeFrontendUrl = htmlspecialchars($frontendUrl, ENT_QUOTES);

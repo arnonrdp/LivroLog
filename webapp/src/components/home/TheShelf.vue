@@ -3,8 +3,8 @@
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
-      <!-- Make the book image clickable -->
-      <div class="book-cover" @click="openBookDialog(book)">
+      <!-- Make the book image clickable only for authenticated users on other shelves -->
+      <div :class="['book-cover', { 'clickable': canOpenBookDialog }]" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
       </div>
@@ -26,7 +26,8 @@
 
 <script setup lang="ts">
 import type { Book, User } from '@/models'
-import { ref } from 'vue'
+import { useAuthStore } from '@/stores'
+import { computed, ref } from 'vue'
 import BookDialog from './BookDialog.vue'
 
 const props = defineProps<{
@@ -34,15 +35,25 @@ const props = defineProps<{
   userIdentifier?: string // if provided, means viewing another user's shelf
 }>()
 
+const authStore = useAuthStore()
+
 const filter = ref('')
 const showBookDialog = ref(false)
 const selectedBookId = ref<string | undefined>()
+
+const canOpenBookDialog = computed(() => {
+  // Users can always open books from their own shelf
+  // For other users' shelves, only authenticated users can open the dialog
+  return !props.userIdentifier || authStore.isAuthenticated
+})
 
 function onFilter(title: Book['title']) {
   return title.toLowerCase().includes(filter.value.toLowerCase())
 }
 
 function openBookDialog(book: Book) {
+  if (!canOpenBookDialog.value) return
+
   selectedBookId.value = book.id
   showBookDialog.value = true
 }
@@ -78,11 +89,16 @@ section figure
     z-index: 1
 
 .book-cover
-  cursor: pointer
   position: relative
   transition: transform 0.2s ease
-  &:hover
-    transform: scale(1.05)
+
+  &.clickable
+    cursor: pointer
+    &:hover
+      transform: scale(1.05)
+
+  &:not(.clickable)
+    cursor: default
 
 img
   height: 115px

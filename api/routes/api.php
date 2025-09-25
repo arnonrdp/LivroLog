@@ -51,12 +51,20 @@ Route::get('/image-proxy/stats', [ImageProxyController::class, 'stats']);
 // User shelf images for social sharing (public)
 Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
+// Public user profiles
+Route::get('/users/{identifier}', [UserController::class, 'show']);
+
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
     // Admin-only routes
     Route::middleware('admin')->group(function () {
         // Merge authors
         Route::post('/authors/merge', [\App\Http\Controllers\Api\AuthorMergeController::class, 'merge']);
+
+        // User management (restricted to admins)
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
     });
 
     // Auth
@@ -73,11 +81,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Legacy password endpoint
     Route::put('/password', [AuthController::class, 'updatePassword']);
 
-    // Users
-    Route::apiResource('users', UserController::class);
+    // Users (read-only for authenticated users)
+    Route::get('/users', [UserController::class, 'index']);
 
     // Books
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
+    Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']); // Amazon links endpoint
     Route::apiResource('books', BookController::class)->except(['index']);
 
     // User's books (Personal Library Management)

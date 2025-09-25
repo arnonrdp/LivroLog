@@ -108,7 +108,10 @@ export const useAuthStore = defineStore('auth', {
         .post('/auth/register', { ...data, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
-          localStorage.setItem('auth_token', authData.access_token)
+          // Store both token and user data
+          if (authData.access_token) {
+            LocalStorage.set('access_token', authData.access_token)
+          }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           router.push('/')
@@ -129,7 +132,10 @@ export const useAuthStore = defineStore('auth', {
         .post('/auth/login', { email, password, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
-          localStorage.setItem('auth_token', authData.access_token)
+          // Store both token and user data
+          if (authData.access_token) {
+            LocalStorage.set('access_token', authData.access_token)
+          }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           router.push('/')
@@ -150,7 +156,6 @@ export const useAuthStore = defineStore('auth', {
         console.error('Logout API error:', error)
       }
       this.$reset()
-      localStorage.removeItem('auth_token')
       LocalStorage.clear()
       localStorage.removeItem('auth')
       router.push('/login')
@@ -215,7 +220,10 @@ export const useAuthStore = defineStore('auth', {
         .post('/auth/google', { id_token: idToken, locale: navigatorLanguage })
         .then((response) => {
           const authData: AuthResponse = response.data
-          localStorage.setItem('auth_token', authData.access_token)
+          // Store both token and user data
+          if (authData.access_token) {
+            LocalStorage.set('access_token', authData.access_token)
+          }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           Notify.create({ message: 'Login with Google successful!', type: 'positive' })
@@ -267,15 +275,15 @@ export const useAuthStore = defineStore('auth', {
     },
 
     isAuthenticatedCheck(): boolean {
-      return !!localStorage.getItem('auth_token')
+      const userStore = useUserStore()
+      return Boolean(userStore.me.id)
     },
 
     restoreSession(): boolean {
-      const token = localStorage.getItem('auth_token')
       const userData = LocalStorage.getItem('user')
       const userStore = useUserStore()
 
-      if (token && userData && typeof userData === 'object') {
+      if (userData && typeof userData === 'object') {
         userStore.setMe(userData as User)
         return true
       }

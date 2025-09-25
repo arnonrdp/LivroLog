@@ -3,15 +3,17 @@ import { LocalStorage } from 'quasar'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json'
   }
 })
 
+// Add Authorization header if token exists
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token')
+    const token = LocalStorage.getItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -25,8 +27,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Clear all auth data
-      localStorage.removeItem('auth_token')
       LocalStorage.remove('user')
+      LocalStorage.remove('access_token')
 
       // Clear auth store to prevent redirect loop
       const authStore = localStorage.getItem('auth')
@@ -40,8 +42,13 @@ api.interceptors.response.use(
         }
       }
 
-      // Only redirect if not already on login page
-      if (window.location.pathname !== '/login') {
+      // Public routes that don't require authentication
+      const publicRoutes = ['/login', '/reset-password']
+      const isPublicUserProfile = /^\/[a-zA-Z0-9_-]+$/.test(window.location.pathname)
+      const isCurrentlyOnPublicRoute = publicRoutes.includes(window.location.pathname) || isPublicUserProfile
+
+      // Only redirect if not already on login page and not on a public route
+      if (!isCurrentlyOnPublicRoute) {
         window.location.href = '/login'
       }
     }
