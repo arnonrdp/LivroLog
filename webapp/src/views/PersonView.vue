@@ -140,6 +140,12 @@ function updateMetaTags() {
   const existingTags = document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')
   existingTags.forEach((tag) => tag.remove())
 
+  // Update canonical URL for this specific page
+  const canonicalTag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement
+  if (canonicalTag) {
+    canonicalTag.href = window.location.href
+  }
+
   if (person.value?.display_name) {
     const booksCount = Array.isArray(person.value.books) ? person.value.books.length : 0
     const shelfName = person.value.shelf_name || person.value.display_name
