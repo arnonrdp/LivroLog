@@ -10,7 +10,7 @@ class GoogleBooksProvider implements BookSearchProvider
 {
     private const API_BASE_URL = 'https://www.googleapis.com/books/v1/volumes';
 
-    private const PRIORITY = 1;
+    private const PRIORITY = 2;
 
     public function search(string $query, array $options = []): array
     {

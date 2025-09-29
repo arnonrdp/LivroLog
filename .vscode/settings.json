@@ -21,6 +21,9 @@
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[yaml]": {
+    "editor.defaultFormatter": null
+  },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
     "source.organizeImports": "always"
@@ -31,19 +34,15 @@
   "eslint.run": "onSave",
   "eslint.useFlatConfig": true,
   "eslint.validate": ["javascript", "typescript", "vue"],
+  "files.associations": {
+    "*.yml": "plaintext"
+  },
+  "github-actions.workflows.pinned.refresh.enabled": false,
+  "github-actions.workflows.pinned.workflows": [],
   "i18n-ally.annotations": true,
   "i18n-ally.displayLanguage": "en",
   "i18n-ally.enabledFrameworks": ["vue"],
   "i18n-ally.extract.ignored": ["LivroLog"],
-  "i18n-ally.keystyle": "nested",
-  "i18n-ally.localesPaths": ["webapp/src/locales"],
-  "i18n-ally.namespace": false,
-  "i18n-ally.pathMatcher": "{locale}.json",
-  "i18n-ally.sortKeys": true,
-  "i18n-ally.sourceLanguage": "en",
-  "php.validate.enable": false,
-  "postman.settings.dotenv-detection-notification-visibility": false,
-  "typescript.tsdk": "node_modules/typescript/lib",
   "i18n-ally.keysInUse": [
     "language-pt_br",
     "language-de",
@@ -56,5 +55,18 @@
     "language-pt",
     "language-ru",
     "language-zh"
-  ]
+  ],
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.localesPaths": ["webapp/src/locales"],
+  "i18n-ally.namespace": false,
+  "i18n-ally.pathMatcher": "{locale}.json",
+  "i18n-ally.sortKeys": true,
+  "i18n-ally.sourceLanguage": "en",
+  "php.validate.enable": false,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "yaml.completion": false,
+  "yaml.format.enable": false,
+  "yaml.hover": false,
+  "yaml.schemaStore.enable": false,
+  "yaml.validate": false
 }

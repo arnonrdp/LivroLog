@@ -11,17 +11,22 @@ services:
     container_name: livrolog-mysql-dev
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-supersecret}'
+      MYSQL_ROOT_PASSWORD: 'rootpassword'
       MYSQL_DATABASE: '${DB_DATABASE:-livrolog_dev}'
       MYSQL_USER: '${DB_USERNAME:-livrolog}'
       MYSQL_PASSWORD: '${DB_PASSWORD:-supersecret}'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
     ports:
       - "127.0.0.1:3307:3306" # Different port to avoid conflicts
     volumes:
       - /var/www/livrolog-dev/shared/db:/var/lib/mysql
     networks:
       - livrolog-dev-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "livrolog", "-psupersecret"]
+      timeout: 5s
+      retries: 10
+      interval: 10s
+      start_period: 30s
 
   # Redis Cache (development)
   redis:
@@ -58,8 +63,10 @@ services:
     networks:
       - livrolog-dev-net
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   # Vue/Quasar WebApp served by Nginx
   web:

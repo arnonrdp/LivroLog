@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Services\UnifiedBookEnrichmentService;
 use App\Services\HybridBookSearchService;
+use App\Services\AmazonLinkEnrichmentService;
 use App\Transformers\BookTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -110,9 +112,13 @@ class BookController extends Controller
             $searchQuery = $request->input('search');
             $perPage = min($request->get('per_page', 20), 40); // Max 40 for search
 
+            // Get locale from Accept-Language header for proper Amazon region
+            $locale = $this->getLocaleFromRequest($request);
+
             $result = $hybridSearchService->search($searchQuery, [
                 'maxResults' => $perPage,
                 'includes' => $includes,
+                'locale' => $locale,
             ]);
 
             return response()->json($result);
@@ -232,7 +238,11 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
-            'thumbnail' => 'nullable|url|max:512',
+            'thumbnail' => ['nullable','url','max:512', function ($attribute, $value, $fail) {
+                if (! $this->isAllowedThumbnailDomain($value)) {
+                    $fail('The thumbnail URL domain is not allowed.');
+                }
+            }],
             'description' => self::VALIDATION_NULLABLE_STRING,
             'language' => self::VALIDATION_NULLABLE_STRING.'|max:10',
             'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
@@ -518,7 +528,11 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$book->id,
             'authors' => self::VALIDATION_NULLABLE_STRING,
-            'thumbnail' => 'nullable|url|max:512',
+            'thumbnail' => ['nullable','url','max:512', function ($attribute, $value, $fail) {
+                if (! $this->isAllowedThumbnailDomain($value)) {
+                    $fail('The thumbnail URL domain is not allowed.');
+                }
+            }],
             'language' => self::VALIDATION_NULLABLE_STRING.'|max:10',
             'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
             'edition' => 'nullable|string|max:50',
@@ -527,6 +541,39 @@ class BookController extends Controller
         $book->update($request->all());
 
         return response()->json($book);
+    }
+
+    /**
+     * Validate thumbnail URL is on allowed domains to reduce SSRF risk
+     */
+    private function isAllowedThumbnailDomain(string $url): bool
+    {
+        $allowed = [
+            'books.google.com',
+            'books.googleapis.com',
+            'lh3.googleusercontent.com',
+            'ssl.gstatic.com',
+            'covers.openlibrary.org',
+        ];
+
+        $parsed = parse_url($url);
+        if (!isset($parsed['host']) || !isset($parsed['scheme'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+        $scheme = strtolower($parsed['scheme']);
+        if (!in_array($scheme, ['http','https'], true)) {
+            return false;
+        }
+
+        foreach ($allowed as $domain) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -849,5 +896,79 @@ class BookController extends Controller
 
             return null;
         }
+    }
+
+    /**
+     * Get locale from request headers for proper Amazon region detection
+     */
+    private function getLocaleFromRequest(Request $request): string
+    {
+        // Priority: authenticated user's locale > Accept-Language header > default
+        $user = $request->user();
+        if ($user && $user->locale) {
+            return $user->locale;
+        }
+
+        $acceptLanguage = $request->header('Accept-Language', 'en-US,en;q=0.9');
+
+        // Parse Accept-Language header to get primary locale
+        $languages = explode(',', $acceptLanguage);
+        $primaryLanguage = trim(explode(';', $languages[0])[0]);
+
+        return $primaryLanguage ?: 'en-US';
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/books/{book}/amazon-links",
+     *     operationId="getBookAmazonLinks",
+     *     tags={"Books"},
+     *     summary="Get Amazon purchase links for all regions",
+     *     description="Returns Amazon purchase links for the book across different regions (BR, US, UK, CA) with proper affiliate tags",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Amazon links for all regions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="links", type="array", @OA\Items(
+     *                 @OA\Property(property="region", type="string", example="BR"),
+     *                 @OA\Property(property="label", type="string", example="Amazon Brazil"),
+     *                 @OA\Property(property="url", type="string", example="https://www.amazon.com.br/dp/123456789?tag=livrolog01-20"),
+     *                 @OA\Property(property="domain", type="string", example="amazon.com.br")
+     *             ))
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=503, description="Amazon integration disabled")
+     * )
+     */
+    public function getAmazonLinks(Book $book, AmazonLinkEnrichmentService $amazonService): JsonResponse
+    {
+        $bookData = $book->toArray();
+        $links = $amazonService->generateAllRegionLinks($bookData);
+
+        if (empty($links)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Amazon integration is currently disabled',
+                'links' => []
+            ], 503);
+        }
+
+        return response()->json([
+            'success' => true,
+            'links' => $links
+        ]);
     }
 }

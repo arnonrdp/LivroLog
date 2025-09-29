@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\BookSearchProvider;
+use App\Services\Providers\AmazonBooksProvider;
 use App\Services\Providers\GoogleBooksProvider;
 use App\Services\Providers\OpenLibraryProvider;
 use App\Transformers\BookTransformer;
@@ -15,6 +16,8 @@ class MultiSourceBookSearchService
     private const CACHE_TTL_SUCCESS = 604800; // 7 days for successful results (more stable)
 
     private const CACHE_TTL_FAILURE = 86400;  // 24 hours for failed results
+
+    private const CACHE_TTL_AMAZON_FAILURE = 3600; // 1 hour for Amazon rate limit failures
 
     public function __construct()
     {
@@ -42,50 +45,128 @@ class MultiSourceBookSearchService
         $includes = $options['includes'] ?? [];
         $transformer = new BookTransformer;
 
-        $lastResult = null;
         $providerResults = [];
+        $allBooks = [];
+        $usedIsbns = [];
 
-        // Try each provider in priority order
-        foreach ($this->getActiveProviders() as $provider) {
+        // Strategy: Always try Amazon first, then supplement with Google Books if needed
+        $amazon = $this->findProviderByName('Amazon Books');
+        $googleBooks = $this->findProviderByName('Google Books');
+
+        $amazonResult = null;
+        $googleResult = null;
+
+        // Try Amazon Books first
+        if ($amazon && $amazon->isEnabled()) {
             try {
-                $result = $this->searchWithProvider($provider, $normalizedQuery, $options);
+                $amazonResult = $this->searchWithProvider($amazon, $normalizedQuery, $options);
                 $providerResults[] = [
-                    'provider' => $provider->getName(),
-                    'success' => $result['success'],
-                    'total_found' => $result['total_found'],
-                    'message' => $result['message'],
+                    'provider' => $amazon->getName(),
+                    'success' => $amazonResult['success'],
+                    'total_found' => $amazonResult['total_found'],
+                    'message' => $amazonResult['message'],
                 ];
 
-                if ($result['success'] && $result['total_found'] > 0) {
-                    // Transform books based on requested fields
-                    if (isset($result['books'])) {
-                        $result['books'] = $transformer->transform($result['books'], $includes);
-                    }
+                if ($amazonResult['success'] && !empty($amazonResult['books'])) {
+                    $transformedBooks = $transformer->transform($amazonResult['books'], $includes);
 
-                    // Success! Cache and return with pagination meta
-                    $finalResult = $this->buildFinalResult($result, $query, $providerResults, $options);
-                    
-                    // Temporary debugging - pass through debug info
-                    if (isset($result['debug_info'])) {
-                        $finalResult['debug_info'] = $result['debug_info'];
-                    }
-                    
-                    Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
+                    // Enrich Amazon results with Google IDs for easier book creation
+                    $transformedBooks = $this->enrichAmazonBooksWithGoogleIds($transformedBooks);
 
-                    return $finalResult;
+                    $allBooks = array_merge($allBooks, $transformedBooks);
+
+                    // Track ISBNs to avoid duplicates
+                    foreach ($transformedBooks as $book) {
+                        if (!empty($book['isbn_13'])) {
+                            $usedIsbns[] = $book['isbn_13'];
+                        }
+                        if (!empty($book['isbn_10'])) {
+                            $usedIsbns[] = $book['isbn_10'];
+                        }
+                        if (!empty($book['isbn'])) {
+                            $usedIsbns[] = $book['isbn'];
+                        }
+                    }
                 }
-
-                $lastResult = $result;
-
             } catch (\Exception $e) {
-                // Provider error - continue to next provider
                 $providerResults[] = [
-                    'provider' => $provider->getName(),
+                    'provider' => $amazon->getName(),
+                    'success' => false,
+                    'total_found' => 0,
+                    'message' => 'Provider error: '.$e->getMessage(),
+                ];
+
+                // Special handling for Amazon rate limiting
+                if (str_contains($e->getMessage(), '429')) {
+                    $amazonCacheKey = 'amazon_rate_limited_' . md5($query);
+                    Cache::put($amazonCacheKey, true, self::CACHE_TTL_AMAZON_FAILURE);
+                }
+            }
+        }
+
+        // If Amazon returned less than 10 results, supplement with Google Books
+        if (count($allBooks) < 10 && $googleBooks && $googleBooks->isEnabled()) {
+            try {
+                $googleResult = $this->searchWithProvider($googleBooks, $normalizedQuery, $options);
+                $providerResults[] = [
+                    'provider' => $googleBooks->getName(),
+                    'success' => $googleResult['success'],
+                    'total_found' => $googleResult['total_found'],
+                    'message' => $googleResult['message'],
+                ];
+
+                if ($googleResult['success'] && !empty($googleResult['books'])) {
+                    $transformedBooks = $transformer->transform($googleResult['books'], $includes);
+
+                    // Filter out books with duplicate ISBNs
+                    foreach ($transformedBooks as $book) {
+                        $isDuplicate = false;
+
+                        // Check if any ISBN already exists
+                        $bookIsbns = array_filter([
+                            $book['isbn_13'] ?? null,
+                            $book['isbn_10'] ?? null,
+                            $book['isbn'] ?? null
+                        ]);
+
+                        foreach ($bookIsbns as $isbn) {
+                            if (in_array($isbn, $usedIsbns)) {
+                                $isDuplicate = true;
+                                break;
+                            }
+                        }
+
+                        if (!$isDuplicate) {
+                            $allBooks[] = $book;
+
+                            // Track new ISBNs
+                            foreach ($bookIsbns as $isbn) {
+                                $usedIsbns[] = $isbn;
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                $providerResults[] = [
+                    'provider' => $googleBooks->getName(),
                     'success' => false,
                     'total_found' => 0,
                     'message' => 'Provider error: '.$e->getMessage(),
                 ];
             }
+        }
+
+        // If we have books from either source, return success
+        if (!empty($allBooks)) {
+            $finalResult = $this->buildCombinedResult($allBooks, $query, $providerResults, $options);
+
+            // Pass through debug info if available
+            if ($amazonResult && isset($amazonResult['debug_info'])) {
+                $finalResult['debug_info'] = $amazonResult['debug_info'];
+            }
+
+            Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
+            return $finalResult;
         }
 
         // No provider found results - build failure response
@@ -159,10 +240,10 @@ class MultiSourceBookSearchService
     private function initializeProviders(): void
     {
         $this->providers = [
+            new AmazonBooksProvider,
             new GoogleBooksProvider,
             new OpenLibraryProvider,
             // Future providers:
-            // new AmazonBooksProvider, // PA-API - when approved
             // new ISBNdbProvider(),
         ];
 
@@ -291,6 +372,43 @@ class MultiSourceBookSearchService
     }
 
     /**
+     * Build combined result from multiple providers
+     */
+    private function buildCombinedResult(array $books, string $originalQuery, array $providerResults, array $options = []): array
+    {
+        $perPage = $options['maxResults'] ?? 20;
+        $totalFound = count($books);
+
+        // Determine providers used
+        $providersUsed = array_filter($providerResults, function($provider) {
+            return $provider['success'] && $provider['total_found'] > 0;
+        });
+
+        $providerNames = array_column($providersUsed, 'provider');
+        $providerString = implode(' + ', $providerNames);
+
+        // Structure response with pagination meta similar to database queries
+        return [
+            'data' => $books,
+            'meta' => [
+                'current_page' => 1,
+                'from' => 1,
+                'last_page' => 1,
+                'per_page' => $perPage,
+                'to' => $totalFound,
+                'total' => $totalFound,
+            ],
+            'search_info' => [
+                'provider' => $providerString,
+                'original_query' => $originalQuery,
+                'search_strategy' => 'amazon_plus_google',
+                'providers_tried' => $providerResults,
+                'cached_at' => now()->toISOString(),
+            ],
+        ];
+    }
+
+    /**
      * Build failure result when no provider found results
      */
     private function buildFailureResult(string $query, array $providerResults): array
@@ -334,5 +452,60 @@ class MultiSourceBookSearchService
         }
 
         return $suggestions;
+    }
+
+    /**
+     * Enrich Amazon book results with Google IDs for easier book creation
+     * This allows users to add books from Amazon search results to their library
+     */
+    private function enrichAmazonBooksWithGoogleIds(array $books): array
+    {
+        $enrichedBooks = [];
+
+        foreach ($books as $book) {
+            $enrichedBook = $book;
+
+            // Only try to find Google ID if book doesn't already have one and has an ISBN
+            if (empty($book['google_id']) && !empty($book['isbn'])) {
+                $googleId = $this->findGoogleIdByIsbn($book['isbn']);
+                if ($googleId) {
+                    $enrichedBook['google_id'] = $googleId;
+                }
+            }
+
+            $enrichedBooks[] = $enrichedBook;
+        }
+
+        return $enrichedBooks;
+    }
+
+    /**
+     * Find Google Books ID by ISBN using a quick API lookup
+     */
+    private function findGoogleIdByIsbn(string $isbn): ?string
+    {
+        try {
+            // Use Google Books API to find the book by ISBN
+            $response = \Illuminate\Support\Facades\Http::timeout(3)->get('https://www.googleapis.com/books/v1/volumes', [
+                'q' => "isbn:{$isbn}",
+                'maxResults' => 1,
+                'key' => config('services.google_books.api_key'),
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (!empty($data['items'][0]['id'])) {
+                    return $data['items'][0]['id'];
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently fail - we don't want to break the search if Google Books lookup fails
+            \Illuminate\Support\Facades\Log::info('Failed to find Google ID for ISBN', [
+                'isbn' => $isbn,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return null;
     }
 }

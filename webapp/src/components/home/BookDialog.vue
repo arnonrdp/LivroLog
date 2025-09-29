@@ -14,13 +14,35 @@
           dense
           :disable="book?.asin_status === 'failed'"
           flat
-          :href="amazonButtonHref || undefined"
           icon="shopping_cart"
           :loading="book?.asin_status === 'processing'"
           round
-          :target="amazonButtonHref ? '_blank' : undefined"
+          @click="showAmazonDropdown"
         >
-          <q-tooltip>{{ amazonTooltipText }}</q-tooltip>
+          <q-tooltip anchor="center left" self="center right">{{ amazonTooltipText }}</q-tooltip>
+
+          <q-menu anchor="bottom right" self="top right">
+            <q-list style="min-width: 200px">
+              <q-item v-for="link in amazonLinks" :key="link.region" v-close-popup class="q-py-sm" clickable :href="link.url" target="_blank">
+                <q-item-section avatar>
+                  <q-icon name="shopping_cart" size="sm" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ link.label }}</q-item-label>
+                  <q-item-label caption>{{ link.domain }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-icon name="open_in_new" size="xs" />
+                </q-item-section>
+              </q-item>
+
+              <q-item v-if="!amazonLinks.length" class="text-grey-6">
+                <q-item-section>
+                  <q-item-label>{{ $t('loading-amazon-links') }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
         <q-btn v-close-popup dense flat icon="close" round />
       </q-card-section>
@@ -338,6 +360,7 @@ import FormattedDescription from '@/components/common/FormattedDescription.vue'
 import { getAmazonRegionConfig, getAmazonSearchUrl } from '@/config/amazon'
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useBookStore, useReviewStore, useUserBookStore, useUserStore } from '@/stores'
+import api from '@/utils/axios'
 import { useQuasar } from 'quasar'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -363,6 +386,8 @@ const form = reactive({
   reading_status: 'read' as ReadingStatus
 })
 
+const allPollingIntervals = new Set<number>()
+const amazonLinks = ref<Array<{ region: string; label: string; url: string; domain: string }>>([])
 const initialPrivacy = ref<boolean | null>(null)
 const isBookInLibrary = ref(false)
 const isInitializing = ref(false)
@@ -371,7 +396,6 @@ const loading = ref(false)
 const MAX_POLLING_TIME = 120000
 const POLLING_INTERVAL = 5000
 const pollingInterval = ref<number | null>(null)
-const allPollingIntervals = new Set<number>()
 const pollingStartTime = ref<Date | null>(null)
 const reviewToDelete = ref<string | null>(null)
 const showDeleteDialog = ref(false)
@@ -447,26 +471,35 @@ const amazonBuyLink = computed(() => {
 
 const shouldShowAmazonButton = computed(() => {
   if (!book.value) return false
-  return (
-    !!book.value.amazon_asin ||
-    book.value.asin_status === 'pending' ||
-    book.value.asin_status === 'processing' ||
-    book.value.asin_status === 'completed' ||
-    book.value.asin_status === 'failed'
-  )
+
+  // Show button if book has Amazon data or is being processed
+  return !!(book.value.amazon_asin || book.value.amazon_buy_link || book.value.asin_status)
 })
 
 const amazonButtonColor = computed(() => {
   if (!book.value) return 'grey-6'
-  if (book.value.amazon_asin) return 'orange'
+
+  // Orange if we have Amazon data available
+  if (book.value.amazon_asin || book.value.amazon_buy_link) return 'orange'
+
+  // Grey variations for processing states
   if (book.value.asin_status === 'processing') return 'grey-6'
   if (book.value.asin_status === 'pending') return 'grey-5'
   if (book.value.asin_status === 'failed') return 'grey-4'
+
   return 'grey-6'
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const amazonButtonHref = computed(() => {
-  return book.value?.asin_status === 'completed' ? amazonBuyLink.value : null
+  if (!book.value) return null
+
+  // Return link if we have Amazon data or processing is completed
+  if (book.value.amazon_buy_link || book.value.amazon_asin || book.value.asin_status === 'completed') {
+    return amazonBuyLink.value
+  }
+
+  return null
 })
 
 const amazonTooltipText = computed(() => {
@@ -639,6 +672,35 @@ function getBookId(): string | null {
   }
 
   return null
+}
+
+async function showAmazonDropdown() {
+  if (amazonLinks.value.length === 0) await fetchAmazonLinks()
+}
+
+async function fetchAmazonLinks() {
+  const bookId = getBookId()
+  if (!bookId) return
+
+  try {
+    const response = await api.get(`/books/${bookId}/amazon-links`)
+    if (response.data.success) {
+      amazonLinks.value = response.data.links
+    }
+  } catch (error) {
+    console.error('Failed to fetch Amazon links:', error)
+    // If API fails, fallback to current book Amazon link
+    if (book.value?.amazon_buy_link) {
+      amazonLinks.value = [
+        {
+          region: book.value.amazon_region || 'BR',
+          label: `Amazon ${book.value.amazon_region || 'BR'}`,
+          url: book.value.amazon_buy_link,
+          domain: book.value.amazon_region === 'US' ? 'amazon.com' : 'amazon.com.br'
+        }
+      ]
+    }
+  }
 }
 
 function startPolling() {
@@ -983,3 +1045,4 @@ async function handleSave() {
     .finally(() => (loading.value = false))
 }
 </script>
+
