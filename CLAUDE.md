@@ -373,3 +373,47 @@ Always prefer the pattern that uses "method name" + "summarized endpoint" as the
 
 - `VITE_API_URL` - Backend API URL
 - `VITE_GOOGLE_CLIENT_ID` - Google OAuth client
+
+## Production Deployment Notes
+
+### Critical Server Configurations
+
+These configurations are set directly on the server and must be maintained across deployments:
+
+#### 1. MySQL/MariaDB Authentication (Development)
+The development MySQL container requires `mysql_native_password` authentication:
+```sql
+ALTER USER "livrolog"@"%" IDENTIFIED WITH mysql_native_password BY "supersecret";
+FLUSH PRIVILEGES;
+```
+
+#### 2. Apache CORS Headers (Production)
+CORS is handled at the Apache level in `/opt/bitnami/apache/conf/bitnami/bitnami-ssl.conf`:
+```apache
+# Inside the api.livrolog.com VirtualHost block
+Header always set Access-Control-Allow-Origin "https://livrolog.com https://www.livrolog.com"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "*"
+```
+
+#### 3. Environment Files
+- **Development**: `/var/www/livrolog-dev/shared/.env.dev`
+- **Production**: `/var/www/livrolog/shared/.env.prod`
+
+**IMPORTANT**: `.env` files must contain ONLY environment variables, never shell commands or scripts.
+
+Example of CORRECT format:
+```bash
+APP_NAME=LivroLog
+APP_ENV=production
+DB_CONNECTION=mysql
+DB_HOST=mariadb
+```
+
+Example of INCORRECT format (will break Laravel):
+```bash
+echo "Setting up environment"  # ❌ NO shell commands
+export DB_PASSWORD="..."       # ❌ NO export statements
+if [ -z "$VAR" ]; then        # ❌ NO conditional logic
+```
+
