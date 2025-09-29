@@ -18,7 +18,7 @@ services:
     volumes:
       - /var/www/livrolog/shared/db:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysql --silent --connect-timeout=5 -u root -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 30
