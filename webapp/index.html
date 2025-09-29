@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Redirect www to non-www -->
+    <script>
+      if (window.location.hostname === 'www.livrolog.com') {
+        window.location.replace('https://livrolog.com' + window.location.pathname + window.location.search + window.location.hash)
+      }
+    </script>
+
     <!-- Google Tag Manager -->
     <script>
       ;(function (w, d, s, l, i) {

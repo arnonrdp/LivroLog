@@ -29,6 +29,7 @@ return [
         'https://127.0.0.1:8001',
         'https://dev.livrolog.com',
         'https://livrolog.com',
+        'https://www.livrolog.com',
         'https://localhost:8001',
     ],
 

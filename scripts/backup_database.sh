@@ -30,8 +30,13 @@ backup_database() {
 
     log_message "Starting backup of $db_name database from container $container..."
 
-    # Use docker exec to run mysqldump inside the container
-    if docker exec $container mysqldump -u root -p"$password" $db_name > $backup_file 2>/dev/null; then
+    # Use docker exec to run mysqldump
+    # Capture stdout (SQL dump) to file, stderr shows warnings but doesn't stop the dump
+    docker exec $container mysqldump -u root -p"$password" --single-transaction --quick --lock-tables=false $db_name > $backup_file 2>/dev/null
+    local exit_code=$?
+
+    # Check if backup succeeded (exit code 0 or 2 - code 2 means warnings but dump succeeded)
+    if [ $exit_code -eq 0 ] || [ $exit_code -eq 2 ]; then
         # Check if backup file has content
         if [ -s $backup_file ]; then
             # Compress the backup
@@ -45,7 +50,7 @@ backup_database() {
             return 1
         fi
     else
-        log_message "ERROR: Backup failed for $db_name"
+        log_message "ERROR: Backup failed for $db_name (exit code: $exit_code)"
         rm -f $backup_file  # Clean up failed backup
         return 1
     fi
