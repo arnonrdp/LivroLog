@@ -455,26 +455,68 @@ jobs:
             exit 1
           fi
 
-      - name: Copy compose file to server
+      - name: Create production .env file
         run: |
-          echo "📁 Copying docker-compose.prod.yml to server..."
+          echo "📝 Creating production .env file locally..."
+          cat > .env.prod << EOF
+          APP_NAME=LivroLog
+          APP_ENV=production
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_DEBUG=false
+          APP_TIMEZONE=UTC
+
+          DB_CONNECTION=mysql
+          DB_HOST=mariadb
+          DB_PORT=3306
+          DB_DATABASE=livrolog
+          DB_USERNAME=root
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          REDIS_CLIENT=predis
+          REDIS_HOST=redis
+          REDIS_PASSWORD=null
+          REDIS_PORT=6379
+
+          QUEUE_CONNECTION=redis
+          SESSION_DRIVER=redis
+          SESSION_LIFETIME=120
+          CACHE_DRIVER=redis
+          MAIL_MAILER=log
+          LOG_CHANNEL=stack
+          LOG_LEVEL=error
+
+          GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}
+          AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}
+          EOF
+
+          echo "✅ Production .env file created locally"
+
+      - name: Copy compose file and env to server
+        run: |
+          echo "📁 Copying files to server..."
 
           # Create target directory on server
-          ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
+          ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker ${DEPLOY_PATH}/shared && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
 
           # Copy compose file
           scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
+
+          # Copy .env file
+          scp -o StrictHostKeyChecking=no .env.prod ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/shared/
 
           # Copy backup scripts
           scp -o StrictHostKeyChecking=no scripts/backup_database.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
           scp -o StrictHostKeyChecking=no scripts/setup_backup_cron.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
           ssh ${{ secrets.SERVER_HOST }} "chmod +x /home/bitnami/*.sh"
 
-          echo "✅ Docker compose file and backup scripts copied successfully"
+          echo "✅ Files copied successfully"
 
       - name: Deploy production containers
         run: |
-          ssh ${{ secrets.SERVER_HOST }} << 'DEPLOY_SCRIPT'
+          ssh ${{ secrets.SERVER_HOST }} "bash -s" << 'DEPLOY_SCRIPT'
             set -euo pipefail
             # Configuration
             DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
@@ -483,7 +525,7 @@ jobs:
             TAG="prod"
             IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
             IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
-            
+
             echo "=================================================="
             echo "🚀 LivroLog Production Deployment"
             echo "Branch: ${{ env.TARGET_BRANCH }}"
@@ -491,58 +533,20 @@ jobs:
             echo "Images: ${IMAGE_API}:${TAG}, ${IMAGE_WEB}:${TAG}"
             echo "Deploy Path: ${{ env.DEPLOY_PATH }}"
             echo "=================================================="
-            
+
             # Create required directories with proper permissions
             echo "📁 Setting up directories and permissions..."
             sudo mkdir -p "${SHARED_DIR}"/{storage,db}
             sudo mkdir -p "${DOCKER_DIR}"
-            
+
             # Set MariaDB data directory permissions (UID 999)
             sudo chown -R 999:999 "${SHARED_DIR}/db"
-            
+
             # Set Laravel storage permissions (www-data)
             sudo chown -R www-data:www-data "${SHARED_DIR}/storage" 2>/dev/null || sudo chown -R 82:82 "${SHARED_DIR}/storage"
-            
+
             # Set deployment directory permissions
             sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} "${{ env.DEPLOY_PATH }}"
-            
-            # Create production environment file
-            echo "📝 Creating production .env file..."
-            cat > "${SHARED_DIR}/.env.prod" << 'ENV_EOF'
-            APP_NAME=LivroLog
-            APP_ENV=production
-            APP_KEY=${{ secrets.APP_KEY }}
-            APP_DEBUG=false
-            APP_TIMEZONE=UTC
-
-            DB_CONNECTION=mysql
-            DB_HOST=mariadb
-            DB_PORT=3306
-            DB_DATABASE=livrolog
-            DB_USERNAME=root
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-
-            REDIS_CLIENT=predis
-            REDIS_HOST=redis
-            REDIS_PASSWORD=null
-            REDIS_PORT=6379
-
-            QUEUE_CONNECTION=redis
-            SESSION_DRIVER=redis
-            SESSION_LIFETIME=120
-            CACHE_DRIVER=redis
-            MAIL_MAILER=log
-            LOG_CHANNEL=stack
-            LOG_LEVEL=error
-
-            GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}
-            AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}
-            ENV_EOF
-
-            echo "✅ Environment file created"
 
             # Navigate to docker directory
             cd "${DOCKER_DIR}"
