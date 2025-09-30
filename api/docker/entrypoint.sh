@@ -65,6 +65,13 @@ mkdir -p /var/log/supervisor
 chmod 755 /var/log/supervisor
 
 echo "Laravel optimization completed successfully"
+echo "================================================================"
+echo "Starting Supervisor to manage PHP-FPM and Nginx..."
+echo "Command: $@"
+echo "================================================================"
+
+# List supervisor binary location for debugging
+which supervisord || echo "WARNING: supervisord not found in PATH"
 
 # Execute the main command (Supervisor with PHP-FPM + Nginx)
 exec "$@"
