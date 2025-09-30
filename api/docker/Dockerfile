@@ -63,4 +63,4 @@ EXPOSE 8080
 
 # Use entrypoint to run Laravel optimizations, then start supervisor
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf", "-n"]
