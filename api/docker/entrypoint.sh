@@ -47,8 +47,9 @@ else
     echo "WARNING: 'resources/views' directory not found. Skipping view cache step."
 fi
 
-# Generate Swagger documentation (optional)
-php artisan l5-swagger:generate || true
+# Skip Swagger generation during container startup (can cause timeouts)
+# Generate manually with: docker exec <container> php artisan l5-swagger:generate
+# php artisan l5-swagger:generate || true
 
 # Set proper permissions for Nginx (skip .env if read-only)
 chown -R www-data:www-data /var/www/html 2>/dev/null || echo "Note: Some files are read-only mounted"
