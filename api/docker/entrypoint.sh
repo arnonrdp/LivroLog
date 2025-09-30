@@ -5,6 +5,9 @@
 
 set -e
 
+# Debug: print all commands as they execute
+set -x
+
 # Try to get APP_KEY from environment variable first, then from .env file
 APP_KEY_TO_CHECK="${APP_KEY}"
 if [ -z "${APP_KEY_TO_CHECK}" ] && [ -f "/var/www/html/.env" ]; then
