@@ -51,14 +51,18 @@ fi
 php artisan l5-swagger:generate || true
 
 # Set proper permissions for Nginx (skip .env if read-only)
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+chown -R www-data:www-data /var/www/html 2>/dev/null || echo "Note: Some files are read-only mounted"
+chmod -R 755 /var/www/html 2>/dev/null || true
 
 # Handle .env separately since it might be read-only mounted
 if [ -f "/var/www/html/.env" ]; then
     chown www-data:www-data /var/www/html/.env 2>/dev/null || echo "Note: .env is read-only mounted (this is expected)"
     chmod 644 /var/www/html/.env 2>/dev/null || true
 fi
+
+# Ensure supervisor log directory exists with correct permissions
+mkdir -p /var/log/supervisor
+chmod 755 /var/log/supervisor
 
 echo "Laravel optimization completed successfully"
 

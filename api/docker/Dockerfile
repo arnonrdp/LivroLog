@@ -1,9 +1,11 @@
 FROM php:8.4-fpm
 
-# Install system dependencies, PHP extensions, Redis, and Xdebug
+# Install system dependencies, Nginx, Supervisor, PHP extensions, Redis, and Xdebug
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
+    nginx \
+    supervisor \
     libicu-dev \
     libonig-dev \
     libpng-dev \
@@ -33,14 +35,32 @@ RUN echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/99-upload-limits.in
     echo "max_input_time = 300" >> /usr/local/etc/php/conf.d/99-upload-limits.ini && \
     echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/99-upload-limits.ini
 
-# Create non-root user for security
-RUN groupadd -g 1000 www-data-secure && \
-    useradd -u 1000 -g www-data-secure -m -s /bin/bash www-data-secure
+# Create required directories for storage and logs
+RUN mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/logs \
+    /var/www/html/storage/framework/{cache,sessions,testing,views} \
+    /var/log/supervisor
 
 WORKDIR /var/www/html
 
-# Change ownership of the working directory to the non-root user
-RUN chown -R www-data-secure:www-data-secure /var/www/html
+# Configure Nginx
+RUN rm -f /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+COPY docker/nginx.conf /etc/nginx/sites-available/laravel
+RUN ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/laravel
 
-# Switch to non-root user
-USER www-data-secure
+# Configure Supervisor to run both PHP-FPM and Nginx
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy and make entrypoint executable
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/bootstrap/cache /var/www/html/storage
+
+# Expose port 8080 for Nginx
+EXPOSE 8080
+
+# Use entrypoint to run Laravel optimizations, then start supervisor
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
