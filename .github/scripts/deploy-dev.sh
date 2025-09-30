@@ -158,10 +158,10 @@ else
   exit 1
 fi
 
-# Check API health endpoint
+# Check API health endpoint (using Nginx static endpoint)
 echo "🔍 Testing API health endpoint..."
 for i in {1..12}; do
-  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8081/healthz 2>/dev/null || echo "000")
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8081/health 2>/dev/null || echo "000")
   if [ "$HTTP_CODE" = "200" ]; then
     echo "✅ API health endpoint is responding"
     break
