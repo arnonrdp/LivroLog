@@ -54,15 +54,10 @@ fi
 # Generate manually with: docker exec <container> php artisan l5-swagger:generate
 # php artisan l5-swagger:generate || true
 
-# Set proper permissions for Nginx (skip .env if read-only)
-chown -R www-data:www-data /var/www/html 2>/dev/null || echo "Note: Some files are read-only mounted"
-chmod -R 755 /var/www/html 2>/dev/null || true
-
-# Handle .env separately since it might be read-only mounted
-if [ -f "/var/www/html/.env" ]; then
-    chown www-data:www-data /var/www/html/.env 2>/dev/null || echo "Note: .env is read-only mounted (this is expected)"
-    chmod 644 /var/www/html/.env 2>/dev/null || true
-fi
+# Set proper permissions for Nginx (skip read-only files)
+# Note: Some files may be read-only mounted, using || true to continue
+chown -R www-data:www-data /var/www/html/bootstrap/cache /var/www/html/storage 2>/dev/null || true
+chmod -R 775 /var/www/html/bootstrap/cache /var/www/html/storage 2>/dev/null || true
 
 # Ensure supervisor log directory exists with correct permissions
 mkdir -p /var/log/supervisor
