@@ -35,12 +35,15 @@ else
     echo "✅ APP_KEY is configured (${#APP_KEY_TO_CHECK} chars)"
 fi
 
-# Safe Laravel optimizations (do not depend on DB)
-echo "Optimizing Laravel caches..."
+# Safe Laravel optimizations (do not depend on DB or mounted .env)
+echo "Clearing Laravel caches..."
 php artisan config:clear || true
 php artisan cache:clear || true
-php artisan config:cache || true
-php artisan route:cache || true
+
+# Do NOT run config:cache or route:cache in entrypoint
+# These cache files may be created before .env is mounted
+# causing wrong config values to be cached
+# Run these manually after container starts if needed
 
 # Only cache views if views directory exists
 if [ -d "resources/views" ]; then
