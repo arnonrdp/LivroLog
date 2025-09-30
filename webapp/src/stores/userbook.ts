@@ -135,10 +135,10 @@ export const useUserBookStore = defineStore('userbook', {
         // Amazon book without ISBN - send full book data
         bookData.amazon_asin = book.amazon_asin
         bookData.title = book.title
-        if (book.authors) bookData.authors = book.authors
-        if (book.thumbnail) bookData.thumbnail = book.thumbnail
-        if (book.description) bookData.description = book.description
-        if (book.publisher) bookData.publisher = book.publisher
+        if (book.authors && book.authors !== '') bookData.authors = book.authors
+        if (book.thumbnail && book.thumbnail !== '') bookData.thumbnail = book.thumbnail
+        if (book.description && book.description !== '') bookData.description = book.description
+        if (book.publisher && book.publisher !== '') bookData.publisher = book.publisher
       }
 
       return await api
