@@ -5,7 +5,7 @@ set -euo pipefail
 cat > "${1}/.env.dev" << 'EOF'
 APP_NAME=LivroLog
 APP_ENV=development
-APP_KEY=base64:UGxhY2Vob2xkZXJLZXlGb3JEZXZlbG9wbWVudA==
+APP_KEY=base64:YjM1ZDk3NWZhYjU4NGJhOTNjZGZkZDNlYmYyMzk3YzE0YzJhMjczNDg5YzE0YTViNzYxMzQ5NmQ3MWMxMGY5Mw==
 APP_DEBUG=true
 APP_TIMEZONE=UTC
 APP_FRONTEND_URL=https://dev.livrolog.com
