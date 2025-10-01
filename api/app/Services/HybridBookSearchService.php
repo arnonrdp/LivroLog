@@ -3,13 +3,12 @@
 namespace App\Services;
 
 use App\Models\Book;
-use App\Services\AmazonLinkEnrichmentService;
-use App\Services\MultiSourceBookSearchService;
 use App\Transformers\BookTransformer;
 
 class HybridBookSearchService
 {
     private MultiSourceBookSearchService $multiSourceService;
+
     private AmazonLinkEnrichmentService $amazonEnrichmentService;
 
     public function __construct(
@@ -23,15 +22,15 @@ class HybridBookSearchService
     /**
      * Search books using hybrid approach: local database first, then external APIs
      *
-     * @param string $query Search query
-     * @param array $options Search options
+     * @param  string  $query  Search query
+     * @param  array  $options  Search options
      * @return array Combined search results
      */
     public function search(string $query, array $options = []): array
     {
         $includes = $options['includes'] ?? [];
         $maxResults = $options['maxResults'] ?? 20;
-        $transformer = new BookTransformer();
+        $transformer = new BookTransformer;
 
         // Step 1: Search local database
         $localResults = $this->searchLocalDatabase($query, $maxResults);
@@ -64,23 +63,23 @@ class HybridBookSearchService
         // Search in multiple fields
         $searchQuery->where(function ($q) use ($query) {
             $q->where('title', 'LIKE', "%{$query}%")
-              ->orWhere('authors', 'LIKE', "%{$query}%")
-              ->orWhere('isbn', 'LIKE', "%{$query}%")
-              ->orWhere('publisher', 'LIKE', "%{$query}%")
-              ->orWhere('google_id', 'LIKE', "%{$query}%")
+                ->orWhere('authors', 'LIKE', "%{$query}%")
+                ->orWhere('isbn', 'LIKE', "%{$query}%")
+                ->orWhere('publisher', 'LIKE', "%{$query}%")
+                ->orWhere('google_id', 'LIKE', "%{$query}%")
               // Search in JSON industry_identifiers
-              ->orWhereJsonContains('industry_identifiers', $query);
+                ->orWhereJsonContains('industry_identifiers', $query);
         });
 
         // Order by relevance: exact title matches first, then others
-        $searchQuery->orderByRaw("
+        $searchQuery->orderByRaw('
             CASE 
                 WHEN title = ? THEN 1
                 WHEN title LIKE ? THEN 2
                 WHEN authors LIKE ? THEN 3
                 ELSE 4
             END
-        ", [$query, "{$query}%", "%{$query}%"]);
+        ', [$query, "{$query}%", "%{$query}%"]);
 
         return $searchQuery->limit($limit * 2)->get()->toArray(); // Get more to allow for deduplication
     }
@@ -96,8 +95,8 @@ class HybridBookSearchService
         // Add local books first (they have priority)
         foreach ($localBooks as $book) {
             $identifier = $this->createBookIdentifier($book);
-            
-            if (!in_array($identifier, $seenIdentifiers)) {
+
+            if (! in_array($identifier, $seenIdentifiers)) {
                 $seenIdentifiers[] = $identifier;
                 $book['source'] = 'local';
                 $combinedBooks[] = $book;
@@ -107,8 +106,8 @@ class HybridBookSearchService
         // Add external books, skipping duplicates
         foreach ($externalBooks as $book) {
             $identifier = $this->createBookIdentifier($book);
-            
-            if (!in_array($identifier, $seenIdentifiers)) {
+
+            if (! in_array($identifier, $seenIdentifiers)) {
                 $seenIdentifiers[] = $identifier;
                 $book['source'] = 'external';
                 $combinedBooks[] = $book;
@@ -125,22 +124,22 @@ class HybridBookSearchService
     private function createBookIdentifier(array $book): string
     {
         // Strategy 1: Use Google ID if available (most reliable for external books)
-        if (!empty($book['google_id'])) {
-            return 'google:' . $book['google_id'];
+        if (! empty($book['google_id'])) {
+            return 'google:'.$book['google_id'];
         }
-        
+
         // Strategy 2: Use ISBN if available
         $isbn = $this->extractPrimaryIsbn($book);
         if ($isbn) {
-            return 'isbn:' . $isbn;
+            return 'isbn:'.$isbn;
         }
-        
+
         // Strategy 3: Use normalized title + first author
         $normalizedTitle = $this->normalizeForComparison($book['title'] ?? '');
         $firstAuthor = $this->extractFirstAuthor($book['authors'] ?? '');
         $normalizedAuthor = $this->normalizeForComparison($firstAuthor);
-        
-        return 'title_author:' . $normalizedTitle . '|' . $normalizedAuthor;
+
+        return 'title_author:'.$normalizedTitle.'|'.$normalizedAuthor;
     }
 
     /**
@@ -149,35 +148,35 @@ class HybridBookSearchService
     private function extractPrimaryIsbn(array $book): ?string
     {
         // First try the main ISBN field
-        if (!empty($book['isbn'])) {
+        if (! empty($book['isbn'])) {
             return $book['isbn'];
         }
-        
+
         // Then try external API ISBN fields (isbn_13, isbn_10)
-        if (!empty($book['isbn_13'])) {
+        if (! empty($book['isbn_13'])) {
             return $book['isbn_13'];
         }
-        
-        if (!empty($book['isbn_10'])) {
+
+        if (! empty($book['isbn_10'])) {
             return $book['isbn_10'];
         }
-        
+
         // Try to extract from industry_identifiers JSON (for local books)
-        if (!empty($book['industry_identifiers'])) {
-            $identifiers = is_string($book['industry_identifiers']) ? 
-                json_decode($book['industry_identifiers'], true) : 
+        if (! empty($book['industry_identifiers'])) {
+            $identifiers = is_string($book['industry_identifiers']) ?
+                json_decode($book['industry_identifiers'], true) :
                 $book['industry_identifiers'];
-                
+
             if (is_array($identifiers)) {
                 foreach ($identifiers as $identifier) {
-                    if (isset($identifier['identifier']) && 
+                    if (isset($identifier['identifier']) &&
                         in_array($identifier['type'] ?? '', ['ISBN_13', 'ISBN_10'])) {
                         return $identifier['identifier'];
                     }
                 }
             }
         }
-        
+
         return null;
     }
 
@@ -185,16 +184,16 @@ class HybridBookSearchService
      * Build final hybrid response
      */
     private function buildHybridResponse(
-        array $finalBooks, 
-        array $localResults, 
-        array $externalResults, 
-        string $query, 
+        array $finalBooks,
+        array $localResults,
+        array $externalResults,
+        string $query,
         array $options
     ): array {
         $localCount = count($localResults);
         $externalCount = count($externalResults['data'] ?? []);
         $finalCount = count($finalBooks);
-        
+
         $perPage = $options['maxResults'] ?? 20;
 
         return [
@@ -228,6 +227,7 @@ class HybridBookSearchService
     {
         // Remove special characters, convert to lowercase, remove extra spaces
         $normalized = preg_replace('/[^\w\s]/', '', mb_strtolower(trim($text)));
+
         return preg_replace('/\s+/', ' ', $normalized);
     }
 
@@ -238,6 +238,7 @@ class HybridBookSearchService
     {
         // Split by common delimiters and get first author
         $authorList = preg_split('/[,;&]/', $authors);
+
         return trim($authorList[0] ?? '');
     }
 }

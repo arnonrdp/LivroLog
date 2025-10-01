@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Book;
-use App\Services\UnifiedBookEnrichmentService;
-use App\Services\HybridBookSearchService;
 use App\Services\AmazonLinkEnrichmentService;
+use App\Services\HybridBookSearchService;
+use App\Services\UnifiedBookEnrichmentService;
 use App\Transformers\BookTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -238,7 +238,7 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
-            'thumbnail' => ['nullable','url','max:512', function ($attribute, $value, $fail) {
+            'thumbnail' => ['nullable', 'url', 'max:512', function ($attribute, $value, $fail) {
                 if (! $this->isAllowedThumbnailDomain($value)) {
                     $fail('The thumbnail URL domain is not allowed.');
                 }
@@ -401,8 +401,10 @@ class BookController extends Controller
      *
      *         @OA\JsonContent(
      *             allOf={
+     *
      *                 @OA\Schema(ref="#/components/schemas/Book"),
      *                 @OA\Schema(
+     *
      *                     @OA\Property(property="pivot", type="object", nullable=true,
      *                         @OA\Property(property="added_at", type="string", format="date-time"),
      *                         @OA\Property(property="read_at", type="string", format="date", nullable=true),
@@ -528,7 +530,7 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$book->id,
             'authors' => self::VALIDATION_NULLABLE_STRING,
-            'thumbnail' => ['nullable','url','max:512', function ($attribute, $value, $fail) {
+            'thumbnail' => ['nullable', 'url', 'max:512', function ($attribute, $value, $fail) {
                 if (! $this->isAllowedThumbnailDomain($value)) {
                     $fail('The thumbnail URL domain is not allowed.');
                 }
@@ -557,13 +559,13 @@ class BookController extends Controller
         ];
 
         $parsed = parse_url($url);
-        if (!isset($parsed['host']) || !isset($parsed['scheme'])) {
+        if (! isset($parsed['host']) || ! isset($parsed['scheme'])) {
             return false;
         }
 
         $host = strtolower($parsed['host']);
         $scheme = strtolower($parsed['scheme']);
-        if (!in_array($scheme, ['http','https'], true)) {
+        if (! in_array($scheme, ['http', 'https'], true)) {
             return false;
         }
 
@@ -814,7 +816,7 @@ class BookController extends Controller
         if ($targetUserId) {
             // Getting pivot for specific user
             $targetUser = \App\Models\User::find($targetUserId);
-            if (!$targetUser) {
+            if (! $targetUser) {
                 return null;
             }
 
@@ -827,7 +829,7 @@ class BookController extends Controller
                         ->where('status', 'accepted')
                         ->exists();
 
-                    if (!$isFollowing) {
+                    if (! $isFollowing) {
                         return null; // Private profile, no access
                     }
                 }
@@ -849,14 +851,14 @@ class BookController extends Controller
             return null;
         }
 
-        if (!$userBook || !$userBook->pivot) {
+        if (! $userBook || ! $userBook->pivot) {
             return null;
         }
 
         $pivot = $userBook->pivot;
 
         // Check if book is private (only owner can see private books)
-        if ($pivot->is_private && (!$currentUser || $currentUser->id !== $pivot->user_id)) {
+        if ($pivot->is_private && (! $currentUser || $currentUser->id !== $pivot->user_id)) {
             return null;
         }
 
@@ -932,13 +934,16 @@ class BookController extends Controller
      *         in="path",
      *         description="Book ID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Amazon links for all regions",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="links", type="array", @OA\Items(
      *                 @OA\Property(property="region", type="string", example="BR"),
@@ -962,13 +967,13 @@ class BookController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Amazon integration is currently disabled',
-                'links' => []
+                'links' => [],
             ], 503);
         }
 
         return response()->json([
             'success' => true,
-            'links' => $links
+            'links' => $links,
         ]);
     }
 }

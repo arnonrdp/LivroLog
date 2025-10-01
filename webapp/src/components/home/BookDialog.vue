@@ -17,7 +17,6 @@
           icon="shopping_cart"
           :loading="book?.asin_status === 'processing'"
           round
-          @click="showAmazonDropdown"
         >
           <q-tooltip anchor="center left" self="center right">{{ amazonTooltipText }}</q-tooltip>
 
@@ -357,10 +356,8 @@
 
 <script setup lang="ts">
 import FormattedDescription from '@/components/common/FormattedDescription.vue'
-import { getAmazonRegionConfig, getAmazonSearchUrl } from '@/config/amazon'
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useBookStore, useReviewStore, useUserBookStore, useUserStore } from '@/stores'
-import api from '@/utils/axios'
 import { useQuasar } from 'quasar'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -387,7 +384,6 @@ const form = reactive({
 })
 
 const allPollingIntervals = new Set<number>()
-const amazonLinks = ref<Array<{ region: string; label: string; url: string; domain: string }>>([])
 const initialPrivacy = ref<boolean | null>(null)
 const isBookInLibrary = ref(false)
 const isInitializing = ref(false)
@@ -431,42 +427,32 @@ const bookReviews = computed(() => {
   return book.value?.reviews || []
 })
 
+const amazonLinks = computed(() => {
+  if (!book.value) return []
+
+  // Use amazon_links from API if available (books in database)
+  if (book.value.amazon_links && Array.isArray(book.value.amazon_links)) {
+    return book.value.amazon_links
+  }
+
+  // Fallback: generate links locally for external search results
+  if (book.value.amazon_buy_link) {
+    return [
+      {
+        region: book.value.amazon_region || 'BR',
+        label: `Amazon ${book.value.amazon_region || 'BR'}`,
+        url: book.value.amazon_buy_link,
+        domain: book.value.amazon_region === 'US' ? 'amazon.com' : 'amazon.com.br'
+      }
+    ]
+  }
+
+  return []
+})
+
 const userReview = computed(() => {
   const reviews = bookReviews.value
   return reviews.find((review) => review.user_id === userStore.me?.id)
-})
-
-const amazonBuyLink = computed(() => {
-  if (!book.value) return null
-
-  if (book.value.amazon_buy_link) {
-    return book.value.amazon_buy_link
-  }
-
-  const locale = t('locale') || 'en-US'
-  const { domain, tag } = getAmazonRegionConfig(locale)
-
-  if (book.value.amazon_asin) {
-    return `https://www.${domain}/dp/${book.value.amazon_asin}?tag=${tag}`
-  }
-
-  let searchTerm = ''
-
-  if (book.value.title && book.value.authors) {
-    searchTerm = `${book.value.title} ${book.value.authors}`
-  } else if (book.value.title) {
-    searchTerm = book.value.title
-  } else if (book.value.isbn) {
-    searchTerm = book.value.isbn
-  }
-
-  if (searchTerm) {
-    const searchUrl = getAmazonSearchUrl(domain)
-    const encodedTerm = encodeURIComponent(searchTerm)
-    return `${searchUrl}?k=${encodedTerm}&i=stripbooks&tag=${tag}&ref=nb_sb_noss&linkCode=ur2&camp=1789&creative=9325`
-  }
-
-  return null
 })
 
 const shouldShowAmazonButton = computed(() => {
@@ -488,18 +474,6 @@ const amazonButtonColor = computed(() => {
   if (book.value.asin_status === 'failed') return 'grey-4'
 
   return 'grey-6'
-})
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const amazonButtonHref = computed(() => {
-  if (!book.value) return null
-
-  // Return link if we have Amazon data or processing is completed
-  if (book.value.amazon_buy_link || book.value.amazon_asin || book.value.asin_status === 'completed') {
-    return amazonBuyLink.value
-  }
-
-  return null
 })
 
 const amazonTooltipText = computed(() => {
@@ -672,35 +646,6 @@ function getBookId(): string | null {
   }
 
   return null
-}
-
-async function showAmazonDropdown() {
-  if (amazonLinks.value.length === 0) await fetchAmazonLinks()
-}
-
-async function fetchAmazonLinks() {
-  const bookId = getBookId()
-  if (!bookId) return
-
-  try {
-    const response = await api.get(`/books/${bookId}/amazon-links`)
-    if (response.data.success) {
-      amazonLinks.value = response.data.links
-    }
-  } catch (error) {
-    console.error('Failed to fetch Amazon links:', error)
-    // If API fails, fallback to current book Amazon link
-    if (book.value?.amazon_buy_link) {
-      amazonLinks.value = [
-        {
-          region: book.value.amazon_region || 'BR',
-          label: `Amazon ${book.value.amazon_region || 'BR'}`,
-          url: book.value.amazon_buy_link,
-          domain: book.value.amazon_region === 'US' ? 'amazon.com' : 'amazon.com.br'
-        }
-      ]
-    }
-  }
 }
 
 function startPolling() {

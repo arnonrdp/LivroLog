@@ -2,10 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class BackupDatabase extends Command
 {
@@ -31,12 +29,12 @@ class BackupDatabase extends Command
         $this->info('Starting database backup...');
 
         $timestamp = Carbon::now()->format('Y-m-d_H-i-s');
-        $database = config('database.connections.' . config('database.default') . '.database');
+        $database = config('database.connections.'.config('database.default').'.database');
         $backupFileName = "backup_{$database}_{$timestamp}.sql";
         $backupPath = storage_path("backups/{$backupFileName}");
 
         // Create backups directory if it doesn't exist
-        if (!file_exists(storage_path('backups'))) {
+        if (! file_exists(storage_path('backups'))) {
             mkdir(storage_path('backups'), 0755, true);
         }
 
@@ -67,12 +65,13 @@ class BackupDatabase extends Command
 
         if ($returnCode !== 0) {
             $this->error('Backup failed!');
-            $this->error('Output: ' . implode("\n", $output));
+            $this->error('Output: '.implode("\n", $output));
+
             return 1;
         }
 
         // Compress backup
-        $compressedPath = $backupPath . '.gz';
+        $compressedPath = $backupPath.'.gz';
         exec("gzip {$backupPath}", $gzipOutput, $gzipReturn);
 
         if ($gzipReturn !== 0) {
@@ -99,14 +98,14 @@ class BackupDatabase extends Command
     private function cleanupOldBackups(int $maxBackups): void
     {
         $backupDir = storage_path('backups');
-        $backups = glob($backupDir . '/backup_*.sql*');
+        $backups = glob($backupDir.'/backup_*.sql*');
 
         if (count($backups) <= $maxBackups) {
             return;
         }
 
         // Sort by modification time (newest first)
-        usort($backups, function($a, $b) {
+        usort($backups, function ($a, $b) {
             return filemtime($b) - filemtime($a);
         });
 
@@ -126,11 +125,11 @@ class BackupDatabase extends Command
     private function formatBytes(int $size): string
     {
         $units = ['B', 'KB', 'MB', 'GB'];
-        
+
         for ($i = 0; $size >= 1024 && $i < count($units) - 1; $i++) {
             $size /= 1024;
         }
-        
-        return round($size, 2) . ' ' . $units[$i];
+
+        return round($size, 2).' '.$units[$i];
     }
 }

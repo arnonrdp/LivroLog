@@ -67,7 +67,7 @@ class MultiSourceBookSearchService
                     'message' => $amazonResult['message'],
                 ];
 
-                if ($amazonResult['success'] && !empty($amazonResult['books'])) {
+                if ($amazonResult['success'] && ! empty($amazonResult['books'])) {
                     $transformedBooks = $transformer->transform($amazonResult['books'], $includes);
 
                     // Enrich Amazon results with Google IDs for easier book creation
@@ -77,13 +77,13 @@ class MultiSourceBookSearchService
 
                     // Track ISBNs to avoid duplicates
                     foreach ($transformedBooks as $book) {
-                        if (!empty($book['isbn_13'])) {
+                        if (! empty($book['isbn_13'])) {
                             $usedIsbns[] = $book['isbn_13'];
                         }
-                        if (!empty($book['isbn_10'])) {
+                        if (! empty($book['isbn_10'])) {
                             $usedIsbns[] = $book['isbn_10'];
                         }
-                        if (!empty($book['isbn'])) {
+                        if (! empty($book['isbn'])) {
                             $usedIsbns[] = $book['isbn'];
                         }
                     }
@@ -98,7 +98,7 @@ class MultiSourceBookSearchService
 
                 // Special handling for Amazon rate limiting
                 if (str_contains($e->getMessage(), '429')) {
-                    $amazonCacheKey = 'amazon_rate_limited_' . md5($query);
+                    $amazonCacheKey = 'amazon_rate_limited_'.md5($query);
                     Cache::put($amazonCacheKey, true, self::CACHE_TTL_AMAZON_FAILURE);
                 }
             }
@@ -115,7 +115,7 @@ class MultiSourceBookSearchService
                     'message' => $googleResult['message'],
                 ];
 
-                if ($googleResult['success'] && !empty($googleResult['books'])) {
+                if ($googleResult['success'] && ! empty($googleResult['books'])) {
                     $transformedBooks = $transformer->transform($googleResult['books'], $includes);
 
                     // Filter out books with duplicate ISBNs
@@ -126,7 +126,7 @@ class MultiSourceBookSearchService
                         $bookIsbns = array_filter([
                             $book['isbn_13'] ?? null,
                             $book['isbn_10'] ?? null,
-                            $book['isbn'] ?? null
+                            $book['isbn'] ?? null,
                         ]);
 
                         foreach ($bookIsbns as $isbn) {
@@ -136,7 +136,7 @@ class MultiSourceBookSearchService
                             }
                         }
 
-                        if (!$isDuplicate) {
+                        if (! $isDuplicate) {
                             $allBooks[] = $book;
 
                             // Track new ISBNs
@@ -157,7 +157,7 @@ class MultiSourceBookSearchService
         }
 
         // If we have books from either source, return success
-        if (!empty($allBooks)) {
+        if (! empty($allBooks)) {
             $finalResult = $this->buildCombinedResult($allBooks, $query, $providerResults, $options);
 
             // Pass through debug info if available
@@ -166,6 +166,7 @@ class MultiSourceBookSearchService
             }
 
             Cache::put($cacheKey, $finalResult, self::CACHE_TTL_SUCCESS);
+
             return $finalResult;
         }
 
@@ -380,7 +381,7 @@ class MultiSourceBookSearchService
         $totalFound = count($books);
 
         // Determine providers used
-        $providersUsed = array_filter($providerResults, function($provider) {
+        $providersUsed = array_filter($providerResults, function ($provider) {
             return $provider['success'] && $provider['total_found'] > 0;
         });
 
@@ -466,7 +467,7 @@ class MultiSourceBookSearchService
             $enrichedBook = $book;
 
             // Only try to find Google ID if book doesn't already have one and has an ISBN
-            if (empty($book['google_id']) && !empty($book['isbn'])) {
+            if (empty($book['google_id']) && ! empty($book['isbn'])) {
                 $googleId = $this->findGoogleIdByIsbn($book['isbn']);
                 if ($googleId) {
                     $enrichedBook['google_id'] = $googleId;
@@ -494,7 +495,7 @@ class MultiSourceBookSearchService
 
             if ($response->successful()) {
                 $data = $response->json();
-                if (!empty($data['items'][0]['id'])) {
+                if (! empty($data['items'][0]['id'])) {
                     return $data['items'][0]['id'];
                 }
             }
@@ -502,7 +503,7 @@ class MultiSourceBookSearchService
             // Silently fail - we don't want to break the search if Google Books lookup fails
             \Illuminate\Support\Facades\Log::info('Failed to find Google ID for ISBN', [
                 'isbn' => $isbn,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
 

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -14,15 +14,18 @@ use Illuminate\Support\Facades\Validator;
 class ImageProxyController extends Controller
 {
     private const CACHE_TTL = 3600; // 1 hour
+
     private const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
     private const TIMEOUT = 10; // 10 seconds
+
     private const MAX_RETRIES = 3;
 
     private const ALLOWED_DOMAINS = [
         'books.google.com',
         'books.googleapis.com',
         'lh3.googleusercontent.com',
-        'ssl.gstatic.com'
+        'ssl.gstatic.com',
     ];
 
     private const ALLOWED_CONTENT_TYPES = [
@@ -30,38 +33,39 @@ class ImageProxyController extends Controller
         'image/jpg',
         'image/png',
         'image/webp',
-        'image/gif'
+        'image/gif',
     ];
 
     public function proxy(Request $request): Response|JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'url' => 'required|url|max:2048'
+            'url' => 'required|url|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'error' => 'Invalid URL provided',
-                'details' => $validator->errors()
+                'details' => $validator->errors(),
             ], 400);
         }
 
         $url = $request->query('url');
 
         // Validate domain
-        if (!$this->isAllowedDomain($url)) {
+        if (! $this->isAllowedDomain($url)) {
             return response()->json([
                 'error' => 'Domain not allowed',
-                'allowed_domains' => self::ALLOWED_DOMAINS
+                'allowed_domains' => self::ALLOWED_DOMAINS,
             ], 403);
         }
 
         // Try to get from cache first
-        $cacheKey = 'image_proxy_' . md5($url);
+        $cacheKey = 'image_proxy_'.md5($url);
         $cachedData = Cache::get($cacheKey);
 
         if ($cachedData) {
             $content = base64_decode($cachedData['content']);
+
             return response($content)
                 ->header('Content-Type', $cachedData['content_type'])
                 ->header('Content-Length', strlen($content))
@@ -72,20 +76,20 @@ class ImageProxyController extends Controller
         // Download image with retry logic
         $imageData = $this->downloadImageWithRetry($url);
 
-        if (!$imageData) {
+        if (! $imageData) {
             return response()->json([
                 'error' => 'Failed to download image after retries',
-                'url' => $url
+                'url' => $url,
             ], 502);
         }
 
         // Validate content type
         $contentType = $imageData['content_type'];
-        if (!in_array($contentType, self::ALLOWED_CONTENT_TYPES)) {
+        if (! in_array($contentType, self::ALLOWED_CONTENT_TYPES)) {
             return response()->json([
                 'error' => 'Invalid content type',
                 'received' => $contentType,
-                'allowed' => self::ALLOWED_CONTENT_TYPES
+                'allowed' => self::ALLOWED_CONTENT_TYPES,
             ], 400);
         }
 
@@ -95,7 +99,7 @@ class ImageProxyController extends Controller
             return response()->json([
                 'error' => 'Image too large',
                 'size' => $contentLength,
-                'max_allowed' => self::MAX_IMAGE_SIZE
+                'max_allowed' => self::MAX_IMAGE_SIZE,
             ], 400);
         }
 
@@ -103,14 +107,14 @@ class ImageProxyController extends Controller
         Cache::put($cacheKey, [
             'content' => base64_encode($imageData['content']),
             'content_type' => $contentType,
-            'cached_at' => now()->toDateTimeString()
+            'cached_at' => now()->toDateTimeString(),
         ], self::CACHE_TTL);
 
         Log::info('Image proxy served', [
             'url' => $url,
             'size' => $contentLength,
             'content_type' => $contentType,
-            'cached' => false
+            'cached' => false,
         ]);
 
         return response($imageData['content'])
@@ -124,7 +128,7 @@ class ImageProxyController extends Controller
     {
         $parsedUrl = parse_url($url);
 
-        if (!isset($parsedUrl['host'])) {
+        if (! isset($parsedUrl['host'])) {
             return false;
         }
 
@@ -132,7 +136,7 @@ class ImageProxyController extends Controller
 
         foreach (self::ALLOWED_DOMAINS as $allowedDomain) {
             // Exact match or subdomain match
-            if ($host === $allowedDomain || str_ends_with($host, '.' . $allowedDomain)) {
+            if ($host === $allowedDomain || str_ends_with($host, '.'.$allowedDomain)) {
                 return true;
             }
         }
@@ -146,30 +150,31 @@ class ImageProxyController extends Controller
 
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
             try {
-                Log::debug("Image proxy attempt {$attempt}/{" . self::MAX_RETRIES . "}", ['url' => $url]);
+                Log::debug("Image proxy attempt {$attempt}/{".self::MAX_RETRIES.'}', ['url' => $url]);
 
                 $response = Http::timeout(self::TIMEOUT)
                     ->withHeaders([
                         'User-Agent' => 'LivroLog Image Proxy/1.0',
                         'Accept' => implode(', ', self::ALLOWED_CONTENT_TYPES),
                         'Accept-Encoding' => 'gzip, deflate',
-                        'Connection' => 'close'
+                        'Connection' => 'close',
                     ])
                     ->get($url);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     Log::warning("Image proxy HTTP error on attempt {$attempt}", [
                         'url' => $url,
                         'status' => $response->status(),
-                        'headers' => $response->headers()
+                        'headers' => $response->headers(),
                     ]);
 
                     // Don't retry on 4xx errors (client errors)
                     if ($response->status() >= 400 && $response->status() < 500) {
                         Log::error('Image proxy client error - not retrying', [
                             'url' => $url,
-                            'status' => $response->status()
+                            'status' => $response->status(),
                         ]);
+
                         return null;
                     }
 
@@ -177,7 +182,7 @@ class ImageProxyController extends Controller
                 }
 
                 $contentType = $response->header('content-type');
-                if (!$contentType) {
+                if (! $contentType) {
                     // Try to detect content type from content
                     $contentType = $this->detectContentType($response->body());
                 }
@@ -189,7 +194,7 @@ class ImageProxyController extends Controller
 
                 return [
                     'content' => $content,
-                    'content_type' => $contentType
+                    'content_type' => $contentType,
                 ];
 
             } catch (\Exception $e) {
@@ -198,7 +203,7 @@ class ImageProxyController extends Controller
                     'url' => $url,
                     'error' => $e->getMessage(),
                     'attempt' => $attempt,
-                    'max_attempts' => self::MAX_RETRIES
+                    'max_attempts' => self::MAX_RETRIES,
                 ]);
 
                 // Wait before retry (exponential backoff)
@@ -212,7 +217,7 @@ class ImageProxyController extends Controller
         Log::error('Image proxy failed after all retries', [
             'url' => $url,
             'attempts' => self::MAX_RETRIES,
-            'last_error' => $lastException?->getMessage()
+            'last_error' => $lastException?->getMessage(),
         ]);
 
         return null;
@@ -224,9 +229,9 @@ class ImageProxyController extends Controller
         $signatures = [
             "\xFF\xD8\xFF" => 'image/jpeg',
             "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A" => 'image/png',
-            "GIF87a" => 'image/gif',
-            "GIF89a" => 'image/gif',
-            "RIFF" => 'image/webp' // Simplified WebP detection
+            'GIF87a' => 'image/gif',
+            'GIF89a' => 'image/gif',
+            'RIFF' => 'image/webp', // Simplified WebP detection
         ];
 
         foreach ($signatures as $signature => $contentType) {
@@ -249,7 +254,7 @@ class ImageProxyController extends Controller
             'max_retries' => self::MAX_RETRIES,
             'allowed_domains' => self::ALLOWED_DOMAINS,
             'allowed_content_types' => self::ALLOWED_CONTENT_TYPES,
-            'proxy_url_format' => '/image-proxy?url={encoded_image_url}'
+            'proxy_url_format' => '/image-proxy?url={encoded_image_url}',
         ]);
     }
 }

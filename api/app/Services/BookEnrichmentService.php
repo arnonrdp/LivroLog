@@ -89,12 +89,13 @@ class BookEnrichmentService
     public function searchBookByIsbn(string $isbn): ?array
     {
         $response = Http::get(self::GOOGLE_BOOKS_API, [
-            'q' => 'isbn:' . $isbn,
+            'q' => 'isbn:'.$isbn,
             'maxResults' => 1,
         ]);
 
         if ($response->successful()) {
             $data = $response->json();
+
             return $data['items'][0] ?? null;
         }
 

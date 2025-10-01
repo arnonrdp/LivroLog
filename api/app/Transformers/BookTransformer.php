@@ -14,6 +14,8 @@ class BookTransformer
         'authors',
         'isbn',
         'amazon_asin',
+        'amazon_buy_link',
+        'amazon_region',
         'asin_status',
         'asin_processed_at',
         'thumbnail',
@@ -39,6 +41,7 @@ class BookTransformer
         'format',
         'info_quality',
         'enriched_at',
+        'amazon_links',
         'created_at',
         'updated_at',
     ];

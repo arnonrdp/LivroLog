@@ -393,7 +393,7 @@ class ReviewController extends Controller
         ]);
 
         $review->update($validated);
-        
+
         // Return only the essential fields for UI updates
         return response()->json([
             'id' => $review->id,

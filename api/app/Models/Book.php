@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Events\BookCreated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use App\Events\BookCreated;
 
 /**
  * @OA\Schema(
@@ -204,7 +204,7 @@ class Book extends Model
      */
     public function getSanitizedDescriptionAttribute()
     {
-        if (!$this->description) {
+        if (! $this->description) {
             return null;
         }
 
@@ -276,7 +276,7 @@ class Book extends Model
 
             if ($part === '**') {
                 // Toggle bold
-                if (!empty($buffer)) {
+                if (! empty($buffer)) {
                     $result[] = ['text' => $buffer, 'style' => $currentStyle];
                     $buffer = '';
                 }
@@ -287,7 +287,7 @@ class Book extends Model
                 }
             } elseif ($part === '__') {
                 // Toggle italic
-                if (!empty($buffer)) {
+                if (! empty($buffer)) {
                     $result[] = ['text' => $buffer, 'style' => $currentStyle];
                     $buffer = '';
                 }
@@ -298,7 +298,7 @@ class Book extends Model
                 }
             } elseif ($part === '~~') {
                 // Toggle underline
-                if (!empty($buffer)) {
+                if (! empty($buffer)) {
                     $result[] = ['text' => $buffer, 'style' => $currentStyle];
                     $buffer = '';
                 }
@@ -313,7 +313,7 @@ class Book extends Model
         }
 
         // Add any remaining text
-        if (!empty($buffer)) {
+        if (! empty($buffer)) {
             $result[] = ['text' => $buffer, 'style' => array_values($currentStyle)];
         }
 
@@ -325,7 +325,7 @@ class Book extends Model
      */
     public function getFormattedDescriptionAttribute()
     {
-        if (!$this->description) {
+        if (! $this->description) {
             return null;
         }
 
@@ -333,24 +333,28 @@ class Book extends Model
 
         // Convert line breaks to proper structure for frontend display
         $paragraphs = explode("\n\n", $sanitized);
-        $formatted = array_map(function($p) {
+        $formatted = array_map(function ($p) {
             $p = trim($p);
-            if (empty($p)) return '';
+            if (empty($p)) {
+                return '';
+            }
 
             // If it starts with a bullet, create list
             if (strpos($p, '•') === 0) {
                 $items = explode("\n", $p);
-                $listItems = array_map(function($item) {
+                $listItems = array_map(function ($item) {
                     $cleanItem = trim(str_replace('•', '', $item));
+
                     return $this->parseInlineFormatting($cleanItem);
                 }, array_filter($items));
+
                 return ['type' => 'list', 'items' => $listItems];
             }
 
             // Otherwise it's a paragraph with inline formatting
             return [
                 'type' => 'paragraph',
-                'content' => $this->parseInlineFormatting($p)
+                'content' => $this->parseInlineFormatting($p),
             ];
         }, $paragraphs);
 
@@ -358,7 +362,18 @@ class Book extends Model
     }
 
     /**
+     * Get Amazon purchase links for all regions
+     */
+    public function getAmazonLinksAttribute(): array
+    {
+        $service = app(\App\Services\AmazonLinkEnrichmentService::class);
+
+        // Use getAttributes() instead of toArray() to avoid infinite recursion
+        return $service->generateAllRegionLinks($this->getAttributes());
+    }
+
+    /**
      * Append formatted date and review stats to JSON output
      */
-    protected $appends = ['formatted_published_date', 'average_rating', 'reviews_count', 'formatted_description'];
+    protected $appends = ['formatted_published_date', 'average_rating', 'reviews_count', 'formatted_description', 'amazon_links'];
 }

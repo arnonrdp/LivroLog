@@ -184,17 +184,17 @@ class FollowSystemTest extends TestCase
         Follow::create([
             'follower_id' => $follower1->id,
             'followed_id' => $user->id,
-            'status' => 'accepted'
+            'status' => 'accepted',
         ]);
         Follow::create([
             'follower_id' => $follower2->id,
             'followed_id' => $user->id,
-            'status' => 'accepted'
+            'status' => 'accepted',
         ]);
         Follow::create([
             'follower_id' => $user->id,
             'followed_id' => $following1->id,
-            'status' => 'accepted'
+            'status' => 'accepted',
         ]);
 
         $result = $this->followService->recalculateFollowCounts($user);

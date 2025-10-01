@@ -18,6 +18,7 @@ class AmazonBooksProvider implements BookSearchProvider
     private const PRIORITY = 1;
 
     private const MAX_RESULTS = 10; // Amazon PA-API allows max 10 per request
+
     private const MAX_PAGES = 2; // Reduce to 2 pages (20 results total) for faster response
 
     private const RATE_LIMIT_DELAY = 1; // Reduce to 1 second between requests for faster response
@@ -179,7 +180,7 @@ class AmazonBooksProvider implements BookSearchProvider
                 if ($page > 1) {
                     Log::warning('Amazon API pagination failed', [
                         'page' => $page,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ]);
                     break;
                 }
@@ -274,7 +275,7 @@ class AmazonBooksProvider implements BookSearchProvider
         }
 
         // Filter out non-book items using classifications
-        if (!$this->isActualBook($item, $itemInfo)) {
+        if (! $this->isActualBook($item, $itemInfo)) {
             return null;
         }
 
@@ -342,7 +343,7 @@ class AmazonBooksProvider implements BookSearchProvider
                 $isbn13s = $externalIds->getISBN13s();
                 if ($isbn13s && $isbn13s->getDisplayValues()) {
                     $values = $isbn13s->getDisplayValues();
-                    if (!empty($values) && $this->isValidIsbn($values[0])) {
+                    if (! empty($values) && $this->isValidIsbn($values[0])) {
                         return $values[0];
                     }
                 }
@@ -353,7 +354,7 @@ class AmazonBooksProvider implements BookSearchProvider
                 $isbn10s = $externalIds->getISBN10s();
                 if ($isbn10s && $isbn10s->getDisplayValues()) {
                     $values = $isbn10s->getDisplayValues();
-                    if (!empty($values) && $this->isValidIsbn($values[0])) {
+                    if (! empty($values) && $this->isValidIsbn($values[0])) {
                         return $values[0];
                     }
                 }
@@ -598,7 +599,8 @@ class AmazonBooksProvider implements BookSearchProvider
      */
     private function isRateLimited(string $query): bool
     {
-        $amazonCacheKey = 'amazon_rate_limited_' . md5($query);
+        $amazonCacheKey = 'amazon_rate_limited_'.md5($query);
+
         return \Illuminate\Support\Facades\Cache::has($amazonCacheKey);
     }
 
@@ -618,7 +620,7 @@ class AmazonBooksProvider implements BookSearchProvider
                 $bookBindings = [
                     'paperback', 'hardcover', 'kindle', 'ebook',
                     'mass market', 'library binding', 'board book',
-                    'spiral', 'loose leaf', 'audio'
+                    'spiral', 'loose leaf', 'audio',
                 ];
 
                 // Check if it's a book binding
@@ -631,7 +633,7 @@ class AmazonBooksProvider implements BookSearchProvider
                 // These are definitely not books
                 $nonBookBindings = [
                     'toy', 'game', 'accessory', 'electronics',
-                    'video game', 'calendar', 'cards', 'dvd'
+                    'video game', 'calendar', 'cards', 'dvd',
                 ];
 
                 foreach ($nonBookBindings as $nonBookBinding) {
@@ -709,5 +711,4 @@ class AmazonBooksProvider implements BookSearchProvider
 
         return false;
     }
-
 }

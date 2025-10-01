@@ -12,7 +12,6 @@ class SocialMediaCrawlerMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
@@ -76,7 +75,7 @@ class SocialMediaCrawlerMiddleware
             'embedly', 'iframely', 'opengraph',
             'vkshare', 'qwantify', 'bitlybot', 'bufferbot',
             'duckduckbot', 'baiduspider', 'yandexbot',
-            'lighthouse', 'pagespeed'
+            'lighthouse', 'pagespeed',
         ];
 
         foreach ($crawlers as $crawler) {
@@ -95,7 +94,7 @@ class SocialMediaCrawlerMiddleware
     {
         $frontend = config('app.frontend_url');
         $currentUrl = $frontend; // canonical to frontend
-        $imageUrl = rtrim($frontend, '/') . '/screenshot-web.jpg';
+        $imageUrl = rtrim($frontend, '/').'/screenshot-web.jpg';
 
         // Basic i18n based on Accept-Language
         $lang = strtolower($request->header('Accept-Language', ''));
@@ -149,7 +148,7 @@ class SocialMediaCrawlerMiddleware
         $safeDisplayName = trim(strip_tags((string) $user->display_name));
         // Canonical URL to frontend profile
         $frontend = rtrim(config('app.frontend_url'), '/');
-        $currentUrl = $frontend . '/' . rawurlencode($user->username);
+        $currentUrl = $frontend.'/'.rawurlencode($user->username);
         // Version for cache-busting
         $versionTs = DB::table('users_books')
             ->where('user_id', $user->id)
@@ -158,7 +157,7 @@ class SocialMediaCrawlerMiddleware
         // Image served by API without /api prefix, with version.
         // Prefer current request host so that proxies/CDNs (dev.livrolog.com) generate same-host URLs.
         $hostBase = rtrim(($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
-        $imageUrl = $hostBase . "/users/{$user->id}/shelf-image?v={$version}";
+        $imageUrl = $hostBase."/users/{$user->id}/shelf-image?v={$version}";
 
         // i18n based on Accept-Language
         $lang = strtolower($request->header('Accept-Language', ''));
@@ -206,36 +205,38 @@ class SocialMediaCrawlerMiddleware
 
         foreach ($metaData as $property => $content) {
             if ($property === 'title') {
-                $metaTags .= '<title>' . htmlspecialchars($content) . '</title>' . "\n    ";
+                $metaTags .= '<title>'.htmlspecialchars($content).'</title>'."\n    ";
+
                 continue;
             }
 
             if ($property === 'description') {
-                $metaTags .= '<meta name="description" content="' . htmlspecialchars($content) . '">' . "\n    ";
+                $metaTags .= '<meta name="description" content="'.htmlspecialchars($content).'">'."\n    ";
+
                 continue;
             }
 
             if (strpos($property, 'og:') === 0 || strpos($property, 'profile:') === 0) {
-                $metaTags .= '<meta property="' . $property . '" content="' . htmlspecialchars($content) . '">' . "\n    ";
+                $metaTags .= '<meta property="'.$property.'" content="'.htmlspecialchars($content).'">'."\n    ";
             } else {
-                $metaTags .= '<meta name="' . $property . '" content="' . htmlspecialchars($content) . '">' . "\n    ";
+                $metaTags .= '<meta name="'.$property.'" content="'.htmlspecialchars($content).'">'."\n    ";
             }
         }
 
         // Add canonical URL pointing to frontend (let frontend be the canonical source)
         $frontendUrl = config('app.frontend_url');
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-        $canonicalUrl = rtrim($frontendUrl, '/') . $requestUri;
-        $metaTags .= '<link rel="canonical" href="' . htmlspecialchars($canonicalUrl, ENT_QUOTES) . '">' . "\n    ";
+        $canonicalUrl = rtrim($frontendUrl, '/').$requestUri;
+        $metaTags .= '<link rel="canonical" href="'.htmlspecialchars($canonicalUrl, ENT_QUOTES).'">'."\n    ";
 
         // Tell search engines not to index this API-served version
-        $metaTags .= '<meta name="robots" content="noindex, follow">' . "\n    ";
+        $metaTags .= '<meta name="robots" content="noindex, follow">'."\n    ";
         $frontendUrl = config('app.frontend_url');
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
         $safeFrontendUrl = htmlspecialchars($frontendUrl, ENT_QUOTES);
         $safeRequestUri = htmlspecialchars($requestUri, ENT_QUOTES);
 
-        $includeClientRedirect = !$forceOg; // do not include client-side redirect when forcing OG
+        $includeClientRedirect = ! $forceOg; // do not include client-side redirect when forcing OG
 
         $redirectScript = '';
         if ($includeClientRedirect) {

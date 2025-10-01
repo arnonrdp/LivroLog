@@ -19,6 +19,7 @@ class CleanInvalidAmazonAsins extends Command
     protected $description = 'Automatically validate and clean invalid Amazon ASINs';
 
     private const RATE_LIMIT_SECONDS = 3;
+
     private const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36';
 
     private array $stats = [
@@ -28,25 +29,26 @@ class CleanInvalidAmazonAsins extends Command
         'kept' => 0,
         'errors' => 0,
         'cleaned_books' => [],
-        'error_books' => []
+        'error_books' => [],
     ];
 
     public function handle(): int
     {
         $this->info('🧹 Starting Amazon ASIN validation and cleaning...');
-        
+
         if ($this->option('dry-run')) {
             $this->warn('🔍 DRY-RUN MODE - No changes will be made');
         }
 
         $threshold = (float) $this->option('threshold');
-        $this->info("📏 Using similarity threshold: " . ($threshold * 100) . "%");
+        $this->info('📏 Using similarity threshold: '.($threshold * 100).'%');
 
         $books = $this->getBooksToClean();
         $this->stats['total'] = $books->count();
 
         if ($this->stats['total'] === 0) {
             $this->info('✅ No books found with Amazon ASINs to clean.');
+
             return Command::SUCCESS;
         }
 
@@ -65,7 +67,7 @@ class CleanInvalidAmazonAsins extends Command
         if ($this->option('book-id')) {
             $bookIds = $this->option('book-id');
             $query->whereIn('id', $bookIds);
-            $this->info('📚 Processing specific books: ' . implode(', ', $bookIds));
+            $this->info('📚 Processing specific books: '.implode(', ', $bookIds));
         }
 
         return $query->orderBy('updated_at', 'desc')->get();
@@ -86,39 +88,39 @@ class CleanInvalidAmazonAsins extends Command
                     $this->stats['errors']++;
                     $this->stats['error_books'][] = [
                         'book' => $book,
-                        'error' => $validation['error']
+                        'error' => $validation['error'],
                     ];
-                    
-                    if (!$this->option('dry-run')) {
+
+                    if (! $this->option('dry-run')) {
                         $book->update(['amazon_asin' => null]);
                         $this->stats['cleaned']++;
                     }
-                    
+
                     if ($this->option('verbose-output')) {
                         $this->line("\n💥 {$book->title}: {$validation['error']} - ASIN removed");
                     }
-                    
+
                 } elseif ($validation['accurate']) {
                     // Keep accurate ASINs
                     $this->stats['kept']++;
-                    
+
                     if ($this->option('verbose-output')) {
                         $this->line("\n✅ {$book->title}: Similarity {$validation['title_similarity']}% - ASIN kept");
                     }
-                    
+
                 } else {
                     // Remove inaccurate ASINs
                     $this->stats['cleaned']++;
                     $this->stats['cleaned_books'][] = [
                         'book' => $book,
                         'amazon_title' => $validation['amazon_title'],
-                        'similarity' => $validation['title_similarity']
+                        'similarity' => $validation['title_similarity'],
                     ];
-                    
-                    if (!$this->option('dry-run')) {
+
+                    if (! $this->option('dry-run')) {
                         $book->update(['amazon_asin' => null]);
                     }
-                    
+
                     if ($this->option('verbose-output')) {
                         $this->line("\n❌ {$book->title}: Similarity {$validation['title_similarity']}% - ASIN removed");
                         $this->line("   Amazon product: {$validation['amazon_title']}");
@@ -136,18 +138,18 @@ class CleanInvalidAmazonAsins extends Command
                 $this->stats['errors']++;
                 $this->stats['error_books'][] = [
                     'book' => $book,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ];
-                
-                if (!$this->option('dry-run')) {
+
+                if (! $this->option('dry-run')) {
                     $book->update(['amazon_asin' => null]);
                     $this->stats['cleaned']++;
                 }
-                
+
                 $progressBar->advance();
-                
+
                 if ($this->option('verbose-output')) {
-                    $this->line("\n💥 Error processing {$book->title}: " . $e->getMessage());
+                    $this->line("\n💥 Error processing {$book->title}: ".$e->getMessage());
                 }
             }
         }
@@ -159,8 +161,8 @@ class CleanInvalidAmazonAsins extends Command
     {
         try {
             $region = $this->getAmazonRegion($book);
-            $regionConfig = config('services.amazon.regions.' . $region);
-            
+            $regionConfig = config('services.amazon.regions.'.$region);
+
             $url = "https://www.{$regionConfig['domain']}/dp/{$book->amazon_asin}";
 
             // Log validation attempt
@@ -168,7 +170,7 @@ class CleanInvalidAmazonAsins extends Command
                 'book_id' => $book->id,
                 'title' => $book->title,
                 'asin' => $book->amazon_asin,
-                'url' => $url
+                'url' => $url,
             ]);
 
             $response = Http::timeout(15)
@@ -183,16 +185,16 @@ class CleanInvalidAmazonAsins extends Command
                 ])
                 ->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('Amazon request failed', [
                     'book_id' => $book->id,
                     'status' => $response->status(),
-                    'asin' => $book->amazon_asin
+                    'asin' => $book->amazon_asin,
                 ]);
-                
+
                 return [
                     'error' => "HTTP {$response->status()}: Invalid ASIN",
-                    'accurate' => false
+                    'accurate' => false,
                 ];
             }
 
@@ -200,20 +202,20 @@ class CleanInvalidAmazonAsins extends Command
             $amazonData = $this->extractAmazonBookData($html);
 
             // Check if this is actually a book
-            if (!$amazonData['isBook']) {
+            if (! $amazonData['isBook']) {
                 Log::info('Product is not a book', [
                     'book_id' => $book->id,
                     'asin' => $book->amazon_asin,
-                    'extracted_title' => $amazonData['title']
+                    'extracted_title' => $amazonData['title'],
                 ]);
-                
+
                 return [
                     'error' => 'Product is not a book',
-                    'accurate' => false
+                    'accurate' => false,
                 ];
             }
 
-            if (!$amazonData['title']) {
+            if (! $amazonData['title']) {
                 // Try to at least validate by ASIN presence in page
                 if (strpos($html, $book->amazon_asin) !== false) {
                     // ASIN is present in page, likely valid but can't extract title
@@ -225,19 +227,19 @@ class CleanInvalidAmazonAsins extends Command
                         'amazon_isbn' => $amazonData['isbn'],
                         'title_similarity' => 51, // Just above 50% threshold
                         'isbn_match' => false,
-                        'note' => 'ASIN found in page but title extraction failed'
+                        'note' => 'ASIN found in page but title extraction failed',
                     ];
                 }
-                
+
                 return [
                     'error' => 'Could not extract title from Amazon page',
-                    'accurate' => false
+                    'accurate' => false,
                 ];
             }
 
             $titleMatch = $this->compareTitles($book->title, $amazonData['title']);
             $isbnMatch = $this->compareIsbns($book->isbn, $amazonData['isbn']);
-            
+
             $threshold = (float) $this->option('threshold');
             $accurate = $titleMatch['score'] >= $threshold || $isbnMatch;
 
@@ -247,13 +249,13 @@ class CleanInvalidAmazonAsins extends Command
                 'amazon_title' => $amazonData['title'],
                 'amazon_isbn' => $amazonData['isbn'],
                 'title_similarity' => round($titleMatch['score'] * 100, 1),
-                'isbn_match' => $isbnMatch
+                'isbn_match' => $isbnMatch,
             ];
 
         } catch (\Exception $e) {
             return [
                 'error' => $e->getMessage(),
-                'accurate' => false
+                'accurate' => false,
             ];
         }
     }
@@ -263,7 +265,7 @@ class CleanInvalidAmazonAsins extends Command
         $title = null;
         $isbn = null;
         $isBook = false;
-        
+
         // Check if this is actually a book product
         $bookIndicators = [
             '/Books<\/a>/i',
@@ -273,9 +275,9 @@ class CleanInvalidAmazonAsins extends Command
             '/"@type"\s*:\s*"Book"/i',
             '/id="book_details"/i',
             '/Publisher\s*:/i',
-            '/Publication date/i'
+            '/Publication date/i',
         ];
-        
+
         foreach ($bookIndicators as $indicator) {
             if (preg_match($indicator, $html)) {
                 $isBook = true;
@@ -291,7 +293,7 @@ class CleanInvalidAmazonAsins extends Command
             '/<span[^>]*class="[^"]*a-size-extra-large[^"]*"[^>]*>([^<]+)<\/span>/i',
             '/data-feature-name="title"[^>]*>([^<]+)</i',
             '/"title"\s*:\s*"([^"]+)"/i',
-            '/<title>([^<]+)<\/title>/i'
+            '/<title>([^<]+)<\/title>/i',
         ];
 
         foreach ($titlePatterns as $pattern) {
@@ -301,9 +303,9 @@ class CleanInvalidAmazonAsins extends Command
                 $title = preg_replace('/\s*:\s*Amazon\..*$/i', '', $title);
                 $title = preg_replace('/\s*-\s*Amazon\.com.*$/i', '', $title);
                 $title = trim($title);
-                
+
                 // Skip if title is too generic or looks like an error
-                if (strlen($title) > 5 && !preg_match('/^(Amazon|Error|Page not found)/i', $title)) {
+                if (strlen($title) > 5 && ! preg_match('/^(Amazon|Error|Page not found)/i', $title)) {
                     break;
                 }
                 $title = null; // Reset if invalid
@@ -311,7 +313,7 @@ class CleanInvalidAmazonAsins extends Command
         }
 
         // If no title found in patterns, try to extract from JSON-LD
-        if (!$title && preg_match('/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/is', $html, $jsonMatch)) {
+        if (! $title && preg_match('/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/is', $html, $jsonMatch)) {
             $jsonData = json_decode($jsonMatch[1], true);
             if (isset($jsonData['name'])) {
                 $title = $jsonData['name'];
@@ -325,7 +327,7 @@ class CleanInvalidAmazonAsins extends Command
             '/ISBN[:\s]*(\d{10,13})/i',
             '/"isbn":"([^"]+)"/i',
             '/isbn13["\s:]+(\d{13})/i',
-            '/isbn10["\s:]+(\d{10})/i'
+            '/isbn10["\s:]+(\d{10})/i',
         ];
 
         foreach ($isbnPatterns as $pattern) {
@@ -341,7 +343,7 @@ class CleanInvalidAmazonAsins extends Command
         return [
             'title' => $title,
             'isbn' => $isbn,
-            'isBook' => $isBook
+            'isBook' => $isBook,
         ];
     }
 
@@ -369,7 +371,7 @@ class CleanInvalidAmazonAsins extends Command
         $mainWords = array_slice($ourWords, 0, 3); // First 3 words
         $amazonMain = implode(' ', array_slice($amazonWords, 0, 3));
         $ourMain = implode(' ', $mainWords);
-        
+
         $mainSimilarity = 0;
         if (strlen($ourMain) > 3 && strlen($amazonMain) > 3) {
             similar_text($ourMain, $amazonMain, $mainSimilarity);
@@ -382,13 +384,13 @@ class CleanInvalidAmazonAsins extends Command
         return [
             'score' => $finalScore,
             'our_normalized' => $our,
-            'amazon_normalized' => $amazon
+            'amazon_normalized' => $amazon,
         ];
     }
 
     private function compareIsbns(?string $ourIsbn, ?string $amazonIsbn): bool
     {
-        if (!$ourIsbn || !$amazonIsbn) {
+        if (! $ourIsbn || ! $amazonIsbn) {
             return false;
         }
 
@@ -403,23 +405,24 @@ class CleanInvalidAmazonAsins extends Command
         $normalized = strtolower(trim($title));
         $normalized = preg_replace('/[^\w\s]/u', ' ', $normalized);
         $normalized = preg_replace('/\s+/', ' ', $normalized);
+
         return trim($normalized);
     }
 
     private function showFinalReport(): void
     {
         $this->newLine(2);
-        
+
         if ($this->option('dry-run')) {
             $this->warn('🔍 DRY-RUN RESULTS - No changes were made');
         } else {
             $this->info('🎉 Amazon ASIN cleaning completed!');
         }
-        
+
         $this->info("📊 Processed: {$this->stats['total']}");
         $this->info("✅ Valid ASINs kept: {$this->stats['kept']}");
         $this->info("🧹 Invalid ASINs cleaned: {$this->stats['cleaned']}");
-        
+
         if ($this->stats['errors'] > 0) {
             $this->info("💥 Errors (ASINs removed): {$this->stats['errors']}");
         }
@@ -460,14 +463,14 @@ class CleanInvalidAmazonAsins extends Command
 
         // Summary
         $this->newLine();
-        if (!$this->option('dry-run')) {
+        if (! $this->option('dry-run')) {
             $this->info('✨ Database has been cleaned!');
-            
+
             // Show new statistics
             $withAsin = Book::whereNotNull('amazon_asin')->count();
             $total = Book::count();
             $percentage = $total > 0 ? round(($withAsin / $total) * 100, 1) : 0;
-            
+
             $this->info("📚 Books with valid ASINs: {$withAsin} / {$total} ({$percentage}%)");
         } else {
             $this->info('💡 Run without --dry-run to actually clean the database');
@@ -483,7 +486,7 @@ class CleanInvalidAmazonAsins extends Command
     {
         $languageToRegion = [
             'pt' => 'BR',
-            'pt-BR' => 'BR', 
+            'pt-BR' => 'BR',
             'pt_BR' => 'BR',
             'en' => 'US',
             'en-US' => 'US',
@@ -502,19 +505,19 @@ class CleanInvalidAmazonAsins extends Command
             'it' => 'US',
         ];
 
-        if (!$language) {
+        if (! $language) {
             return 'US';
         }
 
         $normalizedLang = strtolower(trim($language));
-        
+
         if (isset($languageToRegion[$normalizedLang])) {
             return $languageToRegion[$normalizedLang];
         }
 
         $langPrefix = explode('-', $normalizedLang)[0];
         $langPrefix = explode('_', $langPrefix)[0];
-        
+
         if (isset($languageToRegion[$langPrefix])) {
             return $languageToRegion[$langPrefix];
         }
@@ -532,7 +535,7 @@ class CleanInvalidAmazonAsins extends Command
             'en-CA' => 'en-CA,en;q=0.8,fr;q=0.5',
             'fr-FR' => 'fr-FR,fr;q=0.8,en;q=0.5',
         ];
-        
+
         return $headers[$language] ?? 'en-US,en;q=0.8';
     }
 }

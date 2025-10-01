@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Book;
 use App\Jobs\EnrichBookWithAmazonJob;
+use App\Models\Book;
 use Illuminate\Support\Facades\Log;
 
 class UnifiedBookEnrichmentService
@@ -42,7 +42,7 @@ class UnifiedBookEnrichmentService
                     Log::info("Google Books enrichment successful for book {$book->id}");
                     $book->refresh(); // Reload with updated data
                 } else {
-                    Log::warning("Google Books enrichment failed for book {$book->id}: " . ($googleResult['message'] ?? 'Unknown error'));
+                    Log::warning("Google Books enrichment failed for book {$book->id}: ".($googleResult['message'] ?? 'Unknown error'));
                 }
             } else {
                 Log::info("Skipping Google Books enrichment for book {$book->id} (already enriched or no Google ID)");
@@ -71,8 +71,8 @@ class UnifiedBookEnrichmentService
                 $enrichmentActions[] = 'Amazon (processing)';
             }
 
-            if (!empty($enrichmentActions)) {
-                $result['message'] = 'Book enriched with: ' . implode(' + ', $enrichmentActions);
+            if (! empty($enrichmentActions)) {
+                $result['message'] = 'Book enriched with: '.implode(' + ', $enrichmentActions);
             } else {
                 $result['message'] = 'Book already enriched';
             }
@@ -89,7 +89,7 @@ class UnifiedBookEnrichmentService
             return [
                 'google_success' => false,
                 'amazon_dispatched' => false,
-                'message' => 'Enrichment failed: ' . $e->getMessage(),
+                'message' => 'Enrichment failed: '.$e->getMessage(),
                 'book_id' => $book->id,
             ];
         }
@@ -131,7 +131,7 @@ class UnifiedBookEnrichmentService
 
             return [
                 'success' => false,
-                'message' => 'Failed to create enriched book: ' . $e->getMessage(),
+                'message' => 'Failed to create enriched book: '.$e->getMessage(),
                 'amazon_dispatched' => false,
             ];
         }
@@ -157,19 +157,19 @@ class UnifiedBookEnrichmentService
             // Try to find the book in Google Books by ISBN
             $googleBookData = $this->googleEnrichmentService->searchBookByIsbn($isbn);
 
-            if (!$googleBookData) {
+            if (! $googleBookData) {
                 return [
                     'success' => false,
-                    'message' => 'Book not found in Google Books with ISBN: ' . $isbn,
+                    'message' => 'Book not found in Google Books with ISBN: '.$isbn,
                 ];
             }
 
             // Extract Google ID and create enriched book
             $googleId = $googleBookData['id'] ?? null;
-            if (!$googleId) {
+            if (! $googleId) {
                 return [
                     'success' => false,
-                    'message' => 'No Google ID found for ISBN: ' . $isbn,
+                    'message' => 'No Google ID found for ISBN: '.$isbn,
                 ];
             }
 
@@ -183,7 +183,7 @@ class UnifiedBookEnrichmentService
 
             return [
                 'success' => false,
-                'message' => 'Failed to create enriched book from ISBN: ' . $e->getMessage(),
+                'message' => 'Failed to create enriched book from ISBN: '.$e->getMessage(),
             ];
         }
     }
@@ -241,7 +241,7 @@ class UnifiedBookEnrichmentService
         // 3. Book is in pending status (or status is null - for backwards compatibility)
         // 4. Book has ISBN or title for searching
 
-        if (!config('services.amazon.sitestripe_enabled', false)) {
+        if (! config('services.amazon.sitestripe_enabled', false)) {
             return false;
         }
 
@@ -250,7 +250,7 @@ class UnifiedBookEnrichmentService
         }
 
         $status = $book->asin_status ?? 'pending';
-        if (!in_array($status, ['pending', null])) {
+        if (! in_array($status, ['pending', null])) {
             return false; // Already processing, completed, or failed
         }
 

@@ -4,7 +4,6 @@ namespace App\Services\Providers;
 
 use App\Contracts\BookSearchProvider;
 use App\Models\Book;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AmazonSiteStripeProvider implements BookSearchProvider
@@ -14,25 +13,25 @@ class AmazonSiteStripeProvider implements BookSearchProvider
     private array $regionConfig = [
         'US' => [
             'domain' => 'amazon.com',
-            'search_url' => 'https://www.amazon.com/s'
+            'search_url' => 'https://www.amazon.com/s',
         ],
         'BR' => [
             'domain' => 'amazon.com.br',
-            'search_url' => 'https://www.amazon.com.br/s'
+            'search_url' => 'https://www.amazon.com.br/s',
         ],
         'UK' => [
             'domain' => 'amazon.co.uk',
-            'search_url' => 'https://www.amazon.co.uk/s'
+            'search_url' => 'https://www.amazon.co.uk/s',
         ],
         'CA' => [
             'domain' => 'amazon.ca',
-            'search_url' => 'https://www.amazon.ca/s'
-        ]
+            'search_url' => 'https://www.amazon.ca/s',
+        ],
     ];
 
     public function search(string $query, array $options = []): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return $this->buildErrorResponse('Amazon SiteStripe provider is disabled');
         }
 
@@ -52,10 +51,10 @@ class AmazonSiteStripeProvider implements BookSearchProvider
         } catch (\Exception $e) {
             Log::error('Amazon SiteStripe Provider error', [
                 'query' => $query,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
-            return $this->buildErrorResponse('Search failed: ' . $e->getMessage());
+            return $this->buildErrorResponse('Search failed: '.$e->getMessage());
         }
     }
 
@@ -66,7 +65,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
         }
 
         if (isset($options['title']) && isset($options['author'])) {
-            return $options['title'] . ' ' . $options['author'];
+            return $options['title'].' '.$options['author'];
         }
 
         return trim($query);
@@ -102,39 +101,39 @@ class AmazonSiteStripeProvider implements BookSearchProvider
     private function createSiteStripeBook(string $searchQuery, string $region, int $index): ?array
     {
         $associateTag = config('services.amazon.associate_tag');
-        if (!$associateTag) {
+        if (! $associateTag) {
             return null;
         }
 
         // Gera um ID único baseado na busca e região
-        $uniqueId = 'AMZ-' . strtoupper(substr(md5($searchQuery . $region . $index), 0, 8));
+        $uniqueId = 'AMZ-'.strtoupper(substr(md5($searchQuery.$region.$index), 0, 8));
 
         // Verifica se já existe um livro similar no banco
-        $existingBook = Book::where('title', 'like', '%' . $searchQuery . '%')->first();
+        $existingBook = Book::where('title', 'like', '%'.$searchQuery.'%')->first();
 
         $domain = $this->regionConfig[$region]['domain'];
         $searchUrl = $this->regionConfig[$region]['search_url'];
 
         // Cria URL de busca com associate tag
-        $amazonSearchUrl = $searchUrl . '?' . http_build_query([
+        $amazonSearchUrl = $searchUrl.'?'.http_build_query([
             'k' => $searchQuery,
             'i' => 'stripbooks',
             'tag' => $associateTag,
-            'ref' => 'nb_sb_noss'
+            'ref' => 'nb_sb_noss',
         ]);
 
         $bookData = [
             'provider' => $this->getName(),
             'amazon_search_url' => $amazonSearchUrl,
-            'title' => $searchQuery . ' (Search Result)',
-            'subtitle' => 'Available on Amazon ' . strtoupper($region),
+            'title' => $searchQuery.' (Search Result)',
+            'subtitle' => 'Available on Amazon '.strtoupper($region),
             'authors' => 'Various Authors',
             'isbn' => $uniqueId,
             'isbn_10' => null,
             'isbn_13' => null,
             'thumbnail' => null,
-            'description' => 'Search for "' . $searchQuery . '" on Amazon ' . strtoupper($region) . ' marketplace. Click to browse available books.',
-            'publisher' => 'Amazon ' . strtoupper($region),
+            'description' => 'Search for "'.$searchQuery.'" on Amazon '.strtoupper($region).' marketplace. Click to browse available books.',
+            'publisher' => 'Amazon '.strtoupper($region),
             'published_date' => null,
             'page_count' => null,
             'language' => $this->getRegionLanguage($region),
@@ -153,7 +152,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
 
     private function getRegionLanguage(string $region): string
     {
-        return match($region) {
+        return match ($region) {
             'BR' => 'pt-BR',
             'UK' => 'en-GB',
             'CA' => 'en-CA',
@@ -164,6 +163,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
     private function looksLikeIsbn(string $query): bool
     {
         $cleaned = preg_replace('/[^0-9X]/i', '', $query);
+
         return strlen($cleaned) === 10 || strlen($cleaned) === 13;
     }
 
@@ -180,7 +180,7 @@ class AmazonSiteStripeProvider implements BookSearchProvider
     public function isEnabled(): bool
     {
         return config('services.amazon.sitestripe_enabled', false)
-            && !empty(config('services.amazon.associate_tag'));
+            && ! empty(config('services.amazon.associate_tag'));
     }
 
     public function getPriority(): int

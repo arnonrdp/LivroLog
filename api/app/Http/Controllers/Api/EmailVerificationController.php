@@ -71,6 +71,7 @@ class EmailVerificationController extends Controller
      *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="hash",
      *         in="query",
@@ -79,6 +80,7 @@ class EmailVerificationController extends Controller
      *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="expires",
      *         in="query",
@@ -87,6 +89,7 @@ class EmailVerificationController extends Controller
      *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="signature",
      *         in="query",
@@ -127,7 +130,8 @@ class EmailVerificationController extends Controller
             if ($isJsonRequest) {
                 return response()->json(['message' => 'User not found'], 404);
             }
-            return redirect($frontendUrl . '/settings/account?error=user_not_found');
+
+            return redirect($frontendUrl.'/settings/account?error=user_not_found');
         }
 
         // Check if already verified
@@ -135,7 +139,8 @@ class EmailVerificationController extends Controller
             if ($isJsonRequest) {
                 return response()->json(['message' => 'Email already verified'], 400);
             }
-            return redirect($frontendUrl . '/settings/account?status=already_verified');
+
+            return redirect($frontendUrl.'/settings/account?status=already_verified');
         }
 
         // Verify the URL signature
@@ -143,7 +148,8 @@ class EmailVerificationController extends Controller
             if ($isJsonRequest) {
                 return response()->json(['message' => 'Invalid or expired verification link'], 400);
             }
-            return redirect($frontendUrl . '/settings/account?error=invalid_link');
+
+            return redirect($frontendUrl.'/settings/account?error=invalid_link');
         }
 
         // Verify the hash matches
@@ -151,7 +157,8 @@ class EmailVerificationController extends Controller
             if ($isJsonRequest) {
                 return response()->json(['message' => 'Invalid verification link'], 400);
             }
-            return redirect($frontendUrl . '/settings/account?error=invalid_hash');
+
+            return redirect($frontendUrl.'/settings/account?error=invalid_hash');
         }
 
         // Mark email as verified
@@ -165,6 +172,6 @@ class EmailVerificationController extends Controller
             return response()->json(['message' => 'Email verified successfully']);
         }
 
-        return redirect($frontendUrl . '/settings/account?status=verified');
+        return redirect($frontendUrl.'/settings/account?status=verified');
     }
 }

@@ -8,9 +8,9 @@ use App\Http\Resources\PaginatedUserResource;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\UserWithBooksResource;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
@@ -378,16 +378,19 @@ class UserController extends Controller
      *         in="path",
      *         description="User ID",
      *         required=true,
+     *
      *         @OA\Schema(type="string")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Generated shelf image",
+     *
      *         @OA\MediaType(
      *             mediaType="image/jpeg"
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="User not found"
@@ -417,16 +420,17 @@ class UserController extends Controller
             return response()->file(Storage::disk('public')->path($relative), [
                 'Content-Type' => 'image/jpeg',
                 'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
-                'Last-Modified' => gmdate('D, d M Y H:i:s', @filemtime($cachePath) ?: time()) . ' GMT',
+                'Last-Modified' => gmdate('D, d M Y H:i:s', @filemtime($cachePath) ?: time()).' GMT',
             ]);
         }
 
         // If GD is unavailable, gracefully fall back to a static OG image
-        if (!function_exists('imagecreatetruecolor')) {
+        if (! function_exists('imagecreatetruecolor')) {
             if ($request->boolean('debug')) {
                 return response()->json(['error' => 'GD extension not available'], 500);
             }
-            $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
+            $fallback = rtrim(config('app.frontend_url'), '/').'/screenshot-web.jpg';
+
             return redirect()->away($fallback, 302, [
                 'Cache-Control' => 'public, max-age=1800',
             ]);
@@ -470,7 +474,8 @@ class UserController extends Controller
                 return response()->json(['error' => 'generation_failed', 'message' => $e->getMessage()], 500);
             }
             // On any error, fall back to static OG image to avoid blank previews
-            $fallback = rtrim(config('app.frontend_url'), '/') . '/screenshot-web.jpg';
+            $fallback = rtrim(config('app.frontend_url'), '/').'/screenshot-web.jpg';
+
             return redirect()->away($fallback, 302, [
                 'Cache-Control' => 'public, max-age=1800',
             ]);
@@ -485,9 +490,10 @@ class UserController extends Controller
         $ts = DB::table('users_books')
             ->where('user_id', $user->id)
             ->max('updated_at');
-        if (!$ts) {
+        if (! $ts) {
             $ts = $user->updated_at ?: now();
         }
+
         return is_string($ts) ? (string) strtotime($ts) : (string) strtotime((string) $ts);
     }
 
@@ -607,7 +613,7 @@ class UserController extends Controller
     private function ensureOgTextures(): void
     {
         $destDir = public_path('og/textures');
-        if (!is_dir($destDir)) {
+        if (! is_dir($destDir)) {
             @mkdir($destDir, 0775, true);
         }
 
@@ -619,9 +625,9 @@ class UserController extends Controller
 
         // Try to copy from the front-end assets if available in monorepo
         foreach ($files as $f) {
-            $dest = $destDir . DIRECTORY_SEPARATOR . $f;
-            if (!file_exists($dest)) {
-                $src = base_path('../webapp/src/assets/textures/' . $f);
+            $dest = $destDir.DIRECTORY_SEPARATOR.$f;
+            if (! file_exists($dest)) {
+                $src = base_path('../webapp/src/assets/textures/'.$f);
                 if (file_exists($src)) {
                     @copy($src, $dest);
                 }
@@ -636,10 +642,10 @@ class UserController extends Controller
     {
         $publicDir = public_path('og/fonts');
         $storageDir = storage_path('app/fonts');
-        if (!is_dir($publicDir)) {
+        if (! is_dir($publicDir)) {
             @mkdir($publicDir, 0775, true);
         }
-        if (!is_dir($storageDir)) {
+        if (! is_dir($storageDir)) {
             @mkdir($storageDir, 0775, true);
         }
 
@@ -661,15 +667,16 @@ class UserController extends Controller
         ];
 
         foreach ($fonts as $font) {
-            $pubPath = $publicDir . DIRECTORY_SEPARATOR . $font['name'];
-            $storPath = $storageDir . DIRECTORY_SEPARATOR . $font['name'];
+            $pubPath = $publicDir.DIRECTORY_SEPARATOR.$font['name'];
+            $storPath = $storageDir.DIRECTORY_SEPARATOR.$font['name'];
             if (file_exists($pubPath) || file_exists($storPath)) {
                 // Ensure both locations have a copy
-                if (file_exists($pubPath) && !file_exists($storPath)) {
+                if (file_exists($pubPath) && ! file_exists($storPath)) {
                     @copy($pubPath, $storPath);
-                } elseif (file_exists($storPath) && !file_exists($pubPath)) {
+                } elseif (file_exists($storPath) && ! file_exists($pubPath)) {
                     @copy($storPath, $pubPath);
                 }
+
                 continue;
             }
 
@@ -713,9 +720,10 @@ class UserController extends Controller
                 $latest = $t;
             }
         }
-        if (!$latest) {
+        if (! $latest) {
             $latest = time();
         }
+
         return (string) $latest;
     }
 
@@ -725,7 +733,9 @@ class UserController extends Controller
     private function addBookCoversToImage($image, $books, $width, $height, $paddingTop = 70, $paddingBottom = 40, $rows = 1)
     {
         $n = max(0, count($books));
-        if ($n === 0) return;
+        if ($n === 0) {
+            return;
+        }
 
         // Compute row metrics to match the wooden shelves we drew earlier
         $rows = max(1, (int) $rows);
@@ -762,7 +772,7 @@ class UserController extends Controller
                 $x = $startX + ($col * ($coverWidth + $spacing));
                 $book = $books[$bookIndex];
 
-                if (!empty($book->thumbnail) && ($coverImage = $this->loadImageFromUrl($book->thumbnail))) {
+                if (! empty($book->thumbnail) && ($coverImage = $this->loadImageFromUrl($book->thumbnail))) {
                     $resizedCover = imagecreatetruecolor($coverWidth, $coverHeight);
                     imagecopyresampled($resizedCover, $coverImage, 0, 0, 0, 0, $coverWidth, $coverHeight, imagesx($coverImage), imagesy($coverImage));
                     imagecopy($image, $resizedCover, $x, $y, 0, 0, $coverWidth, $coverHeight);
@@ -787,17 +797,17 @@ class UserController extends Controller
     private function loadImageFromUrl($url)
     {
         try {
-            if (!$this->isAllowedDomain($url)) {
+            if (! $this->isAllowedDomain($url)) {
                 return null;
             }
 
             // Local cache for remote covers (TTL 7 days)
             $cacheDir = storage_path('app/cache/covers');
-            if (!is_dir($cacheDir)) {
+            if (! is_dir($cacheDir)) {
                 @mkdir($cacheDir, 0775, true);
             }
             $hash = sha1($url);
-            $cacheFile = $cacheDir . '/' . $hash . '.jpg';
+            $cacheFile = $cacheDir.'/'.$hash.'.jpg';
             $ttl = 60 * 60 * 24 * 7; // 7 days
 
             if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $ttl) {
@@ -808,9 +818,12 @@ class UserController extends Controller
                     @file_put_contents($cacheFile, $imageData);
                 }
             }
-            if ($imageData === false) return null;
+            if ($imageData === false) {
+                return null;
+            }
 
             $image = @imagecreatefromstring($imageData);
+
             return $image ?: null;
         } catch (\Exception $e) {
             return null;
@@ -830,13 +843,13 @@ class UserController extends Controller
         ];
 
         $parsed = parse_url($url);
-        if (!isset($parsed['host']) || !isset($parsed['scheme'])) {
+        if (! isset($parsed['host']) || ! isset($parsed['scheme'])) {
             return false;
         }
 
         $host = strtolower($parsed['host']);
         $scheme = strtolower($parsed['scheme']);
-        if (!in_array($scheme, ['http', 'https'], true)) {
+        if (! in_array($scheme, ['http', 'https'], true)) {
             return false;
         }
 
@@ -867,6 +880,7 @@ class UserController extends Controller
                 return $p;
             }
         }
+
         // If no custom font, use built-in font (return null for imagestring functions)
         return null;
     }

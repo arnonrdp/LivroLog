@@ -15,10 +15,18 @@ export interface DescriptionBlock {
   items?: TextSegment[][] | string[] // Legacy support
 }
 
+export interface AmazonLink {
+  region: string
+  label: string
+  url: string
+  domain: string
+}
+
 export interface Book {
   addedIn?: Date | string | number
   amazon_asin?: string
   amazon_buy_link?: string
+  amazon_links?: AmazonLink[]
   amazon_region?: string
   asin_processed_at?: string
   asin_status?: AsinStatus

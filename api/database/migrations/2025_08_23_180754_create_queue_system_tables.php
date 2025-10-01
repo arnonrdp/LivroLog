@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedInteger('created_at');
         });
 
-        // Create failed_jobs table for queue system  
+        // Create failed_jobs table for queue system
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();

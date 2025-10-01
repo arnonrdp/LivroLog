@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserBookSimplifiedResource;
 use App\Models\Book;
 use App\Models\User;
-use App\Services\UnifiedBookEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
+use App\Services\UnifiedBookEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -63,12 +63,14 @@ class UserBookController extends Controller
      *         in="path",
      *         description="Book ID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Book details with pivot data and reviews",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/Book")
      *     ),
      *
@@ -79,7 +81,7 @@ class UserBookController extends Controller
     public function show(Request $request, Book $book, AmazonLinkEnrichmentService $amazonService)
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -92,7 +94,7 @@ class UserBookController extends Controller
             }])
             ->first();
 
-        if (!$userBook) {
+        if (! $userBook) {
             return response()->json(['error' => 'Book not found in your library'], 404);
         }
 
@@ -202,7 +204,7 @@ class UserBookController extends Controller
         }
 
         // If no book found but we have ISBN only, try to create from Google Books
-        if ($isbn && !$request->has('title')) {
+        if ($isbn && ! $request->has('title')) {
             return $this->createBookFromIsbnAndAddToLibrary($user, $unifiedEnrichmentService, $isbn, $isPrivate, $readingStatus);
         }
 
@@ -506,6 +508,7 @@ class UserBookController extends Controller
      *         in="path",
      *         description="User ID or username",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="U-1ABC-2DEF")
      *     ),
      *
@@ -514,12 +517,14 @@ class UserBookController extends Controller
      *         in="path",
      *         description="Book ID",
      *         required=true,
+     *
      *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Book details with user's pivot data and reviews",
+     *
      *         @OA\JsonContent(ref="#/components/schemas/Book")
      *     ),
      *
@@ -541,7 +546,7 @@ class UserBookController extends Controller
         $isOwner = $currentUser && $currentUser->id === $targetUser->id;
         $isFollowing = false;
 
-        if ($currentUser && !$isOwner) {
+        if ($currentUser && ! $isOwner) {
             $isFollowing = $currentUser->followingRelationships()
                 ->where('followed_id', $targetUser->id)
                 ->where('status', 'accepted')
@@ -549,7 +554,7 @@ class UserBookController extends Controller
         }
 
         // Check privacy access
-        if ($targetUser->is_private && !$isOwner && !$isFollowing) {
+        if ($targetUser->is_private && ! $isOwner && ! $isFollowing) {
             return response()->json(['error' => 'Access denied to private profile'], 403);
         }
 
@@ -562,12 +567,12 @@ class UserBookController extends Controller
             }])
             ->first();
 
-        if (!$userBook) {
+        if (! $userBook) {
             return response()->json(['error' => 'Book not found in user\'s library'], 404);
         }
 
         // Filter private books (only owner can see their private books)
-        if (!$isOwner && $userBook->pivot->is_private) {
+        if (! $isOwner && $userBook->pivot->is_private) {
             return response()->json(['error' => 'Book is private'], 403);
         }
 
@@ -600,7 +605,7 @@ class UserBookController extends Controller
         ];
 
         // Remove null values
-        $bookData = array_filter($bookData, fn($value) => $value !== null);
+        $bookData = array_filter($bookData, fn ($value) => $value !== null);
 
         // Create the book
         $book = Book::create($bookData);
@@ -643,5 +648,4 @@ class UserBookController extends Controller
                $book->info_quality === 'basic' ||
                ($book->page_count === null && $book->google_id !== null);
     }
-
 }

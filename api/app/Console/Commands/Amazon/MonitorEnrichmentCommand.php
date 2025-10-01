@@ -65,10 +65,10 @@ class MonitorEnrichmentCommand extends Command
             ['Metric', 'Value', 'Percentage'],
             [
                 ['Total books', $stats['total'], '100%'],
-                ['With ISBN', $stats['with_isbn'], round(($stats['with_isbn'] / $stats['total']) * 100, 1) . '%'],
-                ['With ASIN', $stats['with_asin'], round(($stats['with_asin'] / $stats['total']) * 100, 1) . '%'],
+                ['With ISBN', $stats['with_isbn'], round(($stats['with_isbn'] / $stats['total']) * 100, 1).'%'],
+                ['With ASIN', $stats['with_asin'], round(($stats['with_asin'] / $stats['total']) * 100, 1).'%'],
                 ['', '', ''],
-                ['✅ Completed', $stats['completed'], $completionRate . '%'],
+                ['✅ Completed', $stats['completed'], $completionRate.'%'],
                 ['⏳ Pending', $stats['pending'], ''],
                 ['🔄 Processing', $stats['processing'], ''],
                 ['❌ Failed', $stats['failed'], ''],
@@ -81,16 +81,16 @@ class MonitorEnrichmentCommand extends Command
         $filledWidth = (int) ($progress * $progressWidth);
         $emptyWidth = $progressWidth - $filledWidth;
 
-        $progressBar = str_repeat('█', $filledWidth) . str_repeat('░', $emptyWidth);
+        $progressBar = str_repeat('█', $filledWidth).str_repeat('░', $emptyWidth);
 
         $this->info("📊 Progress: [{$progressBar}] {$completionRate}%");
         $this->info("🎯 Success rate: {$successRate}%");
 
         if ($stats['pending'] > 0 || $stats['processing'] > 0) {
-            $this->warn("⚡ There are pending or processing jobs. Run the queue worker:");
-            $this->warn("   docker exec livrolog-api php artisan queue:work");
+            $this->warn('⚡ There are pending or processing jobs. Run the queue worker:');
+            $this->warn('   docker exec livrolog-api php artisan queue:work');
         }
 
-        $this->info("\n⏰ Last update: " . now()->format('H:i:s'));
+        $this->info("\n⏰ Last update: ".now()->format('H:i:s'));
     }
 }

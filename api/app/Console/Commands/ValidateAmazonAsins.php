@@ -17,6 +17,7 @@ class ValidateAmazonAsins extends Command
     protected $description = 'Validate that Amazon ASINs match book titles and ISBNs';
 
     private const RATE_LIMIT_SECONDS = 3;
+
     private const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36';
 
     public function handle(): int
@@ -28,6 +29,7 @@ class ValidateAmazonAsins extends Command
 
         if ($totalBooks === 0) {
             $this->info('✅ No books found with Amazon ASINs to validate.');
+
             return Command::SUCCESS;
         }
 
@@ -43,7 +45,7 @@ class ValidateAmazonAsins extends Command
         if ($this->option('book-id')) {
             $bookIds = $this->option('book-id');
             $query->whereIn('id', $bookIds);
-            $this->info('📚 Validating specific books: ' . implode(', ', $bookIds));
+            $this->info('📚 Validating specific books: '.implode(', ', $bookIds));
         } else {
             $query->orderBy('updated_at', 'desc')
                 ->limit($this->option('max-books'));
@@ -68,18 +70,18 @@ class ValidateAmazonAsins extends Command
         foreach ($books as $book) {
             try {
                 $this->line("\n🔍 Validating: {$book->title} (ASIN: {$book->amazon_asin})");
-                
+
                 $validation = $this->validateBookAsin($book);
-                
+
                 if ($validation['error']) {
                     $errors++;
                     $this->line("💥 Error: {$validation['error']}");
                 } elseif ($validation['accurate']) {
                     $accurate++;
-                    $this->line("✅ Match confirmed");
+                    $this->line('✅ Match confirmed');
                 } else {
                     $inaccurate++;
-                    $this->line("❌ Mismatch detected");
+                    $this->line('❌ Mismatch detected');
                 }
 
                 $results[] = array_merge($validation, ['book' => $book]);
@@ -87,7 +89,7 @@ class ValidateAmazonAsins extends Command
                 $progressBar->advance();
 
                 if ($processed < $totalBooks) {
-                    $this->line("⏸️  Waiting " . self::RATE_LIMIT_SECONDS . " seconds...");
+                    $this->line('⏸️  Waiting '.self::RATE_LIMIT_SECONDS.' seconds...');
                     sleep(self::RATE_LIMIT_SECONDS);
                 }
 
@@ -95,11 +97,11 @@ class ValidateAmazonAsins extends Command
                 $errors++;
                 $processed++;
                 $progressBar->advance();
-                $this->line("💥 Error validating {$book->title}: " . $e->getMessage());
+                $this->line("💥 Error validating {$book->title}: ".$e->getMessage());
                 $results[] = [
                     'book' => $book,
                     'error' => $e->getMessage(),
-                    'accurate' => false
+                    'accurate' => false,
                 ];
             }
         }
@@ -114,8 +116,8 @@ class ValidateAmazonAsins extends Command
     {
         try {
             $region = $this->getAmazonRegion($book);
-            $regionConfig = config('services.amazon.regions.' . $region);
-            
+            $regionConfig = config('services.amazon.regions.'.$region);
+
             $url = "https://www.{$regionConfig['domain']}/dp/{$book->amazon_asin}";
 
             $response = Http::timeout(15)
@@ -128,20 +130,20 @@ class ValidateAmazonAsins extends Command
                 ])
                 ->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return [
                     'error' => "HTTP {$response->status()}: Failed to fetch Amazon page",
-                    'accurate' => false
+                    'accurate' => false,
                 ];
             }
 
             $html = $response->body();
             $amazonData = $this->extractAmazonBookData($html);
 
-            if (!$amazonData['title']) {
+            if (! $amazonData['title']) {
                 return [
                     'error' => 'Could not extract title from Amazon page',
-                    'accurate' => false
+                    'accurate' => false,
                 ];
             }
 
@@ -157,13 +159,13 @@ class ValidateAmazonAsins extends Command
                 'amazon_isbn' => $amazonData['isbn'],
                 'title_similarity' => $titleMatch['score'],
                 'isbn_match' => $isbnMatch,
-                'url' => $url
+                'url' => $url,
             ];
 
         } catch (\Exception $e) {
             return [
                 'error' => $e->getMessage(),
-                'accurate' => false
+                'accurate' => false,
             ];
         }
     }
@@ -177,7 +179,7 @@ class ValidateAmazonAsins extends Command
         $titlePatterns = [
             '/<span[^>]*id="productTitle"[^>]*>([^<]+)<\/span>/i',
             '/<h1[^>]*class="[^"]*a-size-large[^"]*"[^>]*>([^<]+)<\/h1>/i',
-            '/<title>([^<]+)<\/title>/i'
+            '/<title>([^<]+)<\/title>/i',
         ];
 
         foreach ($titlePatterns as $pattern) {
@@ -194,7 +196,7 @@ class ValidateAmazonAsins extends Command
             '/ISBN-13[:\s]*(\d{13})/i',
             '/ISBN-10[:\s]*(\d{10})/i',
             '/ISBN[:\s]*(\d{10,13})/i',
-            '/"isbn":"([^"]+)"/i'
+            '/"isbn":"([^"]+)"/i',
         ];
 
         foreach ($isbnPatterns as $pattern) {
@@ -206,7 +208,7 @@ class ValidateAmazonAsins extends Command
 
         return [
             'title' => $title,
-            'isbn' => $isbn
+            'isbn' => $isbn,
         ];
     }
 
@@ -226,13 +228,13 @@ class ValidateAmazonAsins extends Command
         return [
             'score' => max($score, $subMatch),
             'our_normalized' => $our,
-            'amazon_normalized' => $amazon
+            'amazon_normalized' => $amazon,
         ];
     }
 
     private function compareIsbns(?string $ourIsbn, ?string $amazonIsbn): bool
     {
-        if (!$ourIsbn || !$amazonIsbn) {
+        if (! $ourIsbn || ! $amazonIsbn) {
             return false;
         }
 
@@ -245,12 +247,12 @@ class ValidateAmazonAsins extends Command
     private function normalizeTitle(string $title): string
     {
         $normalized = strtolower(trim($title));
-        
+
         // Remove common noise
         $normalized = preg_replace('/[^\w\s]/u', ' ', $normalized);
         $normalized = preg_replace('/\s+/', ' ', $normalized);
         $normalized = trim($normalized);
-        
+
         return $normalized;
     }
 
@@ -276,14 +278,14 @@ class ValidateAmazonAsins extends Command
         }
 
         // Show inaccurate books summary
-        $inaccurateBooks = array_filter($results, fn($r) => !$r['error'] && !$r['accurate']);
+        $inaccurateBooks = array_filter($results, fn ($r) => ! $r['error'] && ! $r['accurate']);
         if (count($inaccurateBooks) > 0) {
             $this->newLine();
             $this->warn('⚠️  Books with inaccurate ASINs:');
             foreach ($inaccurateBooks as $result) {
                 $book = $result['book'];
                 $this->line("   • {$book->title} (ASIN: {$book->amazon_asin})");
-                $this->line("     Similarity: {$result['title_similarity']}, ISBN Match: " . ($result['isbn_match'] ? 'Yes' : 'No'));
+                $this->line("     Similarity: {$result['title_similarity']}, ISBN Match: ".($result['isbn_match'] ? 'Yes' : 'No'));
             }
         }
     }
@@ -298,17 +300,17 @@ class ValidateAmazonAsins extends Command
             $this->newLine();
             $this->line("📚 {$book->title}");
             $this->line("   ASIN: {$book->amazon_asin}");
-            
+
             if ($result['error']) {
                 $this->line("   ❌ Error: {$result['error']}");
             } else {
                 $this->line("   🏷️  Our title: {$book->title}");
                 $this->line("   🏷️  Amazon: {$result['amazon_title']}");
-                $this->line("   📖 Our ISBN: " . ($book->isbn ?: 'N/A'));
-                $this->line("   📖 Amazon ISBN: " . ($result['amazon_isbn'] ?: 'N/A'));
-                $this->line("   📊 Title similarity: " . round($result['title_similarity'] * 100, 1) . "%");
-                $this->line("   🔢 ISBN match: " . ($result['isbn_match'] ? 'Yes' : 'No'));
-                $this->line("   ✅ Status: " . ($result['accurate'] ? 'ACCURATE' : 'INACCURATE'));
+                $this->line('   📖 Our ISBN: '.($book->isbn ?: 'N/A'));
+                $this->line('   📖 Amazon ISBN: '.($result['amazon_isbn'] ?: 'N/A'));
+                $this->line('   📊 Title similarity: '.round($result['title_similarity'] * 100, 1).'%');
+                $this->line('   🔢 ISBN match: '.($result['isbn_match'] ? 'Yes' : 'No'));
+                $this->line('   ✅ Status: '.($result['accurate'] ? 'ACCURATE' : 'INACCURATE'));
                 $this->line("   🔗 URL: {$result['url']}");
             }
         }
@@ -323,7 +325,7 @@ class ValidateAmazonAsins extends Command
     {
         $languageToRegion = [
             'pt' => 'BR',
-            'pt-BR' => 'BR', 
+            'pt-BR' => 'BR',
             'pt_BR' => 'BR',
             'en' => 'US',
             'en-US' => 'US',
@@ -342,19 +344,19 @@ class ValidateAmazonAsins extends Command
             'it' => 'US',
         ];
 
-        if (!$language) {
+        if (! $language) {
             return 'US';
         }
 
         $normalizedLang = strtolower(trim($language));
-        
+
         if (isset($languageToRegion[$normalizedLang])) {
             return $languageToRegion[$normalizedLang];
         }
 
         $langPrefix = explode('-', $normalizedLang)[0];
         $langPrefix = explode('_', $langPrefix)[0];
-        
+
         if (isset($languageToRegion[$langPrefix])) {
             return $languageToRegion[$langPrefix];
         }
@@ -372,7 +374,7 @@ class ValidateAmazonAsins extends Command
             'en-CA' => 'en-CA,en;q=0.8,fr;q=0.5',
             'fr-FR' => 'fr-FR,fr;q=0.8,en;q=0.5',
         ];
-        
+
         return $headers[$language] ?? 'en-US,en;q=0.8';
     }
 }

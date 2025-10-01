@@ -361,7 +361,7 @@ class AuthController extends Controller
 
         // Add account status information
         $userData['email'] = $user->email;
-        $userData['email_verified'] = !is_null($user->email_verified_at);
+        $userData['email_verified'] = ! is_null($user->email_verified_at);
         $userData['email_verified_at'] = $user->email_verified_at;
         $userData['has_password_set'] = $user->hasPasswordSet();
         $userData['has_google_connected'] = $user->hasGoogleConnected();
@@ -1081,8 +1081,10 @@ class AuthController extends Controller
      *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"id_token", "action"},
+     *
      *             @OA\Property(property="id_token", type="string", description="Google ID token"),
      *             @OA\Property(property="action", type="string", enum={"connect", "update_email"}, description="Action to perform")
      *         )
@@ -1091,7 +1093,9 @@ class AuthController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Google account connected successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Google account connected successfully"),
      *             @OA\Property(property="user", ref="#/components/schemas/User")
      *         )
@@ -1106,7 +1110,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'id_token' => 'required|string',
-            'action' => 'required|string|in:connect,update_email'
+            'action' => 'required|string|in:connect,update_email',
         ]);
 
         $user = $request->user();
@@ -1114,11 +1118,11 @@ class AuthController extends Controller
         $action = $request->input('action');
 
         try {
-            $client = new \Google_Client();
+            $client = new \Google_Client;
             $client->setClientId(config('services.google.client_id'));
 
             $payload = $client->verifyIdToken($idToken);
-            if (!$payload) {
+            if (! $payload) {
                 return response()->json(['message' => 'Invalid Google token'], 400);
             }
 
@@ -1147,11 +1151,11 @@ class AuthController extends Controller
                 $user->email = $googleEmail;
             }
 
-            if (!$user->avatar && $googleAvatar) {
+            if (! $user->avatar && $googleAvatar) {
                 $user->avatar = $googleAvatar;
             }
 
-            if (!$user->display_name && $googleName) {
+            if (! $user->display_name && $googleName) {
                 $user->display_name = $googleName;
             }
 
@@ -1168,18 +1172,18 @@ class AuthController extends Controller
             $userData['pending_follow_requests_count'] = $user->pending_follow_requests_count;
 
             $userData['email'] = $user->email;
-            $userData['email_verified'] = !is_null($user->email_verified_at);
+            $userData['email_verified'] = ! is_null($user->email_verified_at);
             $userData['email_verified_at'] = $user->email_verified_at;
             $userData['has_password_set'] = $user->hasPasswordSet();
             $userData['has_google_connected'] = $user->hasGoogleConnected();
 
             return response()->json([
                 'message' => 'Google account connected successfully',
-                'user' => $userData
+                'user' => $userData,
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to connect Google account: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to connect Google account: '.$e->getMessage()], 500);
         }
     }
 

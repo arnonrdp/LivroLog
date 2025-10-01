@@ -2,43 +2,41 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-
 class AmazonLinkEnrichmentService
 {
     private array $regionConfig = [
         'US' => [
             'domain' => 'amazon.com',
             'search_url' => 'https://www.amazon.com/s',
-            'associate_tag' => 'livrolog-20'
+            'associate_tag' => 'livrolog-20',
         ],
         'BR' => [
             'domain' => 'amazon.com.br',
             'search_url' => 'https://www.amazon.com.br/s',
-            'associate_tag' => 'livrolog01-20'
+            'associate_tag' => 'livrolog01-20',
         ],
         'UK' => [
             'domain' => 'amazon.co.uk',
             'search_url' => 'https://www.amazon.co.uk/s',
-            'associate_tag' => 'livrolog-20'
+            'associate_tag' => 'livrolog-20',
         ],
         'CA' => [
             'domain' => 'amazon.ca',
             'search_url' => 'https://www.amazon.ca/s',
-            'associate_tag' => 'livrolog-20'
-        ]
+            'associate_tag' => 'livrolog-20',
+        ],
     ];
 
     public function enrichBooksWithAmazonLinks(array $books, array $options = []): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return $books;
         }
 
         $region = $this->detectOptimalRegion($options);
         $associateTag = $this->regionConfig[$region]['associate_tag'];
 
-        if (!$associateTag) {
+        if (! $associateTag) {
             return $books;
         }
 
@@ -59,7 +57,7 @@ class AmazonLinkEnrichmentService
         $domain = $this->regionConfig[$region]['domain'];
 
         // Se tiver ASIN, gera link direto para o produto
-        if (!empty($book['amazon_asin'])) {
+        if (! empty($book['amazon_asin'])) {
             return "https://www.{$domain}/dp/{$book['amazon_asin']}?tag={$associateTag}";
         }
 
@@ -69,21 +67,21 @@ class AmazonLinkEnrichmentService
         // Prioridade: ISBN > Título + Autor > Título
         $searchTerm = '';
 
-        if (!empty($book['isbn'])) {
+        if (! empty($book['isbn'])) {
             $searchTerm = $book['isbn'];
-        } elseif (!empty($book['title']) && !empty($book['authors'])) {
-            $searchTerm = $book['title'] . ' ' . $book['authors'];
-        } elseif (!empty($book['title'])) {
+        } elseif (! empty($book['title']) && ! empty($book['authors'])) {
+            $searchTerm = $book['title'].' '.$book['authors'];
+        } elseif (! empty($book['title'])) {
             $searchTerm = $book['title'];
         } else {
             $searchTerm = 'book';
         }
 
-        return $searchUrl . '?' . http_build_query([
+        return $searchUrl.'?'.http_build_query([
             'k' => $searchTerm,
             'i' => 'stripbooks',
             'tag' => $associateTag,
-            'ref' => 'nb_sb_noss'
+            'ref' => 'nb_sb_noss',
         ]);
     }
 
@@ -117,7 +115,7 @@ class AmazonLinkEnrichmentService
         $language = $book['language'] ?? '';
 
         // Check explicit language field first
-        if (!empty($language)) {
+        if (! empty($language)) {
             if (str_starts_with(strtolower($language), 'pt')) {
                 return 'BR';
             }
@@ -127,13 +125,13 @@ class AmazonLinkEnrichmentService
         }
 
         // Analyze title and description for language indicators
-        $content = strtolower($title . ' ' . $description);
+        $content = strtolower($title.' '.$description);
 
         // Portuguese indicators
         $portugueseWords = [
             'livro', 'edição', 'história', 'português', 'brasil', 'brazilian',
             'coleção', 'volume', 'capítulo', 'página', 'páginas',
-            'português', 'brasileira', 'nacional'
+            'português', 'brasileira', 'nacional',
         ];
 
         $portugueseCount = 0;
@@ -146,7 +144,7 @@ class AmazonLinkEnrichmentService
         // English indicators
         $englishWords = [
             'edition', 'english', 'book', 'story', 'novel', 'collection',
-            'volume', 'chapter', 'page', 'pages', 'american', 'british'
+            'volume', 'chapter', 'page', 'pages', 'american', 'british',
         ];
 
         $englishCount = 0;
@@ -175,7 +173,7 @@ class AmazonLinkEnrichmentService
      */
     public function generateAllRegionLinks(array $book): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return [];
         }
 
@@ -189,7 +187,7 @@ class AmazonLinkEnrichmentService
                 'region' => $region,
                 'label' => $this->getRegionLabel($region),
                 'url' => $link,
-                'domain' => $config['domain']
+                'domain' => $config['domain'],
             ];
         }
 
@@ -205,7 +203,7 @@ class AmazonLinkEnrichmentService
             'BR' => 'Amazon Brazil',
             'US' => 'Amazon United States',
             'UK' => 'Amazon United Kingdom',
-            'CA' => 'Amazon Canada'
+            'CA' => 'Amazon Canada',
         ];
 
         return $labels[$region] ?? "Amazon {$region}";

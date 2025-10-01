@@ -43,6 +43,7 @@ class EnrichBooksWithAmazon extends Command
 
         if ($totalBooks === 0) {
             $this->info('✅ No books found without Amazon ASIN.');
+
             return Command::SUCCESS;
         }
 
@@ -53,8 +54,9 @@ class EnrichBooksWithAmazon extends Command
             return $this->handleDryRun($books);
         }
 
-        if (!$this->confirm("Do you want to enrich {$totalBooks} books with Amazon ASINs?", true)) {
+        if (! $this->confirm("Do you want to enrich {$totalBooks} books with Amazon ASINs?", true)) {
             $this->info('❌ Operation cancelled.');
+
             return Command::SUCCESS;
         }
 
@@ -71,14 +73,14 @@ class EnrichBooksWithAmazon extends Command
         if ($this->option('book-id')) {
             $bookIds = $this->option('book-id');
             $query->whereIn('id', $bookIds);
-            $this->info('📚 Processing specific books: ' . implode(', ', $bookIds));
+            $this->info('📚 Processing specific books: '.implode(', ', $bookIds));
         } else {
             // Only books without amazon_asin
             $query->whereNull('amazon_asin');
             $this->info('🔍 Processing books without Amazon ASIN...');
         }
 
-        if (!$this->option('book-id')) {
+        if (! $this->option('book-id')) {
             $query->orderBy('created_at', 'desc')
                 ->limit($this->option('max-books'));
         }
@@ -92,13 +94,13 @@ class EnrichBooksWithAmazon extends Command
     private function handleDryRun($books): int
     {
         $this->warn('🔍 DRY-RUN MODE - No changes will be made');
-        
+
         $this->table(
             ['ID', 'Title', 'ISBN', 'Authors'],
             $books->map(function ($book) {
                 return [
                     $book->id,
-                    substr($book->title, 0, 40) . (strlen($book->title) > 40 ? '...' : ''),
+                    substr($book->title, 0, 40).(strlen($book->title) > 40 ? '...' : ''),
                     $book->isbn ?: 'N/A',
                     substr($book->authors ?: 'Unknown', 0, 30),
                 ];
@@ -124,16 +126,16 @@ class EnrichBooksWithAmazon extends Command
         foreach ($books as $book) {
             try {
                 $this->line("\n🔍 Processing: {$book->title}");
-                
+
                 $asin = $this->findAmazonAsin($book);
-                
+
                 if ($asin) {
                     $book->update(['amazon_asin' => $asin]);
                     $successful++;
                     $this->line("✅ Found ASIN: {$asin}");
                 } else {
                     $errors++;
-                    $this->line("❌ ASIN not found");
+                    $this->line('❌ ASIN not found');
                 }
 
                 $processed++;
@@ -141,7 +143,7 @@ class EnrichBooksWithAmazon extends Command
 
                 // Rate limiting
                 if ($processed < $totalBooks) {
-                    $this->line("⏸️  Waiting " . self::RATE_LIMIT_SECONDS . " seconds...");
+                    $this->line('⏸️  Waiting '.self::RATE_LIMIT_SECONDS.' seconds...');
                     sleep(self::RATE_LIMIT_SECONDS);
                 }
 
@@ -149,7 +151,7 @@ class EnrichBooksWithAmazon extends Command
                 $errors++;
                 $processed++;
                 $progressBar->advance();
-                $this->line("💥 Error processing {$book->title}: " . $e->getMessage());
+                $this->line("💥 Error processing {$book->title}: ".$e->getMessage());
             }
         }
 
@@ -165,15 +167,15 @@ class EnrichBooksWithAmazon extends Command
     private function findAmazonAsin(Book $book): ?string
     {
         $searchStrategies = $this->buildSearchStrategies($book);
-        
+
         foreach ($searchStrategies as $strategy) {
-            $this->line("   {$strategy['icon']} Trying {$strategy['name']}: " . substr($strategy['term'], 0, 50) . "...");
-            
+            $this->line("   {$strategy['icon']} Trying {$strategy['name']}: ".substr($strategy['term'], 0, 50).'...');
+
             $asin = $this->searchAmazonByTerm($strategy['term'], $book);
             if ($asin) {
                 return $asin;
             }
-            
+
             // Small delay between different strategies
             usleep(500000); // 0.5 seconds
         }
@@ -193,7 +195,7 @@ class EnrichBooksWithAmazon extends Command
             $strategies[] = [
                 'name' => 'ISBN',
                 'term' => $book->isbn,
-                'icon' => '📖'
+                'icon' => '📖',
             ];
         }
 
@@ -202,8 +204,8 @@ class EnrichBooksWithAmazon extends Command
             $firstAuthor = $this->extractFirstAuthor($book->authors);
             $strategies[] = [
                 'name' => 'title+first_author',
-                'term' => trim($book->title . ' ' . $firstAuthor),
-                'icon' => '👤'
+                'term' => trim($book->title.' '.$firstAuthor),
+                'icon' => '👤',
             ];
         }
 
@@ -214,8 +216,8 @@ class EnrichBooksWithAmazon extends Command
             if ($cleanTitle !== $book->title) { // Only if different from original
                 $strategies[] = [
                     'name' => 'clean_title+author',
-                    'term' => trim($cleanTitle . ' ' . $firstAuthor),
-                    'icon' => '🧹'
+                    'term' => trim($cleanTitle.' '.$firstAuthor),
+                    'icon' => '🧹',
                 ];
             }
         }
@@ -224,8 +226,8 @@ class EnrichBooksWithAmazon extends Command
         if ($book->title && $book->authors) {
             $strategies[] = [
                 'name' => 'title+all_authors',
-                'term' => trim($book->title . ' ' . $book->authors),
-                'icon' => '🔤'
+                'term' => trim($book->title.' '.$book->authors),
+                'icon' => '🔤',
             ];
         }
 
@@ -235,7 +237,7 @@ class EnrichBooksWithAmazon extends Command
             $strategies[] = [
                 'name' => 'clean_title_only',
                 'term' => $cleanTitle,
-                'icon' => '📚'
+                'icon' => '📚',
             ];
         }
 
@@ -246,7 +248,7 @@ class EnrichBooksWithAmazon extends Command
                 $strategies[] = [
                     'name' => 'title_no_series',
                     'term' => $titleWithoutSeries,
-                    'icon' => '📖'
+                    'icon' => '📖',
                 ];
             }
         }
@@ -258,7 +260,7 @@ class EnrichBooksWithAmazon extends Command
                 $strategies[] = [
                     'name' => 'author_only',
                     'term' => $firstAuthor,
-                    'icon' => '✍️'
+                    'icon' => '✍️',
                 ];
             }
         }
@@ -273,13 +275,13 @@ class EnrichBooksWithAmazon extends Command
     {
         try {
             $region = $this->getAmazonRegion($book);
-            $regionConfig = config('services.amazon.regions.' . $region);
-            
-            $this->line("      🌍 Using Amazon {$region} for language: " . ($book->language ?: 'unknown'));
-            
-            $url = $regionConfig['search_url'] . '?' . http_build_query([
+            $regionConfig = config('services.amazon.regions.'.$region);
+
+            $this->line("      🌍 Using Amazon {$region} for language: ".($book->language ?: 'unknown'));
+
+            $url = $regionConfig['search_url'].'?'.http_build_query([
                 'k' => $term,
-                'i' => 'stripbooks'
+                'i' => 'stripbooks',
             ]);
 
             $response = Http::timeout(10)
@@ -292,7 +294,7 @@ class EnrichBooksWithAmazon extends Command
                 ])
                 ->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return null;
             }
 
@@ -312,7 +314,8 @@ class EnrichBooksWithAmazon extends Command
             return null;
 
         } catch (\Exception $e) {
-            $this->line("   ⚠️  Search error: " . $e->getMessage());
+            $this->line('   ⚠️  Search error: '.$e->getMessage());
+
             return null;
         }
     }
@@ -369,7 +372,7 @@ class EnrichBooksWithAmazon extends Command
             return '0%';
         }
 
-        return round(($part / $total) * 100, 1) . '%';
+        return round(($part / $total) * 100, 1).'%';
     }
 
     /**
@@ -379,6 +382,7 @@ class EnrichBooksWithAmazon extends Command
     {
         // Split by common delimiters and get first author
         $authorList = preg_split('/[,;&|]/', $authors);
+
         return trim($authorList[0] ?? '');
     }
 
@@ -389,16 +393,16 @@ class EnrichBooksWithAmazon extends Command
     {
         // Remove subtitles (after : or -)
         $cleaned = preg_replace('/[:\-–—].+$/', '', $title);
-        
+
         // Remove series info in parentheses or brackets
         $cleaned = preg_replace('/[\(\[].*?[\)\]]/', '', $cleaned);
-        
+
         // Remove special characters but keep spaces and accents
         $cleaned = preg_replace('/[^\w\s\p{L}]/u', ' ', $cleaned);
-        
+
         // Clean up multiple spaces
         $cleaned = preg_replace('/\s+/', ' ', trim($cleaned));
-        
+
         return $cleaned;
     }
 
@@ -415,12 +419,12 @@ class EnrichBooksWithAmazon extends Command
             '/\s*#\d+.*$/i', // Remove #1, #2, etc.
             '/\s*\d+º?\s*(volume|vol|livro).*$/i', // Remove "1º volume", etc.
         ];
-        
+
         $cleaned = $title;
         foreach ($patterns as $pattern) {
             $cleaned = preg_replace($pattern, '', $cleaned);
         }
-        
+
         return trim($cleaned);
     }
 
@@ -440,7 +444,7 @@ class EnrichBooksWithAmazon extends Command
         // Language to region mapping
         $languageToRegion = [
             'pt' => 'BR',
-            'pt-BR' => 'BR', 
+            'pt-BR' => 'BR',
             'pt_BR' => 'BR',
             'en' => 'US',
             'en-US' => 'US',
@@ -459,12 +463,12 @@ class EnrichBooksWithAmazon extends Command
             'it' => 'US', // No Amazon Italy in our config yet, use US
         ];
 
-        if (!$language) {
+        if (! $language) {
             return 'US'; // Fixed fallback
         }
 
         $normalizedLang = strtolower(trim($language));
-        
+
         // Direct match
         if (isset($languageToRegion[$normalizedLang])) {
             return $languageToRegion[$normalizedLang];
@@ -473,7 +477,7 @@ class EnrichBooksWithAmazon extends Command
         // Try prefix match (e.g., pt-BR -> pt)
         $langPrefix = explode('-', $normalizedLang)[0];
         $langPrefix = explode('_', $langPrefix)[0];
-        
+
         if (isset($languageToRegion[$langPrefix])) {
             return $languageToRegion[$langPrefix];
         }
@@ -495,7 +499,7 @@ class EnrichBooksWithAmazon extends Command
             'en-CA' => 'en-CA,en;q=0.8,fr;q=0.5',
             'fr-FR' => 'fr-FR,fr;q=0.8,en;q=0.5',
         ];
-        
+
         return $headers[$language] ?? 'en-US,en;q=0.8';
     }
 }

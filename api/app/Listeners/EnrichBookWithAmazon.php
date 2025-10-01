@@ -14,14 +14,16 @@ class EnrichBookWithAmazon
     public function handle(BookCreated $event): void
     {
         // Only enrich if Amazon integration is enabled
-        if (!config('services.amazon.sitestripe_enabled', false)) {
+        if (! config('services.amazon.sitestripe_enabled', false)) {
             Log::info("Amazon integration disabled, skipping ASIN enrichment for book {$event->book->id}");
+
             return;
         }
 
         // Skip if book already has ASIN or is not in pending status
         if ($event->book->amazon_asin || $event->book->asin_status !== 'pending') {
             Log::info("Book {$event->book->id} already has ASIN or not in pending status (current: {$event->book->asin_status}), skipping enrichment");
+
             return;
         }
 
