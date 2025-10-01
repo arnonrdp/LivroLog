@@ -475,7 +475,7 @@ class UserBookController extends Controller
         // Create a basic book with just ISBN
         $book = Book::create([
             'isbn' => $isbn,
-            'title' => 'Book - ' . $isbn, // Temporary title
+            'title' => 'Book - '.$isbn, // Temporary title
             'info_quality' => 'basic',
         ]);
 

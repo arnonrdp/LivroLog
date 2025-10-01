@@ -39,7 +39,7 @@ class MonitorEnrichmentCommand extends Command
             }
         }
 
-        return Command::SUCCESS;
+        // @phpstan-ignore-next-line - Unreachable code by design (infinite loop, exits on Ctrl+C)
     }
 
     private function displayStats(): void
