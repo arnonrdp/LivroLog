@@ -84,6 +84,24 @@ class BookEnrichmentService
     }
 
     /**
+     * Searches for book in Google Books API by ISBN
+     */
+    public function searchBookByIsbn(string $isbn): ?array
+    {
+        $response = Http::get(self::GOOGLE_BOOKS_API, [
+            'q' => 'isbn:' . $isbn,
+            'maxResults' => 1,
+        ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            return $data['items'][0] ?? null;
+        }
+
+        return null;
+    }
+
+    /**
      * Searches for book in Google Books API
      */
     private function fetchBookFromGoogle(string $identifier): ?array

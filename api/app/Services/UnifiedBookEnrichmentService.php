@@ -138,6 +138,57 @@ class UnifiedBookEnrichmentService
     }
 
     /**
+     * Creates a new enriched book from ISBN using Google Books
+     */
+    public function createEnrichedBookFromIsbn(string $isbn, ?string $userId = null, bool $isPrivate = false, string $readingStatus = 'read'): array
+    {
+        try {
+            // First, check if book already exists with this ISBN
+            $existingBook = Book::where('isbn', $isbn)->first();
+            if ($existingBook) {
+                return [
+                    'success' => true,
+                    'book' => $existingBook,
+                    'message' => 'Book already exists',
+                    'created' => false,
+                ];
+            }
+
+            // Try to find the book in Google Books by ISBN
+            $googleBookData = $this->googleEnrichmentService->searchBookByIsbn($isbn);
+
+            if (!$googleBookData) {
+                return [
+                    'success' => false,
+                    'message' => 'Book not found in Google Books with ISBN: ' . $isbn,
+                ];
+            }
+
+            // Extract Google ID and create enriched book
+            $googleId = $googleBookData['id'] ?? null;
+            if (!$googleId) {
+                return [
+                    'success' => false,
+                    'message' => 'No Google ID found for ISBN: ' . $isbn,
+                ];
+            }
+
+            return $this->createEnrichedBookFromGoogle($googleId, $userId, $isPrivate, $readingStatus);
+
+        } catch (\Exception $e) {
+            Log::error('Error creating enriched book from ISBN', [
+                'isbn' => $isbn,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to create enriched book from ISBN: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Enriches multiple books in batch (maintains existing functionality)
      */
     public function enrichBooksInBatch(?array $bookIds = null): array

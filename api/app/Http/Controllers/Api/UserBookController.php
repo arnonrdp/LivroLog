@@ -201,6 +201,11 @@ class UserBookController extends Controller
             return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
+        // If no book found but we have ISBN only, try to create from Google Books
+        if ($isbn && !$request->has('title')) {
+            return $this->createBookFromIsbnAndAddToLibrary($user, $unifiedEnrichmentService, $isbn, $isPrivate, $readingStatus);
+        }
+
         // If no book found but we have basic book data (from Amazon search), create book manually
         if ($request->has('title') && ($isbn || $amazonAsin)) {
             return $this->createBookFromBasicDataAndAddToLibrary($user, $request, $isPrivate, $readingStatus);
@@ -444,6 +449,33 @@ class UserBookController extends Controller
         if (! $enrichmentResult['success']) {
             return response()->json([
                 'message' => $enrichmentResult['message'] ?? 'Failed to create book from Google Books',
+            ], 422);
+        }
+
+        $book = $enrichmentResult['book'];
+
+        // Reload book with pivot data
+        $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
+
+        return response()->json([
+            'book' => $bookWithPivot,
+            'enriched' => true,
+            'already_in_library' => false,
+            'message' => 'Book added to your library successfully',
+        ], 201);
+    }
+
+    /**
+     * Create new book from ISBN and add to user's library
+     */
+    private function createBookFromIsbnAndAddToLibrary($user, UnifiedBookEnrichmentService $unifiedEnrichmentService, string $isbn, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
+    {
+        // Try to create book from ISBN using Google Books
+        $enrichmentResult = $unifiedEnrichmentService->createEnrichedBookFromIsbn($isbn, $user->id, $isPrivate, $readingStatus);
+
+        if (! $enrichmentResult['success']) {
+            return response()->json([
+                'message' => $enrichmentResult['message'] ?? 'Failed to create book from ISBN',
             ], 422);
         }
 
