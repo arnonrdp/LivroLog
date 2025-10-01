@@ -203,9 +203,9 @@ class UserBookController extends Controller
             return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
-        // If no book found but we have ISBN only, try to create from Google Books
+        // If no book found but we have ISBN only, try to create a basic book
         if ($isbn && ! $request->has('title')) {
-            return $this->createBookFromIsbnAndAddToLibrary($user, $unifiedEnrichmentService, $isbn, $isPrivate, $readingStatus);
+            return $this->createBookFromIsbnOnly($user, $isbn, $isPrivate, $readingStatus);
         }
 
         // If no book found but we have basic book data (from Amazon search), create book manually
@@ -468,27 +468,48 @@ class UserBookController extends Controller
     }
 
     /**
-     * Create new book from ISBN and add to user's library
+     * Create new book from ISBN only and add to user's library
      */
-    private function createBookFromIsbnAndAddToLibrary($user, UnifiedBookEnrichmentService $unifiedEnrichmentService, string $isbn, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
+    private function createBookFromIsbnOnly($user, string $isbn, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
-        // Try to create book from ISBN using Google Books
-        $enrichmentResult = $unifiedEnrichmentService->createEnrichedBookFromIsbn($isbn, $user->id, $isPrivate, $readingStatus);
+        // Create a basic book with just ISBN
+        $book = Book::create([
+            'isbn' => $isbn,
+            'title' => 'Book - ' . $isbn, // Temporary title
+            'info_quality' => 'basic',
+        ]);
 
-        if (! $enrichmentResult['success']) {
-            return response()->json([
-                'message' => $enrichmentResult['message'] ?? 'Failed to create book from ISBN',
-            ], 422);
+        // Add book to user's library
+        $attachData = [
+            'added_at' => now(),
+            'is_private' => $isPrivate,
+            'reading_status' => $readingStatus,
+        ];
+
+        // Auto-set read_at when status is 'read'
+        if ($readingStatus === 'read') {
+            $attachData['read_at'] = now()->format('Y-m-d');
         }
 
-        $book = $enrichmentResult['book'];
+        $user->books()->attach($book->id, $attachData);
+
+        // Try to enrich the book asynchronously (won't block response)
+        try {
+            $unifiedEnrichmentService = app(UnifiedBookEnrichmentService::class);
+            $unifiedEnrichmentService->enrichBook($book);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to enrich book after creation', [
+                'book_id' => $book->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Reload book with pivot data
         $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
 
         return response()->json([
             'book' => $bookWithPivot,
-            'enriched' => true,
+            'enriched' => false,
             'already_in_library' => false,
             'message' => 'Book added to your library successfully',
         ], 201);
