@@ -693,7 +693,7 @@ jobs:
               docker exec "$API_CONTAINER" php artisan migrate --force
               docker exec "$API_CONTAINER" php artisan config:cache
               docker exec "$API_CONTAINER" php artisan route:cache
-              docker exec "$API_CONTAINER" php artisan view:cache
+              # Skip view:cache - API doesn't have views
               echo "✅ Laravel optimizations completed"
             else
               echo "⚠️ API container not found for Laravel commands"
