@@ -472,12 +472,11 @@ class UserBookController extends Controller
      */
     private function createBookFromIsbnOnly($user, string $isbn, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
-        // Create a basic book with just ISBN
-        $book = Book::create([
-            'isbn' => $isbn,
-            'title' => 'Book - '.$isbn, // Temporary title
-            'info_quality' => 'basic',
-        ]);
+        // First, try to get book data from external sources (Amazon/Google Books)
+        $bookData = $this->fetchBookDataFromExternalSources($isbn);
+
+        // Create book with available data
+        $book = Book::create($bookData);
 
         // Add book to user's library
         $attachData = [
@@ -493,15 +492,17 @@ class UserBookController extends Controller
 
         $user->books()->attach($book->id, $attachData);
 
-        // Try to enrich the book asynchronously (won't block response)
-        try {
-            $unifiedEnrichmentService = app(UnifiedBookEnrichmentService::class);
-            $unifiedEnrichmentService->enrichBook($book);
-        } catch (\Exception $e) {
-            \Log::warning('Failed to enrich book after creation', [
-                'book_id' => $book->id,
-                'error' => $e->getMessage(),
-            ]);
+        // If we have minimal data, try to enrich asynchronously
+        if ($book->info_quality === 'basic') {
+            try {
+                $unifiedEnrichmentService = app(UnifiedBookEnrichmentService::class);
+                $unifiedEnrichmentService->enrichBook($book);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to enrich book after creation', [
+                    'book_id' => $book->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Reload book with pivot data
@@ -509,10 +510,54 @@ class UserBookController extends Controller
 
         return response()->json([
             'book' => $bookWithPivot,
-            'enriched' => false,
+            'enriched' => $book->info_quality !== 'basic',
             'already_in_library' => false,
             'message' => 'Book added to your library successfully',
         ], 201);
+    }
+
+    /**
+     * Fetch book data from external sources (Amazon/Google Books)
+     */
+    private function fetchBookDataFromExternalSources(string $isbn): array
+    {
+        try {
+            // Use the HybridBookSearchService to search for the book
+            $searchService = app(\App\Services\HybridBookSearchService::class);
+            $results = $searchService->search('isbn:'.$isbn, ['per_page' => 1]);
+
+            if (! empty($results['data'])) {
+                $externalBook = $results['data'][0];
+
+                // If we have rich data from external source, use it
+                if (! empty($externalBook['title']) && $externalBook['title'] !== 'Book - '.$isbn) {
+                    return [
+                        'isbn' => $isbn,
+                        'title' => $externalBook['title'],
+                        'authors' => $externalBook['authors'] ?? null,
+                        'thumbnail' => $externalBook['thumbnail'] ?? null,
+                        'description' => $externalBook['description'] ?? null,
+                        'amazon_asin' => $externalBook['amazon_asin'] ?? null,
+                        'google_id' => $externalBook['google_id'] ?? null,
+                        'publisher' => $externalBook['publisher'] ?? null,
+                        'info_quality' => 'enhanced',
+                        'asin_status' => ! empty($externalBook['amazon_asin']) ? 'completed' : 'pending',
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Failed to fetch book data from external sources', [
+                'isbn' => $isbn,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Fallback to minimal book data
+        return [
+            'isbn' => $isbn,
+            'title' => 'Book - '.$isbn,
+            'info_quality' => 'basic',
+        ];
     }
 
     /**
