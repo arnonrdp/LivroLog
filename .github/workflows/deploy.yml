@@ -469,7 +469,7 @@ jobs:
           DB_HOST=mariadb
           DB_PORT=3306
           DB_DATABASE=livrolog
-          DB_USERNAME=${{ secrets.DB_USERNAME || 'livrolog' }}
+          DB_USERNAME=${{ secrets.DB_USERNAME || 'root' }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
           REDIS_CLIENT=predis
@@ -599,7 +599,7 @@ jobs:
             export GITHUB_REPOSITORY_OWNER="${OWNER}"
             export TAG="${TAG}"
             export DB_DATABASE="livrolog"
-            export DB_USERNAME="${{ secrets.DB_USERNAME || 'livrolog' }}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME || 'root' }}"
             export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             
             # Start containers with health checks
