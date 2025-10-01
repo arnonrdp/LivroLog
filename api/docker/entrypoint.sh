@@ -5,6 +5,9 @@
 
 set -e
 
+# Debug: print all commands as they execute
+set -x
+
 # Try to get APP_KEY from environment variable first, then from .env file
 APP_KEY_TO_CHECK="${APP_KEY}"
 if [ -z "${APP_KEY_TO_CHECK}" ] && [ -f "/var/www/html/.env" ]; then
@@ -32,12 +35,15 @@ else
     echo "✅ APP_KEY is configured (${#APP_KEY_TO_CHECK} chars)"
 fi
 
-# Safe Laravel optimizations (do not depend on DB)
-echo "Optimizing Laravel caches..."
+# Safe Laravel optimizations (do not depend on DB or mounted .env)
+echo "Clearing Laravel caches..."
 php artisan config:clear || true
 php artisan cache:clear || true
-php artisan config:cache || true
-php artisan route:cache || true
+
+# Do NOT run config:cache or route:cache in entrypoint
+# These cache files may be created before .env is mounted
+# causing wrong config values to be cached
+# Run these manually after container starts if needed
 
 # Only cache views if views directory exists
 if [ -d "resources/views" ]; then
@@ -47,20 +53,27 @@ else
     echo "WARNING: 'resources/views' directory not found. Skipping view cache step."
 fi
 
-# Generate Swagger documentation (optional)
-php artisan l5-swagger:generate || true
+# Skip Swagger generation during container startup (can cause timeouts)
+# Generate manually with: docker exec <container> php artisan l5-swagger:generate
+# php artisan l5-swagger:generate || true
 
-# Set proper permissions for Nginx (skip .env if read-only)
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+# Set proper permissions for Nginx (skip read-only files)
+# Note: Some files may be read-only mounted, using || true to continue
+chown -R www-data:www-data /var/www/html/bootstrap/cache /var/www/html/storage 2>/dev/null || true
+chmod -R 775 /var/www/html/bootstrap/cache /var/www/html/storage 2>/dev/null || true
 
-# Handle .env separately since it might be read-only mounted
-if [ -f "/var/www/html/.env" ]; then
-    chown www-data:www-data /var/www/html/.env 2>/dev/null || echo "Note: .env is read-only mounted (this is expected)"
-    chmod 644 /var/www/html/.env 2>/dev/null || true
-fi
+# Ensure supervisor log directory exists with correct permissions
+mkdir -p /var/log/supervisor
+chmod 755 /var/log/supervisor
 
 echo "Laravel optimization completed successfully"
+echo "================================================================"
+echo "Starting Supervisor to manage PHP-FPM and Nginx..."
+echo "Command: $@"
+echo "================================================================"
+
+# List supervisor binary location for debugging
+which supervisord || echo "WARNING: supervisord not found in PATH"
 
 # Execute the main command (Supervisor with PHP-FPM + Nginx)
 exec "$@"

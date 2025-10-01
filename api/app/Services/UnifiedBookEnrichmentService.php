@@ -168,6 +168,11 @@ class UnifiedBookEnrichmentService
      */
     private function shouldEnrichWithGoogle(Book $book): bool
     {
+        // Cannot enrich from Google Books without google_id or ISBN
+        if (empty($book->google_id) && empty($book->isbn)) {
+            return false;
+        }
+
         // Use the same logic as BookEnrichmentService
         return $book->enriched_at === null ||
                $book->info_quality === 'basic' ||

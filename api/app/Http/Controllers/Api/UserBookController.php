@@ -112,18 +112,24 @@ class UserBookController extends Controller
      *     operationId="addBookToLibrary",
      *     tags={"User Library"},
      *     summary="Add book to user's personal library",
-     *     description="Adds a book to the authenticated user's personal library using book identifiers. Priority: book_id > isbn > google_id. If book doesn't exist and google_id provided, creates and enriches automatically.",
+     *     description="Adds a book to the authenticated user's personal library using book identifiers or full book data. Priority: book_id > isbn > google_id > amazon_asin. If book doesn't exist: with google_id creates and enriches from Google Books; with title+isbn/amazon_asin creates from Amazon data.",
      *     security={{"bearerAuth": {}}},
      *
      *     @OA\RequestBody(
      *         required=true,
-     *         description="Book identifiers - provide at least one",
+     *         description="Book identifiers or full book data - provide at least one identifier or title+isbn/amazon_asin",
      *
      *         @OA\JsonContent(
      *
      *             @OA\Property(property="book_id", type="string", example="B-1ABC-2DEF", description="Book ID if already exists in system"),
-     *             @OA\Property(property="isbn", type="string", example="9781505108293", description="ISBN to search for existing book"),
+     *             @OA\Property(property="isbn", type="string", example="9781505108293", description="ISBN to search for existing book or create new"),
      *             @OA\Property(property="google_id", type="string", example="HuKNDAAAQBAJ", description="Google Books ID for search/creation and enrichment"),
+     *             @OA\Property(property="amazon_asin", type="string", example="B00EXAMPLE", description="Amazon ASIN to search for existing book or create new"),
+     *             @OA\Property(property="title", type="string", example="Book Title", description="Book title (required when creating from Amazon data)"),
+     *             @OA\Property(property="authors", type="string", example="Author Name", description="Book authors (optional, for Amazon data)"),
+     *             @OA\Property(property="thumbnail", type="string", format="url", example="https://example.com/cover.jpg", description="Book cover URL (optional, for Amazon data)"),
+     *             @OA\Property(property="description", type="string", example="Book description", description="Book description (optional, for Amazon data)"),
+     *             @OA\Property(property="publisher", type="string", example="Publisher Name", description="Publisher name (optional, for Amazon data)"),
      *             @OA\Property(property="is_private", type="boolean", example=false, description="Whether to mark this book as private in user's library"),
      *             @OA\Property(property="reading_status", type="string", enum={"want_to_read", "reading", "read", "abandoned", "on_hold", "re_reading"}, example="read", description="Reading status for this book")
      *         )
@@ -165,6 +171,12 @@ class UserBookController extends Controller
             'book_id' => 'nullable|string|exists:books,id',
             'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'google_id' => self::VALIDATION_NULLABLE_STRING,
+            'amazon_asin' => self::VALIDATION_NULLABLE_STRING.'|max:20',
+            'title' => self::VALIDATION_NULLABLE_STRING.'|max:255',
+            'authors' => self::VALIDATION_NULLABLE_STRING,
+            'thumbnail' => 'nullable|url|max:512',
+            'description' => self::VALIDATION_NULLABLE_STRING,
+            'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
             'is_private' => 'boolean',
             'reading_status' => 'nullable|string|in:want_to_read,reading,read,abandoned,on_hold,re_reading',
         ]);
@@ -173,22 +185,28 @@ class UserBookController extends Controller
         $bookId = $request->input('book_id');
         $isbn = $request->input('isbn');
         $googleId = $request->input('google_id');
+        $amazonAsin = $request->input('amazon_asin');
         $isPrivate = $request->boolean('is_private', false);
         $readingStatus = $request->input('reading_status', 'read');
 
         // Try to find existing book by different identifiers
-        $book = $this->findBookByIdentifiers($bookId, $isbn, $googleId);
+        $book = $this->findBookByIdentifiers($bookId, $isbn, $googleId, $amazonAsin);
 
         if ($book) {
             return $this->addBookToUserLibrary($book, $user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
-        // If no book found and we have google_id, create new book
+        // If no book found and we have google_id, create new book with enrichment
         if ($googleId) {
             return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
-        return response()->json(['message' => 'Book not found. Please provide book_id, isbn, or google_id.'], 404);
+        // If no book found but we have basic book data (from Amazon search), create book manually
+        if ($request->has('title') && ($isbn || $amazonAsin)) {
+            return $this->createBookFromBasicDataAndAddToLibrary($user, $request, $isPrivate, $readingStatus);
+        }
+
+        return response()->json(['message' => 'Book not found. Please provide book_id, isbn, google_id, or book details (title + isbn/amazon_asin).'], 404);
     }
 
     /**
@@ -335,7 +353,7 @@ class UserBookController extends Controller
     /**
      * Find existing book by different identifiers
      */
-    private function findBookByIdentifiers(?string $bookId, ?string $isbn, ?string $googleId): ?Book
+    private function findBookByIdentifiers(?string $bookId, ?string $isbn, ?string $googleId, ?string $amazonAsin = null): ?Book
     {
         // Try book_id first (most direct)
         if ($bookId) {
@@ -352,7 +370,15 @@ class UserBookController extends Controller
 
         // Try Google ID
         if ($googleId) {
-            return Book::where('google_id', $googleId)->first();
+            $book = Book::where('google_id', $googleId)->first();
+            if ($book) {
+                return $book;
+            }
+        }
+
+        // Try Amazon ASIN
+        if ($amazonAsin) {
+            return Book::where('amazon_asin', $amazonAsin)->first();
         }
 
         return null;
@@ -521,6 +547,55 @@ class UserBookController extends Controller
         );
 
         return response()->json($enrichedBooks[0]);
+    }
+
+    /**
+     * Create new book from basic data (Amazon search results) and add to user's library
+     */
+    private function createBookFromBasicDataAndAddToLibrary($user, Request $request, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
+    {
+        // Create book with basic data from Amazon
+        $bookData = [
+            'title' => $request->input('title'),
+            'authors' => $request->input('authors'),
+            'isbn' => $request->input('isbn'),
+            'amazon_asin' => $request->input('amazon_asin'),
+            'thumbnail' => $request->input('thumbnail'),
+            'description' => $request->input('description'),
+            'publisher' => $request->input('publisher'),
+            'info_quality' => 'basic', // Mark as basic since it's from Amazon without enrichment
+            'asin_status' => 'completed', // Already have ASIN from Amazon
+        ];
+
+        // Remove null values
+        $bookData = array_filter($bookData, fn($value) => $value !== null);
+
+        // Create the book
+        $book = Book::create($bookData);
+
+        // Add book to user's library
+        $attachData = [
+            'added_at' => now(),
+            'is_private' => $isPrivate,
+            'reading_status' => $readingStatus,
+        ];
+
+        // Auto-set read_at when status is 'read'
+        if ($readingStatus === 'read') {
+            $attachData['read_at'] = now()->format('Y-m-d');
+        }
+
+        $user->books()->attach($book->id, $attachData);
+
+        // Reload book with pivot data
+        $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
+
+        return response()->json([
+            'book' => $bookWithPivot,
+            'enriched' => false,
+            'already_in_library' => false,
+            'message' => 'Book added to your library successfully',
+        ], 201);
     }
 
     /**

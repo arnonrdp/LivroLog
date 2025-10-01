@@ -83,6 +83,10 @@ export const useUserBookStore = defineStore('userbook', {
         if (book.google_id && userBook.google_id === book.google_id) {
           return true
         }
+        // Check by amazon_asin (for Amazon books)
+        if (book.amazon_asin && userBook.amazon_asin === book.amazon_asin) {
+          return true
+        }
         // Legacy check: if book.id is actually a google_id (shouldn't happen now but keep for safety)
         if (book.id && !book.id.startsWith('B-') && userBook.google_id === book.id) {
           return true
@@ -95,8 +99,20 @@ export const useUserBookStore = defineStore('userbook', {
         return false
       }
 
-      // Send only identifiers - backend handles the rest
-      const bookData: { book_id?: string; isbn?: string; google_id?: string; is_private?: boolean; reading_status?: ReadingStatus } = {
+      // Send identifiers and book data for Amazon books - backend handles the rest
+      const bookData: {
+        book_id?: string
+        isbn?: string
+        google_id?: string
+        amazon_asin?: string
+        title?: string
+        authors?: string
+        thumbnail?: string
+        description?: string
+        publisher?: string
+        is_private?: boolean
+        reading_status?: ReadingStatus
+      } = {
         is_private: isPrivate,
         reading_status: readingStatus
       }
@@ -115,6 +131,14 @@ export const useUserBookStore = defineStore('userbook', {
         }
       } else if (book.google_id) {
         bookData.google_id = book.google_id
+      } else if (book.amazon_asin) {
+        // Amazon book without ISBN - send full book data
+        bookData.amazon_asin = book.amazon_asin
+        bookData.title = book.title
+        if (book.authors && book.authors !== '') bookData.authors = book.authors
+        if (book.thumbnail && book.thumbnail !== '') bookData.thumbnail = book.thumbnail
+        if (book.description && book.description !== '') bookData.description = book.description
+        if (book.publisher && book.publisher !== '') bookData.publisher = book.publisher
       }
 
       return await api
