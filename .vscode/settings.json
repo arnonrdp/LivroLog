@@ -62,6 +62,8 @@
   "i18n-ally.pathMatcher": "{locale}.json",
   "i18n-ally.sortKeys": true,
   "i18n-ally.sourceLanguage": "en",
+  "intelephense.diagnostics.undefinedMethods": false,
+  "intelephense.diagnostics.undefinedTypes": false,
   "php.validate.enable": false,
   "typescript.tsdk": "node_modules/typescript/lib",
   "yaml.completion": false,
