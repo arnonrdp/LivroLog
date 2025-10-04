@@ -1,10 +1,10 @@
 <template>
-  <q-header class="bg-accent text-black" elevated height-hint="48">
-    <q-toolbar-title class="non-selectable">
+  <q-header class="bg-accent text-black header-nav" elevated height-hint="48">
+    <q-toolbar-title class="non-selectable logo-container">
       <router-link to="/"><img alt="Logotipo" src="/logo.svg" /></router-link>
     </q-toolbar-title>
 
-    <q-tabs active-color="primary" indicator-color="primary">
+    <q-tabs active-color="primary" class="nav-tabs" indicator-color="primary">
       <q-route-tab
         v-for="t in tabs"
         :key="t.name"
@@ -43,14 +43,26 @@ const settingsTo = computed(() => `/settings/${route.params.tab || 'books'}`)
 </script>
 
 <style scoped lang="sass">
-header
+.header-nav
   align-items: baseline
   display: flex
   text-align: left
-  @media screen and (max-width: $breakpoint-sm-min)
+  @media screen and (max-width: $breakpoint-xs-max)
     display: block
     padding-top: 1rem
     text-align: center
+
+.nav-tabs
+  @media screen and (max-width: $breakpoint-xs-max)
+    background: $accent
+    border-top: 1px solid rgba(0, 0, 0, 0.12)
+    bottom: 0
+    justify-content: space-around
+    left: 0
+    position: fixed
+    right: 0
+    width: 100%
+    z-index: 1000
 
 img[alt='Logotipo']
   padding: 0 1rem
