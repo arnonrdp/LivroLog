@@ -140,7 +140,7 @@ class BookEnrichmentService
         $data = [];
 
         $data = array_merge($data, $this->extractBasicInfo($volumeInfo));
-        $data = array_merge($data, $this->extractThumbnail($volumeInfo));
+        $data = array_merge($data, $this->extractThumbnail($volumeInfo, $book));
         $data = array_merge($data, $this->extractPublicationDate($volumeInfo, $book));
         $data = array_merge($data, $this->extractAuthorInfo($volumeInfo));
         $data = array_merge($data, $this->extractPublisherInfo($volumeInfo));
@@ -198,12 +198,16 @@ class BookEnrichmentService
     /**
      * Extract thumbnail image
      */
-    private function extractThumbnail(array $volumeInfo): array
+    private function extractThumbnail(array $volumeInfo, ?Book $book = null): array
     {
         $data = [];
 
         if (isset($volumeInfo['imageLinks']['thumbnail'])) {
+            // Google Books has a thumbnail - use it
             $data['thumbnail'] = str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail']);
+        } elseif ($book && ! empty($book->thumbnail)) {
+            // No thumbnail from Google Books, but book already has one - preserve it
+            $data['thumbnail'] = $book->thumbnail;
         }
 
         return $data;
