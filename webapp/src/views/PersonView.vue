@@ -141,8 +141,8 @@ function updateMetaTags() {
   existingTags.forEach((tag) => tag.remove())
 
   // Update canonical URL for this specific page
-  const canonicalTag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement
-  if (canonicalTag) {
+  const canonicalTag = document.querySelector('link[rel="canonical"]')
+  if (canonicalTag && 'href' in canonicalTag) {
     canonicalTag.href = window.location.href
   }
 
