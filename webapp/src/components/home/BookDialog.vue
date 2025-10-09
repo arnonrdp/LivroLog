@@ -15,7 +15,7 @@
           :disable="book?.asin_status === 'failed'"
           flat
           icon="shopping_cart"
-          :loading="book?.asin_status === 'processing'"
+          :loading="isAmazonLoading"
           round
         >
           <q-tooltip anchor="center left" self="center right">{{ amazonTooltipText }}</q-tooltip>
@@ -430,12 +430,12 @@ const bookReviews = computed(() => {
 const amazonLinks = computed(() => {
   if (!book.value) return []
 
-  // Use amazon_links from API if available (books in database)
-  if (book.value.amazon_links && Array.isArray(book.value.amazon_links)) {
+  // Priority 1: Use amazon_links from API if available (books in database)
+  if (book.value.amazon_links && Array.isArray(book.value.amazon_links) && book.value.amazon_links.length > 0) {
     return book.value.amazon_links
   }
 
-  // Fallback: generate links locally for external search results
+  // Priority 2: Fallback to amazon_buy_link for external search results
   if (book.value.amazon_buy_link) {
     return [
       {
@@ -447,6 +447,7 @@ const amazonLinks = computed(() => {
     ]
   }
 
+  // Only show empty if still processing/pending AND no links available yet
   return []
 })
 
@@ -478,19 +479,37 @@ const amazonButtonColor = computed(() => {
 
 const amazonTooltipText = computed(() => {
   if (!book.value) return t('buy-on-amazon')
+
+  // Priority: If we have data, show appropriate message regardless of status
+  if (book.value.amazon_links?.length || book.value.amazon_buy_link) {
+    // Check if we have actual ASIN (direct product link) or just search link
+    if (book.value.amazon_asin) {
+      return t('buy-on-amazon')
+    }
+    return t('search-on-amazon')
+  }
+
+  // If no data yet, check status
   if (book.value.asin_status === 'processing' || book.value.asin_status === 'pending') {
     return t('searching-amazon-link')
   }
   if (book.value.asin_status === 'failed') {
     return t('amazon-link-not-found')
   }
-  if (book.value.asin_status === 'completed') {
-    if (book.value.amazon_asin) {
-      return t('buy-on-amazon')
-    }
-    return t('search-on-amazon')
-  }
+
   return t('buy-on-amazon')
+})
+
+const isAmazonLoading = computed(() => {
+  if (!book.value) return false
+
+  // Don't show loading if we already have data
+  if (book.value.amazon_links?.length || book.value.amazon_buy_link || book.value.amazon_asin) {
+    return false
+  }
+
+  // Only show loading if processing and no data yet
+  return book.value.asin_status === 'processing' || book.value.asin_status === 'pending'
 })
 
 const canAddReview = computed(() => !userReview.value && isBookInLibrary.value && getBookId() !== null && !props.userIdentifier)
