@@ -69,6 +69,55 @@ php artisan migrate:fresh --seed
 sudo /opt/bitnami/ctlscript.sh restart apache
 ```
 
+## Database Access
+
+### MariaDB Credentials
+
+The production MariaDB instance has the following users:
+
+- **root**
+  - Username: `root`
+  - Password: `3StLYpY7z4R=` (stored in `DB_PASSWORD` env var)
+  - Access: All databases
+
+- **livrolog** (created manually for SSH tunnel access)
+  - Username: `livrolog`
+  - Password: `supersecret`
+  - Access: `livrolog`, `livrolog_dev`, `livrolog_prod` databases
+
+### SSH Tunnel for Database Access
+
+The MariaDB port (3306) is exposed only to localhost for security. To access from your local machine:
+
+**Option 1: Manual SSH Tunnel**
+```bash
+ssh -f -N -L 3306:localhost:3306 livrolog
+```
+
+**Option 2: Database Client with SSH Tunnel**
+- SSH Host: `35.170.25.86`
+- SSH Port: `22`
+- SSH User: `bitnami`
+- SSH Key: `~/.ssh/livrolog-key.pem`
+- DB Host: `127.0.0.1`
+- DB Port: `3306`
+- DB User: `livrolog` (or `root`)
+- DB Password: `supersecret` (or `3StLYpY7z4R=`)
+- Database: `livrolog`
+
+**Note**: The `livrolog` user must be manually recreated if the MariaDB container is rebuilt:
+
+```bash
+ssh livrolog
+docker exec livrolog-mariadb-1 mysql -u root -p'3StLYpY7z4R=' -e "
+CREATE USER IF NOT EXISTS 'livrolog'@'%' IDENTIFIED BY 'supersecret';
+GRANT ALL PRIVILEGES ON livrolog.* TO 'livrolog'@'%';
+GRANT ALL PRIVILEGES ON livrolog_prod.* TO 'livrolog'@'%';
+GRANT ALL PRIVILEGES ON livrolog_dev.* TO 'livrolog'@'%';
+FLUSH PRIVILEGES;
+"
+```
+
 ## Server Structure
 
 ```

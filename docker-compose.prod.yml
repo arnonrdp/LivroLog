@@ -4,7 +4,7 @@
 name: livrolog
 
 services:
-  # MariaDB Database (internal, no exposed ports for security)
+  # MariaDB Database (localhost-only access for SSH tunneling)
   mariadb:
     image: mariadb:10.11-jammy
     restart: always
@@ -13,6 +13,8 @@ services:
       - MYSQL_DATABASE=${DB_DATABASE}
       - MYSQL_USER=${DB_USERNAME}
       - MYSQL_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:3306:3306"
     networks:
       - livrolog-net
     volumes:
