@@ -117,6 +117,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the GoodReads imports for this user.
+     */
+    public function goodreadsImports()
+    {
+        return $this->hasMany(GoodReadsImport::class);
+    }
+
+    /**
      * Check if the user is an admin.
      */
     public function isAdmin(): bool

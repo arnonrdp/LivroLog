@@ -5,6 +5,7 @@
     </q-toolbar-title>
 
     <q-tabs active-color="primary" class="nav-tabs" indicator-color="primary">
+      <LiquidGlassNav />
       <q-route-tab
         v-for="t in tabs"
         :key="t.name"
@@ -21,6 +22,7 @@
 </template>
 
 <script setup>
+import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -79,24 +81,23 @@ const createRipple = (event) => {
 
 .nav-tabs
   @media screen and (max-width: $breakpoint-xs-max)
-    background: rgba(255, 255, 255, 0.08)
-    backdrop-filter: blur(80px) saturate(200%)
-    -webkit-backdrop-filter: blur(80px) saturate(200%)
-    border: 1px solid rgba(255, 255, 255, 0.2)
+    background: transparent
+    border: 1px solid rgba(255, 255, 255, 0.3)
     border-radius: 28px
     bottom: 0
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4)
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)
     gap: 0
     height: 56px
     justify-content: space-around
     left: 12px
     margin-bottom: max(env(safe-area-inset-bottom, 12px), 16px)
-    padding: 0 12px
+    padding: 0
     position: fixed
     right: 12px
     width: calc(100% - 24px)
     z-index: 1000
-    @supports not (backdrop-filter: blur(80px))
+    overflow: hidden
+    @supports not (backdrop-filter: blur(4px))
       background: rgba(255, 255, 255, 0.95)
 
 .tab-item
@@ -134,14 +135,10 @@ img[alt='Logotipo']
       top: 50%
       left: 50%
       transform: translate(-50%, -50%)
-      width: 52px
-      height: 52px
-      background: rgba(255, 255, 255, 0.15)
-      backdrop-filter: blur(20px)
-      -webkit-backdrop-filter: blur(20px)
-      border: 1px solid rgba(255, 255, 255, 0.3)
+      width: 56px
+      height: 56px
+      background: rgba(0, 0, 0, 0.25)
       border-radius: 50%
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)
       z-index: 0
       pointer-events: none
 

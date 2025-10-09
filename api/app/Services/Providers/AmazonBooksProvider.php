@@ -487,7 +487,20 @@ class AmazonBooksProvider implements BookSearchProvider
         if ($contentInfo && $contentInfo->getLanguages()) {
             $languages = $contentInfo->getLanguages();
             if ($languages->getDisplayValues()) {
-                return $languages->getDisplayValues()[0]; // Return first language
+                $lang = $languages->getDisplayValues()[0];
+
+                // Handle case where language is an object with DisplayValue property
+                if (is_object($lang) && isset($lang->DisplayValue)) {
+                    return $lang->DisplayValue;
+                }
+
+                // Handle case where language is an array
+                if (is_array($lang) && isset($lang['DisplayValue'])) {
+                    return $lang['DisplayValue'];
+                }
+
+                // Return as string if it's already a simple value
+                return is_string($lang) ? $lang : null;
             }
         }
 

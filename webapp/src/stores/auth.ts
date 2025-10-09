@@ -150,16 +150,25 @@ export const useAuthStore = defineStore('auth', {
 
     async postAuthLogout() {
       this._isLoading = true
-      try {
-        await api.post('/auth/logout')
-      } catch (error) {
-        console.error('Logout API error:', error)
-      }
-      this.$reset()
+
+      // Clear auth data FIRST to prevent interceptor from triggering
+      const token = LocalStorage.getItem('access_token')
       LocalStorage.clear()
       localStorage.removeItem('auth')
-      router.push('/login')
+      this.$reset()
+
+      // Then try to call logout API (ignore errors since we already cleared local data)
+      if (token) {
+        try {
+          await api.post('/auth/logout')
+        } catch (error) {
+          // Ignore errors - we already logged out locally
+          console.debug('Logout API call failed (expected):', error)
+        }
+      }
+
       this._isLoading = false
+      router.push('/login')
     },
 
     async putAuthPassword(data: { current_password?: string; password: string; password_confirmation: string }) {
