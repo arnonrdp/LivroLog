@@ -186,6 +186,8 @@ jobs:
             export GOOGLE_CLIENT_SECRET='${{ secrets.GOOGLE_CLIENT_SECRET || '' }}'
             export AMAZON_PA_API_KEY='${{ secrets.AMAZON_PA_API_KEY || '' }}'
             export AMAZON_PA_SECRET_KEY='${{ secrets.AMAZON_PA_SECRET_KEY || '' }}'
+            export AMAZON_ASSOCIATE_TAG='${{ secrets.AMAZON_ASSOCIATE_TAG || '' }}'
+            export AMAZON_SITESTRIPE_ENABLED='${{ secrets.AMAZON_SITESTRIPE_ENABLED || '' }}'
             cd '${{ env.DEPLOY_PATH }}/scripts'
             ./deploy-dev.sh
           "
@@ -490,6 +492,8 @@ jobs:
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}
           AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}
+          AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}
+          AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}
           EOF
 
           echo "✅ Production .env file created locally"
