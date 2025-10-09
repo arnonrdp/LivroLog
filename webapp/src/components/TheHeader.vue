@@ -88,7 +88,7 @@ const createRipple = (event) => {
     box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)
     gap: 0
     height: 56px
-    justify-content: space-around
+    justify-content: space-evenly
     left: 12px
     margin-bottom: max(env(safe-area-inset-bottom, 12px), 16px)
     padding: 0
@@ -163,6 +163,7 @@ img[alt='Logotipo']
 .nav-tabs :deep(.q-tabs__content)
   @media screen and (max-width: $breakpoint-xs-max)
     align-items: center
+    justify-content: space-evenly
 
 :deep(.ripple)
   position: absolute
