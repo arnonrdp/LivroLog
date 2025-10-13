@@ -1,13 +1,13 @@
 <template>
   <div class="liquid-glass-nav">
     <!-- Lens distortion SVG filter -->
-    <svg style="position: absolute; width: 0; height: 0;">
+    <svg style="position: absolute; width: 0; height: 0">
       <defs>
-        <filter id="nav-lens-filter" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+        <filter id="nav-lens-filter" filterUnits="objectBoundingBox" height="100%" width="100%" x="0%" y="0%">
           <feComponentTransfer in="SourceAlpha" result="alpha">
             <feFuncA type="identity" />
           </feComponentTransfer>
-          <feGaussianBlur in="alpha" stdDeviation="30" result="blur" />
+          <feGaussianBlur in="alpha" result="blur" stdDeviation="30" />
           <feDisplacementMap in="SourceGraphic" in2="blur" scale="30" xChannelSelector="A" yChannelSelector="A" />
         </filter>
       </defs>
@@ -33,6 +33,9 @@
   border-radius: 28px
   pointer-events: none
   z-index: -1
+  // Apenas em telas mobile (xs)
+  @media screen and (min-width: $breakpoint-sm-min)
+    display: none
 
 .glass-unified
   position: absolute
