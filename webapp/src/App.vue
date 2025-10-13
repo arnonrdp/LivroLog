@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <TheHeader v-if="userStore.me.id && !['/login', '/reset-password'].includes($route.path)" />
+    <TheHeader v-if="!['/login', '/reset-password'].includes($route.path)" />
     <q-page-container>
       <RouterView v-slot="{ Component }">
         <Transition name="fade">
