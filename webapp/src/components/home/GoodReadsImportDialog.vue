@@ -61,11 +61,11 @@
         <div v-if="!importCompleted">
           <q-file
             v-model="selectedFile"
-            :label="$t('select-csv-file')"
             accept=".csv"
             clearable
             filled
             :hint="$t('max-file-size')"
+            :label="$t('select-csv-file')"
             max-file-size="10485760"
             @rejected="onFileRejected"
           >
@@ -152,7 +152,7 @@ const { t } = useI18n()
 
 const isOpen = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
+  set: (value) => emit('update:modelValue', value)
 })
 
 const selectedFile = ref<File | null>(null)
@@ -173,7 +173,7 @@ function onFileRejected() {
   $q.notify({
     type: 'negative',
     message: t('file-too-large'),
-    position: 'top',
+    position: 'top'
   })
 }
 
@@ -199,7 +199,7 @@ function startImport() {
       $q.notify({
         type: 'positive',
         message: t('import-completed'),
-        position: 'top',
+        position: 'top'
       })
     })
     .catch((error) => {
@@ -210,7 +210,7 @@ function startImport() {
       $q.notify({
         type: 'negative',
         message: errorMessage,
-        position: 'top',
+        position: 'top'
       })
     })
     .finally(() => {

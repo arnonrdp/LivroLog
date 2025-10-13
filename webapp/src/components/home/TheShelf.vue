@@ -8,7 +8,7 @@
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable only for authenticated users on other shelves -->
-      <div :class="['book-cover', { 'clickable': canOpenBookDialog }]" @click="openBookDialog(book)">
+      <div :class="['book-cover', { clickable: canOpenBookDialog }]" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
       </div>

@@ -20,7 +20,9 @@ export default tseslint.config(
         process: 'readonly',
         document: 'readonly',
         window: 'readonly',
-        navigator: 'readonly'
+        navigator: 'readonly',
+        File: 'readonly',
+        FormData: 'readonly'
       }
     },
     rules: {
