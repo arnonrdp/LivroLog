@@ -32,6 +32,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Check if we already cleared the token to avoid multiple redirects
+      const hadToken = Boolean(LocalStorage.getItem('access_token'))
+
       // Clear all auth data
       LocalStorage.remove('user')
       LocalStorage.remove('access_token')
@@ -48,13 +51,26 @@ api.interceptors.response.use(
         }
       }
 
+      // Clear user store to ensure isAuthenticated returns false
+      const userStore = localStorage.getItem('user')
+      if (userStore) {
+        try {
+          const userData = JSON.parse(userStore)
+          userData._me = {}
+          localStorage.setItem('user', JSON.stringify(userData))
+        } catch {
+          localStorage.removeItem('user')
+        }
+      }
+
       // Public routes that don't require authentication
       const publicRoutes = ['/login', '/reset-password']
       const isPublicUserProfile = /^\/[a-zA-Z0-9_-]+$/.test(window.location.pathname)
       const isCurrentlyOnPublicRoute = publicRoutes.includes(window.location.pathname) || isPublicUserProfile
 
-      // Only redirect if not already on login page and not on a public route
-      if (!isCurrentlyOnPublicRoute) {
+      // Only redirect if we had a token and not already on a public route
+      // This prevents redirect loops when the 401 is expected (no token)
+      if (hadToken && !isCurrentlyOnPublicRoute) {
         window.location.href = '/login'
       }
     }

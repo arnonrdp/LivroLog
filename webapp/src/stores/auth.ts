@@ -17,7 +17,8 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isAuthenticated: () => {
       const userStore = useUserStore()
-      return Boolean(userStore.me.id)
+      const hasToken = Boolean(LocalStorage.getItem('access_token'))
+      return Boolean(userStore.me.id) && hasToken
     },
     isLoading: (state) => state._isLoading,
     isGoogleLoading: (state) => state._isGoogleLoading
