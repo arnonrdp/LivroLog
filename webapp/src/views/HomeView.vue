@@ -9,7 +9,7 @@
       </q-btn>
       <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
     </div>
-    <TheShelf :books="filteredBooks" />
+    <TheShelf :books="filteredBooks" @import-completed="onImportCompleted" />
 
     <ShareButtons v-model="showShareDialog" />
   </q-page>
@@ -51,5 +51,9 @@ function onSort(label: string | number) {
     sortKey.value = label
     ascDesc.value = 'asc'
   }
+}
+
+function onImportCompleted() {
+  userBookStore.getUserBooks()
 }
 </script>

@@ -19,7 +19,7 @@ class GoodReadsImportController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:csv,txt|max:10240', // Max 10MB
+            'file' => 'required|file|mimes:csv|max:10240', // Max 10MB
         ]);
 
         if ($validator->fails()) {

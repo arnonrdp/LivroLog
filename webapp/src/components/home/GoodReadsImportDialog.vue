@@ -145,6 +145,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
+  'import-completed': []
 }>()
 
 const $q = useQuasar()
@@ -220,8 +221,8 @@ function startImport() {
 
 function closeAndRefresh() {
   isOpen.value = false
-  // Reload the page to show newly imported books
-  window.location.reload()
+  // Notify parent to refresh shelf data reactively
+  emit('import-completed')
 }
 
 function resetDialog() {

@@ -28,7 +28,7 @@
   <BookDialog v-model="showBookDialog" :book-id="selectedBookId" :user-identifier="props.userIdentifier" />
 
   <!-- GoodReads Import Dialog -->
-  <GoodReadsImportDialog v-model="showImportDialog" />
+  <GoodReadsImportDialog v-model="showImportDialog" @import-completed="onImportCompleted" />
 </template>
 
 <script setup lang="ts">
@@ -42,6 +42,10 @@ import GoodReadsImportDialog from './GoodReadsImportDialog.vue'
 const props = defineProps<{
   books?: User['books']
   userIdentifier?: string // if provided, means viewing another user's shelf
+}>()
+
+const emit = defineEmits<{
+  'import-completed': []
 }>()
 
 const authStore = useAuthStore()
@@ -70,6 +74,10 @@ function openBookDialog(book: Book) {
 
 function handleImport() {
   showImportDialog.value = true
+}
+
+function onImportCompleted() {
+  emit('import-completed')
 }
 </script>
 
