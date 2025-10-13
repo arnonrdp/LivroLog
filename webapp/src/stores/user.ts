@@ -1,7 +1,7 @@
 import type { Meta, User } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
-import { Notify } from 'quasar'
+import { LocalStorage, Notify } from 'quasar'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -58,6 +58,8 @@ export const useUserStore = defineStore('user', {
     // Update a specific property of the current user
     updateMe(updates: Partial<User>) {
       this._me = { ...this._me, ...updates }
+      // Sync updated user data to LocalStorage to keep it in sync with the store
+      LocalStorage.set('user', this._me)
     },
 
     // Generate shelf image URL for Open Graph sharing

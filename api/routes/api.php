@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\FollowController;
+use App\Http\Controllers\Api\GoodReadsImportController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ImageProxyController;
 use App\Http\Controllers\Api\UserBookController;
@@ -107,6 +108,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/books', [UserBookController::class, 'store']);
     Route::patch('/user/books/{book}', [UserBookController::class, 'update']);
     Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
+
+    // GoodReads Import
+    Route::post('/user/goodreads-imports', [GoodReadsImportController::class, 'store']);
 
     // Follow system
     Route::post('/users/{user}/follow', [FollowController::class, 'follow']);

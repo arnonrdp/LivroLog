@@ -33,6 +33,8 @@ sudo chown -R ${SERVER_USER}:${SERVER_USER} "${DEPLOY_PATH}"
 
 # Create development environment file with GitHub secrets
 echo "📝 Creating development .env file..."
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-}"
 export GOOGLE_BOOKS_API_KEY="${GOOGLE_BOOKS_API_KEY:-}"
 export GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 export GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"

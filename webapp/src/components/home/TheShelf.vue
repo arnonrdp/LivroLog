@@ -1,10 +1,14 @@
 <template>
-  <section class="flex justify-around">
+  <!-- Empty state when user has no books and is viewing their own shelf -->
+  <EmptyShelfState v-if="!userIdentifier && (!books || books.length === 0)" @import="handleImport" />
+
+  <!-- Regular shelf display -->
+  <section v-else class="flex justify-around">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable only for authenticated users on other shelves -->
-      <div :class="['book-cover', { 'clickable': canOpenBookDialog }]" @click="openBookDialog(book)">
+      <div :class="['book-cover', { clickable: canOpenBookDialog }]" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
       </div>
@@ -16,12 +20,15 @@
   </section>
 
   <!-- Amazon Associates disclosure placed under the shelf -->
-  <div class="text-caption text-grey-7 q-mt-xs q-mb-md">
+  <div v-if="books && books.length > 0" class="text-caption text-grey-7 q-mt-xs q-mb-md">
     {{ $t('affiliate-disclosure') }}
   </div>
 
   <!-- Book Dialog -->
   <BookDialog v-model="showBookDialog" :book-id="selectedBookId" :user-identifier="props.userIdentifier" />
+
+  <!-- GoodReads Import Dialog -->
+  <GoodReadsImportDialog v-model="showImportDialog" @import-completed="onImportCompleted" />
 </template>
 
 <script setup lang="ts">
@@ -29,16 +36,23 @@ import type { Book, User } from '@/models'
 import { useAuthStore } from '@/stores'
 import { computed, ref } from 'vue'
 import BookDialog from './BookDialog.vue'
+import EmptyShelfState from './EmptyShelfState.vue'
+import GoodReadsImportDialog from './GoodReadsImportDialog.vue'
 
 const props = defineProps<{
-  books: User['books']
+  books?: User['books']
   userIdentifier?: string // if provided, means viewing another user's shelf
+}>()
+
+const emit = defineEmits<{
+  'import-completed': []
 }>()
 
 const authStore = useAuthStore()
 
 const filter = ref('')
 const showBookDialog = ref(false)
+const showImportDialog = ref(false)
 const selectedBookId = ref<string | undefined>()
 
 const canOpenBookDialog = computed(() => {
@@ -56,6 +70,14 @@ function openBookDialog(book: Book) {
 
   selectedBookId.value = book.id
   showBookDialog.value = true
+}
+
+function handleImport() {
+  showImportDialog.value = true
+}
+
+function onImportCompleted() {
+  emit('import-completed')
 }
 </script>
 
