@@ -43,17 +43,6 @@ Route::get('/auth/verify-email', [EmailVerificationController::class, 'verifyEma
 
 // Public routes
 Route::get('/health', [HealthController::class, 'index']);
-
-// Temporary debug route - TODO: Remove after fixing Amazon links issue
-Route::get('/debug/amazon-config', function () {
-    return response()->json([
-        'sitestripe_enabled' => config('services.amazon.sitestripe_enabled'),
-        'associate_tag' => config('services.amazon.associate_tag'),
-        'env_sitestripe' => env('AMAZON_SITESTRIPE_ENABLED'),
-        'env_tag' => env('AMAZON_ASSOCIATE_TAG'),
-    ]);
-});
-
 Route::get('/books', [BookController::class, 'index']);
 
 // Image proxy (public for CORS issues)
