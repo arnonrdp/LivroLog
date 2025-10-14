@@ -326,20 +326,4 @@ class UnifiedBookEnrichmentService
         return $missingFields;
     }
 
-    /**
-     * Future method for Phase 2: Merge data from multiple sources intelligently
-     * This will be implemented when Amazon PA-API is available
-     */
-    private function mergeBookData(array $googleData, array $amazonData): array
-    {
-        // TODO: Implement in Phase 2
-        // Priority strategy:
-        // - thumbnail: Amazon > Google (better quality)
-        // - description: Google > Amazon (more complete)
-        // - page_count: Google > Amazon (more reliable)
-        // - dimensions: Amazon > Google (Amazon has physical measurements)
-        // - asin: Amazon only
-
-        return $googleData; // For now, just return Google data
-    }
 }
