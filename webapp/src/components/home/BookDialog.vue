@@ -58,14 +58,18 @@
               style="max-height: 150px; object-fit: contain; border-radius: 4px"
             />
 
-            <!-- Overlay hover -->
+            <!-- Overlay hover with Liquid Glass effect -->
             <div
               v-if="!props.userIdentifier && isBookInLibrary"
-              class="absolute-full flex flex-center column bg-black overlay-hover"
-              style="border-radius: 4px; opacity: 0; transition: opacity 0.2s; background-color: rgba(0, 0, 0, 0.7); pointer-events: none"
+              class="absolute-full flex flex-center column overlay-hover"
+              style="border-radius: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none"
             >
-              <q-icon color="white" name="swap_horiz" size="md" style="pointer-events: none" />
-              <div class="text-white text-caption q-mt-xs" style="pointer-events: none">
+              <!-- Glass background layer -->
+              <div class="glass-background" style="pointer-events: none"></div>
+
+              <!-- Content on top -->
+              <q-icon color="white" name="swap_horiz" size="md" style="pointer-events: none; z-index: 1; position: relative" />
+              <div class="text-white text-caption q-mt-xs" style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)">
                 {{ $t('change-cover') }}
               </div>
             </div>
@@ -1047,8 +1051,22 @@ function onBookReplaced(newBook: Book) {
 }
 </script>
 
-<style scoped>
-.cursor-pointer:hover .overlay-hover {
-  opacity: 1 !important;
-}
+<style scoped lang="sass">
+.cursor-pointer:hover .overlay-hover
+  opacity: 1 !important
+
+.glass-background
+  position: absolute
+  inset: 0
+  border-radius: inherit
+  pointer-events: none
+  z-index: 0
+  backdrop-filter: blur(8px) saturate(150%) brightness(1.1)
+  -webkit-backdrop-filter: blur(8px) saturate(150%) brightness(1.1)
+  background: rgba(255, 255, 255, 0.3)
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.1)
+
+@supports not (backdrop-filter: blur(8px))
+  .glass-background
+    background: rgba(255, 255, 255, 0.9)
 </style>

@@ -5,7 +5,6 @@ import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
 import { useUserStore } from './user'
 
-
 export const useUserBookStore = defineStore('userbook', {
   state: () => ({
     _book: {} as Book,
@@ -241,7 +240,15 @@ export const useUserBookStore = defineStore('userbook', {
       const userStore = useUserStore()
 
       // Build payload based on whether newBook is an ID or a Book object
-      let payload: any
+      let payload: {
+        new_book_id?: string
+        amazon_asin?: string
+        title?: string
+        authors?: string
+        thumbnail?: string
+        description?: string
+        publisher?: string
+      }
       if (typeof newBook === 'string') {
         // It's a book ID
         payload = { new_book_id: newBook }
