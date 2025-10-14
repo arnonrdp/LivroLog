@@ -47,7 +47,7 @@ class BookController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Search term for external APIs (Google Books, Open Library)",
+     *         description="Search term for Amazon Books",
      *         required=false,
      *
      *         @OA\Schema(type="string", example="Sidarta")
