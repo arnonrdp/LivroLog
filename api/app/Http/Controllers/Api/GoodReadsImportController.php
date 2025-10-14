@@ -59,6 +59,7 @@ class GoodReadsImportController extends Controller
 
             if (empty($title)) {
                 $stats['failed']++;
+
                 continue;
             }
 
@@ -72,6 +73,7 @@ class GoodReadsImportController extends Controller
                         'title' => $title,
                         'status' => 'not_found',
                     ];
+
                     continue;
                 }
 
@@ -82,6 +84,7 @@ class GoodReadsImportController extends Controller
                         'title' => $title,
                         'status' => 'already_exists',
                     ];
+
                     continue;
                 }
 

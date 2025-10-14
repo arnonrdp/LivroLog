@@ -393,5 +393,4 @@ class MultiSourceBookSearchService
 
         return $suggestions;
     }
-
 }

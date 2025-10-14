@@ -325,5 +325,4 @@ class UnifiedBookEnrichmentService
 
         return $missingFields;
     }
-
 }

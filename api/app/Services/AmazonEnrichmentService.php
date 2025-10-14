@@ -8,10 +8,6 @@ use Illuminate\Support\Facades\Log;
 
 class AmazonEnrichmentService
 {
-    public function __construct(
-        private AmazonLinkEnrichmentService $amazonLinkService
-    ) {}
-
     /**
      * Enrich book with Amazon data synchronously
      * Returns array with success status and filled fields
@@ -77,260 +73,54 @@ class AmazonEnrichmentService
     }
 
     /**
-     * Search for book data on Amazon using available providers
+     * Search for book data on Amazon using PA-API ONLY
      */
     private function searchAmazonBook(Book $book): ?array
     {
-        // Phase 2: Try Amazon PA-API first (when available)
-        if (config('services.amazon.enabled', false)) {
-            try {
-                $amazonProvider = app(AmazonBooksProvider::class);
-
-                if ($amazonProvider->isEnabled()) {
-                    Log::info("Using Amazon PA-API for book {$book->id}");
-
-                    // Build search query - prefer ISBN, fallback to title + author
-                    $searchQuery = $this->buildSearchQuery($book);
-
-                    $result = $amazonProvider->search($searchQuery);
-
-                    if ($result['success'] && ! empty($result['books'])) {
-                        $amazonBook = $result['books'][0]; // Take first result
-
-                        // Validate this is likely the same book (ISBN match or high title similarity)
-                        if ($this->validateBookMatch($book, $amazonBook)) {
-                            return $amazonBook;
-                        } else {
-                            Log::warning("Amazon result doesn't match our book {$book->id}");
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::warning("Amazon PA-API search failed for book {$book->id}: {$e->getMessage()}");
-            }
-        }
-
-        // Phase 1: Simple Amazon search using basic method
-        Log::info("Using basic Amazon search for book {$book->id}");
-
-        $asinData = $this->searchAmazonBasic($book);
-
-        if ($asinData) {
-            Log::info("Found Amazon data for book {$book->id}", [
-                'asin' => $asinData['asin'],
-                'source' => $asinData['source'] ?? 'basic_search',
-            ]);
-
-            // Generate proper Amazon link with found ASIN
-            $bookWithAsin = array_merge($book->toArray(), ['amazon_asin' => $asinData['asin']]);
-            $enrichedBooks = $this->amazonLinkService->enrichBooksWithAmazonLinks([$bookWithAsin]);
-
-            return [
-                'amazon_asin' => $asinData['asin'],
-                'amazon_buy_link' => $enrichedBooks[0]['amazon_buy_link'] ?? null,
-                'amazon_region' => $enrichedBooks[0]['amazon_region'] ?? 'BR',
-                'thumbnail' => $asinData['thumbnail'] ?? null,
-            ];
-        }
-
-        // Fallback: Generate search link without specific ASIN (still provides affiliate value)
-        Log::info("Could not find specific ASIN, generating fallback Amazon link for book {$book->id}");
-
-        $enrichedBooks = $this->amazonLinkService->enrichBooksWithAmazonLinks([$book->toArray()]);
-
-        return [
-            'amazon_asin' => null,
-            'amazon_buy_link' => $enrichedBooks[0]['amazon_buy_link'] ?? null,
-            'amazon_region' => $enrichedBooks[0]['amazon_region'] ?? 'BR',
-            'source' => 'search_fallback',
-        ];
-    }
-
-    /**
-     * Basic Amazon search using simple HTTP requests
-     */
-    private function searchAmazonBasic(Book $book): ?array
-    {
-        try {
-            // Try ISBN first (most reliable)
-            if (! empty($book->isbn)) {
-                $result = $this->searchAmazonByIsbn($book->isbn);
-                if ($result) {
-                    return $result;
-                }
-            }
-
-            // Fallback to title + author search
-            if (! empty($book->title)) {
-                $query = $book->title;
-                if (! empty($book->authors)) {
-                    $query .= ' '.$book->authors;
-                }
-
-                $result = $this->searchAmazonByQuery($query);
-                if ($result) {
-                    return $result;
-                }
-            }
-
-            return null;
-
-        } catch (\Exception $e) {
-            Log::warning("Basic Amazon search failed for book {$book->id}: {$e->getMessage()}");
+        if (! config('services.amazon.enabled', false)) {
+            Log::warning("Amazon PA-API is disabled for book {$book->id}");
 
             return null;
         }
-    }
 
-    /**
-     * Search Amazon by ISBN
-     */
-    private function searchAmazonByIsbn(string $isbn): ?array
-    {
-        $cleanIsbn = preg_replace('/[^0-9X]/i', '', $isbn);
-
-        // Search Amazon Brazil first (most likely to have Portuguese books)
-        $searchUrl = "https://www.amazon.com.br/s?k={$cleanIsbn}&i=stripbooks&ref=nb_sb_noss";
-
-        Log::info("Searching Amazon BR for ISBN: {$cleanIsbn}");
-
-        return $this->parseAmazonSearchPage($searchUrl, $cleanIsbn);
-    }
-
-    /**
-     * Search Amazon by query
-     */
-    private function searchAmazonByQuery(string $query): ?array
-    {
-        $encodedQuery = urlencode(trim($query));
-
-        // Search Amazon Brazil first
-        $searchUrl = "https://www.amazon.com.br/s?k={$encodedQuery}&i=stripbooks&ref=nb_sb_noss";
-
-        Log::info("Searching Amazon BR for query: {$query}");
-
-        return $this->parseAmazonSearchPage($searchUrl, $query);
-    }
-
-    /**
-     * Parse Amazon search page to extract ASIN
-     */
-    private function parseAmazonSearchPage(string $url, string $searchTerm): ?array
-    {
         try {
-            $userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            $amazonProvider = app(AmazonBooksProvider::class);
 
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'GET',
-                    'header' => [
-                        "User-Agent: {$userAgent}",
-                        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                        'Accept-Language: pt-BR,pt;q=0.9,en;q=0.8',
-                        'Accept-Encoding: gzip, deflate, br',
-                        'DNT: 1',
-                        'Connection: keep-alive',
-                        'Upgrade-Insecure-Requests: 1',
-                        'Sec-Fetch-Dest: document',
-                        'Sec-Fetch-Mode: navigate',
-                        'Sec-Fetch-Site: none',
-                        'Cache-Control: max-age=0',
-                    ],
-                    'timeout' => 15,
-                ],
-            ]);
-
-            // Add delay to be more respectful
-            sleep(1);
-
-            // Try with cURL first, fallback to file_get_contents
-            $html = $this->fetchUrlWithCurl($url) ?: @file_get_contents($url, false, $context);
-
-            if (! $html) {
-                Log::warning("Failed to fetch Amazon search page: {$url}");
+            if (! $amazonProvider->isEnabled()) {
+                Log::warning("Amazon PA-API provider not available for book {$book->id}");
 
                 return null;
             }
 
-            // Look for ASIN patterns in search results
-            // Amazon search results contain data-asin attributes
-            if (preg_match_all('/data-asin="([A-Z0-9]{10})"/', $html, $matches)) {
-                $asins = array_unique($matches[1]);
+            Log::info("Using Amazon PA-API for book {$book->id}");
 
-                // Return first valid ASIN
-                foreach ($asins as $asin) {
-                    if ($this->isValidAsin($asin)) {
-                        Log::info("Found ASIN {$asin} for search term: {$searchTerm}");
+            // Build search query - prefer ISBN, fallback to title + author
+            $searchQuery = $this->buildSearchQuery($book);
 
-                        return [
-                            'asin' => $asin,
-                            'source' => 'search_page_parsing',
-                            'search_term' => $searchTerm,
-                        ];
-                    }
+            $result = $amazonProvider->search($searchQuery);
+
+            if ($result['success'] && ! empty($result['books'])) {
+                $amazonBook = $result['books'][0]; // Take first result
+
+                // Validate this is likely the same book (ISBN match or high title similarity)
+                if ($this->validateBookMatch($book, $amazonBook)) {
+                    Log::info("Found Amazon data for book {$book->id}", [
+                        'asin' => $amazonBook['amazon_asin'],
+                        'source' => 'pa-api',
+                    ]);
+
+                    return $amazonBook;
                 }
+
+                Log::warning("Amazon PA-API result doesn't match our book {$book->id}");
+            } else {
+                Log::info("No Amazon PA-API results found for book {$book->id}");
             }
-
-            Log::info("No valid ASIN found in Amazon search for: {$searchTerm}");
-
-            return null;
-
         } catch (\Exception $e) {
-            Log::warning("Error parsing Amazon search page: {$e->getMessage()}");
-
-            return null;
-        }
-    }
-
-    /**
-     * Validate ASIN format
-     */
-    private function isValidAsin(string $asin): bool
-    {
-        // Accept both traditional ASINs (B123456789) and numeric ISBNs (1234567890)
-        // Amazon Brazil often uses ISBNs directly as ASINs for books
-        return preg_match('/^[A-Z0-9]{10}$/', $asin);
-    }
-
-    /**
-     * Fetch URL with cURL (more robust than file_get_contents)
-     */
-    private function fetchUrlWithCurl(string $url): ?string
-    {
-        $ch = curl_init();
-
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT => 15,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            CURLOPT_HTTPHEADER => [
-                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language: pt-BR,pt;q=0.9,en;q=0.8',
-                'Accept-Encoding: gzip, deflate, br',
-                'DNT: 1',
-                'Connection: keep-alive',
-                'Upgrade-Insecure-Requests: 1',
-                'Sec-Fetch-Dest: document',
-                'Sec-Fetch-Mode: navigate',
-                'Sec-Fetch-Site: none',
-                'Cache-Control: max-age=0',
-            ],
-            CURLOPT_ENCODING => '', // Support gzip
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        curl_close($ch);
-
-        if ($response === false || $httpCode !== 200) {
-            return null;
+            Log::error("Amazon PA-API search failed for book {$book->id}: {$e->getMessage()}");
         }
 
-        return $response;
+        return null;
     }
 
     /**
@@ -360,9 +150,194 @@ class AmazonEnrichmentService
             return $book->isbn === $amazonBook['isbn'];
         }
 
-        // TODO: Implement title similarity check for Phase 2
-        // For now, assume it's a match if we reach here
+        // Title similarity check (when no ISBN available)
+        if (! empty($book->title) && ! empty($amazonBook['title'])) {
+            // First check: is our title contained in Amazon's title?
+            // This handles cases like "Sapiens" vs "Sapiens (Nova edição): Uma breve história"
+            $normalized1 = $this->normalizeTitle($book->title);
+            $normalized2 = $this->normalizeTitle($amazonBook['title']);
+
+            $isContained = str_contains($normalized2, $normalized1) && strlen($normalized1) >= 3;
+
+            $similarity = $this->calculateTitleSimilarity($book->title, $amazonBook['title']);
+
+            Log::info("Title similarity check for book {$book->id}", [
+                'our_title' => $book->title,
+                'amazon_title' => $amazonBook['title'],
+                'similarity' => $similarity,
+                'is_contained' => $isContained,
+            ]);
+
+            // Match if: contained OR high similarity
+            if ($isContained || $similarity >= 0.60) {
+                // If we have author info, validate that too for extra confidence
+                if (! empty($book->authors) && ! empty($amazonBook['authors'])) {
+                    // Check if our author's words are all present in Amazon's author list
+                    // (Amazon often uses "Last, First" format and includes translators)
+                    $authorWordsMatch = $this->checkAuthorWordsMatch($book->authors, $amazonBook['authors']);
+
+                    $authorSimilarity = $this->calculateAuthorSimilarity(
+                        $book->authors,
+                        $amazonBook['authors']
+                    );
+
+                    Log::info("Author similarity check for book {$book->id}", [
+                        'our_authors' => $book->authors,
+                        'amazon_authors' => $amazonBook['authors'],
+                        'similarity' => $authorSimilarity,
+                        'words_match' => $authorWordsMatch,
+                    ]);
+
+                    // Match if: all author words present OR high similarity (70%+)
+                    return $authorWordsMatch || $authorSimilarity >= 0.70;
+                }
+
+                // If no author to compare, title similarity is enough
+                return true;
+            }
+
+            Log::warning("Title similarity too low for book {$book->id}", [
+                'required' => 0.60,
+                'actual' => $similarity,
+            ]);
+
+            return false;
+        }
+
+        // If we can't validate, don't match
+        Log::warning("Cannot validate match for book {$book->id}: missing title information");
+
+        return false;
+    }
+
+    /**
+     * Calculate similarity between two titles
+     * Returns a value between 0.0 (completely different) and 1.0 (identical)
+     */
+    private function calculateTitleSimilarity(string $title1, string $title2): float
+    {
+        $normalized1 = $this->normalizeTitle($title1);
+        $normalized2 = $this->normalizeTitle($title2);
+
+        // Use similar_text for percentage similarity
+        similar_text($normalized1, $normalized2, $percent);
+
+        return $percent / 100;
+    }
+
+    /**
+     * Calculate similarity between author strings
+     * Returns a value between 0.0 (completely different) and 1.0 (identical)
+     */
+    private function calculateAuthorSimilarity(string $authors1, string $authors2): float
+    {
+        $normalized1 = $this->normalizeAuthors($authors1);
+        $normalized2 = $this->normalizeAuthors($authors2);
+
+        similar_text($normalized1, $normalized2, $percent);
+
+        return $percent / 100;
+    }
+
+    /**
+     * Normalize title for comparison
+     * - Lowercase
+     * - Remove punctuation and special characters
+     * - Normalize whitespace
+     * - Remove common words (the, a, an, etc.)
+     */
+    private function normalizeTitle(string $title): string
+    {
+        // Lowercase
+        $title = mb_strtolower($title, 'UTF-8');
+
+        // Remove content in parentheses (often edition info, language, etc.)
+        $title = preg_replace('/\([^)]*\)/', '', $title);
+
+        // Remove content in brackets
+        $title = preg_replace('/\[[^\]]*\]/', '', $title);
+
+        // Remove punctuation except spaces
+        $title = preg_replace('/[^\p{L}\p{N}\s]/u', '', $title);
+
+        // Normalize whitespace
+        $title = preg_replace('/\s+/', ' ', $title);
+
+        // Remove common articles and words (multilingual)
+        $commonWords = ['the', 'a', 'an', 'o', 'a', 'os', 'as', 'um', 'uma', 'uns', 'umas', 'de', 'da', 'do', 'das', 'dos'];
+        $words = explode(' ', $title);
+        $words = array_filter($words, function ($word) use ($commonWords) {
+            return ! in_array(trim($word), $commonWords);
+        });
+
+        return trim(implode(' ', $words));
+    }
+
+    /**
+     * Check if all significant words from author1 are present in author2
+     * Handles different formats like "J.R.R. Tolkien" vs "Tolkien, J.R.R."
+     */
+    private function checkAuthorWordsMatch(string $author1, string $author2): bool
+    {
+        $normalized1 = $this->normalizeAuthors($author1);
+        $normalized2 = $this->normalizeAuthors($author2);
+
+        // Split into words
+        $words1 = array_filter(explode(' ', $normalized1), fn ($w) => strlen($w) >= 2);
+        $words2 = array_filter(explode(' ', $normalized2), fn ($w) => strlen($w) >= 2);
+
+        if (empty($words1)) {
+            return false;
+        }
+
+        // Check if all words from author1 are present in author2
+        foreach ($words1 as $word) {
+            $found = false;
+            foreach ($words2 as $word2) {
+                // For very short words (initials), use contains or exact match
+                if (strlen($word) <= 3 || strlen($word2) <= 3) {
+                    if ($word === $word2 || str_contains($word2, $word) || str_contains($word, $word2)) {
+                        $found = true;
+                        break;
+                    }
+                } else {
+                    // For regular words, use similarity (80%+)
+                    similar_text($word, $word2, $percent);
+                    if ($percent >= 80) {
+                        $found = true;
+                        break;
+                    }
+                }
+            }
+            if (! $found) {
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    /**
+     * Normalize author names for comparison
+     * - Lowercase
+     * - Remove punctuation
+     * - Normalize whitespace
+     */
+    private function normalizeAuthors(string $authors): string
+    {
+        // Lowercase
+        $authors = mb_strtolower($authors, 'UTF-8');
+
+        // Remove punctuation except spaces and commas
+        $authors = preg_replace('/[^\p{L}\s,]/u', '', $authors);
+
+        // Normalize whitespace
+        $authors = preg_replace('/\s+/', ' ', $authors);
+
+        // Split into individual authors and join with spaces
+        $authorList = array_map('trim', explode(',', $authors));
+
+        return trim(implode(' ', $authorList));
     }
 
     /**

@@ -87,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Books
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
+    Route::get('/books/{book}/editions', [BookController::class, 'getEditions']);
     // @deprecated Use GET /books/{id}?with=details instead (amazon_links included automatically)
     Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']);
     Route::apiResource('books', BookController::class)->except(['index']);
@@ -96,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/books/{book}', [UserBookController::class, 'show']);
     Route::post('/user/books', [UserBookController::class, 'store']);
     Route::patch('/user/books/{book}', [UserBookController::class, 'update']);
+    Route::put('/user/books/{book}/replace', [UserBookController::class, 'replaceBook']);
     Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
 
     // GoodReads Import

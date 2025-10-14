@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
 import { useUserStore } from './user'
 
+
 export const useUserBookStore = defineStore('userbook', {
   state: () => ({
     _book: {} as Book,
@@ -229,6 +230,61 @@ export const useUserBookStore = defineStore('userbook', {
         })
         .catch((error) => {
           Notify.create({ message: error.response?.data?.message || i18n.global.t('removed-error'), type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
+    },
+
+    // Replace user book with another edition (v3 - supports Amazon editions)
+    async replaceUserBook(oldBookId: Book['id'], newBook: Book | string) {
+      this._isLoading = true
+      const userStore = useUserStore()
+
+      // Build payload based on whether newBook is an ID or a Book object
+      let payload: any
+      if (typeof newBook === 'string') {
+        // It's a book ID
+        payload = { new_book_id: newBook }
+      } else {
+        // It's a Book object (from Amazon) - send relevant fields
+        payload = {
+          new_book_id: newBook.id || undefined,
+          amazon_asin: newBook.amazon_asin || undefined,
+          title: newBook.title,
+          authors: newBook.authors || undefined,
+          thumbnail: newBook.thumbnail || undefined,
+          description: newBook.description || undefined,
+          publisher: newBook.publisher || undefined
+        }
+      }
+
+      return api
+        .put(`/user/books/${oldBookId}/replace`, payload)
+        .then((response) => {
+          const newBook = response.data.book
+
+          // Update user's book list: replace old book with new book
+          const currentBooks = userStore.me.books || []
+          const updatedBooks = [...currentBooks.map((book) => (book.id === oldBookId ? newBook : book))]
+
+          userStore.updateMe({ books: updatedBooks })
+
+          // Also update currentUser if it's the same user
+          if (userStore.user.id === userStore.me.id) {
+            userStore.$patch((state) => {
+              state._user.books = [...updatedBooks]
+            })
+          }
+
+          // Update _book if it's the current book being viewed
+          if (this._book.id === oldBookId) {
+            this._book = newBook
+          }
+
+          return newBook
+        })
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
           throw error
         })
         .finally(() => (this._isLoading = false))

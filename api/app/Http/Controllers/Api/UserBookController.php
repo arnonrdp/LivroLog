@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserBookSimplifiedResource;
 use App\Models\Book;
+use App\Models\Review;
 use App\Models\User;
 use App\Services\AmazonLinkEnrichmentService;
 use App\Services\UnifiedBookEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UserBookController extends Controller
 {
@@ -355,6 +358,227 @@ class UserBookController extends Controller
         $user->books()->detach($book->id);
 
         return response()->json(['message' => 'Book removed from your library']);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/user/books/{book}/replace",
+     *     operationId="replaceUserBook",
+     *     tags={"User Library"},
+     *     summary="Replace book in user's library",
+     *     description="Replaces a book in the authenticated user's library with another book, preserving reading data and migrating reviews",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Current Book ID to be replaced",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="New book to replace with",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="new_book_id", type="string", example="B-3XYZ-4WVU", description="ID of the book to replace with")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book replaced successfully",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Livro substituído com sucesso"),
+     *             @OA\Property(property="book", ref="#/components/schemas/Book")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found in user's library or new book doesn't exist"),
+     *     @OA\Response(response=409, description="New book already in user's library"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function replaceBook(Request $request, Book $book, AmazonLinkEnrichmentService $amazonService): JsonResponse
+    {
+        $request->validate([
+            'new_book_id' => 'nullable|string|exists:books,id',
+            'amazon_asin' => self::VALIDATION_NULLABLE_STRING.'|max:20',
+            'title' => self::VALIDATION_NULLABLE_STRING.'|max:255',
+            'authors' => self::VALIDATION_NULLABLE_STRING,
+            'thumbnail' => 'nullable|url|max:512',
+            'description' => self::VALIDATION_NULLABLE_STRING,
+            'publisher' => self::VALIDATION_NULLABLE_STRING.'|max:255',
+        ]);
+
+        $user = $request->user();
+
+        // Try to find or create the new book
+        $newBookId = $request->input('new_book_id');
+
+        // If no new_book_id, try to find/create by ASIN or create from Amazon data
+        if (!$newBookId) {
+            $amazonAsin = $request->input('amazon_asin');
+            $title = $request->input('title');
+
+            if (!$amazonAsin && !$title) {
+                return response()->json([
+                    'message' => 'Either new_book_id or amazon_asin/title is required',
+                ], 422);
+            }
+
+            // Try to find existing book by ASIN
+            if ($amazonAsin) {
+                $existingBook = Book::where('amazon_asin', $amazonAsin)->first();
+                if ($existingBook) {
+                    $newBookId = $existingBook->id;
+                }
+            }
+
+            // If still no book found, create from Amazon data
+            if (!$newBookId && $title) {
+                $newBook = Book::create([
+                    'amazon_asin' => $amazonAsin,
+                    'title' => $title,
+                    'authors' => $request->input('authors'),
+                    'thumbnail' => $request->input('thumbnail'),
+                    'description' => $request->input('description'),
+                    'publisher' => $request->input('publisher'),
+                    'info_quality' => 'basic',
+                    'asin_status' => $amazonAsin ? 'completed' : 'pending',
+                ]);
+                $newBookId = $newBook->id;
+
+                Log::info('New book created during replacement', [
+                    'book_id' => $newBookId,
+                    'amazon_asin' => $amazonAsin,
+                    'title' => $title,
+                ]);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Validate: original book is in library
+            $userBook = DB::table('users_books')
+                ->where('user_id', $user->id)
+                ->where('book_id', $book->id)
+                ->first();
+
+            if (! $userBook) {
+                DB::rollBack();
+
+                return response()->json([
+                    'message' => 'Livro não encontrado na sua estante',
+                ], 404);
+            }
+
+            // 2. Validate: new book is NOT in library
+            $existingNewBook = DB::table('users_books')
+                ->where('user_id', $user->id)
+                ->where('book_id', $newBookId)
+                ->exists();
+
+            if ($existingNewBook) {
+                DB::rollBack();
+
+                return response()->json([
+                    'message' => 'Este livro já está na sua estante',
+                ], 409);
+            }
+
+            // 3. Update users_books (swap book_id)
+            DB::table('users_books')
+                ->where('user_id', $user->id)
+                ->where('book_id', $book->id)
+                ->update([
+                    'book_id' => $newBookId,
+                    'updated_at' => now(),
+                ]);
+
+            // 4. Migrate review (if exists)
+            $review = Review::where('user_id', $user->id)
+                ->where('book_id', $book->id)
+                ->first();
+
+            if ($review) {
+                // Check if review already exists for destination book
+                $existingReview = Review::where('user_id', $user->id)
+                    ->where('book_id', $newBookId)
+                    ->exists();
+
+                if ($existingReview) {
+                    // Conflict: user already has review on destination
+                    // Delete old review
+                    $review->delete();
+                    Log::info('Review deleted during book replacement', [
+                        'user_id' => $user->id,
+                        'old_book' => $book->id,
+                        'new_book' => $newBookId,
+                    ]);
+                } else {
+                    // Migrate review
+                    $review->update(['book_id' => $newBookId]);
+                    Log::info('Review migrated during book replacement', [
+                        'user_id' => $user->id,
+                        'review_id' => $review->id,
+                        'from' => $book->id,
+                        'to' => $newBookId,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            // 5. Reload book with pivot and reviews
+            $newBook = Book::with(['reviews' => function ($query) {
+                $query->with('user:id,display_name,username,avatar');
+            }])
+                ->where('id', $newBookId)
+                ->first();
+
+            // Add pivot data
+            $userBookData = $user->books()
+                ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+                ->where('books.id', $newBookId)
+                ->first();
+
+            if ($userBookData) {
+                $newBook->pivot = $userBookData->pivot;
+            }
+
+            // Enrich with Amazon links
+            $bookData = $newBook->toArray();
+            $enrichedBooks = $amazonService->enrichBooksWithAmazonLinks(
+                [$bookData],
+                ['locale' => $request->header('Accept-Language', 'en-US')]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Livro substituído com sucesso',
+                'book' => $enrichedBooks[0],
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error replacing book', [
+                'user_id' => $user->id,
+                'old_book' => $book->id,
+                'new_book' => $newBookId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao substituir livro',
+            ], 500);
+        }
     }
 
     /**

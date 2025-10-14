@@ -105,6 +105,18 @@ export const useBookStore = defineStore('book', {
         })
         .catch(() => Notify.create({ message: i18n.global.t('removed-error'), type: 'negative' }))
         .finally(() => (this._isLoading = false))
+    },
+
+    async getBookEditions(bookId: Book['id']) {
+      this._isLoading = true
+      return api
+        .get(`/books/${bookId}/editions`)
+        .then((response) => response.data)
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+          throw error
+        })
+        .finally(() => (this._isLoading = false))
     }
   }
 })
