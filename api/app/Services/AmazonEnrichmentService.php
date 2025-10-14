@@ -1,57 +1,85 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Services;
 
 use App\Models\Book;
-use App\Services\AmazonLinkEnrichmentService;
 use App\Services\Providers\AmazonBooksProvider;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class EnrichBookWithAmazonJob implements ShouldQueue
+class AmazonEnrichmentService
 {
-    use InteractsWithQueue, Queueable, SerializesModels;
-
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
-    public $tries = 3;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     *
-     * @var array
-     */
-    public $backoff = [60, 300, 900]; // 1 min, 5 min, 15 min
-
-    /**
-     * The book to enrich with Amazon ASIN.
-     */
     public function __construct(
-        public Book $book
-    ) {
-        // Add delay to avoid rate limiting
-        $this->delay(now()->addSeconds(random_int(5, 30)));
-    }
+        private AmazonLinkEnrichmentService $amazonLinkService
+    ) {}
 
     /**
-     * Execute the job.
+     * Enrich book with Amazon data synchronously
+     * Returns array with success status and filled fields
      */
-    public function handle(): void
+    public function enrichBookWithAmazon(Book $book): array
     {
-        $service = app(\App\Services\AmazonEnrichmentService::class);
-        $service->enrichBookWithAmazon($this->book);
+        try {
+            // Skip if book already has ASIN
+            if ($book->amazon_asin) {
+                $book->update([
+                    'asin_status' => 'completed',
+                    'asin_processed_at' => now(),
+                ]);
+                Log::info("Book {$book->id} already has ASIN, marking as completed");
+
+                return [
+                    'success' => true,
+                    'message' => 'Book already has ASIN',
+                    'fields_filled' => [],
+                ];
+            }
+
+            Log::info("Starting Amazon enrichment for book: {$book->title} (ID: {$book->id})");
+
+            $amazonData = $this->searchAmazonBook($book);
+
+            if ($amazonData) {
+                $filledFields = $this->updateBookWithAmazonData($book, $amazonData);
+                Log::info("Successfully enriched book {$book->id} with Amazon data");
+
+                return [
+                    'success' => true,
+                    'message' => 'Book enriched with Amazon data',
+                    'fields_filled' => $filledFields,
+                ];
+            } else {
+                $book->update([
+                    'asin_status' => 'failed',
+                    'asin_processed_at' => now(),
+                ]);
+                Log::warning("Could not find Amazon data for book {$book->id}: {$book->title}");
+
+                return [
+                    'success' => false,
+                    'message' => 'Could not find Amazon data',
+                    'fields_filled' => [],
+                ];
+            }
+
+        } catch (\Exception $e) {
+            $book->update([
+                'asin_status' => 'failed',
+                'asin_processed_at' => now(),
+            ]);
+            Log::error("Failed to enrich book {$book->id} with Amazon data: {$e->getMessage()}");
+
+            return [
+                'success' => false,
+                'message' => 'Error enriching with Amazon: '.$e->getMessage(),
+                'fields_filled' => [],
+            ];
+        }
     }
 
     /**
      * Search for book data on Amazon using available providers
      */
-    private function searchAmazonBook(): ?array
+    private function searchAmazonBook(Book $book): ?array
     {
         // Phase 2: Try Amazon PA-API first (when available)
         if (config('services.amazon.enabled', false)) {
@@ -59,10 +87,10 @@ class EnrichBookWithAmazonJob implements ShouldQueue
                 $amazonProvider = app(AmazonBooksProvider::class);
 
                 if ($amazonProvider->isEnabled()) {
-                    Log::info("Using Amazon PA-API for book {$this->book->id}");
+                    Log::info("Using Amazon PA-API for book {$book->id}");
 
                     // Build search query - prefer ISBN, fallback to title + author
-                    $searchQuery = $this->buildSearchQuery();
+                    $searchQuery = $this->buildSearchQuery($book);
 
                     $result = $amazonProvider->search($searchQuery);
 
@@ -70,33 +98,32 @@ class EnrichBookWithAmazonJob implements ShouldQueue
                         $amazonBook = $result['books'][0]; // Take first result
 
                         // Validate this is likely the same book (ISBN match or high title similarity)
-                        if ($this->validateBookMatch($amazonBook)) {
+                        if ($this->validateBookMatch($book, $amazonBook)) {
                             return $amazonBook;
                         } else {
-                            Log::warning("Amazon result doesn't match our book {$this->book->id}");
+                            Log::warning("Amazon result doesn't match our book {$book->id}");
                         }
                     }
                 }
             } catch (\Exception $e) {
-                Log::warning("Amazon PA-API search failed for book {$this->book->id}: {$e->getMessage()}");
+                Log::warning("Amazon PA-API search failed for book {$book->id}: {$e->getMessage()}");
             }
         }
 
         // Phase 1: Simple Amazon search using basic method
-        Log::info("Using basic Amazon search for book {$this->book->id}");
+        Log::info("Using basic Amazon search for book {$book->id}");
 
-        $asinData = $this->searchAmazonBasic();
+        $asinData = $this->searchAmazonBasic($book);
 
         if ($asinData) {
-            Log::info("Found Amazon data for book {$this->book->id}", [
+            Log::info("Found Amazon data for book {$book->id}", [
                 'asin' => $asinData['asin'],
                 'source' => $asinData['source'] ?? 'basic_search',
             ]);
 
             // Generate proper Amazon link with found ASIN
-            $enrichmentService = app(AmazonLinkEnrichmentService::class);
-            $bookWithAsin = array_merge($this->book->toArray(), ['amazon_asin' => $asinData['asin']]);
-            $enrichedBooks = $enrichmentService->enrichBooksWithAmazonLinks([$bookWithAsin]);
+            $bookWithAsin = array_merge($book->toArray(), ['amazon_asin' => $asinData['asin']]);
+            $enrichedBooks = $this->amazonLinkService->enrichBooksWithAmazonLinks([$bookWithAsin]);
 
             return [
                 'amazon_asin' => $asinData['asin'],
@@ -107,10 +134,9 @@ class EnrichBookWithAmazonJob implements ShouldQueue
         }
 
         // Fallback: Generate search link without specific ASIN (still provides affiliate value)
-        Log::info("Could not find specific ASIN, generating fallback Amazon link for book {$this->book->id}");
+        Log::info("Could not find specific ASIN, generating fallback Amazon link for book {$book->id}");
 
-        $enrichmentService = app(AmazonLinkEnrichmentService::class);
-        $enrichedBooks = $enrichmentService->enrichBooksWithAmazonLinks([$this->book->toArray()]);
+        $enrichedBooks = $this->amazonLinkService->enrichBooksWithAmazonLinks([$book->toArray()]);
 
         return [
             'amazon_asin' => null,
@@ -123,22 +149,22 @@ class EnrichBookWithAmazonJob implements ShouldQueue
     /**
      * Basic Amazon search using simple HTTP requests
      */
-    private function searchAmazonBasic(): ?array
+    private function searchAmazonBasic(Book $book): ?array
     {
         try {
             // Try ISBN first (most reliable)
-            if (! empty($this->book->isbn)) {
-                $result = $this->searchAmazonByIsbn($this->book->isbn);
+            if (! empty($book->isbn)) {
+                $result = $this->searchAmazonByIsbn($book->isbn);
                 if ($result) {
                     return $result;
                 }
             }
 
             // Fallback to title + author search
-            if (! empty($this->book->title)) {
-                $query = $this->book->title;
-                if (! empty($this->book->authors)) {
-                    $query .= ' '.$this->book->authors;
+            if (! empty($book->title)) {
+                $query = $book->title;
+                if (! empty($book->authors)) {
+                    $query .= ' '.$book->authors;
                 }
 
                 $result = $this->searchAmazonByQuery($query);
@@ -150,7 +176,7 @@ class EnrichBookWithAmazonJob implements ShouldQueue
             return null;
 
         } catch (\Exception $e) {
-            Log::warning("Basic Amazon search failed for book {$this->book->id}: {$e->getMessage()}");
+            Log::warning("Basic Amazon search failed for book {$book->id}: {$e->getMessage()}");
 
             return null;
         }
@@ -310,15 +336,15 @@ class EnrichBookWithAmazonJob implements ShouldQueue
     /**
      * Build search query for Amazon search
      */
-    private function buildSearchQuery(): string
+    private function buildSearchQuery(Book $book): string
     {
-        if (! empty($this->book->isbn)) {
-            return $this->book->isbn;
+        if (! empty($book->isbn)) {
+            return $book->isbn;
         }
 
-        $query = $this->book->title;
-        if (! empty($this->book->authors)) {
-            $query .= ' '.$this->book->authors;
+        $query = $book->title;
+        if (! empty($book->authors)) {
+            $query .= ' '.$book->authors;
         }
 
         return trim($query);
@@ -327,11 +353,11 @@ class EnrichBookWithAmazonJob implements ShouldQueue
     /**
      * Validate if Amazon result matches our book
      */
-    private function validateBookMatch(array $amazonBook): bool
+    private function validateBookMatch(Book $book, array $amazonBook): bool
     {
         // If both have ISBN, they should match
-        if (! empty($this->book->isbn) && ! empty($amazonBook['isbn'])) {
-            return $this->book->isbn === $amazonBook['isbn'];
+        if (! empty($book->isbn) && ! empty($amazonBook['isbn'])) {
+            return $book->isbn === $amazonBook['isbn'];
         }
 
         // TODO: Implement title similarity check for Phase 2
@@ -341,57 +367,71 @@ class EnrichBookWithAmazonJob implements ShouldQueue
 
     /**
      * Update book with Amazon data
+     * Returns list of fields that were filled
      */
-    private function updateBookWithAmazonData(array $amazonData): void
+    private function updateBookWithAmazonData(Book $book, array $amazonData): array
     {
         $updateData = [
             'asin_status' => 'completed',
             'asin_processed_at' => now(),
         ];
 
+        $filledFields = [];
+
         // Phase 2: Full data update (when PA-API is available)
         if (isset($amazonData['amazon_asin']) && ! empty($amazonData['amazon_asin'])) {
             $updateData['amazon_asin'] = $amazonData['amazon_asin'];
+            $filledFields[] = 'amazon_asin';
 
-            // Update thumbnail if Amazon has a better one
-            if (! empty($amazonData['thumbnail']) && empty($this->book->thumbnail)) {
+            // Update thumbnail if Amazon has one and book doesn't
+            if (! empty($amazonData['thumbnail']) && empty($book->thumbnail)) {
                 $updateData['thumbnail'] = $amazonData['thumbnail'];
+                $filledFields[] = 'thumbnail';
             }
 
             // Add physical dimensions if available
-            if (! empty($amazonData['height'])) {
+            if (! empty($amazonData['height']) && empty($book->height)) {
                 $updateData['height'] = $amazonData['height'];
+                $filledFields[] = 'height';
             }
-            if (! empty($amazonData['width'])) {
+            if (! empty($amazonData['width']) && empty($book->width)) {
                 $updateData['width'] = $amazonData['width'];
+                $filledFields[] = 'width';
             }
-            if (! empty($amazonData['thickness'])) {
+            if (! empty($amazonData['thickness']) && empty($book->thickness)) {
                 $updateData['thickness'] = $amazonData['thickness'];
+                $filledFields[] = 'thickness';
             }
 
             // Update other fields if missing
-            if (! empty($amazonData['page_count']) && empty($this->book->page_count)) {
+            if (! empty($amazonData['page_count']) && empty($book->page_count)) {
                 $updateData['page_count'] = $amazonData['page_count'];
+                $filledFields[] = 'page_count';
             }
 
-            if (! empty($amazonData['description']) && empty($this->book->description)) {
+            if (! empty($amazonData['description']) && empty($book->description)) {
                 $updateData['description'] = $amazonData['description'];
+                $filledFields[] = 'description';
+            }
+
+            if (! empty($amazonData['publisher']) && empty($book->publisher)) {
+                $updateData['publisher'] = $amazonData['publisher'];
+                $filledFields[] = 'publisher';
+            }
+
+            if (! empty($amazonData['authors']) && empty($book->authors)) {
+                $updateData['authors'] = $amazonData['authors'];
+                $filledFields[] = 'authors';
             }
         }
 
-        $this->book->update($updateData);
+        $book->update($updateData);
 
-        Log::info("Updated book {$this->book->id} with Amazon data", [
+        Log::info("Updated book {$book->id} with Amazon data", [
             'fields_updated' => array_keys($updateData),
             'has_asin' => isset($updateData['amazon_asin']),
         ]);
-    }
 
-    /**
-     * Handle a job failure.
-     */
-    public function failed(\Throwable $exception): void
-    {
-        Log::error("Amazon ASIN enrichment failed permanently for book {$this->book->id}: {$exception->getMessage()}");
+        return $filledFields;
     }
 }
