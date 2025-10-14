@@ -25,9 +25,6 @@ class MultiSourceBookSearchTest extends TestCase
     {
         parent::setUp();
 
-        // Disable Amazon provider for testing to avoid real API calls
-        config(['services.amazon.enabled' => false]);
-
         $this->searchService = new MultiSourceBookSearchService;
     }
 
@@ -41,7 +38,11 @@ class MultiSourceBookSearchTest extends TestCase
         $this->assertArrayHasKey('provider_details', $stats);
 
         $this->assertIsInt($stats['active_providers']);
-        $this->assertGreaterThanOrEqual(2, $stats['active_providers']);
+        // After refactoring to Amazon-only search, we have 1 provider total
+        $this->assertEquals(1, $stats['total_providers']);
+        // Amazon is enabled if credentials are present
+        $this->assertGreaterThanOrEqual(0, $stats['active_providers']);
+        $this->assertLessThanOrEqual(1, $stats['active_providers']);
     }
 
     public function test_search_with_isbn_success(): void
