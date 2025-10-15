@@ -1074,18 +1074,20 @@ class BookController extends Controller
 
         // Filter out the current book from editions (in case Amazon or local DB returned it)
         $editions = array_filter($editions, function ($edition) use ($book) {
-            // Remove if same internal ID
-            if (isset($edition['id']) && $edition['id'] === $book->id) {
+            // Remove if same internal ID (with null/empty check)
+            if (! empty($edition['id']) && ! empty($book->id) && $edition['id'] === $book->id) {
                 return false;
             }
 
-            // Remove if same ASIN
-            if (isset($edition['amazon_asin']) && $book->amazon_asin && $edition['amazon_asin'] === $book->amazon_asin) {
+            // Remove if same ASIN (with null/empty check)
+            if (! empty($edition['amazon_asin']) && ! empty($book->amazon_asin)
+                && $edition['amazon_asin'] === $book->amazon_asin) {
                 return false;
             }
 
-            // Remove if same Google ID
-            if (isset($edition['google_id']) && $book->google_id && $edition['google_id'] === $book->google_id) {
+            // Remove if same Google ID (with null/empty check)
+            if (! empty($edition['google_id']) && ! empty($book->google_id)
+                && $edition['google_id'] === $book->google_id) {
                 return false;
             }
 

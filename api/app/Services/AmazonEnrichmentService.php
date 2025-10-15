@@ -145,9 +145,12 @@ class AmazonEnrichmentService
      */
     private function validateBookMatch(Book $book, array $amazonBook): bool
     {
-        // If both have ISBN, they should match
+        // If both have ISBN, they should match (normalize before comparing)
         if (! empty($book->isbn) && ! empty($amazonBook['isbn'])) {
-            return $book->isbn === $amazonBook['isbn'];
+            $normalizedBookIsbn = $this->normalizeIsbn($book->isbn);
+            $normalizedAmazonIsbn = $this->normalizeIsbn($amazonBook['isbn']);
+
+            return $normalizedBookIsbn === $normalizedAmazonIsbn;
         }
 
         // Title similarity check (when no ISBN available)
@@ -338,6 +341,14 @@ class AmazonEnrichmentService
         $authorList = array_map('trim', explode(',', $authors));
 
         return trim(implode(' ', $authorList));
+    }
+
+    /**
+     * Normalize ISBN by removing hyphens, spaces and other formatting
+     */
+    private function normalizeIsbn(string $isbn): string
+    {
+        return preg_replace('/[^0-9X]/i', '', $isbn);
     }
 
     /**
