@@ -4,6 +4,10 @@ namespace App\Services\Providers;
 
 use Amazon\ProductAdvertisingAPI\v1\ApiException;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\api\DefaultApi;
+use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\GetItemsRequest;
+use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\GetItemsResource;
+use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\GetVariationsRequest;
+use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\GetVariationsResource;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\PartnerType;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\SearchItemsRequest;
 use Amazon\ProductAdvertisingAPI\v1\com\amazon\paapi5\v1\SearchItemsResource;
@@ -100,6 +104,159 @@ class AmazonBooksProvider implements BookSearchProvider
             ]);
 
             return $this->buildErrorResponse('Search failed: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Get items by ASINs - useful for batch updates and price refreshes
+     * GetItems is more efficient than SearchItems for updating existing books
+     *
+     * @param  array  $asins  Array of ASINs (max 10 per request)
+     * @param  array  $options  Optional parameters (region, etc.)
+     * @return array Response with success status and book data
+     */
+    public function getItems(array $asins, array $options = []): array
+    {
+        if (! $this->isEnabled()) {
+            return $this->buildErrorResponse('Amazon Books provider is disabled');
+        }
+
+        if (empty($asins)) {
+            return $this->buildErrorResponse('No ASINs provided');
+        }
+
+        // PA-API GetItems allows max 10 ASINs per request
+        if (count($asins) > 10) {
+            $asins = array_slice($asins, 0, 10);
+            Log::warning('GetItems limited to first 10 ASINs', ['provided' => count($asins)]);
+        }
+
+        try {
+            $this->respectRateLimit();
+
+            $region = $this->detectOptimalRegion($options);
+            $api = $this->createApiClient($region);
+
+            $getItemsRequest = $this->createGetItemsRequest($asins, $region);
+
+            Log::info('Amazon GetItems API Request', [
+                'asins' => $asins,
+                'region' => $region,
+                'count' => count($asins),
+            ]);
+
+            $response = $api->getItems($getItemsRequest);
+
+            if ($response->getErrors()) {
+                $errors = $response->getErrors();
+                $errorMessages = array_map(fn ($e) => $e->getMessage(), $errors);
+                Log::error('Amazon GetItems errors', ['errors' => $errorMessages]);
+
+                return $this->buildErrorResponse('GetItems failed: '.implode(', ', $errorMessages));
+            }
+
+            $items = [];
+            if ($response->getItemsResult() && $response->getItemsResult()->getItems()) {
+                $items = $response->getItemsResult()->getItems();
+            }
+
+            if (empty($items)) {
+                return $this->buildErrorResponse('No items found for provided ASINs');
+            }
+
+            $books = $this->transformSearchResults($items);
+
+            return $this->buildSuccessResponse($books, count($books));
+
+        } catch (ApiException $e) {
+            Log::error('Amazon GetItems PA-API error', [
+                'asins' => $asins,
+                'error' => $e->getMessage(),
+                'response_body' => $e->getResponseBody(),
+            ]);
+
+            return $this->buildErrorResponse('Amazon API error: '.$e->getMessage());
+
+        } catch (\Exception $e) {
+            Log::error('Amazon GetItems error', [
+                'asins' => $asins,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->buildErrorResponse('GetItems failed: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Get variations (different editions) of a book by its ASIN
+     * Returns different formats/editions of the same book (Kindle, Hardcover, Paperback, etc.)
+     *
+     * @param  string  $asin  The parent ASIN to get variations for
+     * @param  array  $options  Optional parameters (region, etc.)
+     * @return array Response with success status and variations data
+     */
+    public function getVariations(string $asin, array $options = []): array
+    {
+        if (! $this->isEnabled()) {
+            return $this->buildErrorResponse('Amazon Books provider is disabled');
+        }
+
+        if (empty($asin)) {
+            return $this->buildErrorResponse('No ASIN provided');
+        }
+
+        try {
+            $this->respectRateLimit();
+
+            $region = $this->detectOptimalRegion($options);
+            $api = $this->createApiClient($region);
+
+            $getVariationsRequest = $this->createGetVariationsRequest($asin, $region);
+
+            Log::info('Amazon GetVariations API Request', [
+                'asin' => $asin,
+                'region' => $region,
+            ]);
+
+            $response = $api->getVariations($getVariationsRequest);
+
+            if ($response->getErrors()) {
+                $errors = $response->getErrors();
+                $errorMessages = array_map(fn ($e) => $e->getMessage(), $errors);
+                Log::error('Amazon GetVariations errors', ['errors' => $errorMessages]);
+
+                return $this->buildErrorResponse('GetVariations failed: '.implode(', ', $errorMessages));
+            }
+
+            $variations = [];
+            if ($response->getVariationsResult() && $response->getVariationsResult()->getItems()) {
+                $variations = $response->getVariationsResult()->getItems();
+            }
+
+            if (empty($variations)) {
+                return $this->buildErrorResponse('No variations found for this ASIN');
+            }
+
+            $books = $this->transformSearchResults($variations);
+
+            return $this->buildSuccessResponse($books, count($books));
+
+        } catch (ApiException $e) {
+            Log::error('Amazon GetVariations PA-API error', [
+                'asin' => $asin,
+                'error' => $e->getMessage(),
+                'response_body' => $e->getResponseBody(),
+            ]);
+
+            return $this->buildErrorResponse('Amazon API error: '.$e->getMessage());
+
+        } catch (\Exception $e) {
+            Log::error('Amazon GetVariations error', [
+                'asin' => $asin,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->buildErrorResponse('GetVariations failed: '.$e->getMessage());
         }
     }
 
@@ -225,14 +382,77 @@ class AmazonBooksProvider implements BookSearchProvider
             SearchItemsResource::ITEM_INFOPRODUCT_INFO,
             SearchItemsResource::ITEM_INFOTECHNICAL_INFO,
             SearchItemsResource::ITEM_INFOEXTERNAL_IDS,  // For ISBN data
+            SearchItemsResource::BROWSE_NODE_INFOBROWSE_NODES,  // For category hierarchy
             SearchItemsResource::IMAGESPRIMARYLARGE,
             SearchItemsResource::IMAGESPRIMARYMEDIUM,
             SearchItemsResource::IMAGESPRIMARYSMALL,
-            SearchItemsResource::OFFERSLISTINGSPRICE,
-            // Availability constants vary by SDK fork; omit to avoid undefined constant issues
         ]);
 
         return $searchItemsRequest;
+    }
+
+    /**
+     * Create GetItems request with same resources as SearchItems
+     */
+    private function createGetItemsRequest(array $asins, string $region): GetItemsRequest
+    {
+        $getItemsRequest = new GetItemsRequest;
+        $getItemsRequest->setItemIds($asins);
+        $regionConfig = $this->getRegionConfig();
+        $getItemsRequest->setPartnerTag($regionConfig[$region]['associate_tag']);
+        $getItemsRequest->setPartnerType(PartnerType::ASSOCIATES);
+        $getItemsRequest->setMarketplace($regionConfig[$region]['marketplace']);
+
+        // Request same comprehensive book information as SearchItems
+        $getItemsRequest->setResources([
+            GetItemsResource::ITEM_INFOTITLE,
+            GetItemsResource::ITEM_INFOFEATURES,
+            GetItemsResource::ITEM_INFOBY_LINE_INFO,
+            GetItemsResource::ITEM_INFOCONTENT_INFO,
+            GetItemsResource::ITEM_INFOCONTENT_RATING,
+            GetItemsResource::ITEM_INFOCLASSIFICATIONS,
+            GetItemsResource::ITEM_INFOPRODUCT_INFO,
+            GetItemsResource::ITEM_INFOTECHNICAL_INFO,
+            GetItemsResource::ITEM_INFOEXTERNAL_IDS,
+            GetItemsResource::BROWSE_NODE_INFOBROWSE_NODES,  // For category hierarchy
+            GetItemsResource::IMAGESPRIMARYLARGE,
+            GetItemsResource::IMAGESPRIMARYMEDIUM,
+            GetItemsResource::IMAGESPRIMARYSMALL,
+        ]);
+
+        return $getItemsRequest;
+    }
+
+    /**
+     * Create GetVariations request with same resources as GetItems
+     */
+    private function createGetVariationsRequest(string $asin, string $region): GetVariationsRequest
+    {
+        $getVariationsRequest = new GetVariationsRequest;
+        $getVariationsRequest->setASIN($asin);
+        $regionConfig = $this->getRegionConfig();
+        $getVariationsRequest->setPartnerTag($regionConfig[$region]['associate_tag']);
+        $getVariationsRequest->setPartnerType(PartnerType::ASSOCIATES);
+        $getVariationsRequest->setMarketplace($regionConfig[$region]['marketplace']);
+
+        // Request same comprehensive book information as GetItems
+        $getVariationsRequest->setResources([
+            GetVariationsResource::ITEM_INFOTITLE,
+            GetVariationsResource::ITEM_INFOFEATURES,
+            GetVariationsResource::ITEM_INFOBY_LINE_INFO,
+            GetVariationsResource::ITEM_INFOCONTENT_INFO,
+            GetVariationsResource::ITEM_INFOCONTENT_RATING,
+            GetVariationsResource::ITEM_INFOCLASSIFICATIONS,
+            GetVariationsResource::ITEM_INFOPRODUCT_INFO,
+            GetVariationsResource::ITEM_INFOTECHNICAL_INFO,
+            GetVariationsResource::ITEM_INFOEXTERNAL_IDS,
+            GetVariationsResource::BROWSE_NODE_INFOBROWSE_NODES,  // For category hierarchy
+            GetVariationsResource::IMAGESPRIMARYLARGE,
+            GetVariationsResource::IMAGESPRIMARYMEDIUM,
+            GetVariationsResource::IMAGESPRIMARYSMALL,
+        ]);
+
+        return $getVariationsRequest;
     }
 
     private function transformSearchResults(array $items): array
@@ -288,6 +508,23 @@ class AmazonBooksProvider implements BookSearchProvider
             $existingBook = Book::where('amazon_asin', $asin)->first();
         }
 
+        // Extract categories from both Classifications and Browse Nodes
+        $classificationCategories = $this->extractCategories($itemInfo);
+        $browseNodeCategories = $this->extractBrowseNodes($item);
+
+        // Merge categories: Browse Nodes (more detailed) + Classifications (binding/format)
+        $allCategories = [];
+        if ($browseNodeCategories) {
+            $allCategories = array_merge($allCategories, $browseNodeCategories);
+        }
+        if ($classificationCategories) {
+            $allCategories = array_merge($allCategories, $classificationCategories);
+        }
+
+        // Remove duplicates and filter for relevant categories
+        $allCategories = ! empty($allCategories) ? array_values(array_unique($allCategories)) : null;
+        $allCategories = $this->filterRelevantCategories($allCategories);
+
         $bookData = [
             'provider' => $this->getName(),
             'amazon_asin' => $asin,
@@ -303,7 +540,7 @@ class AmazonBooksProvider implements BookSearchProvider
             'published_date' => $this->extractPublishedDate($itemInfo),
             'page_count' => $this->extractPageCount($itemInfo),
             'language' => $this->extractLanguage($itemInfo),
-            'categories' => $this->extractCategories($itemInfo),
+            'categories' => $allCategories,
             'maturity_rating' => $this->extractMaturityRating($itemInfo),
             'preview_link' => null, // Amazon doesn't provide preview links via PA-API
             'info_link' => $item->getDetailPageURL(),
@@ -534,6 +771,142 @@ class AmazonBooksProvider implements BookSearchProvider
         }
 
         return null;
+    }
+
+    /**
+     * Extract Browse Nodes - Amazon's category hierarchy
+     * Returns array of category names from most general to most specific
+     * Example: ['Books', 'Science Fiction & Fantasy', 'Science Fiction', 'Space Opera']
+     */
+    private function extractBrowseNodes($item): ?array
+    {
+        $browseNodeInfo = $item->getBrowseNodeInfo();
+        if (! $browseNodeInfo) {
+            return null;
+        }
+
+        $browseNodes = $browseNodeInfo->getBrowseNodes();
+        if (! $browseNodes || empty($browseNodes)) {
+            return null;
+        }
+
+        $categories = [];
+
+        // Process each browse node (usually books have just one primary node)
+        foreach ($browseNodes as $node) {
+            // Extract this node's name
+            if ($node->getDisplayName()) {
+                $nodeName = $node->getDisplayName();
+
+                // Build hierarchy by following ancestors
+                $hierarchy = [$nodeName];
+
+                // Walk up the ancestor chain
+                $ancestor = $node->getAncestor();
+                while ($ancestor) {
+                    if ($ancestor->getDisplayName()) {
+                        // Prepend ancestor (so we go from general to specific)
+                        array_unshift($hierarchy, $ancestor->getDisplayName());
+                    }
+
+                    // Move to next ancestor
+                    $ancestor = $ancestor->getAncestor();
+                }
+
+                // Add this complete hierarchy
+                $categories = array_merge($categories, $hierarchy);
+            }
+        }
+
+        // Remove duplicates while preserving order
+        $categories = array_values(array_unique($categories));
+
+        return ! empty($categories) ? $categories : null;
+    }
+
+    /**
+     * Filter out marketing/navigation categories and keep only relevant literary categories
+     */
+    private function filterRelevantCategories(?array $categories): ?array
+    {
+        if (! $categories || empty($categories)) {
+            return null;
+        }
+
+        // Patterns to exclude (marketing, navigation, price-based, promotions)
+        $excludePatterns = [
+            '/livros? até r\$/i',
+            '/ebooks? até r\$/i',
+            '/top asins?/i',
+            '/guia de compras/i',
+            '/promo(ção|cao)?/i',
+            '/cupom/i',
+            '/off (no|em)/i',
+            '/termos e condi(ções|coes)/i',
+            '/n(ão|ao) aplicad/i',
+            '/lan(ç|c)amentos/i',
+            '/ofertas?/i',
+            '/mais amados/i',
+            '/mais lidos/i',
+            '/preferidos/i',
+            '/p(á|a)gina do autor/i',
+            '/comece a sua leitura/i',
+            '/em oferta/i',
+            '/kindle unlimited/i',
+            '/catalogo kindle/i',
+            '/cashback/i',
+            '/pr(é|e)-venda/i',
+            '/aniversa(á|a)rio/i',
+            '/editora /i',
+            '/obrigado por/i',
+            '/sele(ç|c)(ã|a)o participante/i',
+            '/categorias$/i',
+            '/compra de ebook/i',
+            '/^[a-f0-9]{8}-[a-f0-9]{4}/i', // UUIDs
+            '/^trade$/i',
+            '/^book$/i',
+            '/^capa (comum|dura)$/i',
+            '/ebook kindle$/i',
+            '/kindle unlimited$/i',
+        ];
+
+        // Also exclude publisher names (they're not categories)
+        $publisherNames = [
+            'ciranda cultural',
+            'alta books',
+            'companhia das letras',
+            'rocco',
+            'darkside',
+            'intrínseca',
+            'nova fronteira',
+            'globo livros',
+        ];
+
+        $filtered = [];
+        foreach ($categories as $category) {
+            $shouldExclude = false;
+
+            // Check against exclude patterns
+            foreach ($excludePatterns as $pattern) {
+                if (preg_match($pattern, $category)) {
+                    $shouldExclude = true;
+                    break;
+                }
+            }
+
+            // Check against publisher names
+            $lowerCategory = mb_strtolower($category, 'UTF-8');
+            if (in_array($lowerCategory, $publisherNames)) {
+                $shouldExclude = true;
+            }
+
+            // Keep it if not excluded
+            if (! $shouldExclude) {
+                $filtered[] = $category;
+            }
+        }
+
+        return ! empty($filtered) ? array_values($filtered) : null;
     }
 
     private function looksLikeIsbn(string $query): bool

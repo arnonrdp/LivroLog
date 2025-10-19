@@ -49,14 +49,31 @@
       <q-separator />
 
       <q-card-section class="row q-col-gutter-md q-py-md">
-        <div class="col-3">
-          <img
-            v-if="book?.thumbnail"
-            :alt="`Cover of ${book?.title}`"
-            class="full-width"
-            :src="book.thumbnail"
-            style="max-height: 150px; object-fit: contain; border-radius: 4px"
-          />
+        <div class="col-3 relative-position">
+          <div v-if="book?.thumbnail" class="cursor-pointer relative-position" @click="openReplaceDialog">
+            <img
+              :alt="`Cover of ${book?.title}`"
+              class="full-width"
+              :src="book.thumbnail"
+              style="max-height: 150px; object-fit: contain; border-radius: 4px"
+            />
+
+            <!-- Overlay hover with Liquid Glass effect -->
+            <div
+              v-if="!props.userIdentifier && isBookInLibrary"
+              class="absolute-full flex flex-center column overlay-hover"
+              style="border-radius: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none"
+            >
+              <!-- Glass background layer -->
+              <div class="glass-background" style="pointer-events: none"></div>
+
+              <!-- Content on top -->
+              <q-icon color="white" name="swap_horiz" size="md" style="pointer-events: none; z-index: 1; position: relative" />
+              <div class="text-white text-caption q-mt-xs" style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)">
+                {{ $t('change-cover') }}
+              </div>
+            </div>
+          </div>
           <div v-else class="bg-grey-3 full-width text-center q-pa-md" style="height: 150px; border-radius: 4px">
             <q-icon color="grey-5" name="book" size="3em" />
           </div>
@@ -352,10 +369,13 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <ChangeCoverDialog v-if="book" v-model="showReplaceDialog" :current-book="book" @replaced="onBookReplaced" />
 </template>
 
 <script setup lang="ts">
 import FormattedDescription from '@/components/common/FormattedDescription.vue'
+import ChangeCoverDialog from '@/components/home/ChangeCoverDialog.vue'
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useBookStore, useReviewStore, useUserBookStore, useUserStore } from '@/stores'
 import { useQuasar } from 'quasar'
@@ -395,6 +415,7 @@ const pollingInterval = ref<number | null>(null)
 const pollingStartTime = ref<Date | null>(null)
 const reviewToDelete = ref<string | null>(null)
 const showDeleteDialog = ref(false)
+const showReplaceDialog = ref(false)
 const showFullDescription = ref(false)
 const showSpoiler = ref<Record<string, boolean>>({})
 
@@ -720,8 +741,9 @@ function stopPolling() {
 function updateLibraryStatus() {
   const bookId = book.value?.id
   const googleId = book.value?.google_id
+  const amazonAsin = book.value?.amazon_asin
 
-  if (!bookId && !googleId) {
+  if (!bookId && !googleId && !amazonAsin) {
     isBookInLibrary.value = false
     return
   }
@@ -731,6 +753,7 @@ function updateLibraryStatus() {
   const result = userBooks.some((book) => {
     if (bookId && book.id === bookId) return true
     if (googleId && book.google_id === googleId) return true
+    if (amazonAsin && book.amazon_asin === amazonAsin) return true
     return false
   })
 
@@ -1008,4 +1031,42 @@ async function handleSave() {
     .catch(() => $q.notify({ message: t('error-occurred'), type: 'negative' }))
     .finally(() => (loading.value = false))
 }
+
+function openReplaceDialog() {
+  // Only allow replacement if book is in library and user is viewing their own shelf
+  if (!props.userIdentifier && isBookInLibrary.value && book.value) {
+    showReplaceDialog.value = true
+  }
+}
+
+function onBookReplaced(newBook: Book) {
+  // Update the book being viewed (this triggers reactive updates throughout the component)
+  bookStore.$patch({ _book: newBook })
+  userBookStore.$patch({ _book: newBook })
+
+  // Update library status with the new book
+  updateLibraryStatus()
+
+  // No need to reload - the new book already comes with reviews and pivot data from the API
+}
 </script>
+
+<style scoped lang="sass">
+.cursor-pointer:hover .overlay-hover
+  opacity: 1 !important
+
+.glass-background
+  position: absolute
+  inset: 0
+  border-radius: inherit
+  pointer-events: none
+  z-index: 0
+  backdrop-filter: blur(8px) saturate(150%) brightness(1.1)
+  -webkit-backdrop-filter: blur(8px) saturate(150%) brightness(1.1)
+  background: rgba(255, 255, 255, 0.3)
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.1)
+
+@supports not (backdrop-filter: blur(8px))
+  .glass-background
+    background: rgba(255, 255, 255, 0.9)
+</style>

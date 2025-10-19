@@ -15,8 +15,10 @@ class BookEnrichmentService
 
     /**
      * Enriquece um livro específico usando Google Books API
+     *
+     * @param  array  $skipFields  List of fields that should not be overwritten
      */
-    public function enrichBook(Book $book, ?string $googleId = null): array
+    public function enrichBook(Book $book, ?string $googleId = null, array $skipFields = []): array
     {
         try {
             $googleBookData = $this->fetchBookFromGoogle($googleId ?? $book->google_id ?? $book->isbn);
@@ -29,7 +31,7 @@ class BookEnrichmentService
                 ];
             }
 
-            $enrichedData = $this->extractEnrichedData($googleBookData, $book);
+            $enrichedData = $this->extractEnrichedData($googleBookData, $book, $skipFields);
             $book->update($enrichedData);
 
             return [
@@ -133,29 +135,33 @@ class BookEnrichmentService
 
     /**
      * Extracts enriched data from Google Books API response
+     *
+     * @param  array  $skipFields  List of fields that should not be included
      */
-    private function extractEnrichedData(array $googleBookData, ?Book $book = null): array
+    private function extractEnrichedData(array $googleBookData, ?Book $book = null, array $skipFields = []): array
     {
         $volumeInfo = $googleBookData['volumeInfo'] ?? [];
         $data = [];
 
-        $data = array_merge($data, $this->extractBasicInfo($volumeInfo));
-        $data = array_merge($data, $this->extractThumbnail($volumeInfo, $book));
-        $data = array_merge($data, $this->extractPublicationDate($volumeInfo, $book));
-        $data = array_merge($data, $this->extractAuthorInfo($volumeInfo));
-        $data = array_merge($data, $this->extractPublisherInfo($volumeInfo));
-        $data = array_merge($data, $this->extractPageInfo($volumeInfo));
-        $data = array_merge($data, $this->extractCategoriesAndIdentifiers($volumeInfo));
-        $data = array_merge($data, $this->extractPhysicalDimensions($volumeInfo));
+        $data = array_merge($data, $this->extractBasicInfo($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractThumbnail($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractPublicationDate($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractAuthorInfo($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractPublisherInfo($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractPageInfo($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractCategoriesAndIdentifiers($volumeInfo, $book, $skipFields));
+        $data = array_merge($data, $this->extractPhysicalDimensions($volumeInfo, $book, $skipFields));
         $data = array_merge($data, $this->extractMaturityAndRating($volumeInfo));
 
         // Google ID
-        if (isset($googleBookData['id'])) {
+        if (isset($googleBookData['id']) && ! in_array('google_id', $skipFields)) {
             $data['google_id'] = $googleBookData['id'];
         }
 
         // Determine format based on available information
-        $data['format'] = $this->determineFormat($googleBookData);
+        if (! in_array('format', $skipFields)) {
+            $data['format'] = $this->determineFormat($googleBookData);
+        }
 
         // Information quality
         $data['info_quality'] = $this->determineInfoQuality(
@@ -176,19 +182,22 @@ class BookEnrichmentService
     /**
      * Extract basic information (title, subtitle, description)
      */
-    private function extractBasicInfo(array $volumeInfo): array
+    private function extractBasicInfo(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
         $data = [];
 
-        if (isset($volumeInfo['title'])) {
-            $data['title'] = $volumeInfo['title'];
+        if (isset($volumeInfo['title']) && ! in_array('title', $skipFields)) {
+            // Only update title if book doesn't have one or it's a basic placeholder
+            if (! $book || empty($book->title) || str_starts_with($book->title, 'Book - ')) {
+                $data['title'] = $volumeInfo['title'];
+            }
         }
 
-        if (isset($volumeInfo['subtitle'])) {
+        if (isset($volumeInfo['subtitle']) && ! in_array('subtitle', $skipFields) && (! $book || empty($book->subtitle))) {
             $data['subtitle'] = $volumeInfo['subtitle'];
         }
 
-        if (isset($volumeInfo['description'])) {
+        if (isset($volumeInfo['description']) && ! in_array('description', $skipFields) && (! $book || empty($book->description))) {
             $data['description'] = $volumeInfo['description'];
         }
 
@@ -198,16 +207,17 @@ class BookEnrichmentService
     /**
      * Extract thumbnail image
      */
-    private function extractThumbnail(array $volumeInfo, ?Book $book = null): array
+    private function extractThumbnail(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
         $data = [];
 
-        if (isset($volumeInfo['imageLinks']['thumbnail'])) {
-            // Google Books has a thumbnail - use it
+        if (in_array('thumbnail', $skipFields)) {
+            return $data;
+        }
+
+        if (isset($volumeInfo['imageLinks']['thumbnail']) && (! $book || empty($book->thumbnail))) {
+            // Google Books has a thumbnail and book doesn't - use it
             $data['thumbnail'] = str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail']);
-        } elseif ($book && ! empty($book->thumbnail)) {
-            // No thumbnail from Google Books, but book already has one - preserve it
-            $data['thumbnail'] = $book->thumbnail;
         }
 
         return $data;
@@ -216,11 +226,11 @@ class BookEnrichmentService
     /**
      * Extract publication date with smart updating logic
      */
-    private function extractPublicationDate(array $volumeInfo, ?Book $book): array
+    private function extractPublicationDate(array $volumeInfo, ?Book $book, array $skipFields = []): array
     {
         $data = [];
 
-        if (! isset($volumeInfo['publishedDate'])) {
+        if (in_array('published_date', $skipFields) || ! isset($volumeInfo['publishedDate'])) {
             return $data;
         }
 
@@ -288,21 +298,33 @@ class BookEnrichmentService
     /**
      * Extract author information
      */
-    private function extractAuthorInfo(array $volumeInfo): array
+    private function extractAuthorInfo(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
-        // This service focuses on book-level data
-        // Author extraction is handled separately
-        return [];
+        $data = [];
+
+        if (in_array('authors', $skipFields)) {
+            return $data;
+        }
+
+        if (isset($volumeInfo['authors']) && (! $book || empty($book->authors))) {
+            $data['authors'] = implode(', ', $volumeInfo['authors']);
+        }
+
+        return $data;
     }
 
     /**
      * Extract publisher information
      */
-    private function extractPublisherInfo(array $volumeInfo): array
+    private function extractPublisherInfo(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
         $data = [];
 
-        if (isset($volumeInfo['publisher'])) {
+        if (in_array('publisher', $skipFields)) {
+            return $data;
+        }
+
+        if (isset($volumeInfo['publisher']) && (! $book || empty($book->publisher))) {
             $data['publisher'] = $volumeInfo['publisher'];
         }
 
@@ -312,15 +334,15 @@ class BookEnrichmentService
     /**
      * Extract page and format information
      */
-    private function extractPageInfo(array $volumeInfo): array
+    private function extractPageInfo(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
         $data = [];
 
-        if (isset($volumeInfo['pageCount'])) {
+        if (! in_array('page_count', $skipFields) && isset($volumeInfo['pageCount']) && (! $book || empty($book->page_count))) {
             $data['page_count'] = (int) $volumeInfo['pageCount'];
         }
 
-        if (isset($volumeInfo['printType'])) {
+        if (! in_array('print_type', $skipFields) && isset($volumeInfo['printType']) && (! $book || empty($book->print_type))) {
             $data['print_type'] = $volumeInfo['printType'];
         }
 
@@ -330,12 +352,12 @@ class BookEnrichmentService
     /**
      * Extract categories and industry identifiers
      */
-    private function extractCategoriesAndIdentifiers(array $volumeInfo): array
+    private function extractCategoriesAndIdentifiers(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
         $data = [];
 
         // Categories - normalize to always be an array
-        if (isset($volumeInfo['categories'])) {
+        if (! in_array('categories', $skipFields) && isset($volumeInfo['categories']) && (! $book || empty($book->categories))) {
             if (is_array($volumeInfo['categories'])) {
                 $data['categories'] = $volumeInfo['categories'];
             } else {
@@ -344,11 +366,11 @@ class BookEnrichmentService
         }
 
         // Industry identifiers (all ISBNs)
-        if (isset($volumeInfo['industryIdentifiers'])) {
+        if (! in_array('industry_identifiers', $skipFields) && isset($volumeInfo['industryIdentifiers'])) {
             $data['industry_identifiers'] = $volumeInfo['industryIdentifiers'];
 
             // Updates main ISBN if not available
-            if (empty($data['isbn'])) {
+            if (! in_array('isbn', $skipFields) && (! $book || empty($book->isbn))) {
                 foreach ($volumeInfo['industryIdentifiers'] as $identifier) {
                     if (in_array($identifier['type'], ['ISBN_13', 'ISBN_10'])) {
                         $data['isbn'] = $identifier['identifier'];
@@ -364,19 +386,22 @@ class BookEnrichmentService
     /**
      * Extract physical dimensions
      */
-    private function extractPhysicalDimensions(array $volumeInfo): array
+    private function extractPhysicalDimensions(array $volumeInfo, ?Book $book = null, array $skipFields = []): array
     {
         $data = [];
 
         if (isset($volumeInfo['dimensions'])) {
             $dimensions = $volumeInfo['dimensions'];
-            if (isset($dimensions['height'])) {
+
+            if (! in_array('height', $skipFields) && isset($dimensions['height']) && (! $book || empty($book->height))) {
                 $data['height'] = $this->convertToMillimeters($dimensions['height']);
             }
-            if (isset($dimensions['width'])) {
+
+            if (! in_array('width', $skipFields) && isset($dimensions['width']) && (! $book || empty($book->width))) {
                 $data['width'] = $this->convertToMillimeters($dimensions['width']);
             }
-            if (isset($dimensions['thickness'])) {
+
+            if (! in_array('thickness', $skipFields) && isset($dimensions['thickness']) && (! $book || empty($book->thickness))) {
                 $data['thickness'] = $this->convertToMillimeters($dimensions['thickness']);
             }
         }

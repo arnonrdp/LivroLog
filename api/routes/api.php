@@ -43,17 +43,6 @@ Route::get('/auth/verify-email', [EmailVerificationController::class, 'verifyEma
 
 // Public routes
 Route::get('/health', [HealthController::class, 'index']);
-
-// Temporary debug route - TODO: Remove after fixing Amazon links issue
-Route::get('/debug/amazon-config', function () {
-    return response()->json([
-        'sitestripe_enabled' => config('services.amazon.sitestripe_enabled'),
-        'associate_tag' => config('services.amazon.associate_tag'),
-        'env_sitestripe' => env('AMAZON_SITESTRIPE_ENABLED'),
-        'env_tag' => env('AMAZON_ASSOCIATE_TAG'),
-    ]);
-});
-
 Route::get('/books', [BookController::class, 'index']);
 
 // Image proxy (public for CORS issues)
@@ -98,6 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Books
     Route::post('/books/{book}/enrich', [BookController::class, 'enrichBook']);
+    Route::get('/books/{book}/editions', [BookController::class, 'getEditions']);
     // @deprecated Use GET /books/{id}?with=details instead (amazon_links included automatically)
     Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']);
     Route::apiResource('books', BookController::class)->except(['index']);
@@ -107,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/books/{book}', [UserBookController::class, 'show']);
     Route::post('/user/books', [UserBookController::class, 'store']);
     Route::patch('/user/books/{book}', [UserBookController::class, 'update']);
+    Route::put('/user/books/{book}/replace', [UserBookController::class, 'replaceBook']);
     Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
 
     // GoodReads Import

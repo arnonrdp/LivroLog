@@ -10,31 +10,74 @@ class UnifiedBookEnrichmentService
 {
     private BookEnrichmentService $googleEnrichmentService;
 
-    public function __construct(BookEnrichmentService $googleEnrichmentService)
-    {
+    private AmazonEnrichmentService $amazonEnrichmentService;
+
+    public function __construct(
+        BookEnrichmentService $googleEnrichmentService,
+        AmazonEnrichmentService $amazonEnrichmentService
+    ) {
         $this->googleEnrichmentService = $googleEnrichmentService;
+        $this->amazonEnrichmentService = $amazonEnrichmentService;
     }
 
     /**
-     * Enriches a book using multiple sources (Google Books + Amazon)
-     * Google Books: Synchronous (immediate data)
-     * Amazon: Asynchronous via job (background processing)
+     * Enriches a book using multiple sources (Amazon + Google Books)
+     * Strategy: Amazon first (synchronous), then Google Books to complement
+     * Amazon: Synchronous (searches for ASIN and product data)
+     * Google Books: Synchronous (only fills missing fields)
      */
     public function enrichBook(Book $book, ?string $googleId = null): array
     {
         $result = [
+            'amazon_success' => false,
             'google_success' => false,
-            'amazon_dispatched' => false,
             'message' => '',
             'book_id' => $book->id,
         ];
 
         try {
-            // 1. Google Books Enrichment (Synchronous)
-            if ($this->shouldEnrichWithGoogle($book)) {
-                Log::info("Starting Google Books enrichment for book: {$book->title} (ID: {$book->id})");
+            $amazonFilledFields = [];
 
-                $googleResult = $this->googleEnrichmentService->enrichBook($book, $googleId);
+            // 1. Amazon Enrichment (Synchronous)
+            if ($this->shouldEnrichWithAmazon($book)) {
+                Log::info("Starting Amazon enrichment for book: {$book->title} (ID: {$book->id})");
+
+                $amazonResult = $this->amazonEnrichmentService->enrichBookWithAmazon($book);
+                $result['amazon_result'] = $amazonResult;
+                $result['amazon_success'] = $amazonResult['success'] ?? false;
+                $amazonFilledFields = $amazonResult['fields_filled'] ?? [];
+
+                if ($result['amazon_success']) {
+                    Log::info("Amazon enrichment successful for book {$book->id}", [
+                        'fields_filled' => $amazonFilledFields,
+                    ]);
+                    $book->refresh(); // Reload with updated data
+                } else {
+                    Log::warning("Amazon enrichment failed for book {$book->id}: ".($amazonResult['message'] ?? 'Unknown error'));
+                }
+            } else {
+                Log::info("Skipping Amazon enrichment for book {$book->id} (already has ASIN or not enabled)");
+                $result['amazon_success'] = true; // Consider as success if no enrichment needed
+            }
+
+            // 2. Check if book is fully enriched
+            $missingFields = $this->getMissingFields($book);
+            $isFullyEnriched = empty($missingFields);
+
+            Log::info("Book {$book->id} enrichment status", [
+                'is_fully_enriched' => $isFullyEnriched,
+                'missing_fields' => $missingFields,
+                'amazon_filled_fields' => $amazonFilledFields,
+            ]);
+
+            // 3. Google Books Enrichment (Synchronous, only if not fully enriched)
+            if (! $isFullyEnriched && $this->shouldEnrichWithGoogle($book)) {
+                Log::info("Starting Google Books enrichment for book: {$book->title} (ID: {$book->id}) to fill missing fields");
+
+                // Pass Amazon-filled fields as skip fields to avoid overwriting
+                $skipFields = $amazonFilledFields;
+
+                $googleResult = $this->googleEnrichmentService->enrichBook($book, $googleId, $skipFields);
                 $result['google_result'] = $googleResult;
                 $result['google_success'] = $googleResult['success'] ?? false;
 
@@ -45,36 +88,27 @@ class UnifiedBookEnrichmentService
                     Log::warning("Google Books enrichment failed for book {$book->id}: ".($googleResult['message'] ?? 'Unknown error'));
                 }
             } else {
-                Log::info("Skipping Google Books enrichment for book {$book->id} (already enriched or no Google ID)");
+                if ($isFullyEnriched) {
+                    Log::info("Skipping Google Books enrichment for book {$book->id} (already fully enriched)");
+                } else {
+                    Log::info("Skipping Google Books enrichment for book {$book->id} (no Google ID or already enriched)");
+                }
                 $result['google_success'] = true; // Consider as success if no enrichment needed
             }
 
-            // 2. Amazon Enrichment (Asynchronous)
-            if ($this->shouldEnrichWithAmazon($book)) {
-                Log::info("Dispatching Amazon enrichment job for book: {$book->title} (ID: {$book->id})");
-
-                // Update status to processing before dispatching job
-                $book->update(['asin_status' => 'processing']);
-
-                EnrichBookWithAmazonJob::dispatch($book);
-                $result['amazon_dispatched'] = true;
-            } else {
-                Log::info("Skipping Amazon enrichment for book {$book->id} (already has ASIN or not in pending status)");
-            }
-
-            // 3. Build success message
+            // 4. Build success message
             $enrichmentActions = [];
-            if ($result['google_success'] && $this->shouldEnrichWithGoogle($book)) {
-                $enrichmentActions[] = 'Google Books';
+            if ($result['amazon_success'] && ! empty($amazonFilledFields)) {
+                $enrichmentActions[] = 'Amazon ('.count($amazonFilledFields).' fields)';
             }
-            if ($result['amazon_dispatched']) {
-                $enrichmentActions[] = 'Amazon (processing)';
+            if ($result['google_success'] && ! $isFullyEnriched) {
+                $enrichmentActions[] = 'Google Books (complementary)';
             }
 
             if (! empty($enrichmentActions)) {
                 $result['message'] = 'Book enriched with: '.implode(' + ', $enrichmentActions);
             } else {
-                $result['message'] = 'Book already enriched';
+                $result['message'] = 'Book already fully enriched';
             }
 
             return $result;
@@ -87,8 +121,8 @@ class UnifiedBookEnrichmentService
             ]);
 
             return [
+                'amazon_success' => false,
                 'google_success' => false,
-                'amazon_dispatched' => false,
                 'message' => 'Enrichment failed: '.$e->getMessage(),
                 'book_id' => $book->id,
             ];
@@ -263,19 +297,32 @@ class UnifiedBookEnrichmentService
     }
 
     /**
-     * Future method for Phase 2: Merge data from multiple sources intelligently
-     * This will be implemented when Amazon PA-API is available
+     * Check which important fields are missing from a book
+     * Returns array of missing field names
      */
-    private function mergeBookData(array $googleData, array $amazonData): array
+    private function getMissingFields(Book $book): array
     {
-        // TODO: Implement in Phase 2
-        // Priority strategy:
-        // - thumbnail: Amazon > Google (better quality)
-        // - description: Google > Amazon (more complete)
-        // - page_count: Google > Amazon (more reliable)
-        // - dimensions: Amazon > Google (Amazon has physical measurements)
-        // - asin: Amazon only
+        $importantFields = [
+            'description',
+            'page_count',
+            'publisher',
+            'published_date',
+            'authors',
+            'thumbnail',
+            'categories',
+        ];
 
-        return $googleData; // For now, just return Google data
+        $missingFields = [];
+
+        foreach ($importantFields as $field) {
+            $value = $book->$field;
+
+            // Check if field is empty
+            if (empty($value)) {
+                $missingFields[] = $field;
+            }
+        }
+
+        return $missingFields;
     }
 }

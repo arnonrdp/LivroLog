@@ -47,7 +47,7 @@ class BookController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Search term for external APIs (Google Books, Open Library)",
+     *         description="Search term for Amazon Books",
      *         required=false,
      *
      *         @OA\Schema(type="string", example="Sidarta")
@@ -974,6 +974,142 @@ class BookController extends Controller
         return response()->json([
             'success' => true,
             'links' => $links,
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/books/{book}/editions",
+     *     operationId="getBookEditions",
+     *     tags={"Books"},
+     *     summary="Get different editions of a book",
+     *     description="Returns different editions/formats of the same book (Kindle, Hardcover, Paperback, etc.) using Amazon PA-API GetVariations or local database fallback",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book editions found",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="source", type="string", example="amazon_variations", description="Source of editions: amazon_variations or local_database"),
+     *             @OA\Property(property="total_found", type="integer", example=5),
+     *             @OA\Property(property="current_book_id", type="string", example="B-1ABC-2DEF"),
+     *             @OA\Property(property="editions", type="array", @OA\Items(ref="#/components/schemas/Book"))
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=200, description="No editions found (single edition only)")
+     * )
+     */
+    public function getEditions(Book $book): JsonResponse
+    {
+        $editions = [];
+        $source = 'none';
+
+        // Try Amazon PA-API GetVariations first (if book has ASIN)
+        if ($book->amazon_asin) {
+            $amazonProvider = app(\App\Services\Providers\AmazonBooksProvider::class);
+
+            if ($amazonProvider->isEnabled()) {
+                $result = $amazonProvider->getVariations($book->amazon_asin);
+
+                if ($result['success'] && ! empty($result['books'])) {
+                    $editions = $result['books'];
+                    $source = 'amazon_variations';
+
+                    Log::info('Amazon GetVariations success', [
+                        'book_id' => $book->id,
+                        'asin' => $book->amazon_asin,
+                        'variations_found' => count($editions),
+                    ]);
+                } else {
+                    Log::info('Amazon GetVariations found no results', [
+                        'book_id' => $book->id,
+                        'asin' => $book->amazon_asin,
+                        'message' => $result['message'] ?? 'Unknown error',
+                    ]);
+                }
+            }
+        }
+
+        // Fallback to local database search by title + author
+        if (empty($editions) && $book->title && $book->authors) {
+            $query = Book::query()
+                ->where('id', '!=', $book->id) // Exclude current book
+                ->where('title', 'LIKE', '%'.$book->title.'%')
+                ->where('authors', 'LIKE', '%'.$book->authors.'%')
+                ->limit(10);
+
+            $localEditions = $query->get();
+
+            if ($localEditions->isNotEmpty()) {
+                $transformer = new BookTransformer;
+                $editions = $transformer->transform($localEditions->toArray(), ['details']);
+                $source = 'local_database';
+
+                Log::info('Local database editions found', [
+                    'book_id' => $book->id,
+                    'title' => $book->title,
+                    'editions_found' => count($editions),
+                ]);
+            }
+        }
+
+        // Ensure editions is always an array
+        if (! is_array($editions)) {
+            $editions = [];
+        }
+
+        // Filter out the current book from editions (in case Amazon or local DB returned it)
+        $editions = array_filter($editions, function ($edition) use ($book) {
+            // Remove if same internal ID (with null/empty check)
+            if (! empty($edition['id']) && ! empty($book->id) && $edition['id'] === $book->id) {
+                return false;
+            }
+
+            // Remove if same ASIN (with null/empty check)
+            if (! empty($edition['amazon_asin']) && ! empty($book->amazon_asin)
+                && $edition['amazon_asin'] === $book->amazon_asin) {
+                return false;
+            }
+
+            // Remove if same Google ID (with null/empty check)
+            if (! empty($edition['google_id']) && ! empty($book->google_id)
+                && $edition['google_id'] === $book->google_id) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Re-index array after filtering
+        $editions = array_values($editions);
+
+        // Always include the current book at the beginning
+        $transformer = new BookTransformer;
+        $currentBookData = $transformer->transform($book, ['details']);
+
+        // Add current book at the start
+        array_unshift($editions, $currentBookData);
+
+        return response()->json([
+            'success' => true,
+            'source' => $source,
+            'total_found' => count($editions),
+            'current_book_id' => $book->id,
+            'editions' => $editions,
         ]);
     }
 }
