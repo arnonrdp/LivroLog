@@ -64,11 +64,12 @@ jobs:
   # Legacy rollback (disabled - Docker containers handle rollback now)
 
   # Docker container deployments are the primary deployment method
+  # Dev deployment disabled - only production on Hostinger
   docker-canary-dev:
     name: docker-canary-dev
     runs-on: ubuntu-latest
     needs: [required-checks, build]
-    if: always() && needs.build.result == 'success' && (github.ref == 'refs/heads/dev' || (github.event_name == 'workflow_dispatch' && github.event.inputs.branch == 'dev'))
+    if: false  # Disabled - no separate dev environment after Hostinger migration
 
     env:
       ENVIRONMENT: Development
