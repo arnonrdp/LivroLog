@@ -3,7 +3,8 @@
 # Comments in English only
 
 # Build stage - Install dependencies
-FROM composer:2 AS vendor
+# Using PHP 8.4 explicitly to match production runtime and avoid PHP 8.5 compatibility issues
+FROM composer:2.8 AS vendor
 WORKDIR /app
 # Copy composer files first for better Docker layer caching
 COPY api/composer.json api/composer.lock ./
