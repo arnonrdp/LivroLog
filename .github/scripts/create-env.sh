@@ -32,16 +32,14 @@ SESSION_LIFETIME=120
 CACHE_DRIVER=redis
 
 # Logging Configuration
-MAIL_MAILER=ses
+MAIL_MAILER=resend
 MAIL_FROM_ADDRESS=noreply@livrolog.com
 MAIL_FROM_NAME=\${APP_NAME}
 LOG_CHANNEL=stack
 LOG_LEVEL=debug
 
-# AWS Configuration (for SES)
-AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
-AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
-AWS_DEFAULT_REGION=us-east-1
+# Resend Configuration (for transactional emails)
+RESEND_KEY=${RESEND_KEY:-}
 
 # Google Services Configuration
 GOOGLE_BOOKS_API_KEY=${GOOGLE_BOOKS_API_KEY:-}

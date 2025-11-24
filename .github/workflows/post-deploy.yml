@@ -41,14 +41,11 @@ jobs:
             REDIS_PORT=6379
             REDIS_PASSWORD=null
 
-            MAIL_MAILER=ses
+            MAIL_MAILER=resend
             MAIL_FROM_ADDRESS=noreply@livrolog.com
             MAIL_FROM_NAME=LivroLog
 
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_DEFAULT_REGION=us-east-1
-            AWS_SES_REGION=us-east-1
+            RESEND_KEY=${{ secrets.RESEND_KEY }}
 
             SESSION_DRIVER=file
             CACHE_DRIVER=file
@@ -101,14 +98,11 @@ jobs:
             REDIS_PORT=6379
             REDIS_PASSWORD=null
 
-            MAIL_MAILER=ses
+            MAIL_MAILER=resend
             MAIL_FROM_ADDRESS=noreply@livrolog.com
             MAIL_FROM_NAME="LivroLog Dev"
 
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_DEFAULT_REGION=us-east-1
-            AWS_SES_REGION=us-east-1
+            RESEND_KEY=${{ secrets.RESEND_KEY }}
 
             SESSION_DRIVER=file
             CACHE_DRIVER=file

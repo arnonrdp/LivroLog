@@ -7,7 +7,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "aws/aws-sdk-php": "^3.327",
         "darkaonline/l5-swagger": "*",
         "google/apiclient": "^2.18",
         "laravel/framework": "^12.0",
@@ -15,6 +14,7 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "predis/predis": "^3.1",
+        "resend/resend-laravel": "^0.15",
         "thewirecutter/paapi5-php-sdk": "^1.2"
     },
     "require-dev": {
