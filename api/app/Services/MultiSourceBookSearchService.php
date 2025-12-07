@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\BookSearchProvider;
 use App\Services\Providers\AmazonBooksProvider;
+use App\Services\Providers\GoogleBooksProvider;
 use App\Transformers\BookTransformer;
 use Illuminate\Support\Facades\Cache;
 
@@ -47,12 +48,14 @@ class MultiSourceBookSearchService
         $allBooks = [];
         $usedIsbns = [];
 
-        // Strategy: Only use Amazon Books
+        // Strategy: Try Amazon first, then Google Books as fallback
         $amazon = $this->findProviderByName('Amazon Books');
+        $google = $this->findProviderByName('Google Books');
 
         $amazonResult = null;
+        $googleResult = null;
 
-        // Try Amazon Books
+        // Try Amazon Books first
         if ($amazon && $amazon->isEnabled()) {
             try {
                 $amazonResult = $this->searchWithProvider($amazon, $normalizedQuery, $options);
@@ -94,6 +97,48 @@ class MultiSourceBookSearchService
                     $amazonCacheKey = 'amazon_rate_limited_'.md5($query);
                     Cache::put($amazonCacheKey, true, self::CACHE_TTL_AMAZON_FAILURE);
                 }
+            }
+        }
+
+        // Try Google Books as fallback if Amazon didn't return results
+        if (empty($allBooks) && $google && $google->isEnabled()) {
+            try {
+                $googleResult = $this->searchWithProvider($google, $normalizedQuery, $options);
+                $providerResults[] = [
+                    'provider' => $google->getName(),
+                    'success' => $googleResult['success'],
+                    'total_found' => $googleResult['total_found'],
+                    'message' => $googleResult['message'] ?? 'Success',
+                ];
+
+                if ($googleResult['success'] && ! empty($googleResult['books'])) {
+                    $transformedBooks = $transformer->transform($googleResult['books'], $includes);
+
+                    // Filter out books with ISBNs we already have from Amazon
+                    foreach ($transformedBooks as $book) {
+                        $isDuplicate = false;
+                        if (! empty($book['isbn_13']) && in_array($book['isbn_13'], $usedIsbns)) {
+                            $isDuplicate = true;
+                        }
+                        if (! empty($book['isbn_10']) && in_array($book['isbn_10'], $usedIsbns)) {
+                            $isDuplicate = true;
+                        }
+                        if (! empty($book['isbn']) && in_array($book['isbn'], $usedIsbns)) {
+                            $isDuplicate = true;
+                        }
+
+                        if (! $isDuplicate) {
+                            $allBooks[] = $book;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                $providerResults[] = [
+                    'provider' => $google->getName(),
+                    'success' => false,
+                    'total_found' => 0,
+                    'message' => 'Provider error: '.$e->getMessage(),
+                ];
             }
         }
 
@@ -183,8 +228,7 @@ class MultiSourceBookSearchService
     {
         $this->providers = [
             new AmazonBooksProvider,
-            // Future providers:
-            // new ISBNdbProvider(),
+            new GoogleBooksProvider,
         ];
 
         // Providers initialized
