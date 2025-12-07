@@ -91,19 +91,53 @@
 <script setup lang="ts">
 import type { Book } from '@/models'
 import { useBookStore } from '@/stores'
-import { Notify } from 'quasar'
-import { onMounted, ref, watch } from 'vue'
+import { Notify, useMeta } from 'quasar'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
 const bookStore = useBookStore()
+const { t } = useI18n()
 
 const searchQuery = ref('')
 const lastSearchQuery = ref('')
 const books = ref<Book[]>([])
 const isLoading = ref(false)
 const hasSearched = ref(false)
+
+const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
+
+// Dynamic SEO Meta Tags
+const pageTitle = computed(() => {
+  if (lastSearchQuery.value) {
+    return `"${lastSearchQuery.value}" - ${t('search.button')} | LivroLog`
+  }
+  return `${t('search.initial-title')} | LivroLog`
+})
+
+const pageDescription = computed(() => {
+  if (lastSearchQuery.value && books.value.length > 0) {
+    return t('search.results-for', { query: lastSearchQuery.value }) + ` - ${books.value.length} ${t('books', books.value.length)}`
+  }
+  return t('search.initial-hint')
+})
+
+useMeta(() => ({
+  title: pageTitle.value,
+  meta: {
+    description: { name: 'description', content: pageDescription.value },
+    ogType: { property: 'og:type', content: 'website' },
+    ogTitle: { property: 'og:title', content: pageTitle.value },
+    ogDescription: { property: 'og:description', content: pageDescription.value },
+    ogUrl: { property: 'og:url', content: `${baseUrl}/search${lastSearchQuery.value ? '?q=' + encodeURIComponent(lastSearchQuery.value) : ''}` },
+    twitterCard: { name: 'twitter:card', content: 'summary' },
+    twitterTitle: { name: 'twitter:title', content: pageTitle.value },
+    twitterDescription: { name: 'twitter:description', content: pageDescription.value },
+    robots: { name: 'robots', content: lastSearchQuery.value ? 'noindex, follow' : 'index, follow' }
+  }
+}))
 
 // Watch for query param changes
 watch(

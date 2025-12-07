@@ -260,7 +260,7 @@
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useBookStore, useUserBookStore, useUserStore } from '@/stores'
 import api from '@/utils/axios'
-import { Notify } from 'quasar'
+import { Notify, useMeta } from 'quasar'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -290,6 +290,52 @@ const isLoading = ref(true)
 const isLoadingReviews = ref(false)
 const error = ref(false)
 const descriptionExpanded = ref(false)
+
+const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
+
+// Dynamic SEO Meta Tags for Book Page
+const pageTitle = computed(() => {
+  if (book.value) {
+    const author = book.value.authors || t('book.unknown-author')
+    return `${book.value.title} - ${author} | LivroLog`
+  }
+  return 'LivroLog'
+})
+
+const pageDescription = computed(() => {
+  if (book.value) {
+    const desc = book.value.description || ''
+    const truncated = desc.length > 160 ? desc.substring(0, 157) + '...' : desc
+    const rating = stats.value?.average_rating ? ` - ${stats.value.average_rating.toFixed(1)}/5` : ''
+    return truncated || `${book.value.title} ${t('book.by-author', { author: book.value.authors || t('book.unknown-author') })}${rating}`
+  }
+  return t('description')
+})
+
+const pageImage = computed(() => {
+  return book.value?.thumbnail || `${baseUrl}/no_cover.jpg`
+})
+
+useMeta(() => ({
+  title: pageTitle.value,
+  meta: {
+    description: { name: 'description', content: pageDescription.value },
+    // Open Graph
+    ogType: { property: 'og:type', content: 'book' },
+    ogTitle: { property: 'og:title', content: pageTitle.value },
+    ogDescription: { property: 'og:description', content: pageDescription.value },
+    ogImage: { property: 'og:image', content: pageImage.value },
+    ogUrl: { property: 'og:url', content: `${baseUrl}/books/${props.bookId}` },
+    // Book specific OG tags
+    ogBookAuthor: { property: 'og:book:author', content: book.value?.authors || '' },
+    ogBookIsbn: { property: 'og:book:isbn', content: book.value?.isbn || '' },
+    // Twitter
+    twitterCard: { name: 'twitter:card', content: 'summary_large_image' },
+    twitterTitle: { name: 'twitter:title', content: pageTitle.value },
+    twitterDescription: { name: 'twitter:description', content: pageDescription.value },
+    twitterImage: { name: 'twitter:image', content: pageImage.value }
+  }
+}))
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 

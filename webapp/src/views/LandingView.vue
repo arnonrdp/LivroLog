@@ -290,11 +290,32 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores'
+import { useMeta } from 'quasar'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
+
+const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
+
+// SEO Meta Tags
+useMeta(() => ({
+  title: 'LivroLog - ' + t('landing.hero-title'),
+  meta: {
+    description: { name: 'description', content: t('landing.hero-subtitle') },
+    ogType: { property: 'og:type', content: 'website' },
+    ogTitle: { property: 'og:title', content: 'LivroLog - ' + t('landing.hero-title') },
+    ogDescription: { property: 'og:description', content: t('landing.hero-subtitle') },
+    ogImage: { property: 'og:image', content: `${baseUrl}/screenshot-web.jpg` },
+    ogUrl: { property: 'og:url', content: baseUrl },
+    twitterCard: { name: 'twitter:card', content: 'summary_large_image' },
+    twitterTitle: { name: 'twitter:title', content: 'LivroLog - ' + t('landing.hero-title') },
+    twitterDescription: { name: 'twitter:description', content: t('landing.hero-subtitle') }
+  }
+}))
 
 const searchQuery = ref('')
 
