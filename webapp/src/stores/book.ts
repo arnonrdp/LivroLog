@@ -73,13 +73,15 @@ export const useBookStore = defineStore('book', {
 
     async postBook(payload: object) {
       this._isLoading = true
-      await api
+      return await api
         .post('/books', payload)
-        .then(async () => {
-          Notify.create({ message: i18n.global.t('added-to-shelf'), type: 'positive' })
-          await this.getBooks()
+        .then((response) => {
+          return response.data
         })
-        .catch((error) => Notify.create({ message: error.response.data.message, type: 'negative' }))
+        .catch((error) => {
+          Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+          throw error
+        })
         .finally(() => (this._isLoading = false))
     },
 

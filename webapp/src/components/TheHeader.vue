@@ -1,8 +1,25 @@
 <template>
   <q-header class="bg-accent text-black header-nav" elevated height-hint="48">
     <q-toolbar-title class="non-selectable logo-container">
-      <router-link :to="authStore.isAuthenticated ? '/' : '/login'"><img alt="Logotipo" src="/logo.svg" /></router-link>
+      <router-link to="/"><img alt="Logotipo" src="/logo.svg" /></router-link>
     </q-toolbar-title>
+
+    <!-- Search bar for guests (desktop only) -->
+    <div v-if="!authStore.isAuthenticated" class="search-container gt-xs">
+      <q-input
+        v-model="searchQuery"
+        class="search-input"
+        dense
+        outlined
+        :placeholder="$t('search-placeholder', 'Search books...')"
+        rounded
+        @keydown.enter="handleSearch"
+      >
+        <template v-slot:append>
+          <q-icon class="cursor-pointer" name="search" @click="handleSearch" />
+        </template>
+      </q-input>
+    </div>
 
     <!-- Authenticated User Navigation -->
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
@@ -22,22 +39,44 @@
 
     <!-- Guest User Navigation -->
     <div v-else class="guest-nav">
-      <q-btn color="primary" :label="$t('signup-signin')" no-caps outline rounded size="md" to="/login" unelevated />
+      <q-btn
+        class="q-mr-sm"
+        color="primary"
+        :label="$t('signin')"
+        no-caps
+        outline
+        rounded
+        size="md"
+        unelevated
+        @click="openLogin"
+      />
+      <q-btn
+        color="primary"
+        :label="$t('signup')"
+        no-caps
+        rounded
+        size="md"
+        unelevated
+        @click="openRegister"
+      />
     </div>
   </q-header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
 import { useAuthStore } from '@/stores'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
+const searchQuery = ref('')
+
 const tabs = [
-  { name: 'home', icon: 'img:/books.svg', to: '/' },
+  { name: 'home', icon: 'img:/books.svg', to: '/home' },
   { name: 'add', icon: 'search', to: '/add' },
   { name: 'people', icon: 'people', to: '/people' },
   { name: 'settings', icon: 'settings', to: '/settings' }
@@ -47,14 +86,31 @@ const peopleTo = computed(() => {
   const path = route.path || '/'
   if (path.startsWith('/people')) return '/people'
   const segments = path.split('/').filter(Boolean)
-  const reserved = new Set(['add', 'people', 'settings'])
-  if (segments.length === 1 && !reserved.has(segments[0])) return path
+  const reserved = new Set(['home', 'add', 'people', 'settings', 'search', 'books'])
+  if (segments.length === 1 && segments[0] && !reserved.has(segments[0])) return path
   return '/people'
 })
+
 const settingsTo = computed(() => `/settings/${route.params.tab || 'books'}`)
 
-const createRipple = (event) => {
-  const button = event.currentTarget
+function openLogin() {
+  authStore.openAuthModal('login')
+}
+
+function openRegister() {
+  authStore.openAuthModal('register')
+}
+
+function handleSearch() {
+  if (searchQuery.value.trim()) {
+    router.push({ path: '/search', query: { q: searchQuery.value.trim() } })
+    searchQuery.value = ''
+  }
+}
+
+const createRipple = (event: Event) => {
+  const mouseEvent = event as MouseEvent
+  const button = event.currentTarget as HTMLElement
   const existingRipple = button.querySelector('.ripple')
   if (existingRipple) existingRipple.remove()
 
@@ -63,8 +119,8 @@ const createRipple = (event) => {
   const radius = diameter / 2
 
   const rect = button.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
+  const x = mouseEvent.clientX - rect.left
+  const y = mouseEvent.clientY - rect.top
 
   circle.style.width = circle.style.height = `${diameter}px`
   circle.style.left = `${x - radius}px`
@@ -90,6 +146,20 @@ const createRipple = (event) => {
 .logo-container
   align-items: center
   display: flex
+  flex-shrink: 0
+
+.search-container
+  flex: 1
+  max-width: 400px
+  margin: 0 1rem
+  @media screen and (max-width: $breakpoint-sm-max)
+    max-width: 250px
+
+.search-input
+  :deep(.q-field__control)
+    background: rgba(255, 255, 255, 0.8)
+    &:hover
+      background: rgba(255, 255, 255, 0.95)
 
 .nav-tabs
   @media screen and (max-width: $breakpoint-xs-max)
@@ -200,16 +270,14 @@ img[alt='Logotipo']
 .guest-nav
   align-items: center
   display: flex
-  flex: 1
-  justify-content: flex-end
+  flex-shrink: 0
   padding: 0 1.5rem
   @media screen and (max-width: $breakpoint-xs-max)
     justify-content: center
     padding: 0.5rem 1rem 1rem
   :deep(.q-btn)
-    border-width: 2px
     font-weight: 500
-    padding: 0.5rem 1.5rem
+    padding: 0.5rem 1.25rem
     transition: all 0.2s ease
     &:hover
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)

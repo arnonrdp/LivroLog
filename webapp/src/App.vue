@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <TheHeader v-if="!['/login', '/reset-password'].includes($route.path)" />
+    <TheHeader v-if="$route.path !== '/reset-password'" />
     <q-page-container>
       <RouterView v-slot="{ Component }">
         <Transition name="fade">
@@ -8,10 +8,12 @@
         </Transition>
       </RouterView>
     </q-page-container>
+    <AuthModal />
   </q-layout>
 </template>
 
 <script setup lang="ts">
+import AuthModal from '@/components/auth/AuthModal.vue'
 import TheHeader from '@/components/TheHeader.vue'
 import { useMeta } from 'quasar'
 import { onMounted } from 'vue'

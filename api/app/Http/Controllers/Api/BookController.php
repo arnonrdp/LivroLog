@@ -922,6 +922,83 @@ class BookController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/books/{book}/stats",
+     *     operationId="getBookStats",
+     *     tags={"Books"},
+     *     summary="Get public statistics for a book",
+     *     description="Returns aggregated statistics for a book including reader count, average rating, and rating distribution. This is a public endpoint.",
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book statistics",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="total_readers", type="integer", example=42, description="Number of users who have this book in their library"),
+     *             @OA\Property(property="average_rating", type="number", format="float", example=4.2, description="Average rating from public reviews"),
+     *             @OA\Property(property="review_count", type="integer", example=15, description="Number of public reviews"),
+     *             @OA\Property(property="rating_distribution", type="object",
+     *                 @OA\Property(property="1", type="integer", example=1),
+     *                 @OA\Property(property="2", type="integer", example=2),
+     *                 @OA\Property(property="3", type="integer", example=3),
+     *                 @OA\Property(property="4", type="integer", example=5),
+     *                 @OA\Property(property="5", type="integer", example=4)
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found")
+     * )
+     */
+    public function stats(Book $book): JsonResponse
+    {
+        // Count users who have this book in their library (non-private)
+        $totalReaders = $book->users()
+            ->wherePivot('is_private', false)
+            ->count();
+
+        // Get public reviews for this book
+        $publicReviews = $book->reviews()
+            ->where('visibility_level', 'public')
+            ->get();
+
+        // Calculate average rating
+        $averageRating = $publicReviews->avg('rating');
+
+        // Calculate rating distribution
+        $ratingDistribution = [
+            '1' => 0,
+            '2' => 0,
+            '3' => 0,
+            '4' => 0,
+            '5' => 0,
+        ];
+
+        foreach ($publicReviews as $review) {
+            if ($review->rating >= 1 && $review->rating <= 5) {
+                $ratingDistribution[(string) $review->rating]++;
+            }
+        }
+
+        return response()->json([
+            'total_readers' => $totalReaders,
+            'average_rating' => $averageRating ? round($averageRating, 1) : null,
+            'review_count' => $publicReviews->count(),
+            'rating_distribution' => $ratingDistribution,
+        ]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/books/{book}/amazon-links",
      *     operationId="getBookAmazonLinks",
      *     tags={"Books"},
