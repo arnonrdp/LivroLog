@@ -16,26 +16,14 @@
     <div v-else-if="book" class="book-content">
       <!-- Back Button -->
       <div class="back-nav q-mb-md">
-        <q-btn
-          color="grey-7"
-          dense
-          flat
-          icon="arrow_back"
-          :label="$t('book.back')"
-          no-caps
-          @click="goBack"
-        />
+        <q-btn color="grey-7" dense flat icon="arrow_back" :label="$t('book.back')" no-caps @click="goBack" />
       </div>
 
       <!-- Book Header -->
       <div class="book-header">
         <!-- Cover -->
         <div class="book-cover">
-          <img
-            :alt="book.title"
-            :src="highResThumbnail"
-            @error="(e: Event) => (e.target as HTMLImageElement).src = '/no_cover.jpg'"
-          />
+          <img :alt="book.title" :src="highResThumbnail" @error="(e: Event) => ((e.target as HTMLImageElement).src = '/no_cover.jpg')" />
         </div>
 
         <!-- Info -->
@@ -69,13 +57,7 @@
               <div class="rating-source">Amazon</div>
               <div class="rating-row">
                 <div class="stars">
-                  <q-icon
-                    v-for="n in 5"
-                    :key="n"
-                    :color="n <= Math.round(book.amazon_rating) ? 'orange-7' : 'grey-4'"
-                    name="star"
-                    size="1.25rem"
-                  />
+                  <q-icon v-for="n in 5" :key="n" :color="n <= Math.round(book.amazon_rating) ? 'orange-7' : 'grey-4'" name="star" size="1.25rem" />
                 </div>
                 <span class="rating-value">{{ book.amazon_rating.toFixed(1) }}</span>
                 <span v-if="book.amazon_rating_count" class="rating-count">
@@ -94,49 +76,20 @@
           <div class="action-buttons">
             <!-- Add to Shelf Button (for authenticated users) -->
             <template v-if="isAuthenticated">
-              <q-btn-dropdown
-                v-if="!isInLibrary"
-                color="primary"
-                :label="$t('book.add-to-shelf')"
-                no-caps
-                rounded
-                unelevated
-              >
+              <q-btn-dropdown v-if="!isInLibrary" color="primary" :label="$t('book.add-to-shelf')" no-caps rounded unelevated>
                 <q-list>
-                  <q-item
-                    v-for="status in readingStatuses"
-                    :key="status.value"
-                    v-close-popup
-                    clickable
-                    @click="addToLibrary(status.value)"
-                  >
+                  <q-item v-for="status in readingStatuses" :key="status.value" v-close-popup clickable @click="addToLibrary(status.value)">
                     <q-item-section>
                       <q-item-label>{{ $t(`reading-status.${status.value}`) }}</q-item-label>
                     </q-item-section>
                   </q-item>
                 </q-list>
               </q-btn-dropdown>
-              <q-btn
-                v-else
-                color="positive"
-                icon="check"
-                :label="$t('book.in-library')"
-                no-caps
-                outline
-                rounded
-              />
+              <q-btn v-else color="positive" icon="check" :label="$t('book.in-library')" no-caps outline rounded />
             </template>
 
             <!-- CTA for guests -->
-            <q-btn
-              v-else
-              color="primary"
-              :label="$t('book.add-to-shelf')"
-              no-caps
-              rounded
-              unelevated
-              @click="promptLogin"
-            />
+            <q-btn v-else color="primary" :label="$t('book.add-to-shelf')" no-caps rounded unelevated @click="promptLogin" />
 
             <!-- Amazon Button - Direct link if only one region, dropdown if multiple -->
             <q-btn
@@ -153,15 +106,7 @@
               <!-- Dropdown menu only if multiple regions -->
               <q-menu v-if="amazonLinks.length > 1" anchor="bottom right" self="top right">
                 <q-list style="min-width: 220px">
-                  <q-item
-                    v-for="link in amazonLinks"
-                    :key="link.region"
-                    v-close-popup
-                    class="q-py-sm"
-                    clickable
-                    :href="link.url"
-                    target="_blank"
-                  >
+                  <q-item v-for="link in amazonLinks" :key="link.region" v-close-popup class="q-py-sm" clickable :href="link.url" target="_blank">
                     <q-item-section avatar>
                       <q-icon name="shopping_cart" size="sm" />
                     </q-item-section>
@@ -246,24 +191,14 @@
                 <q-icon v-else color="grey" name="person" size="24px" />
               </q-avatar>
               <div class="review-meta">
-                <router-link
-                  v-if="review.user?.username"
-                  class="reviewer-name"
-                  :to="`/${review.user.username}`"
-                >
+                <router-link v-if="review.user?.username" class="reviewer-name" :to="`/${review.user.username}`">
                   {{ review.user?.display_name || review.user?.username || $t('book.anonymous') }}
                 </router-link>
                 <span v-else class="reviewer-name">
                   {{ review.user?.display_name || $t('book.anonymous') }}
                 </span>
                 <div class="review-rating">
-                  <q-icon
-                    v-for="n in 5"
-                    :key="n"
-                    :color="n <= review.rating ? 'amber' : 'grey-4'"
-                    name="star"
-                    size="0.9rem"
-                  />
+                  <q-icon v-for="n in 5" :key="n" :color="n <= review.rating ? 'amber' : 'grey-4'" name="star" size="0.9rem" />
                   <span v-if="review.created_at" class="review-date">
                     {{ formatDate(review.created_at) }}
                   </span>
@@ -285,21 +220,8 @@
           <h3>{{ $t('book.cta-title') }}</h3>
           <p>{{ $t('book.cta-subtitle') }}</p>
           <div class="cta-buttons">
-            <q-btn
-              color="primary"
-              :label="$t('signup')"
-              no-caps
-              rounded
-              unelevated
-              @click="openRegister"
-            />
-            <q-btn
-              color="primary"
-              flat
-              :label="$t('book.already-have-account')"
-              no-caps
-              @click="promptLogin"
-            />
+            <q-btn color="primary" :label="$t('signup')" no-caps rounded unelevated @click="openRegister" />
+            <q-btn color="primary" flat :label="$t('book.already-have-account')" no-caps @click="promptLogin" />
           </div>
         </div>
       </section>
@@ -309,7 +231,7 @@
 
 <script setup lang="ts">
 import type { Book, ReadingStatus, Review } from '@/models'
-import { useAuthStore, useBookStore, useUserBookStore, useUserStore } from '@/stores'
+import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
 import api from '@/utils/axios'
 import { Notify, useMeta } from 'quasar'
 import { computed, onMounted, ref } from 'vue'
@@ -331,7 +253,6 @@ const router = useRouter()
 const { t } = useI18n()
 const authStore = useAuthStore()
 const userStore = useUserStore()
-const bookStore = useBookStore()
 const userBookStore = useUserBookStore()
 
 const book = ref<Book | null>(null)
@@ -396,11 +317,7 @@ const isInLibrary = computed(() => {
   return userBooks.some((ub) => ub.id === book.value?.id)
 })
 
-const readingStatuses: { value: ReadingStatus }[] = [
-  { value: 'want_to_read' },
-  { value: 'reading' },
-  { value: 'read' }
-]
+const readingStatuses: { value: ReadingStatus }[] = [{ value: 'want_to_read' }, { value: 'reading' }, { value: 'read' }]
 
 // Convert thumbnail URL to high resolution version
 const highResThumbnail = computed(() => {

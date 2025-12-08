@@ -7,11 +7,11 @@ const mockAxios = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
-  delete: vi.fn(),
+  delete: vi.fn()
 }))
 
 vi.mock('@/utils/axios', () => ({
-  default: mockAxios,
+  default: mockAxios
 }))
 
 import { useBookStore } from '../book'
@@ -20,9 +20,9 @@ import { useBookStore } from '../book'
 vi.mock('@/locales', () => ({
   i18n: {
     global: {
-      t: (key: string) => key,
-    },
-  },
+      t: (key: string) => key
+    }
+  }
 }))
 
 describe('Book Store', () => {
@@ -34,7 +34,7 @@ describe('Book Store', () => {
     description: 'A test book description',
     thumbnail: 'https://example.com/cover.jpg',
     page_count: 300,
-    language: 'pt',
+    language: 'pt'
   }
 
   const mockBooks: Book[] = [
@@ -43,8 +43,8 @@ describe('Book Store', () => {
       id: 'B-TEST-5678',
       title: 'Another Book',
       authors: 'Another Author',
-      isbn: '9780987654321',
-    },
+      isbn: '9780987654321'
+    }
   ]
 
   beforeEach(() => {
@@ -93,7 +93,7 @@ describe('Book Store', () => {
       mockAxios.get.mockResolvedValueOnce({ data: { data: mockBooks } })
 
       const store = useBookStore()
-      const result = await store.getBooks()
+      await store.getBooks()
 
       expect(mockAxios.get).toHaveBeenCalledWith('/books', { params: {} })
       expect(store._books).toEqual(mockBooks)
@@ -122,7 +122,7 @@ describe('Book Store', () => {
 
     it('should handle error when fetching books fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Server error' } },
+        response: { data: { message: 'Server error' } }
       })
 
       const store = useBookStore()
@@ -152,7 +152,7 @@ describe('Book Store', () => {
       await store.getBook('B-TEST-1234', { with: ['reviews', 'author'] })
 
       expect(mockAxios.get).toHaveBeenCalledWith('/books/B-TEST-1234', {
-        params: { 'with[]': ['reviews', 'author'] },
+        params: { 'with[]': ['reviews', 'author'] }
       })
     })
 
@@ -163,13 +163,13 @@ describe('Book Store', () => {
       await store.getBook('B-TEST-1234', { user_id: 'U-TEST-1234' })
 
       expect(mockAxios.get).toHaveBeenCalledWith('/books/B-TEST-1234', {
-        params: { user_id: 'U-TEST-1234' },
+        params: { user_id: 'U-TEST-1234' }
       })
     })
 
     it('should handle error when fetching book fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Book not found' } },
+        response: { data: { message: 'Book not found' } }
       })
 
       const store = useBookStore()
@@ -187,7 +187,7 @@ describe('Book Store', () => {
       const payload = {
         title: 'Test Book',
         authors: 'Test Author',
-        isbn: '9781234567890',
+        isbn: '9781234567890'
       }
       const result = await store.postBook(payload)
 
@@ -198,7 +198,7 @@ describe('Book Store', () => {
 
     it('should handle error when creating book fails', async () => {
       mockAxios.post.mockRejectedValueOnce({
-        response: { data: { message: 'Validation error' } },
+        response: { data: { message: 'Validation error' } }
       })
 
       const store = useBookStore()
@@ -216,7 +216,7 @@ describe('Book Store', () => {
       const store = useBookStore()
       store._books = [mockBook]
 
-      const result = await store.putBook('B-TEST-1234', { title: 'Updated Title' })
+      await store.putBook('B-TEST-1234', { title: 'Updated Title' })
 
       expect(mockAxios.put).toHaveBeenCalledWith('/books/B-TEST-1234', { title: 'Updated Title' })
       expect(store._books[0].title).toBe('Updated Title')
@@ -225,7 +225,7 @@ describe('Book Store', () => {
 
     it('should handle error when updating book fails', async () => {
       mockAxios.put.mockRejectedValueOnce({
-        response: { data: { message: 'Update failed' } },
+        response: { data: { message: 'Update failed' } }
       })
 
       const store = useBookStore()
@@ -253,7 +253,7 @@ describe('Book Store', () => {
 
     it('should handle error when deleting book fails', async () => {
       mockAxios.delete.mockRejectedValueOnce({
-        response: { data: { message: 'Delete failed' } },
+        response: { data: { message: 'Delete failed' } }
       })
 
       const store = useBookStore()
@@ -281,7 +281,7 @@ describe('Book Store', () => {
 
     it('should handle error when fetching editions fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Error fetching editions' } },
+        response: { data: { message: 'Error fetching editions' } }
       })
 
       const store = useBookStore()

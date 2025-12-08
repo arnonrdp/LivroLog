@@ -35,15 +35,7 @@
         size="md"
         @click="openLogin"
       />
-      <q-btn
-        color="primary"
-        data-testid="header-signup-btn"
-        :label="$t('signup')"
-        no-caps
-        rounded
-        size="md"
-        @click="openRegister"
-      />
+      <q-btn color="primary" data-testid="header-signup-btn" :label="$t('signup')" no-caps rounded size="md" @click="openRegister" />
     </div>
   </q-header>
 </template>
@@ -83,9 +75,9 @@ function openRegister() {
   authStore.openAuthModal('register')
 }
 
-const createRipple = (event: Event) => {
-  const mouseEvent = event as MouseEvent
-  const button = event.currentTarget as HTMLElement
+const createRipple = (event: globalThis.Event) => {
+  const mouseEvent = event as globalThis.MouseEvent
+  const button = event.currentTarget as globalThis.HTMLElement
   const existingRipple = button.querySelector('.ripple')
   if (existingRipple) existingRipple.remove()
 

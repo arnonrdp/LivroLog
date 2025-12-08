@@ -20,12 +20,12 @@ test.describe('Books', () => {
     await loginPage.register(user)
   })
 
-  test('user can search for books', async ({ page }) => {
+  test('user can search for books', async () => {
     await homePage.searchBooks(testBooks.searchQuery)
     await homePage.expectSearchResults()
   })
 
-  test('user can add book to library', async ({ page }) => {
+  test('user can add book to library', async () => {
     await homePage.searchBooks(testBooks.searchQuery)
     await homePage.expectSearchResults()
     await homePage.clickOnBookResult(0)
@@ -34,7 +34,7 @@ test.describe('Books', () => {
     await bookDialog.expectInLibrary()
   })
 
-  test('user can remove book from library', async ({ page }) => {
+  test('user can remove book from library', async () => {
     // First add a book
     await homePage.searchBooks(testBooks.searchQuery)
     await homePage.clickOnBookResult(0)
@@ -56,7 +56,7 @@ test.describe('Books', () => {
     await expect(page.locator('[data-testid="reading-status-select"]')).toContainText('Reading')
   })
 
-  test('user can set read date', async ({ page }) => {
+  test('user can set read date', async () => {
     await homePage.searchBooks(testBooks.searchQuery)
     await homePage.clickOnBookResult(0)
     await bookDialog.addToLibrary()

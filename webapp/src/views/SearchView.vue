@@ -18,15 +18,7 @@
           <q-icon name="search" />
         </template>
         <template v-slot:append>
-          <q-btn
-            v-if="searchQuery"
-            color="primary"
-            dense
-            flat
-            :label="$t('search.button')"
-            no-caps
-            @click="performSearch"
-          />
+          <q-btn v-if="searchQuery" color="primary" dense flat :label="$t('search.button')" no-caps @click="performSearch" />
         </template>
       </q-input>
     </div>
@@ -61,21 +53,11 @@
 
     <!-- Results Grid -->
     <div v-else class="results-grid">
-      <div
-        v-for="book in books"
-        :key="book.id || book.amazon_asin"
-        class="book-card"
-        @click="navigateToBook(book)"
-      >
+      <div v-for="(book, idx) in books" :key="book.id||idx" class="book-card" @click="navigateToBook(book)">
         <div class="book-cover">
-          <q-img
-            :alt="book.title"
-            fit="cover"
-            :ratio="2/3"
-            :src="book.thumbnail || '/no_cover.jpg'"
-          >
+          <q-img :alt="book.title" fit="cover" :ratio="2 / 3" :src="book.thumbnail || '/no_cover.jpg'">
             <template v-slot:error>
-              <q-img fit="cover" :ratio="2/3" src="/no_cover.jpg" />
+              <q-img fit="cover" :ratio="2 / 3" src="/no_cover.jpg" />
             </template>
           </q-img>
         </div>

@@ -273,7 +273,7 @@ describe('Auth Store', () => {
 
       const store = useAuthStore()
 
-      const result = await store.putAuthPassword({
+      await store.putAuthPassword({
         current_password: 'oldpassword',
         password: 'newpassword123',
         password_confirmation: 'newpassword123'

@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/login.page'
-import { ProfilePage } from './pages/profile.page'
 import { createTestUser } from './fixtures/test-data'
 
 test.describe('Social Features', () => {

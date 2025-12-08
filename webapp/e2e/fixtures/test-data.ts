@@ -12,20 +12,20 @@ export const testUsers = {
     displayName: `Usr${ts1}`,
     email: `testuser.e2e.${Date.now()}@test.com`,
     username: `usr${ts1}`,
-    password: 'TestPassword123!',
+    password: 'TestPassword123!'
   },
   secondary: {
     displayName: `Sec${ts2}`,
     email: `secondary.e2e.${Date.now()}@test.com`,
     username: `sec${ts2}`,
-    password: 'SecondaryPassword123!',
+    password: 'SecondPass123!'
   },
   privateUser: {
     displayName: `Prv${ts3}`,
     email: `private.e2e.${Date.now()}@test.com`,
     username: `prv${ts3}`,
-    password: 'PrivatePassword123!',
-  },
+    password: 'PrivatePass123!'
+  }
 }
 
 // Factory function to generate unique user data
@@ -37,17 +37,17 @@ export function createTestUser(prefix: string = 'usr') {
     displayName: `${prefix}${shortId}`,
     email: `${prefix}.${timestamp}@test.com`,
     username: `${prefix}${shortId}`.toLowerCase(),
-    password: 'TestPassword123!',
+    password: 'TestPassword123!'
   }
 }
 
 export const testBooks = {
   searchQuery: 'Dom Casmurro',
-  isbn: '9788525406958',
+  isbn: '9788525406958'
 }
 
 export const testReview = {
   title: 'Great Read',
   content: 'This is a fantastic book that I thoroughly enjoyed reading.',
-  rating: 5,
+  rating: 5
 }
