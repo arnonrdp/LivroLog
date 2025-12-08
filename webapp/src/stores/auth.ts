@@ -157,12 +157,14 @@ export const useAuthStore = defineStore('auth', {
 
     async postAuthLogout() {
       this._isLoading = true
+      const userStore = useUserStore()
 
       // Clear auth data FIRST to prevent interceptor from triggering
       const token = LocalStorage.getItem('access_token')
       LocalStorage.clear()
       localStorage.removeItem('auth')
       this.$reset()
+      userStore.$reset()
 
       // Then try to call logout API (ignore errors since we already cleared local data)
       if (token) {

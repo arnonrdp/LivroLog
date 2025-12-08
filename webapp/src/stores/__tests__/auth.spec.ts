@@ -201,6 +201,23 @@ describe('Auth Store', () => {
 
       expect(store._isLoading).toBe(false)
     })
+
+    it('should reset userStore on logout to update navbar reactively', async () => {
+      mockAxios.post.mockResolvedValueOnce({ data: { message: 'Logged out' } })
+
+      const store = useAuthStore()
+      const userStore = useUserStore()
+
+      // Simulate logged in state
+      userStore.setMe(mockUser)
+      expect(userStore.me.id).toBe('U-TEST-1234')
+
+      await store.postAuthLogout()
+
+      // userStore should be reset
+      expect(userStore.me).toEqual({})
+      expect(store.isAuthenticated).toBe(false)
+    })
   })
 
   describe('getMe', () => {
