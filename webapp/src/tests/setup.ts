@@ -18,12 +18,12 @@ const localStorageMock = {
   get length() {
     return Object.keys(storage).length
   },
-  key: vi.fn((index: number) => Object.keys(storage)[index] || null),
+  key: vi.fn((index: number) => Object.keys(storage)[index] || null)
 }
 Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock,
   writable: true,
-  configurable: true,
+  configurable: true
 })
 
 // Mock @vue/devtools-kit to prevent localStorage issues
@@ -31,10 +31,10 @@ vi.mock('@vue/devtools-kit', () => ({
   devtools: {
     hook: {
       on: vi.fn(),
-      emit: vi.fn(),
-    },
+      emit: vi.fn()
+    }
   },
-  setupDevtoolsPlugin: vi.fn(),
+  setupDevtoolsPlugin: vi.fn()
 }))
 
 // Mock Quasar
@@ -43,15 +43,15 @@ vi.mock('quasar', async () => {
   return {
     ...actual,
     Notify: {
-      create: vi.fn(),
+      create: vi.fn()
     },
     LocalStorage: {
       getItem: vi.fn(() => null),
       setItem: vi.fn(),
       set: vi.fn(),
       clear: vi.fn(),
-      remove: vi.fn(),
-    },
+      remove: vi.fn()
+    }
   }
 })
 
@@ -65,13 +65,13 @@ vi.mock('vue-router', async () => {
       replace: vi.fn(),
       go: vi.fn(),
       back: vi.fn(),
-      forward: vi.fn(),
+      forward: vi.fn()
     }),
     useRoute: () => ({
       params: {},
       query: {},
-      path: '/',
-    }),
+      path: '/'
+    })
   }
 })
 
@@ -89,5 +89,5 @@ afterEach(() => {
 config.global.stubs = {
   // Stub router-link and router-view
   RouterLink: true,
-  RouterView: true,
+  RouterView: true
 }

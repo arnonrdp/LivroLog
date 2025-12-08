@@ -8,21 +8,21 @@ export const mockAxios = {
   delete: vi.fn(),
   defaults: {
     headers: {
-      common: {},
-    },
+      common: {}
+    }
   },
   interceptors: {
     request: {
-      use: vi.fn(),
+      use: vi.fn()
     },
     response: {
-      use: vi.fn(),
-    },
-  },
+      use: vi.fn()
+    }
+  }
 }
 
 vi.mock('@/utils/axios', () => ({
-  default: mockAxios,
+  default: mockAxios
 }))
 
 export const resetAxiosMocks = () => {

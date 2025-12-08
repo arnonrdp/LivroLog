@@ -8,13 +8,7 @@
       </q-card-section>
 
       <q-card-section>
-        <q-tabs
-          v-model="tab"
-          active-bg-color="teal"
-          active-color="white"
-          class="text-teal"
-          indicator-color="transparent"
-        >
+        <q-tabs v-model="tab" active-bg-color="teal" active-color="white" class="text-teal" indicator-color="transparent">
           <q-tab data-testid="signup-tab" :label="$t('signup')" name="signup" />
           <q-tab data-testid="signin-tab" :label="$t('signin')" name="signin" />
           <q-tab data-testid="recover-tab" :label="$t('recover')" name="recover" />
@@ -88,7 +82,13 @@
         </q-card-section>
         <q-card-actions class="column">
           <div class="q-gutter-x-md">
-            <q-btn color="primary" :data-testid="tab === 'signin' ? 'login-button' : tab === 'signup' ? 'register-button' : 'recover-button'" :label="$t(tab)" :loading="authStore.isLoading" type="submit" />
+            <q-btn
+              color="primary"
+              :data-testid="tab === 'signin' ? 'login-button' : tab === 'signup' ? 'register-button' : 'recover-button'"
+              :label="$t(tab)"
+              :loading="authStore.isLoading"
+              type="submit"
+            />
             <q-btn color="primary" flat :label="$t('reset')" type="reset" />
           </div>
           <q-btn

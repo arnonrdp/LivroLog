@@ -6,11 +6,11 @@ import type { User, FollowRequest } from '@/models'
 const mockAxios = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
-  delete: vi.fn(),
+  delete: vi.fn()
 }))
 
 vi.mock('@/utils/axios', () => ({
-  default: mockAxios,
+  default: mockAxios
 }))
 
 import { useFollowStore } from '../follow'
@@ -19,9 +19,9 @@ import { useFollowStore } from '../follow'
 vi.mock('@/locales', () => ({
   i18n: {
     global: {
-      t: (key: string) => key,
-    },
-  },
+      t: (key: string) => key
+    }
+  }
 }))
 
 describe('Follow Store', () => {
@@ -29,13 +29,13 @@ describe('Follow Store', () => {
     id: 'U-TEST-1234',
     display_name: 'Test User',
     email: 'test@example.com',
-    username: 'testuser',
+    username: 'testuser'
   }
 
   const mockFollowRequest: FollowRequest = {
     id: 1,
     follower: mockUser,
-    created_at: '2024-01-01T00:00:00Z',
+    created_at: '2024-01-01T00:00:00Z'
   }
 
   const mockFollowers: User[] = [
@@ -44,8 +44,8 @@ describe('Follow Store', () => {
       id: 'U-TEST-5678',
       display_name: 'Another User',
       email: 'another@example.com',
-      username: 'anotheruser',
-    },
+      username: 'anotheruser'
+    }
   ]
 
   beforeEach(() => {
@@ -72,7 +72,7 @@ describe('Follow Store', () => {
       store._followStatus['U-TEST-1234'] = {
         is_following: true,
         is_followed_by: false,
-        mutual_follow: false,
+        mutual_follow: false
       }
       expect(store.isFollowing('U-TEST-1234')).toBe(true)
     })
@@ -84,7 +84,7 @@ describe('Follow Store', () => {
       store._followStatus['U-TEST-1234'] = {
         is_following: false,
         is_followed_by: true,
-        mutual_follow: false,
+        mutual_follow: false
       }
       expect(store.isFollowedBy('U-TEST-1234')).toBe(true)
     })
@@ -96,7 +96,7 @@ describe('Follow Store', () => {
       store._followStatus['U-TEST-1234'] = {
         is_following: true,
         is_followed_by: true,
-        mutual_follow: true,
+        mutual_follow: true
       }
       expect(store.isMutualFollow('U-TEST-1234')).toBe(true)
     })
@@ -107,8 +107,8 @@ describe('Follow Store', () => {
       mockAxios.post.mockResolvedValueOnce({
         data: {
           success: true,
-          data: { status: 'accepted' },
-        },
+          data: { status: 'accepted' }
+        }
       })
 
       const store = useFollowStore()
@@ -123,8 +123,8 @@ describe('Follow Store', () => {
       mockAxios.post.mockResolvedValueOnce({
         data: {
           success: true,
-          data: { status: 'pending' },
-        },
+          data: { status: 'pending' }
+        }
       })
 
       const store = useFollowStore()
@@ -137,7 +137,7 @@ describe('Follow Store', () => {
 
     it('should handle error when following fails', async () => {
       mockAxios.post.mockRejectedValueOnce({
-        response: { data: { message: 'Cannot follow yourself' } },
+        response: { data: { message: 'Cannot follow yourself' } }
       })
 
       const store = useFollowStore()
@@ -151,15 +151,15 @@ describe('Follow Store', () => {
       mockAxios.delete.mockResolvedValueOnce({
         data: {
           success: true,
-          data: { was_pending: false },
-        },
+          data: { was_pending: false }
+        }
       })
 
       const store = useFollowStore()
       store._followStatus['U-TEST-1234'] = {
         is_following: true,
         is_followed_by: false,
-        mutual_follow: false,
+        mutual_follow: false
       }
 
       const result = await store.deleteUserFollow('U-TEST-1234')
@@ -173,8 +173,8 @@ describe('Follow Store', () => {
       mockAxios.delete.mockResolvedValueOnce({
         data: {
           success: true,
-          data: { was_pending: true },
-        },
+          data: { was_pending: true }
+        }
       })
 
       const store = useFollowStore()
@@ -185,7 +185,7 @@ describe('Follow Store', () => {
 
     it('should handle error when unfollowing fails', async () => {
       mockAxios.delete.mockRejectedValueOnce({
-        response: { data: { message: 'Not following this user' } },
+        response: { data: { message: 'Not following this user' } }
       })
 
       const store = useFollowStore()
@@ -219,7 +219,7 @@ describe('Follow Store', () => {
 
     it('should handle error when fetching followers fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'User not found' } },
+        response: { data: { message: 'User not found' } }
       })
 
       const store = useFollowStore()
@@ -255,7 +255,7 @@ describe('Follow Store', () => {
 
     it('should handle error when fetching following fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'User not found' } },
+        response: { data: { message: 'User not found' } }
       })
 
       const store = useFollowStore()
@@ -280,7 +280,7 @@ describe('Follow Store', () => {
 
     it('should return empty array on error', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Server error' } },
+        response: { data: { message: 'Server error' } }
       })
 
       const store = useFollowStore()
@@ -294,7 +294,7 @@ describe('Follow Store', () => {
   describe('acceptFollowRequest', () => {
     it('should accept follow request', async () => {
       mockAxios.post.mockResolvedValueOnce({
-        data: { success: true },
+        data: { success: true }
       })
 
       const store = useFollowStore()
@@ -306,7 +306,7 @@ describe('Follow Store', () => {
 
     it('should return false on failure', async () => {
       mockAxios.post.mockResolvedValueOnce({
-        data: { success: false },
+        data: { success: false }
       })
 
       const store = useFollowStore()
@@ -317,7 +317,7 @@ describe('Follow Store', () => {
 
     it('should handle error when accepting fails', async () => {
       mockAxios.post.mockRejectedValueOnce({
-        response: { data: { message: 'Request not found' } },
+        response: { data: { message: 'Request not found' } }
       })
 
       const store = useFollowStore()
@@ -330,7 +330,7 @@ describe('Follow Store', () => {
   describe('rejectFollowRequest', () => {
     it('should reject follow request', async () => {
       mockAxios.delete.mockResolvedValueOnce({
-        data: { success: true },
+        data: { success: true }
       })
 
       const store = useFollowStore()
@@ -342,7 +342,7 @@ describe('Follow Store', () => {
 
     it('should return false on failure', async () => {
       mockAxios.delete.mockResolvedValueOnce({
-        data: { success: false },
+        data: { success: false }
       })
 
       const store = useFollowStore()
@@ -353,7 +353,7 @@ describe('Follow Store', () => {
 
     it('should handle error when rejecting fails', async () => {
       mockAxios.delete.mockRejectedValueOnce({
-        response: { data: { message: 'Request not found' } },
+        response: { data: { message: 'Request not found' } }
       })
 
       const store = useFollowStore()
@@ -368,7 +368,7 @@ describe('Follow Store', () => {
       const store = useFollowStore()
       store._followStatus = {
         'U-TEST-1234': { is_following: true, is_followed_by: false, mutual_follow: false },
-        'U-TEST-5678': { is_following: false, is_followed_by: true, mutual_follow: false },
+        'U-TEST-5678': { is_following: false, is_followed_by: true, mutual_follow: false }
       }
 
       store.clearFollowStatus('U-TEST-1234')
@@ -381,7 +381,7 @@ describe('Follow Store', () => {
       const store = useFollowStore()
       store._followStatus = {
         'U-TEST-1234': { is_following: true, is_followed_by: false, mutual_follow: false },
-        'U-TEST-5678': { is_following: false, is_followed_by: true, mutual_follow: false },
+        'U-TEST-5678': { is_following: false, is_followed_by: true, mutual_follow: false }
       }
 
       store.clearFollowStatus()

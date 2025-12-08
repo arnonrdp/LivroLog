@@ -74,7 +74,12 @@
       </q-card-section>
       <q-card-actions class="column">
         <div class="q-gutter-x-md">
-          <q-btn color="primary" :data-testid="tab === 'signin' ? 'login-button' : tab === 'signup' ? 'register-button' : 'recover-button'" :label="$t(tab)" type="submit" />
+          <q-btn
+            color="primary"
+            :data-testid="tab === 'signin' ? 'login-button' : tab === 'signup' ? 'register-button' : 'recover-button'"
+            :label="$t(tab)"
+            type="submit"
+          />
           <q-btn color="primary" flat :label="$t('reset')" type="reset" />
         </div>
         <q-btn

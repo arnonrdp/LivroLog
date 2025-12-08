@@ -15,7 +15,7 @@ test.describe('Authentication', () => {
     const user = {
       displayName: `Reg${shortId}`,
       email: `register.test.${timestamp}@test.com`,
-      password: 'TestPassword123!',
+      password: 'TestPassword123!'
     }
 
     await loginPage.register(user)
@@ -29,7 +29,7 @@ test.describe('Authentication', () => {
     const user = {
       displayName: `Log${shortId}`,
       email: `login.test.${timestamp}@test.com`,
-      password: 'TestPassword123!',
+      password: 'TestPassword123!'
     }
     await loginPage.register(user)
 
@@ -54,7 +54,7 @@ test.describe('Authentication', () => {
     const user = {
       displayName: `Out${shortId}`,
       email: `logout.test.${timestamp}@test.com`,
-      password: 'TestPassword123!',
+      password: 'TestPassword123!'
     }
     await loginPage.register(user)
 
@@ -72,7 +72,7 @@ test.describe('Authentication', () => {
     const user = {
       displayName: `Dup${shortId}`,
       email: `duplicate.test.${timestamp}@test.com`,
-      password: 'TestPassword123!',
+      password: 'TestPassword123!'
     }
 
     // Register first time
@@ -88,7 +88,7 @@ test.describe('Authentication', () => {
     await loginPage.attemptRegister({
       displayName: `Dup2${shortId}`,
       email: user.email, // Same email
-      password: 'TestPassword123!',
+      password: 'TestPassword123!'
     })
 
     // Wait a bit for the API response and error handling

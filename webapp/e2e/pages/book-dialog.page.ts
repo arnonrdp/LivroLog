@@ -24,12 +24,12 @@ export class BookDialogPage {
     await this.page.locator('[data-testid="reading-status-select"]').click()
     // Map status to exact display text
     const statusMap: Record<string, string> = {
-      'read': 'Read',
-      'reading': 'Reading',
-      'want_to_read': 'Want to Read',
-      'abandoned': 'Abandoned',
-      'on_hold': 'On Hold',
-      're_reading': 'Re-reading'
+      read: 'Read',
+      reading: 'Reading',
+      want_to_read: 'Want to Read',
+      abandoned: 'Abandoned',
+      on_hold: 'On Hold',
+      re_reading: 'Re-reading'
     }
     const displayText = statusMap[status]
     // Use getByRole for exact matching
@@ -102,7 +102,9 @@ export class BookDialogPage {
 
   async expectReviewVisible(textToFind: string) {
     // Wait longer for the review to appear and look for any review containing the text
-    await expect(this.page.locator('[data-testid="user-review"], [data-testid="book-review"]').filter({ hasText: textToFind })).toBeVisible({ timeout: 10000 })
+    await expect(this.page.locator('[data-testid="user-review"], [data-testid="book-review"]').filter({ hasText: textToFind })).toBeVisible({
+      timeout: 10000
+    })
   }
 
   async expectUserReviewExists() {

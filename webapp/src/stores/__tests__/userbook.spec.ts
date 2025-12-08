@@ -8,11 +8,11 @@ const mockAxios = vi.hoisted(() => ({
   post: vi.fn(),
   put: vi.fn(),
   patch: vi.fn(),
-  delete: vi.fn(),
+  delete: vi.fn()
 }))
 
 vi.mock('@/utils/axios', () => ({
-  default: mockAxios,
+  default: mockAxios
 }))
 
 import { useUserBookStore } from '../userbook'
@@ -22,9 +22,9 @@ import { useUserStore } from '../user'
 vi.mock('@/locales', () => ({
   i18n: {
     global: {
-      t: (key: string) => key,
-    },
-  },
+      t: (key: string) => key
+    }
+  }
 }))
 
 describe('UserBook Store', () => {
@@ -37,8 +37,8 @@ describe('UserBook Store', () => {
     pivot: {
       reading_status: 'read',
       read_at: '2024-01-01',
-      is_private: false,
-    },
+      is_private: false
+    }
   }
 
   const mockBooks: Book[] = [
@@ -49,9 +49,9 @@ describe('UserBook Store', () => {
       authors: 'Another Author',
       pivot: {
         reading_status: 'reading',
-        is_private: false,
-      },
-    },
+        is_private: false
+      }
+    }
   ]
 
   beforeEach(() => {
@@ -112,7 +112,7 @@ describe('UserBook Store', () => {
 
     it('should handle error when fetching library fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Unauthorized' } },
+        response: { data: { message: 'Unauthorized' } }
       })
 
       const store = useUserBookStore()
@@ -141,7 +141,7 @@ describe('UserBook Store', () => {
 
     it('should handle error when fetching book fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Book not found' } },
+        response: { data: { message: 'Book not found' } }
       })
 
       const store = useUserBookStore()
@@ -161,11 +161,14 @@ describe('UserBook Store', () => {
 
       const result = await store.postUserBooks(mockBook)
 
-      expect(mockAxios.post).toHaveBeenCalledWith('/user/books', expect.objectContaining({
-        book_id: 'B-TEST-1234',
-        is_private: false,
-        reading_status: 'read',
-      }))
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/user/books',
+        expect.objectContaining({
+          book_id: 'B-TEST-1234',
+          is_private: false,
+          reading_status: 'read'
+        })
+      )
       expect(result).toBe(true)
       expect(userStore.me.books).toContainEqual(mockBook)
       expect(store._isLoading).toBe(false)
@@ -176,7 +179,7 @@ describe('UserBook Store', () => {
         id: 'google-book-id',
         title: 'Google Book',
         authors: 'Google Author',
-        google_id: 'google-book-id',
+        google_id: 'google-book-id'
       }
       mockAxios.post.mockResolvedValueOnce({ data: { book: googleBook } })
 
@@ -186,9 +189,12 @@ describe('UserBook Store', () => {
 
       await store.postUserBooks(googleBook as Book)
 
-      expect(mockAxios.post).toHaveBeenCalledWith('/user/books', expect.objectContaining({
-        google_id: 'google-book-id',
-      }))
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/user/books',
+        expect.objectContaining({
+          google_id: 'google-book-id'
+        })
+      )
     })
 
     it('should return false if book already in library', async () => {
@@ -211,15 +217,18 @@ describe('UserBook Store', () => {
 
       await store.postUserBooks(mockBook, true, 'reading')
 
-      expect(mockAxios.post).toHaveBeenCalledWith('/user/books', expect.objectContaining({
-        is_private: true,
-        reading_status: 'reading',
-      }))
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        '/user/books',
+        expect.objectContaining({
+          is_private: true,
+          reading_status: 'reading'
+        })
+      )
     })
 
     it('should handle error when adding book fails', async () => {
       mockAxios.post.mockRejectedValueOnce({
-        response: { data: { message: 'Error adding book' } },
+        response: { data: { message: 'Error adding book' } }
       })
 
       const store = useUserBookStore()
@@ -242,7 +251,7 @@ describe('UserBook Store', () => {
       await store.patchUserBook('B-TEST-1234', { reading_status: 'reading' })
 
       expect(mockAxios.patch).toHaveBeenCalledWith('/user/books/B-TEST-1234', {
-        reading_status: 'reading',
+        reading_status: 'reading'
       })
       expect(store._isLoading).toBe(false)
     })
@@ -257,7 +266,7 @@ describe('UserBook Store', () => {
       await store.patchUserBook('B-TEST-1234', { read_at: '2024-06-01' })
 
       expect(mockAxios.patch).toHaveBeenCalledWith('/user/books/B-TEST-1234', {
-        read_at: '2024-06-01',
+        read_at: '2024-06-01'
       })
     })
 
@@ -271,7 +280,7 @@ describe('UserBook Store', () => {
       await store.patchUserBook('B-TEST-1234', { is_private: true })
 
       expect(mockAxios.patch).toHaveBeenCalledWith('/user/books/B-TEST-1234', {
-        is_private: true,
+        is_private: true
       })
     })
 
@@ -284,27 +293,25 @@ describe('UserBook Store', () => {
 
       await store.patchUserBook('B-TEST-1234', {
         reading_status: 'read',
-        read_at: '2024-06-01',
+        read_at: '2024-06-01'
       })
 
       expect(mockAxios.patch).toHaveBeenCalledWith('/user/books/B-TEST-1234', {
         reading_status: 'read',
-        read_at: '2024-06-01',
+        read_at: '2024-06-01'
       })
     })
 
     it('should handle error when updating fails', async () => {
       mockAxios.patch.mockRejectedValueOnce({
-        response: { data: { message: 'Update failed' } },
+        response: { data: { message: 'Update failed' } }
       })
 
       const store = useUserBookStore()
       const userStore = useUserStore()
       userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
 
-      await expect(
-        store.patchUserBook('B-TEST-1234', { reading_status: 'invalid' as any })
-      ).rejects.toThrow()
+      await expect(store.patchUserBook('B-TEST-1234', { reading_status: 'invalid' as any })).rejects.toThrow()
       expect(store._isLoading).toBe(false)
     })
   })
@@ -327,7 +334,7 @@ describe('UserBook Store', () => {
 
     it('should handle error when removing book fails', async () => {
       mockAxios.delete.mockRejectedValueOnce({
-        response: { data: { message: 'Delete failed' } },
+        response: { data: { message: 'Delete failed' } }
       })
 
       const store = useUserBookStore()
@@ -351,7 +358,7 @@ describe('UserBook Store', () => {
       const result = await store.replaceUserBook('B-TEST-1234', 'B-NEW-EDITION')
 
       expect(mockAxios.put).toHaveBeenCalledWith('/user/books/B-TEST-1234/replace', {
-        new_book_id: 'B-NEW-EDITION',
+        new_book_id: 'B-NEW-EDITION'
       })
       expect(result).toEqual(newBook)
       expect(store._isLoading).toBe(false)
@@ -363,7 +370,7 @@ describe('UserBook Store', () => {
         title: 'Amazon Edition',
         authors: 'Test Author',
         amazon_asin: 'B00ASIN123',
-        thumbnail: 'https://amazon.com/cover.jpg',
+        thumbnail: 'https://amazon.com/cover.jpg'
       }
       mockAxios.put.mockResolvedValueOnce({ data: { book: amazonBook } })
 
@@ -373,15 +380,18 @@ describe('UserBook Store', () => {
 
       await store.replaceUserBook('B-TEST-1234', amazonBook as Book)
 
-      expect(mockAxios.put).toHaveBeenCalledWith('/user/books/B-TEST-1234/replace', expect.objectContaining({
-        amazon_asin: 'B00ASIN123',
-        title: 'Amazon Edition',
-      }))
+      expect(mockAxios.put).toHaveBeenCalledWith(
+        '/user/books/B-TEST-1234/replace',
+        expect.objectContaining({
+          amazon_asin: 'B00ASIN123',
+          title: 'Amazon Edition'
+        })
+      )
     })
 
     it('should handle error when replacing fails', async () => {
       mockAxios.put.mockRejectedValueOnce({
-        response: { data: { message: 'Replace failed' } },
+        response: { data: { message: 'Replace failed' } }
       })
 
       const store = useUserBookStore()

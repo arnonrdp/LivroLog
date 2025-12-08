@@ -23,15 +23,7 @@
             @keydown.enter="handleSearch"
           >
             <template #append>
-              <q-btn
-                color="amber-8"
-                icon="search"
-                padding="sm"
-                round
-                size="md"
-                unelevated
-                @click="handleSearch"
-              />
+              <q-btn color="amber-8" icon="search" padding="sm" round size="md" unelevated @click="handleSearch" />
             </template>
           </q-input>
         </div>

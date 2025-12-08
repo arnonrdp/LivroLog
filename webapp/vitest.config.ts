@@ -7,12 +7,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@vue/devtools-kit': fileURLToPath(new URL('./src/tests/mocks/devtools-kit.ts', import.meta.url)),
-    },
+      '@vue/devtools-kit': fileURLToPath(new URL('./src/tests/mocks/devtools-kit.ts', import.meta.url))
+    }
   },
   define: {
     __VUE_PROD_DEVTOOLS__: false,
-    'process.env.NODE_ENV': '"test"',
+    'process.env.NODE_ENV': '"test"'
   },
   test: {
     environment: 'jsdom',
@@ -21,7 +21,7 @@ export default defineConfig({
     root: fileURLToPath(new URL('./', import.meta.url)),
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html']
     },
     globalSetup: ['./src/tests/global-setup.ts'],
     setupFiles: ['./src/tests/setup.ts'],
@@ -29,7 +29,7 @@ export default defineConfig({
     pool: 'forks',
     isolate: true,
     deps: {
-      inline: [/pinia/],
-    },
-  },
+      inline: [/pinia/]
+    }
+  }
 })

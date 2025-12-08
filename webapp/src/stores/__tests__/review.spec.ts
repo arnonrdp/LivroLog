@@ -7,11 +7,11 @@ const mockAxios = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
-  delete: vi.fn(),
+  delete: vi.fn()
 }))
 
 vi.mock('@/utils/axios', () => ({
-  default: mockAxios,
+  default: mockAxios
 }))
 
 import { useReviewStore } from '../review'
@@ -20,9 +20,9 @@ import { useReviewStore } from '../review'
 vi.mock('@/locales', () => ({
   i18n: {
     global: {
-      t: (key: string) => key,
-    },
-  },
+      t: (key: string) => key
+    }
+  }
 }))
 
 describe('Review Store', () => {
@@ -34,7 +34,7 @@ describe('Review Store', () => {
     content: 'This is a fantastic read!',
     rating: 5,
     visibility_level: 'public',
-    created_at: '2024-01-01T00:00:00Z',
+    created_at: '2024-01-01T00:00:00Z'
   }
 
   const mockReviews: Review[] = [
@@ -47,8 +47,8 @@ describe('Review Store', () => {
       content: 'Enjoyed reading it',
       rating: 4,
       visibility_level: 'public',
-      created_at: '2024-01-02T00:00:00Z',
-    },
+      created_at: '2024-01-02T00:00:00Z'
+    }
   ]
 
   beforeEach(() => {
@@ -89,7 +89,7 @@ describe('Review Store', () => {
 
     it('should handle error when fetching review fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Review not found' } },
+        response: { data: { message: 'Review not found' } }
       })
 
       const store = useReviewStore()
@@ -124,7 +124,7 @@ describe('Review Store', () => {
 
     it('should handle error when fetching reviews fails', async () => {
       mockAxios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Server error' } },
+        response: { data: { message: 'Server error' } }
       })
 
       const store = useReviewStore()
@@ -145,7 +145,7 @@ describe('Review Store', () => {
         title: 'Great Book',
         content: 'This is a fantastic read!',
         rating: 5,
-        visibility_level: 'public' as const,
+        visibility_level: 'public' as const
       }
       const result = await store.postReviews(reviewData)
 
@@ -156,14 +156,14 @@ describe('Review Store', () => {
 
     it('should handle error when creating review fails', async () => {
       mockAxios.post.mockRejectedValueOnce({
-        response: { data: { message: 'Validation error' } },
+        response: { data: { message: 'Validation error' } }
       })
 
       const store = useReviewStore()
       await store.postReviews({
         book_id: 'B-TEST-1234',
         rating: 5,
-        visibility_level: 'public',
+        visibility_level: 'public'
       })
 
       expect(store._isLoading).toBe(false)
@@ -185,7 +185,7 @@ describe('Review Store', () => {
 
     it('should handle error when updating review fails', async () => {
       mockAxios.put.mockRejectedValueOnce({
-        response: { data: { message: 'Update failed' } },
+        response: { data: { message: 'Update failed' } }
       })
 
       const store = useReviewStore()
@@ -212,7 +212,7 @@ describe('Review Store', () => {
 
     it('should handle error when deleting review fails', async () => {
       mockAxios.delete.mockRejectedValueOnce({
-        response: { data: { message: 'Delete failed' } },
+        response: { data: { message: 'Delete failed' } }
       })
 
       const store = useReviewStore()
@@ -280,7 +280,7 @@ describe('Review Store', () => {
 
     it('should handle error when marking helpful fails', async () => {
       mockAxios.post.mockRejectedValueOnce({
-        response: { data: { message: 'Already marked' } },
+        response: { data: { message: 'Already marked' } }
       })
 
       const store = useReviewStore()

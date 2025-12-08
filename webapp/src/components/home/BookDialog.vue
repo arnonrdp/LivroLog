@@ -69,7 +69,10 @@
 
               <!-- Content on top -->
               <q-icon color="white" name="swap_horiz" size="md" style="pointer-events: none; z-index: 1; position: relative" />
-              <div class="text-white text-caption q-mt-xs" style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)">
+              <div
+                class="text-white text-caption q-mt-xs"
+                style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)"
+              >
                 {{ $t('change-cover') }}
               </div>
             </div>
@@ -207,7 +210,13 @@
           <div class="text-body2">{{ $t('no-reviews-yet') }}</div>
         </div>
 
-        <div v-for="review in bookReviews" v-else :key="review.id" class="q-mb-md" :data-testid="review.user_id === userStore.me?.id ? 'user-review' : 'book-review'">
+        <div
+          v-for="review in bookReviews"
+          v-else
+          :key="review.id"
+          class="q-mb-md"
+          :data-testid="review.user_id === userStore.me?.id ? 'user-review' : 'book-review'"
+        >
           <q-card bordered flat>
             <q-card-section class="q-py-sm">
               <div class="row items-center q-mb-xs">
@@ -279,7 +288,15 @@
         <div class="row items-center q-col-gutter-md q-mb-md">
           <div class="col-4">
             <div class="text-body2">{{ $t('rating') }}</div>
-            <q-rating v-model="reviewForm.rating" color="amber" data-testid="review-rating" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+            <q-rating
+              v-model="reviewForm.rating"
+              color="amber"
+              data-testid="review-rating"
+              icon="star_border"
+              icon-selected="star"
+              :max="5"
+              size="1.5em"
+            />
           </div>
 
           <div class="col-4">
@@ -299,7 +316,15 @@
           </div>
         </div>
 
-        <q-input v-model="reviewForm.title" class="q-mb-md" data-testid="review-title-input" dense :label="$t('title') + ' (' + $t('optional') + ')'" :maxlength="200" outlined />
+        <q-input
+          v-model="reviewForm.title"
+          class="q-mb-md"
+          data-testid="review-title-input"
+          dense
+          :label="$t('title') + ' (' + $t('optional') + ')'"
+          :maxlength="200"
+          outlined
+        />
 
         <q-input
           v-model="reviewForm.content"
