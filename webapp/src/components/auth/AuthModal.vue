@@ -117,7 +117,7 @@
 import { useAuthStore } from '@/stores'
 import { GoogleAuth } from '@/utils/google-auth'
 import { useQuasar } from 'quasar'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const authStore = useAuthStore()
@@ -131,6 +131,7 @@ const passwordConfirm = ref('')
 const tab = ref('signin')
 const googleButtonRef = ref()
 let googleButtonElement: { click: () => void } | null = null
+let googleButtonInitialized = false
 
 // Sync with store
 const isVisible = computed({
@@ -151,24 +152,35 @@ watch(
   { immediate: true }
 )
 
-onMounted(async () => {
-  try {
-    // Render the hidden Google button once after initialization
-    if (googleButtonRef.value) {
-      await GoogleAuth.renderSignInButton(googleButtonRef.value, handleGoogleCredential, {
-        theme: 'outline',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular'
-      })
-
+// Initialize Google button when modal becomes visible
+watch(
+  isVisible,
+  async (visible) => {
+    if (visible && !googleButtonInitialized) {
+      // Wait for dialog DOM to be rendered
       await nextTick()
-      googleButtonElement = googleButtonRef.value?.querySelector('[role="button"]')
+      await nextTick()
+
+      if (!googleButtonRef.value) return
+
+      try {
+        await GoogleAuth.renderSignInButton(googleButtonRef.value, handleGoogleCredential, {
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular'
+        })
+
+        await nextTick()
+        googleButtonElement = googleButtonRef.value?.querySelector('[role="button"]')
+        googleButtonInitialized = true
+      } catch (error) {
+        console.error('[AuthModal] Failed to initialize Google Auth:', error)
+      }
     }
-  } catch (error) {
-    console.error('Failed to initialize Google Auth:', error)
-  }
-})
+  },
+  { immediate: true }
+)
 
 onUnmounted(() => {
   GoogleAuth.disableAutoSelect()
