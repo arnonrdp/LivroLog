@@ -116,11 +116,6 @@ jobs:
             exit 1
           fi
 
-          # GHCR_PAT is optional for public images, but warn if missing
-          if [ -z "${{ secrets.GHCR_PAT }}" ]; then
-            echo "⚠️ GHCR_PAT secret not found - will attempt to pull public images"
-          fi
-
           echo "✅ Secret validation completed"
 
       - name: Setup SSH key and test connection
@@ -261,13 +256,8 @@ jobs:
             # Navigate to docker directory
             cd "${DOCKER_DIR}"
 
-            # Login to GitHub Container Registry if PAT available
-            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
-              echo "🔐 Authenticating with GitHub Container Registry..."
-              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ env.GITHUB_REPOSITORY_OWNER }}" --password-stdin
-            else
-              echo "⚠️ No GHCR_PAT provided - attempting to pull public images"
-            fi
+            # Skip GHCR authentication - images are public
+            echo "📦 Using public GHCR images (no authentication required)"
 
             # Pull latest images with error handling
             echo "📦 Pulling latest Docker images..."
