@@ -319,19 +319,34 @@ const isInLibrary = computed(() => {
 
 const readingStatuses: { value: ReadingStatus }[] = [{ value: 'want_to_read' }, { value: 'reading' }, { value: 'read' }]
 
+// Helper to safely check URL hostname
+function isAllowedImageHost(url: string): { isGoogle: boolean; isAmazon: boolean } {
+  try {
+    const parsed = new URL(url)
+    const hostname = parsed.hostname.toLowerCase()
+    return {
+      isGoogle: hostname === 'books.google.com' || hostname.endsWith('.books.google.com'),
+      isAmazon: hostname === 'amazon.com' || hostname.endsWith('.amazon.com') || hostname === 'media-amazon.com' || hostname.endsWith('.media-amazon.com')
+    }
+  } catch {
+    return { isGoogle: false, isAmazon: false }
+  }
+}
+
 // Convert thumbnail URL to high resolution version
 const highResThumbnail = computed(() => {
   if (!book.value?.thumbnail) return '/no_cover.jpg'
 
   const url = book.value.thumbnail
+  const { isGoogle, isAmazon } = isAllowedImageHost(url)
 
   // Google Books: change zoom=1 to zoom=0 (max resolution)
-  if (url.includes('books.google.com')) {
+  if (isGoogle) {
     return url.replace(/zoom=\d/, 'zoom=0')
   }
 
   // Amazon: change size parameter to _SL1500_ (1500px)
-  if (url.includes('amazon.com') || url.includes('media-amazon.com')) {
+  if (isAmazon) {
     // Pattern matches _SX###_, _SY###_, _SL###_, _SS###_, _AC_SX###_, etc.
     const sizePattern = /(\._[A-Z]{2}\d+_|\._AC_[A-Z]{2}\d+_)/
     if (sizePattern.test(url)) {
