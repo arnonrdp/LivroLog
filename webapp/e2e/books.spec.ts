@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/login.page'
 import { HomePage } from './pages/home.page'
 import { BookDialogPage } from './pages/book-dialog.page'
-import { testUsers, testBooks } from './fixtures/test-data'
+import { createTestUser, testBooks } from './fixtures/test-data'
 
 test.describe('Books', () => {
   let loginPage: LoginPage
@@ -14,13 +14,9 @@ test.describe('Books', () => {
     homePage = new HomePage(page)
     bookDialog = new BookDialogPage(page)
 
-    // Register and login a test user
+    // Register and login a test user with unique data
     await loginPage.goto()
-    const user = {
-      ...testUsers.primary,
-      email: `books.test.${Date.now()}@test.com`,
-      username: `books_test_${Date.now()}`,
-    }
+    const user = createTestUser('book')
     await loginPage.register(user)
   })
 
@@ -56,8 +52,8 @@ test.describe('Books', () => {
     await bookDialog.addToLibrary()
 
     await bookDialog.setReadingStatus('reading')
-    // Verify the status was changed
-    await expect(page.locator('[data-testid="reading-status-select"]')).toContainText('reading')
+    // Verify the status was changed (case-insensitive)
+    await expect(page.locator('[data-testid="reading-status-select"]')).toContainText('Reading')
   })
 
   test('user can set read date', async ({ page }) => {

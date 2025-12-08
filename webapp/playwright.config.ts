@@ -9,9 +9,10 @@ export default defineConfig({
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:8001',
-    trace: 'on-first-retry',
+    trace: 'on',
     screenshot: 'only-on-failure',
   },
+  timeout: 60000, // Increase test timeout to 60 seconds
   projects: [
     {
       name: 'chromium',

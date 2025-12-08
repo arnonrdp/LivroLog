@@ -1,12 +1,12 @@
 <template>
   <q-page padding>
     <q-form @submit.prevent="search">
-      <q-input v-model="seek" class="q-mx-auto" clearable data-testid="book-search-input" dense :label="$t('addlabel')" style="max-width: 32rem" @clear="clearSearch">
+      <q-input v-model="seek" class="q-mx-auto" clearable data-testid="book-search-input" dense :label="$t('addlabel')" style="max-width: 32rem" @clear="clearSearch" @keyup.enter="search">
         <template v-slot:prepend>
           <q-icon name="search" />
         </template>
         <template v-slot:append>
-          <q-btn color="primary" data-testid="book-search-button" dense flat icon="search" round type="submit" />
+          <q-btn color="primary" data-testid="book-search-button" dense flat icon="search" round type="submit" @click="search" />
         </template>
       </q-input>
     </q-form>

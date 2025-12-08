@@ -307,19 +307,24 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // Support both token-based and session-based auth
-        if (method_exists($request->user(), 'currentAccessToken') && $request->user()->currentAccessToken()) {
-            $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        // If user is authenticated, invalidate their token/session
+        if ($user) {
+            // Support both token-based and session-based auth
+            if (method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
+
+            // Only attempt session logout if using session-based auth (web guard)
+            if ($request->hasSession() && Auth::guard('web')->check()) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
         }
 
-        // Only attempt session logout if using session-based auth (web guard)
-        // Check if session is active and user is authenticated via session
-        if ($request->hasSession() && Auth::guard('web')->check()) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
-
+        // Always return success - logout is idempotent
         return response()->json([
             'message' => 'Logged out successfully',
         ]);

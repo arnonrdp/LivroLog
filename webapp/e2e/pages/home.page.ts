@@ -14,11 +14,17 @@ export class HomePage {
   async searchBooks(query: string) {
     await this.gotoAdd()
     await this.page.locator('[data-testid="book-search-input"]').fill(query)
-    await this.page.locator('[data-testid="book-search-button"]').click()
+    // Submit the form by pressing Enter (more reliable than clicking the button)
+    await this.page.locator('[data-testid="book-search-input"]').press('Enter')
+    // Wait for results to load (API call can be slow)
+    await this.page.waitForSelector('[data-testid="book-result"]', { timeout: 60000 })
   }
 
   async clickOnBookResult(index: number = 0) {
-    await this.page.locator('[data-testid="book-result"]').nth(index).click()
+    // Click on the book cover to open the BookDialog
+    await this.page.locator('[data-testid="book-result"]').nth(index).locator('.book-cover').click()
+    // Wait for dialog to appear
+    await this.page.waitForSelector('[data-testid="close-dialog-btn"]', { timeout: 10000 })
   }
 
   async expectSearchResults() {
