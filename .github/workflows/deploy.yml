@@ -298,13 +298,10 @@ jobs:
             # Export environment variables for docker-compose
             export GITHUB_REPOSITORY_OWNER="${OWNER}"
             export TAG="${TAG}"
-            export DB_DATABASE="livrolog"
-            export DB_USERNAME="${{ secrets.DB_USERNAME || 'root' }}"
-            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            
-            # Start containers with health checks
+
+            # Start containers with health checks using env file
             echo "🚀 Starting production containers..."
-            if ! docker compose -f docker-compose.prod.yml up -d --remove-orphans; then
+            if ! docker compose --env-file "${SHARED_DIR}/.env.prod" -f docker-compose.prod.yml up -d --remove-orphans; then
               echo "❌ Failed to start containers"
               echo "=== Docker Compose Logs ==="
               docker compose -f docker-compose.prod.yml logs --tail=50

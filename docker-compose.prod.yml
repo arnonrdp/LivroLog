@@ -14,7 +14,8 @@ services:
       - MYSQL_USER=${DB_USERNAME}
       - MYSQL_PASSWORD=${DB_PASSWORD}
     ports:
-      - "127.0.0.1:3306:3306"
+      # Use port 3307 to avoid conflict with existing MySQL on server
+      - "127.0.0.1:3307:3306"
     networks:
       - livrolog-net
     volumes:
