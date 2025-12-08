@@ -200,7 +200,7 @@ function navigateToBook(book: Book) {
     // Book from external source (Amazon), need to create it first
     isLoading.value = true
 
-    // Prepare book data for creation
+    // Prepare book data for creation (include all Amazon data from search)
     const bookData = {
       title: book.title,
       authors: book.authors,
@@ -211,7 +211,9 @@ function navigateToBook(book: Book) {
       language: book.language,
       page_count: book.page_count,
       google_id: book.google_id,
-      amazon_asin: book.amazon_asin
+      amazon_asin: book.amazon_asin,
+      amazon_rating: book.amazon_rating,
+      amazon_rating_count: book.amazon_rating_count
     }
 
     bookStore

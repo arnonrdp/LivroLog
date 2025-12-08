@@ -4,22 +4,7 @@
       <router-link to="/"><img alt="Logotipo" src="/logo.svg" /></router-link>
     </q-toolbar-title>
 
-    <!-- Search bar for guests (desktop only) -->
-    <div v-if="!authStore.isAuthenticated" class="search-container gt-xs">
-      <q-input
-        v-model="searchQuery"
-        class="search-input"
-        dense
-        outlined
-        :placeholder="$t('search-placeholder', 'Search books...')"
-        rounded
-        @keydown.enter="handleSearch"
-      >
-        <template v-slot:append>
-          <q-icon class="cursor-pointer" name="search" @click="handleSearch" />
-        </template>
-      </q-input>
-    </div>
+    <q-space />
 
     <!-- Authenticated User Navigation -->
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
@@ -42,21 +27,21 @@
       <q-btn
         class="q-mr-sm"
         color="primary"
+        data-testid="header-signin-btn"
         :label="$t('signin')"
         no-caps
         outline
         rounded
         size="md"
-        unelevated
         @click="openLogin"
       />
       <q-btn
         color="primary"
+        data-testid="header-signup-btn"
         :label="$t('signup')"
         no-caps
         rounded
         size="md"
-        unelevated
         @click="openRegister"
       />
     </div>
@@ -66,14 +51,11 @@
 <script setup lang="ts">
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
 import { useAuthStore } from '@/stores'
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
-
-const searchQuery = ref('')
 
 const tabs = [
   { name: 'home', icon: 'img:/books.svg', to: '/home' },
@@ -99,13 +81,6 @@ function openLogin() {
 
 function openRegister() {
   authStore.openAuthModal('register')
-}
-
-function handleSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ path: '/search', query: { q: searchQuery.value.trim() } })
-    searchQuery.value = ''
-  }
 }
 
 const createRipple = (event: Event) => {
@@ -137,6 +112,7 @@ const createRipple = (event: Event) => {
 .header-nav
   align-items: center
   display: flex
+  min-height: 56px
   text-align: left
   @media screen and (max-width: $breakpoint-xs-max)
     display: block
@@ -147,19 +123,6 @@ const createRipple = (event: Event) => {
   align-items: center
   display: flex
   flex-shrink: 0
-
-.search-container
-  flex: 1
-  max-width: 400px
-  margin: 0 1rem
-  @media screen and (max-width: $breakpoint-sm-max)
-    max-width: 250px
-
-.search-input
-  :deep(.q-field__control)
-    background: rgba(255, 255, 255, 0.8)
-    &:hover
-      background: rgba(255, 255, 255, 0.95)
 
 .nav-tabs
   @media screen and (max-width: $breakpoint-xs-max)
@@ -271,10 +234,11 @@ img[alt='Logotipo']
   align-items: center
   display: flex
   flex-shrink: 0
+  height: 100%
   padding: 0 1.5rem
   @media screen and (max-width: $breakpoint-xs-max)
     justify-content: center
-    padding: 0.5rem 1rem 1rem
+    padding: 0.75rem 1rem
   :deep(.q-btn)
     font-weight: 500
     padding: 0.5rem 1.25rem

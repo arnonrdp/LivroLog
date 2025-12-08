@@ -46,6 +46,7 @@ Route::get('/health', [HealthController::class, 'index']);
 
 // Public book routes
 Route::get('/books', [BookController::class, 'index']);
+Route::post('/books', [BookController::class, 'store']);
 Route::get('/books/{book}', [BookController::class, 'show']);
 Route::get('/books/{book}/stats', [BookController::class, 'stats']);
 Route::get('/books/{book}/reviews', [ReviewController::class, 'bookReviews']);
@@ -95,7 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/books/{book}/editions', [BookController::class, 'getEditions']);
     // @deprecated Use GET /books/{id}?with=details instead (amazon_links included automatically)
     Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']);
-    Route::apiResource('books', BookController::class)->except(['index', 'show']);
+    Route::apiResource('books', BookController::class)->except(['index', 'show', 'store']);
 
     // User's books (Personal Library Management)
     Route::get('/user/books', [UserBookController::class, 'index']);

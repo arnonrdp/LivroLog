@@ -313,6 +313,7 @@
     "add-to-shelf": "Add to Shelf",
     "in-library": "In your shelf",
     "buy-amazon": "Buy on Amazon",
+    "search-amazon": "Search on Amazon",
     "description": "Description",
     "details": "Details",
     "pages": "Pages",
@@ -337,7 +338,9 @@
     "days-ago": "{days} days ago",
     "weeks-ago": "{weeks} week ago | {weeks} weeks ago",
     "months-ago": "{months} month ago | {months} months ago",
-    "years-ago": "{years} year ago | {years} years ago"
+    "years-ago": "{years} year ago | {years} years ago",
+    "amazon-reviews": "reviews",
+    "no-ratings-yet": "No ratings yet"
   },
 
   "reading-status": {

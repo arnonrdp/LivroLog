@@ -27,6 +27,8 @@ export interface Book {
   amazon_asin?: string
   amazon_buy_link?: string
   amazon_links?: AmazonLink[]
+  amazon_rating?: number
+  amazon_rating_count?: number
   amazon_region?: string
   asin_processed_at?: string
   asin_status?: AsinStatus

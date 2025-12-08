@@ -22,7 +22,28 @@ class FollowFactory extends Factory
     {
         return [
             'follower_id' => User::factory(),
-            'following_id' => User::factory(),
+            'followed_id' => User::factory(),
+            'status' => 'accepted',
         ];
+    }
+
+    /**
+     * Indicate that the follow request is pending.
+     */
+    public function pending(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'pending',
+        ]);
+    }
+
+    /**
+     * Indicate that the follow request is accepted.
+     */
+    public function accepted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'accepted',
+        ]);
     }
 }

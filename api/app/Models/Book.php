@@ -17,6 +17,8 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="id", type="string", example="B-3D6Y-9IO8"),
  *     @OA\Property(property="google_id", type="string", example="8fcQEAAAQBAJ", nullable=true),
  *     @OA\Property(property="amazon_asin", type="string", example="B08LPMFDQC", nullable=true),
+ *     @OA\Property(property="amazon_rating", type="number", format="float", example=4.5, nullable=true, description="Amazon average star rating (1.0 to 5.0)"),
+ *     @OA\Property(property="amazon_rating_count", type="integer", example=1234, nullable=true, description="Number of Amazon customer reviews"),
  *     @OA\Property(property="asin_status", type="string", enum={"pending", "processing", "completed", "failed"}, example="completed"),
  *     @OA\Property(property="asin_processed_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="isbn", type="string", example="9788533613379", nullable=true),
@@ -66,6 +68,8 @@ class Book extends Model
         'isbn',
         'google_id',
         'amazon_asin',
+        'amazon_rating',
+        'amazon_rating_count',
         'asin_status',
         'asin_processed_at',
         'title',
@@ -99,6 +103,7 @@ class Book extends Model
         'height' => self::DECIMAL_PRECISION,
         'width' => self::DECIMAL_PRECISION,
         'thickness' => self::DECIMAL_PRECISION,
+        'amazon_rating' => self::DECIMAL_PRECISION,
     ];
 
     protected static function boot()

@@ -31,16 +31,11 @@
       <div class="book-header">
         <!-- Cover -->
         <div class="book-cover">
-          <q-img
+          <img
             :alt="book.title"
-            fit="cover"
-            :ratio="2/3"
-            :src="book.thumbnail || '/no_cover.jpg'"
-          >
-            <template v-slot:error>
-              <q-img fit="cover" :ratio="2/3" src="/no_cover.jpg" />
-            </template>
-          </q-img>
+            :src="highResThumbnail"
+            @error="(e: Event) => (e.target as HTMLImageElement).src = '/no_cover.jpg'"
+          />
         </div>
 
         <!-- Info -->
@@ -50,18 +45,49 @@
           <p class="book-author">{{ $t('book.by-author', { author: book.authors || $t('book.unknown-author') }) }}</p>
 
           <!-- Rating Summary -->
-          <div v-if="stats" class="rating-summary">
-            <div class="stars">
-              <q-icon
-                v-for="n in 5"
-                :key="n"
-                :color="n <= Math.round(stats.average_rating || 0) ? 'amber' : 'grey-4'"
-                name="star"
-                size="1.25rem"
-              />
+          <div class="ratings-container">
+            <!-- Local (LivroLog) Rating -->
+            <div v-if="stats && stats.review_count > 0" class="rating-summary">
+              <div class="rating-source">LivroLog</div>
+              <div class="rating-row">
+                <div class="stars">
+                  <q-icon
+                    v-for="n in 5"
+                    :key="n"
+                    :color="n <= Math.round(stats.average_rating || 0) ? 'amber' : 'grey-4'"
+                    name="star"
+                    size="1.25rem"
+                  />
+                </div>
+                <span class="rating-value">{{ stats.average_rating?.toFixed(1) || '-' }}</span>
+                <span class="rating-count">({{ $t('book.reviews-count', { count: stats.review_count || 0 }) }})</span>
+              </div>
             </div>
-            <span class="rating-value">{{ stats.average_rating?.toFixed(1) || '-' }}</span>
-            <span class="rating-count">({{ $t('book.reviews-count', { count: stats.review_count || 0 }) }})</span>
+
+            <!-- Amazon Rating -->
+            <div v-if="book.amazon_rating" class="rating-summary amazon-rating">
+              <div class="rating-source">Amazon</div>
+              <div class="rating-row">
+                <div class="stars">
+                  <q-icon
+                    v-for="n in 5"
+                    :key="n"
+                    :color="n <= Math.round(book.amazon_rating) ? 'orange-7' : 'grey-4'"
+                    name="star"
+                    size="1.25rem"
+                  />
+                </div>
+                <span class="rating-value">{{ book.amazon_rating.toFixed(1) }}</span>
+                <span v-if="book.amazon_rating_count" class="rating-count">
+                  ({{ formatRatingCount(book.amazon_rating_count) }} {{ $t('book.amazon-reviews') }})
+                </span>
+              </div>
+            </div>
+
+            <!-- No ratings at all -->
+            <div v-if="(!stats || stats.review_count === 0) && !book.amazon_rating" class="no-rating">
+              <span class="rating-count">{{ $t('book.no-ratings-yet') }}</span>
+            </div>
           </div>
 
           <!-- Action Buttons -->
@@ -112,19 +138,44 @@
               @click="promptLogin"
             />
 
-            <!-- Amazon Button -->
+            <!-- Amazon Button - Direct link if only one region, dropdown if multiple -->
             <q-btn
-              v-if="book.amazon_buy_link"
-              class="amazon-btn"
-              color="orange"
+              v-if="amazonLinks.length > 0"
+              class="amazon-btn bg-amazon-orange"
+              :href="primaryAmazonLink"
               icon="shopping_cart"
               :label="$t('book.buy-amazon')"
               no-caps
-              outline
               rounded
-              :href="book.amazon_buy_link"
-              target="_blank"
-            />
+              :target="primaryAmazonLink ? '_blank' : undefined"
+              unelevated
+            >
+              <!-- Dropdown menu only if multiple regions -->
+              <q-menu v-if="amazonLinks.length > 1" anchor="bottom right" self="top right">
+                <q-list style="min-width: 220px">
+                  <q-item
+                    v-for="link in amazonLinks"
+                    :key="link.region"
+                    v-close-popup
+                    class="q-py-sm"
+                    clickable
+                    :href="link.url"
+                    target="_blank"
+                  >
+                    <q-item-section avatar>
+                      <q-icon name="shopping_cart" size="sm" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ link.label }}</q-item-label>
+                      <q-item-label caption>{{ link.domain }}</q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                      <q-icon name="open_in_new" size="xs" />
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
           </div>
         </div>
       </div>
@@ -351,6 +402,63 @@ const readingStatuses: { value: ReadingStatus }[] = [
   { value: 'read' }
 ]
 
+// Convert thumbnail URL to high resolution version
+const highResThumbnail = computed(() => {
+  if (!book.value?.thumbnail) return '/no_cover.jpg'
+
+  const url = book.value.thumbnail
+
+  // Google Books: change zoom=1 to zoom=0 (max resolution)
+  if (url.includes('books.google.com')) {
+    return url.replace(/zoom=\d/, 'zoom=0')
+  }
+
+  // Amazon: change size parameter to _SL1500_ (1500px)
+  if (url.includes('amazon.com') || url.includes('media-amazon.com')) {
+    // Pattern matches _SX###_, _SY###_, _SL###_, _SS###_, _AC_SX###_, etc.
+    const sizePattern = /(\._[A-Z]{2}\d+_|\._AC_[A-Z]{2}\d+_)/
+    if (sizePattern.test(url)) {
+      return url.replace(sizePattern, '._SL1500_')
+    }
+    // If no size param, add one before extension
+    return url.replace(/\.(\w{3,4})$/, '._SL1500_.$1')
+  }
+
+  return url
+})
+
+// Amazon links for purchase button
+const amazonLinks = computed(() => {
+  if (!book.value) return []
+
+  // Priority 1: Use amazon_links from API if available
+  if (book.value.amazon_links && Array.isArray(book.value.amazon_links) && book.value.amazon_links.length > 0) {
+    return book.value.amazon_links
+  }
+
+  // Priority 2: Fallback to amazon_buy_link
+  if (book.value.amazon_buy_link) {
+    return [
+      {
+        region: book.value.amazon_region || 'BR',
+        label: `Amazon ${book.value.amazon_region || 'BR'}`,
+        url: book.value.amazon_buy_link,
+        domain: book.value.amazon_region === 'US' ? 'amazon.com' : 'amazon.com.br'
+      }
+    ]
+  }
+
+  return []
+})
+
+// Direct link for single region, undefined for multiple (uses dropdown)
+const primaryAmazonLink = computed(() => {
+  if (amazonLinks.value.length === 1) {
+    return amazonLinks.value[0]?.url
+  }
+  return undefined
+})
+
 onMounted(() => {
   loadBook()
 })
@@ -458,6 +566,16 @@ function formatDate(dateString: string): string {
   if (diffDays < 365) return t('book.months-ago', { months: Math.floor(diffDays / 30) })
   return t('book.years-ago', { years: Math.floor(diffDays / 365) })
 }
+
+function formatRatingCount(count: number): string {
+  if (count >= 1000000) {
+    return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
+  }
+  return count.toString()
+}
 </script>
 
 <style scoped lang="sass">
@@ -498,14 +616,18 @@ function formatDate(dateString: string): string {
     text-align: center
 
 .book-cover
-  border-radius: 8px
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15)
   flex-shrink: 0
-  overflow: hidden
   width: 200px
 
   @media (max-width: 600px)
     width: 160px
+
+  img
+    width: 100%
+    height: auto
+    border-radius: 8px
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15)
+    object-fit: contain
 
 .book-info
   flex: 1
@@ -527,14 +649,41 @@ function formatDate(dateString: string): string {
   font-size: 1rem
   margin: 0 0 1rem
 
-.rating-summary
-  align-items: center
+.ratings-container
   display: flex
+  flex-direction: column
   gap: 0.5rem
   margin-bottom: 1.5rem
 
+.rating-summary
+  display: flex
+  flex-direction: column
+  gap: 0.25rem
+
+  @media (max-width: 600px)
+    align-items: center
+
+.rating-source
+  color: #6b6b8d
+  font-size: 0.75rem
+  font-weight: 500
+  text-transform: uppercase
+  letter-spacing: 0.5px
+
+.rating-row
+  align-items: center
+  display: flex
+  gap: 0.5rem
+
   @media (max-width: 600px)
     justify-content: center
+
+.amazon-rating
+  .rating-source
+    color: #ff9900
+
+.no-rating
+  padding: 0.25rem 0
 
 .stars
   display: flex
@@ -559,6 +708,26 @@ function formatDate(dateString: string): string {
 .amazon-btn
   :deep(.q-btn__content)
     gap: 0.5rem
+
+  // Amazon brand orange - filled style for maximum conversion
+  &.bg-amazon-orange
+    background: linear-gradient(180deg, #FFB84D 0%, #FF9900 100%) !important
+    border: none !important
+    color: #111 !important
+    font-weight: 600
+    box-shadow: 0 2px 8px rgba(255, 153, 0, 0.4)
+
+    &:hover
+      background: linear-gradient(180deg, #FFC266 0%, #FFa31a 100%) !important
+      box-shadow: 0 4px 12px rgba(255, 153, 0, 0.5)
+      transform: translateY(-1px)
+
+    &:active
+      transform: translateY(0)
+      box-shadow: 0 2px 6px rgba(255, 153, 0, 0.3)
+
+    :deep(.q-icon)
+      color: #111 !important
 
 .section
   margin-bottom: 2rem

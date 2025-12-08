@@ -274,13 +274,17 @@ class BookController extends Controller
             'format' => 'nullable|string|in:hardcover,paperback,ebook,audiobook',
             'categories' => 'nullable|array',
             'edition' => 'nullable|string|max:50',
+            'amazon_asin' => self::VALIDATION_NULLABLE_STRING.'|max:20',
+            'amazon_rating' => 'nullable|numeric|min:0|max:5',
+            'amazon_rating_count' => 'nullable|integer|min:0',
         ]);
 
         $isbn = $request->input('isbn');
         $googleId = $request->input('google_id');
+        $amazonAsin = $request->input('amazon_asin');
 
         // Check if book already exists
-        $book = $this->findExistingBook($isbn, $googleId);
+        $book = $this->findExistingBook($isbn, $googleId, $amazonAsin);
 
         if ($book) {
             // Book exists, enrich if needed
@@ -306,6 +310,12 @@ class BookController extends Controller
             $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
         }
 
+        // If book already has Amazon ASIN from search results, mark as completed
+        if (! empty($bookData['amazon_asin'])) {
+            $bookData['asin_status'] = 'completed';
+            $bookData['asin_processed_at'] = now();
+        }
+
         $book = Book::create($bookData);
 
         // Enrich book if Google ID is provided
@@ -325,9 +335,9 @@ class BookController extends Controller
     }
 
     /**
-     * Find existing book by ISBN or Google ID
+     * Find existing book by ISBN, Google ID, or Amazon ASIN
      */
-    private function findExistingBook(?string $isbn, ?string $googleId): ?Book
+    private function findExistingBook(?string $isbn, ?string $googleId, ?string $amazonAsin = null): ?Book
     {
         if ($isbn) {
             $book = Book::where('isbn', $isbn)->first();
@@ -337,7 +347,14 @@ class BookController extends Controller
         }
 
         if ($googleId) {
-            return Book::where('google_id', $googleId)->first();
+            $book = Book::where('google_id', $googleId)->first();
+            if ($book) {
+                return $book;
+            }
+        }
+
+        if ($amazonAsin) {
+            return Book::where('amazon_asin', $amazonAsin)->first();
         }
 
         return null;

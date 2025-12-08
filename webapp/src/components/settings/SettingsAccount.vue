@@ -11,7 +11,7 @@
           {{ userStore.me.email_verified ? $t('email-verified') : $t('email-not-verified') }}
         </q-chip>
       </div>
-      <q-btn color="negative" flat icon="logout" round @click="logout()">
+      <q-btn color="negative" data-testid="logout-button" flat icon="logout" round @click="logout()">
         <q-tooltip>{{ $t('logout') }}</q-tooltip>
       </q-btn>
     </div>

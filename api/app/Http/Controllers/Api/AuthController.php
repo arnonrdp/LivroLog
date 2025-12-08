@@ -312,8 +312,10 @@ class AuthController extends Controller
             $request->user()->currentAccessToken()->delete();
         }
 
-        if (\Illuminate\Support\Facades\Auth::check()) {
-            \Illuminate\Support\Facades\Auth::logout();
+        // Only attempt session logout if using session-based auth (web guard)
+        // Check if session is active and user is authenticated via session
+        if ($request->hasSession() && Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
