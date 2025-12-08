@@ -4,7 +4,7 @@
 
   <!-- Regular shelf display -->
   <section v-else class="flex justify-around">
-    <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id">
+    <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id" data-testid="library-book">
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable only for authenticated users on other shelves -->

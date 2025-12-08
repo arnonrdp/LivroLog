@@ -2,9 +2,9 @@
   <q-card class="text-center q-pa-md" style="width: 400px; max-width: 85vw">
     <q-card-section>
       <q-tabs v-model="tab" active-bg-color="teal" active-color="white" class="text-teal" indicator-color="transparent">
-        <q-tab :label="$t('signup')" name="signup" />
-        <q-tab :label="$t('signin')" name="signin" />
-        <q-tab :label="$t('recover')" name="recover" />
+        <q-tab data-testid="signup-tab" :label="$t('signup')" name="signup" />
+        <q-tab data-testid="signin-tab" :label="$t('signin')" name="signin" />
+        <q-tab data-testid="recover-tab" :label="$t('recover')" name="recover" />
       </q-tabs>
     </q-card-section>
     <q-form greedy @reset="onReset" @submit="submit()">
@@ -13,6 +13,7 @@
           v-if="tab === 'signup'"
           v-model="displayName"
           autofocus
+          data-testid="display-name"
           dense
           :label="$t('name')"
           lazy-rules
@@ -26,6 +27,7 @@
         <q-input
           key="email-input"
           v-model="email"
+          data-testid="email"
           dense
           :label="$t('mail')"
           lazy-rules
@@ -41,6 +43,7 @@
         <q-input
           v-if="tab !== 'recover'"
           v-model="password"
+          data-testid="password"
           dense
           :label="$t('password')"
           lazy-rules
@@ -56,6 +59,7 @@
         <q-input
           v-if="tab === 'signup'"
           v-model="passwordConfirm"
+          data-testid="password-confirmation"
           dense
           :label="$t('password-confirmation')"
           lazy-rules
@@ -70,7 +74,12 @@
       </q-card-section>
       <q-card-actions class="column">
         <div class="q-gutter-x-md">
-          <q-btn color="primary" :label="$t(tab)" type="submit" />
+          <q-btn
+            color="primary"
+            :data-testid="tab === 'signin' ? 'login-button' : tab === 'signup' ? 'register-button' : 'recover-button'"
+            :label="$t(tab)"
+            type="submit"
+          />
           <q-btn color="primary" flat :label="$t('reset')" type="reset" />
         </div>
         <q-btn

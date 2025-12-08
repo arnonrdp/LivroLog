@@ -44,14 +44,14 @@ WORKDIR /var/www/html
 
 # Configure Nginx
 RUN rm -f /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-COPY docker/nginx.conf /etc/nginx/sites-available/laravel
+COPY api/docker/nginx.conf /etc/nginx/sites-available/laravel
 RUN ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/laravel
 
 # Configure Supervisor to run both PHP-FPM and Nginx
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY api/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy and make entrypoint executable
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY api/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Set proper permissions

@@ -12,7 +12,7 @@
 
     <div v-else>
       <!-- Private Profile Message -->
-      <div v-if="isPrivateAndNotAccessible" class="text-center q-py-xl">
+      <div v-if="isPrivateAndNotAccessible" class="text-center q-py-xl" data-testid="private-profile-message">
         <q-icon class="q-mb-md" color="grey" name="lock" size="6em" />
         <div class="text-h5 q-mb-md">{{ $t('private-profile') }}</div>
         <div class="text-body1 text-grey q-mb-lg">{{ $t('private-profile-message') }}</div>
@@ -22,6 +22,7 @@
           v-if="showFollowButton"
           class="q-mt-md"
           :color="getButtonColor()"
+          :data-testid="hasPendingRequest ? 'pending-button' : isFollowing ? 'unfollow-button' : 'follow-button'"
           :icon="getButtonIcon()"
           :label="getButtonLabel()"
           no-caps
@@ -38,7 +39,7 @@
           <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
         </div>
 
-        <TheShelf :books="filteredBooks" :user-identifier="person.username" />
+        <TheShelf :books="filteredBooks" data-testid="profile-books" :user-identifier="person.username" />
       </div>
     </div>
 

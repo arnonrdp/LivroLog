@@ -19,11 +19,11 @@
         <q-item-label caption>{{ $t('private-profile-description') }}</q-item-label>
       </q-item-section>
       <q-item-section side>
-        <q-toggle v-model="isPrivate" />
+        <q-toggle v-model="isPrivate" data-testid="privacy-toggle" />
       </q-item-section>
     </q-item>
     <div class="text-center">
-      <q-btn color="primary" icon="save" :label="$t('update-profile')" :loading="authStore.isLoading" type="submit" />
+      <q-btn color="primary" data-testid="save-profile-btn" icon="save" :label="$t('update-profile')" :loading="authStore.isLoading" type="submit" />
     </div>
   </q-form>
 </template>

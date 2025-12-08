@@ -9,7 +9,10 @@ import { useUserStore } from './user'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     _isLoading: false,
-    _isGoogleLoading: false
+    _isGoogleLoading: false,
+    _showAuthModal: false,
+    _authModalTab: 'login' as 'login' | 'register',
+    _redirectPath: null as string | null
   }),
 
   persist: true,
@@ -21,7 +24,10 @@ export const useAuthStore = defineStore('auth', {
       return Boolean(userStore.me.id) && hasToken
     },
     isLoading: (state) => state._isLoading,
-    isGoogleLoading: (state) => state._isGoogleLoading
+    isGoogleLoading: (state) => state._isGoogleLoading,
+    showAuthModal: (state) => state._showAuthModal,
+    authModalTab: (state) => state._authModalTab,
+    redirectPath: (state) => state._redirectPath
   },
   actions: {
     setUser(user: User) {
@@ -93,7 +99,7 @@ export const useAuthStore = defineStore('auth', {
       this._isLoading = true
       return await api
         .delete('/auth/me')
-        .then(() => router.push('/login'))
+        .then(() => router.push('/'))
         .catch((error) => {
           Notify.create({ message: error.response?.data?.message || error.message, type: 'negative' })
           throw error
@@ -115,7 +121,7 @@ export const useAuthStore = defineStore('auth', {
           }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
-          router.push('/')
+          this.handlePostLoginRedirect()
           return authData
         })
         .catch((error) => {
@@ -139,7 +145,7 @@ export const useAuthStore = defineStore('auth', {
           }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
-          router.push('/')
+          this.handlePostLoginRedirect()
           return authData
         })
         .catch((error) => {
@@ -151,12 +157,14 @@ export const useAuthStore = defineStore('auth', {
 
     async postAuthLogout() {
       this._isLoading = true
+      const userStore = useUserStore()
 
       // Clear auth data FIRST to prevent interceptor from triggering
       const token = LocalStorage.getItem('access_token')
       LocalStorage.clear()
       localStorage.removeItem('auth')
       this.$reset()
+      userStore.$reset()
 
       // Then try to call logout API (ignore errors since we already cleared local data)
       if (token) {
@@ -169,7 +177,7 @@ export const useAuthStore = defineStore('auth', {
       }
 
       this._isLoading = false
-      router.push('/login')
+      router.push('/')
     },
 
     async putAuthPassword(data: { current_password?: string; password: string; password_confirmation: string }) {
@@ -237,7 +245,7 @@ export const useAuthStore = defineStore('auth', {
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
           Notify.create({ message: 'Login with Google successful!', type: 'positive' })
-          router.push('/')
+          this.handlePostLoginRedirect()
           return authData
         })
         .catch((error) => {
@@ -319,6 +327,32 @@ export const useAuthStore = defineStore('auth', {
           throw error
         })
         .finally(() => (this._isLoading = false))
+    },
+
+    // Auth Modal methods
+    openAuthModal(tab: 'login' | 'register' = 'login') {
+      this._authModalTab = tab
+      this._showAuthModal = true
+    },
+
+    closeAuthModal() {
+      this._showAuthModal = false
+    },
+
+    setRedirectPath(path: string | null) {
+      this._redirectPath = path
+    },
+
+    clearRedirectPath() {
+      this._redirectPath = null
+    },
+
+    // Handle redirect after successful login
+    handlePostLoginRedirect() {
+      const redirectTo = this._redirectPath || '/home'
+      this._redirectPath = null
+      this._showAuthModal = false
+      router.push(redirectTo)
     }
   }
 })

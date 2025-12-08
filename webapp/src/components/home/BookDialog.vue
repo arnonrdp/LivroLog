@@ -43,7 +43,7 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn v-close-popup dense flat icon="close" round />
+        <q-btn v-close-popup data-testid="close-dialog-btn" dense flat icon="close" round />
       </q-card-section>
 
       <q-separator />
@@ -69,7 +69,10 @@
 
               <!-- Content on top -->
               <q-icon color="white" name="swap_horiz" size="md" style="pointer-events: none; z-index: 1; position: relative" />
-              <div class="text-white text-caption q-mt-xs" style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)">
+              <div
+                class="text-white text-caption q-mt-xs"
+                style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)"
+              >
                 {{ $t('change-cover') }}
               </div>
             </div>
@@ -147,6 +150,7 @@
           <div class="col-6">
             <q-select
               v-model="form.reading_status"
+              data-testid="reading-status-select"
               dense
               emit-value
               :label="$t('reading-status')"
@@ -159,6 +163,7 @@
           <div class="col-6">
             <q-input
               v-model="form.read_at"
+              data-testid="read-date-input"
               dense
               :label="$t('read-date')"
               outlined
@@ -205,7 +210,13 @@
           <div class="text-body2">{{ $t('no-reviews-yet') }}</div>
         </div>
 
-        <div v-for="review in bookReviews" v-else :key="review.id" class="q-mb-md">
+        <div
+          v-for="review in bookReviews"
+          v-else
+          :key="review.id"
+          class="q-mb-md"
+          :data-testid="review.user_id === userStore.me?.id ? 'user-review' : 'book-review'"
+        >
           <q-card bordered flat>
             <q-card-section class="q-py-sm">
               <div class="row items-center q-mb-xs">
@@ -239,6 +250,7 @@
                 <div v-if="review.user_id === userStore.me?.id" class="row q-gutter-xs">
                   <q-btn
                     :color="getVisibility(review.visibility_level).color"
+                    data-testid="review-visibility-toggle"
                     dense
                     flat
                     :icon="getVisibility(review.visibility_level).icon"
@@ -247,7 +259,8 @@
                   >
                     <q-tooltip>{{ getVisibility(review.visibility_level).tooltip }}</q-tooltip>
                   </q-btn>
-                  <q-btn class="text-red-6" dense flat icon="delete" size="sm" @click="deleteReview(review.id)">
+                  <span data-testid="review-visibility-status" style="display: none">{{ review.visibility_level }}</span>
+                  <q-btn class="text-red-6" data-testid="delete-review-btn" dense flat icon="delete" size="sm" @click="deleteReview(review.id)">
                     <q-tooltip>{{ $t('delete') }}</q-tooltip>
                   </q-btn>
                 </div>
@@ -275,7 +288,15 @@
         <div class="row items-center q-col-gutter-md q-mb-md">
           <div class="col-4">
             <div class="text-body2">{{ $t('rating') }}</div>
-            <q-rating v-model="reviewForm.rating" color="amber" icon="star_border" icon-selected="star" :max="5" size="1.5em" />
+            <q-rating
+              v-model="reviewForm.rating"
+              color="amber"
+              data-testid="review-rating"
+              icon="star_border"
+              icon-selected="star"
+              :max="5"
+              size="1.5em"
+            />
           </div>
 
           <div class="col-4">
@@ -295,12 +316,21 @@
           </div>
         </div>
 
-        <q-input v-model="reviewForm.title" class="q-mb-md" dense :label="$t('title') + ' (' + $t('optional') + ')'" :maxlength="200" outlined />
+        <q-input
+          v-model="reviewForm.title"
+          class="q-mb-md"
+          data-testid="review-title-input"
+          dense
+          :label="$t('title') + ' (' + $t('optional') + ')'"
+          :maxlength="200"
+          outlined
+        />
 
         <q-input
           v-model="reviewForm.content"
           class="q-mb-xs"
           counter
+          data-testid="review-content-input"
           :label="$t('content')"
           :maxlength="2000"
           outlined
@@ -308,7 +338,7 @@
           :rules="[(val: string) => !!val || $t('content-required')]"
           type="textarea"
         />
-        <q-btn v-if="canAddReview" color="primary" :label="$t('save')" :loading="loading" @click="handleSave" />
+        <q-btn v-if="canAddReview" color="primary" data-testid="submit-review-btn" :label="$t('save')" :loading="loading" @click="handleSave" />
       </q-card-section>
 
       <q-separator />
@@ -316,6 +346,7 @@
         <div v-if="!props.userIdentifier" class="row items-center">
           <q-checkbox
             v-model="form.is_private"
+            data-testid="private-book-checkbox"
             :label="$t('private-book')"
             @update:model-value="
               (newValue) => {
@@ -335,6 +366,7 @@
         <q-btn
           v-if="!isBookInLibrary"
           color="primary"
+          data-testid="add-to-library-btn"
           :disable="libraryLoading"
           :label="$t('add-to-library')"
           :loading="libraryLoading"
@@ -343,6 +375,7 @@
         <q-btn
           v-else
           color="negative"
+          data-testid="remove-from-library-btn"
           :disable="libraryLoading"
           :label="$t('remove-from-library')"
           :loading="libraryLoading"
@@ -365,7 +398,7 @@
 
       <q-card-actions align="right">
         <q-btn v-close-popup color="grey-6" flat :label="$t('cancel')" />
-        <q-btn color="negative" flat :label="$t('delete')" :loading="loading" @click="confirmDelete" />
+        <q-btn color="negative" data-testid="confirm-delete-btn" flat :label="$t('delete')" :loading="loading" @click="confirmDelete" />
       </q-card-actions>
     </q-card>
   </q-dialog>

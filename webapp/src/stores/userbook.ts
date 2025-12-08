@@ -272,7 +272,7 @@ export const useUserBookStore = defineStore('userbook', {
 
           // Update user's book list: replace old book with new book
           const currentBooks = userStore.me.books || []
-          const updatedBooks = [...currentBooks.map((book) => (book.id === oldBookId ? newBook : book))]
+          const updatedBooks = currentBooks.map((book) => (book.id === oldBookId ? newBook : book))
 
           userStore.updateMe({ books: updatedBooks })
 

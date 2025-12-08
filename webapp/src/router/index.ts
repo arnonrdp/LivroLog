@@ -3,37 +3,47 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { LocalStorage } from 'quasar'
 
 const routes: Array<RouteRecordRaw> = [
+  // Public routes
   {
-    path: '/login',
-    component: () => import('@/views/LoginView.vue')
+    path: '/',
+    name: 'landing',
+    component: () => import('@/views/LandingView.vue')
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: () => import('@/views/SearchView.vue')
+  },
+  {
+    path: '/books/:bookId',
+    name: 'book',
+    component: () => import('@/views/BookView.vue'),
+    props: true
   },
   {
     path: '/reset-password',
+    name: 'reset-password',
     component: () => import('@/views/ResetPasswordView.vue')
   },
+
+  // Authenticated routes
   {
-    path: '/',
+    path: '/home',
+    name: 'home',
     component: () => import('@/views/HomeView.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/home',
-    redirect: '/'
-  },
-  {
     path: '/add',
+    name: 'add',
     component: () => import('@/views/AddView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/people',
+    name: 'people',
     component: () => import('@/views/PeopleView.vue'),
     meta: { requiresAuth: true }
-  },
-  {
-    path: '/:username',
-    component: () => import('@/views/PersonView.vue'),
-    props: true
   },
   {
     path: '/settings',
@@ -41,9 +51,26 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/settings/:tab',
+    name: 'settings',
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true }
   },
+
+  // Legacy redirect: old /login route → landing page
+  {
+    path: '/login',
+    redirect: '/'
+  },
+
+  // Public user profiles (must be after specific routes to avoid conflicts)
+  {
+    path: '/:username',
+    name: 'person',
+    component: () => import('@/views/PersonView.vue'),
+    props: true
+  },
+
+  // Catch-all redirect
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'
@@ -87,10 +114,18 @@ router.beforeEach(async (to, _from, next) => {
   // Re-check authentication status after potential restoration
   const isAuthenticated = authStore.isAuthenticated
 
+  // Only block access for routes that require authentication
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ path: '/login' })
-  } else if (to.path === '/login' && isAuthenticated) {
-    next({ path: '/' })
+    // Store the intended destination for redirect after login
+    authStore.setRedirectPath(to.fullPath)
+    // Open auth modal instead of redirecting (handled by the component)
+    authStore.openAuthModal('login')
+    // Stay on current page or go to landing if no current page
+    if (_from.name) {
+      next(false)
+    } else {
+      next({ path: '/' })
+    }
   } else {
     next()
   }

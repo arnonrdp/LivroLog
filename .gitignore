@@ -22,7 +22,7 @@ vendor/
 /api/storage/framework/cache/
 /api/storage/framework/sessions/
 /api/storage/framework/views/
-/api/bootstrap/cache/
+/api/bootstrap/cache/*.php
 
 # Docker
 /api/docker/data/

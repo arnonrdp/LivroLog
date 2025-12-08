@@ -386,6 +386,8 @@ class AmazonBooksProvider implements BookSearchProvider
             SearchItemsResource::IMAGESPRIMARYLARGE,
             SearchItemsResource::IMAGESPRIMARYMEDIUM,
             SearchItemsResource::IMAGESPRIMARYSMALL,
+            SearchItemsResource::CUSTOMER_REVIEWSCOUNT,  // Amazon customer review count
+            SearchItemsResource::CUSTOMER_REVIEWSSTAR_RATING,  // Amazon average rating
         ]);
 
         return $searchItemsRequest;
@@ -418,6 +420,8 @@ class AmazonBooksProvider implements BookSearchProvider
             GetItemsResource::IMAGESPRIMARYLARGE,
             GetItemsResource::IMAGESPRIMARYMEDIUM,
             GetItemsResource::IMAGESPRIMARYSMALL,
+            GetItemsResource::CUSTOMER_REVIEWSCOUNT,  // Amazon customer review count
+            GetItemsResource::CUSTOMER_REVIEWSSTAR_RATING,  // Amazon average rating
         ]);
 
         return $getItemsRequest;
@@ -450,6 +454,8 @@ class AmazonBooksProvider implements BookSearchProvider
             GetVariationsResource::IMAGESPRIMARYLARGE,
             GetVariationsResource::IMAGESPRIMARYMEDIUM,
             GetVariationsResource::IMAGESPRIMARYSMALL,
+            GetVariationsResource::CUSTOMER_REVIEWSCOUNT,  // Amazon customer review count
+            GetVariationsResource::CUSTOMER_REVIEWSSTAR_RATING,  // Amazon average rating
         ]);
 
         return $getVariationsRequest;
@@ -525,6 +531,9 @@ class AmazonBooksProvider implements BookSearchProvider
         $allCategories = ! empty($allCategories) ? array_values(array_unique($allCategories)) : null;
         $allCategories = $this->filterRelevantCategories($allCategories);
 
+        // Extract Amazon customer reviews
+        $amazonRating = $this->extractAmazonRating($item);
+
         $bookData = [
             'provider' => $this->getName(),
             'amazon_asin' => $asin,
@@ -544,6 +553,8 @@ class AmazonBooksProvider implements BookSearchProvider
             'maturity_rating' => $this->extractMaturityRating($itemInfo),
             'preview_link' => null, // Amazon doesn't provide preview links via PA-API
             'info_link' => $item->getDetailPageURL(),
+            'amazon_rating' => $amazonRating['rating'],
+            'amazon_rating_count' => $amazonRating['count'],
         ];
 
         if ($existingBook) {
@@ -662,20 +673,58 @@ class AmazonBooksProvider implements BookSearchProvider
             return null;
         }
 
-        // Prefer medium, fallback to large, then small
-        if ($primary->getMedium() && $primary->getMedium()->getURL()) {
-            return $primary->getMedium()->getURL();
-        }
-
+        // Get any available URL (prefer large)
+        $imageUrl = null;
         if ($primary->getLarge() && $primary->getLarge()->getURL()) {
-            return $primary->getLarge()->getURL();
+            $imageUrl = $primary->getLarge()->getURL();
+        } elseif ($primary->getMedium() && $primary->getMedium()->getURL()) {
+            $imageUrl = $primary->getMedium()->getURL();
+        } elseif ($primary->getSmall() && $primary->getSmall()->getURL()) {
+            $imageUrl = $primary->getSmall()->getURL();
         }
 
-        if ($primary->getSmall() && $primary->getSmall()->getURL()) {
-            return $primary->getSmall()->getURL();
+        if (! $imageUrl) {
+            return null;
         }
 
-        return null;
+        // Convert to high resolution (1500px) using Amazon URL manipulation
+        return $this->convertToHighResolution($imageUrl);
+    }
+
+    /**
+     * Convert Amazon image URL to high resolution version.
+     * Amazon image URLs contain size parameters like _SX300_, _SY500_, _SL500_
+     * We can replace these with _SL1500_ to get the highest quality image.
+     */
+    private function convertToHighResolution(string $url): string
+    {
+        // Pattern matches Amazon image size parameters:
+        // _SX###_ (width), _SY###_ (height), _SL###_ (largest side)
+        // Also matches _SS###_ (square) and composite patterns like _AC_SX300_
+        $pattern = '/(\._[A-Z]{2}\d+_|\._AC_[A-Z]{2}\d+_)/';
+
+        // Check if URL has size parameter
+        if (preg_match($pattern, $url)) {
+            // Replace with high resolution (1500px on largest side)
+            return preg_replace($pattern, '._SL1500_', $url);
+        }
+
+        // Some URLs have the pattern at the end before extension like: /41abc123._SY300_.jpg
+        $patternAlt = '/\._[A-Z]{2}\d+_\./';
+        if (preg_match($patternAlt, $url)) {
+            return preg_replace($patternAlt, '._SL1500_.', $url);
+        }
+
+        // If no size parameter found, try to add one before the extension
+        // Format: https://m.media-amazon.com/images/I/XXXXXXXXX.jpg
+        if (preg_match('/\/images\/I\/([A-Za-z0-9+%-]+)\.([a-z]{3,4})$/i', $url, $matches)) {
+            $imageId = $matches[1];
+            $extension = $matches[2];
+
+            return preg_replace('/\/images\/I\/[A-Za-z0-9+%-]+\.[a-z]{3,4}$/i', "/images/I/{$imageId}._SL1500_.{$extension}", $url);
+        }
+
+        return $url;
     }
 
     private function extractDescription($itemInfo): ?string
@@ -771,6 +820,39 @@ class AmazonBooksProvider implements BookSearchProvider
         }
 
         return null;
+    }
+
+    /**
+     * Extract Amazon customer reviews (rating and count)
+     *
+     * @param  mixed  $item  The Amazon item object
+     * @return array Array with 'rating' (float|null) and 'count' (int|null)
+     */
+    private function extractAmazonRating($item): array
+    {
+        $result = [
+            'rating' => null,
+            'count' => null,
+        ];
+
+        $customerReviews = $item->getCustomerReviews();
+        if (! $customerReviews) {
+            return $result;
+        }
+
+        // Extract star rating (e.g., 4.5 out of 5)
+        $starRating = $customerReviews->getStarRating();
+        if ($starRating && $starRating->getValue()) {
+            $result['rating'] = (float) $starRating->getValue();
+        }
+
+        // Extract review count
+        $count = $customerReviews->getCount();
+        if ($count !== null) {
+            $result['count'] = (int) $count;
+        }
+
+        return $result;
     }
 
     /**

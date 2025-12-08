@@ -1,8 +1,10 @@
 <template>
   <q-header class="bg-accent text-black header-nav" elevated height-hint="48">
     <q-toolbar-title class="non-selectable logo-container">
-      <router-link :to="authStore.isAuthenticated ? '/' : '/login'"><img alt="Logotipo" src="/logo.svg" /></router-link>
+      <router-link to="/"><img alt="Logotipo" src="/logo.svg" /></router-link>
     </q-toolbar-title>
+
+    <q-space />
 
     <!-- Authenticated User Navigation -->
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
@@ -22,12 +24,23 @@
 
     <!-- Guest User Navigation -->
     <div v-else class="guest-nav">
-      <q-btn color="primary" :label="$t('signup-signin')" no-caps outline rounded size="md" to="/login" unelevated />
+      <q-btn
+        class="q-mr-sm"
+        color="primary"
+        data-testid="header-signin-btn"
+        :label="$t('signin')"
+        no-caps
+        outline
+        rounded
+        size="md"
+        @click="openLogin"
+      />
+      <q-btn color="primary" data-testid="header-signup-btn" :label="$t('signup')" no-caps rounded size="md" @click="openRegister" />
     </div>
   </q-header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
 import { useAuthStore } from '@/stores'
 import { computed } from 'vue'
@@ -37,7 +50,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const tabs = [
-  { name: 'home', icon: 'img:/books.svg', to: '/' },
+  { name: 'home', icon: 'img:/books.svg', to: '/home' },
   { name: 'add', icon: 'search', to: '/add' },
   { name: 'people', icon: 'people', to: '/people' },
   { name: 'settings', icon: 'settings', to: '/settings' }
@@ -47,14 +60,24 @@ const peopleTo = computed(() => {
   const path = route.path || '/'
   if (path.startsWith('/people')) return '/people'
   const segments = path.split('/').filter(Boolean)
-  const reserved = new Set(['add', 'people', 'settings'])
-  if (segments.length === 1 && !reserved.has(segments[0])) return path
+  const reserved = new Set(['home', 'add', 'people', 'settings', 'search', 'books'])
+  if (segments.length === 1 && segments[0] && !reserved.has(segments[0])) return path
   return '/people'
 })
+
 const settingsTo = computed(() => `/settings/${route.params.tab || 'books'}`)
 
-const createRipple = (event) => {
-  const button = event.currentTarget
+function openLogin() {
+  authStore.openAuthModal('login')
+}
+
+function openRegister() {
+  authStore.openAuthModal('register')
+}
+
+const createRipple = (event: globalThis.Event) => {
+  const mouseEvent = event as globalThis.MouseEvent
+  const button = event.currentTarget as globalThis.HTMLElement
   const existingRipple = button.querySelector('.ripple')
   if (existingRipple) existingRipple.remove()
 
@@ -63,8 +86,8 @@ const createRipple = (event) => {
   const radius = diameter / 2
 
   const rect = button.getBoundingClientRect()
-  const x = event.clientX - rect.left
-  const y = event.clientY - rect.top
+  const x = mouseEvent.clientX - rect.left
+  const y = mouseEvent.clientY - rect.top
 
   circle.style.width = circle.style.height = `${diameter}px`
   circle.style.left = `${x - radius}px`
@@ -81,6 +104,7 @@ const createRipple = (event) => {
 .header-nav
   align-items: center
   display: flex
+  min-height: 56px
   text-align: left
   @media screen and (max-width: $breakpoint-xs-max)
     display: block
@@ -90,6 +114,7 @@ const createRipple = (event) => {
 .logo-container
   align-items: center
   display: flex
+  flex-shrink: 0
 
 .nav-tabs
   @media screen and (max-width: $breakpoint-xs-max)
@@ -200,16 +225,15 @@ img[alt='Logotipo']
 .guest-nav
   align-items: center
   display: flex
-  flex: 1
-  justify-content: flex-end
+  flex-shrink: 0
+  height: 100%
   padding: 0 1.5rem
   @media screen and (max-width: $breakpoint-xs-max)
     justify-content: center
-    padding: 0.5rem 1rem 1rem
+    padding: 0.75rem 1rem
   :deep(.q-btn)
-    border-width: 2px
     font-weight: 500
-    padding: 0.5rem 1.5rem
+    padding: 0.5rem 1.25rem
     transition: all 0.2s ease
     &:hover
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)

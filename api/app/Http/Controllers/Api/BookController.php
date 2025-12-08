@@ -274,13 +274,17 @@ class BookController extends Controller
             'format' => 'nullable|string|in:hardcover,paperback,ebook,audiobook',
             'categories' => 'nullable|array',
             'edition' => 'nullable|string|max:50',
+            'amazon_asin' => self::VALIDATION_NULLABLE_STRING.'|max:20',
+            'amazon_rating' => 'nullable|numeric|min:0|max:5',
+            'amazon_rating_count' => 'nullable|integer|min:0',
         ]);
 
         $isbn = $request->input('isbn');
         $googleId = $request->input('google_id');
+        $amazonAsin = $request->input('amazon_asin');
 
         // Check if book already exists
-        $book = $this->findExistingBook($isbn, $googleId);
+        $book = $this->findExistingBook($isbn, $googleId, $amazonAsin);
 
         if ($book) {
             // Book exists, enrich if needed
@@ -306,6 +310,12 @@ class BookController extends Controller
             $bookData['published_date'] = $this->parsePublishedDate($bookData['published_date']);
         }
 
+        // If book already has Amazon ASIN from search results, mark as completed
+        if (! empty($bookData['amazon_asin'])) {
+            $bookData['asin_status'] = 'completed';
+            $bookData['asin_processed_at'] = now();
+        }
+
         $book = Book::create($bookData);
 
         // Enrich book if Google ID is provided
@@ -325,9 +335,9 @@ class BookController extends Controller
     }
 
     /**
-     * Find existing book by ISBN or Google ID
+     * Find existing book by ISBN, Google ID, or Amazon ASIN
      */
-    private function findExistingBook(?string $isbn, ?string $googleId): ?Book
+    private function findExistingBook(?string $isbn, ?string $googleId, ?string $amazonAsin = null): ?Book
     {
         if ($isbn) {
             $book = Book::where('isbn', $isbn)->first();
@@ -337,7 +347,14 @@ class BookController extends Controller
         }
 
         if ($googleId) {
-            return Book::where('google_id', $googleId)->first();
+            $book = Book::where('google_id', $googleId)->first();
+            if ($book) {
+                return $book;
+            }
+        }
+
+        if ($amazonAsin) {
+            return Book::where('amazon_asin', $amazonAsin)->first();
         }
 
         return null;
@@ -918,6 +935,83 @@ class BookController extends Controller
         $primaryLanguage = trim(explode(';', $languages[0])[0]);
 
         return $primaryLanguage ?: 'en-US';
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/books/{book}/stats",
+     *     operationId="getBookStats",
+     *     tags={"Books"},
+     *     summary="Get public statistics for a book",
+     *     description="Returns aggregated statistics for a book including reader count, average rating, and rating distribution. This is a public endpoint.",
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         description="Book ID",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="B-1ABC-2DEF")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Book statistics",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="total_readers", type="integer", example=42, description="Number of users who have this book in their library"),
+     *             @OA\Property(property="average_rating", type="number", format="float", example=4.2, description="Average rating from public reviews"),
+     *             @OA\Property(property="review_count", type="integer", example=15, description="Number of public reviews"),
+     *             @OA\Property(property="rating_distribution", type="object",
+     *                 @OA\Property(property="1", type="integer", example=1),
+     *                 @OA\Property(property="2", type="integer", example=2),
+     *                 @OA\Property(property="3", type="integer", example=3),
+     *                 @OA\Property(property="4", type="integer", example=5),
+     *                 @OA\Property(property="5", type="integer", example=4)
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found")
+     * )
+     */
+    public function stats(Book $book): JsonResponse
+    {
+        // Count users who have this book in their library (non-private)
+        $totalReaders = $book->users()
+            ->wherePivot('is_private', false)
+            ->count();
+
+        // Get public reviews for this book
+        $publicReviews = $book->reviews()
+            ->where('visibility_level', 'public')
+            ->get();
+
+        // Calculate average rating
+        $averageRating = $publicReviews->avg('rating');
+
+        // Calculate rating distribution
+        $ratingDistribution = [
+            '1' => 0,
+            '2' => 0,
+            '3' => 0,
+            '4' => 0,
+            '5' => 0,
+        ];
+
+        foreach ($publicReviews as $review) {
+            if ($review->rating >= 1 && $review->rating <= 5) {
+                $ratingDistribution[(string) $review->rating]++;
+            }
+        }
+
+        return response()->json([
+            'total_readers' => $totalReaders,
+            'average_rating' => $averageRating ? round($averageRating, 1) : null,
+            'review_count' => $publicReviews->count(),
+            'rating_distribution' => $ratingDistribution,
+        ]);
     }
 
     /**

@@ -24,7 +24,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Auth routes (public)
-Route::middleware(['throttle:5,1'])->group(function () {
+// Rate limit: 60/min for local/testing, 5/min for production
+$authRateLimit = app()->environment('local', 'testing') ? 'throttle:60,1' : 'throttle:5,1';
+Route::middleware([$authRateLimit])->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -41,9 +43,18 @@ Route::middleware(['throttle:10,1'])->group(function () {
 // Email verification routes
 Route::get('/auth/verify-email', [EmailVerificationController::class, 'verifyEmail'])->name('verification.verify');
 
+// Logout route (public - idempotent, always succeeds)
+Route::post('/auth/logout', [AuthController::class, 'logout']);
+
 // Public routes
 Route::get('/health', [HealthController::class, 'index']);
+
+// Public book routes
 Route::get('/books', [BookController::class, 'index']);
+Route::post('/books', [BookController::class, 'store']);
+Route::get('/books/{book}', [BookController::class, 'show']);
+Route::get('/books/{book}/stats', [BookController::class, 'stats']);
+Route::get('/books/{book}/reviews', [ReviewController::class, 'bookReviews']);
 
 // Image proxy (public for CORS issues)
 Route::get('/image-proxy', [ImageProxyController::class, 'proxy']);
@@ -69,7 +80,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Auth
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/me', [AuthController::class, 'updateMe']);
     Route::delete('/auth/me', [AuthController::class, 'deleteMe']);
@@ -90,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/books/{book}/editions', [BookController::class, 'getEditions']);
     // @deprecated Use GET /books/{id}?with=details instead (amazon_links included automatically)
     Route::get('/books/{book}/amazon-links', [BookController::class, 'getAmazonLinks']);
-    Route::apiResource('books', BookController::class)->except(['index']);
+    Route::apiResource('books', BookController::class)->except(['index', 'show', 'store']);
 
     // User's books (Personal Library Management)
     Route::get('/user/books', [UserBookController::class, 'index']);

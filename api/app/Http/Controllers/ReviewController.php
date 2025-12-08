@@ -514,4 +514,70 @@ class ReviewController extends Controller
             'helpful_count' => $review->helpful_count,
         ]);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/books/{book}/reviews",
+     *     summary="Get public reviews for a specific book",
+     *     description="Returns paginated public reviews for a book. This is a public endpoint that does not require authentication.",
+     *     tags={"Reviews", "Books"},
+     *
+     *     @OA\Parameter(
+     *         name="book",
+     *         in="path",
+     *         required=true,
+     *         description="Book ID",
+     *
+     *         @OA\Schema(type="string", example="B-3D6Y-9IO8")
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number for pagination",
+     *
+     *         @OA\Schema(type="integer", minimum=1, default=1)
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ReviewResource")),
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=404, description="Book not found")
+     * )
+     */
+    public function bookReviews(Book $book): JsonResponse
+    {
+        $reviews = Review::with([self::USER_RELATION_FIELDS])
+            ->where('book_id', $book->id)
+            ->where('visibility_level', 'public')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return response()->json([
+            'data' => ReviewResource::collection($reviews->items()),
+            'meta' => [
+                'current_page' => $reviews->currentPage(),
+                'from' => $reviews->firstItem(),
+                'last_page' => $reviews->lastPage(),
+                'per_page' => $reviews->perPage(),
+                'to' => $reviews->lastItem(),
+                'total' => $reviews->total(),
+            ],
+        ]);
+    }
 }

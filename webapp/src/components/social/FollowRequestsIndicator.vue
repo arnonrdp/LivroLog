@@ -1,5 +1,5 @@
 <template>
-  <q-btn v-if="pendingRequestsCount > 0" flat icon="group_add" round @click="loadPendingRequests">
+  <q-btn v-if="pendingRequestsCount > 0" data-testid="follow-requests-indicator" flat icon="group_add" round @click="loadPendingRequests">
     <q-badge color="red" floating rounded>
       {{ pendingRequestsCount }}
     </q-badge>
@@ -27,8 +27,8 @@
 
           <q-item-section side>
             <div class="row q-gutter-xs">
-              <q-btn color="positive" dense icon="check" outline round size="sm" @click="acceptRequest(request.id)" />
-              <q-btn color="negative" dense icon="close" outline round size="sm" @click="rejectRequest(request.id)" />
+              <q-btn color="positive" data-testid="accept-follow-btn" dense icon="check" outline round size="sm" @click="acceptRequest(request.id)" />
+              <q-btn color="negative" data-testid="reject-follow-btn" dense icon="close" outline round size="sm" @click="rejectRequest(request.id)" />
             </div>
           </q-item-section>
         </q-item>

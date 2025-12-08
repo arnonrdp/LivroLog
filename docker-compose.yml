@@ -70,7 +70,7 @@ services:
       MYSQL_DATABASE: '${DB_DATABASE:-livrolog}'
       MYSQL_USER: '${DB_USERNAME:-livrolog}'
       MYSQL_PASSWORD: '${DB_PASSWORD:-supersecret}'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    command: --default-authentication-plugin=mysql_native_password
     volumes:
       - 'mysql:/var/lib/mysql'
     networks:

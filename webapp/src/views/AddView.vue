@@ -1,9 +1,22 @@
 <template>
   <q-page padding>
     <q-form @submit.prevent="search">
-      <q-input v-model="seek" class="q-mx-auto" clearable dense :label="$t('addlabel')" style="max-width: 32rem" @clear="clearSearch">
+      <q-input
+        v-model="seek"
+        class="q-mx-auto"
+        clearable
+        data-testid="book-search-input"
+        dense
+        :label="$t('addlabel')"
+        style="max-width: 32rem"
+        @clear="clearSearch"
+        @keyup.enter="search"
+      >
         <template v-slot:prepend>
           <q-icon name="search" />
+        </template>
+        <template v-slot:append>
+          <q-btn color="primary" data-testid="book-search-button" dense flat icon="search" round type="submit" @click="search" />
         </template>
       </q-input>
     </q-form>
@@ -11,9 +24,10 @@
     <TheLoading v-show="isSearching" />
 
     <section class="items-baseline justify-center row">
-      <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg">
+      <figure v-for="(book, index) in books" :key="index" class="relative-position q-mx-md q-my-lg" data-testid="book-result">
         <q-btn
           :color="isBookInLibrary(book) ? 'positive' : 'primary'"
+          data-testid="add-book-btn"
           :disable="isBookInLibrary(book)"
           :icon="isBookInLibrary(book) ? 'check' : 'add'"
           round
