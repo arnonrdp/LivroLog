@@ -15,19 +15,20 @@
         <div class="search-box">
           <q-input
             v-model="searchQuery"
-            class="search-input"
-            dense
+            bg-color="white"
+            color="amber-8"
             outlined
             :placeholder="$t('landing.search-placeholder')"
             rounded
             @keydown.enter="handleSearch"
           >
-            <template v-slot:append>
+            <template #append>
               <q-btn
-                class="search-btn"
-                color="primary"
+                color="amber-8"
                 icon="search"
+                padding="sm"
                 round
+                size="md"
                 unelevated
                 @click="handleSearch"
               />
@@ -250,20 +251,25 @@
         <div class="cta-buttons">
           <q-btn
             class="cta-primary-btn"
+            color="amber-8"
             :label="$t('landing.cta-signup')"
             no-caps
+            padding="md xl"
             rounded
             size="lg"
+            text-color="white"
             unelevated
             @click="openRegister"
           />
           <q-btn
             class="cta-secondary-btn"
-            flat
             :label="$t('landing.cta-explore')"
             no-caps
+            outline
+            padding="md xl"
             rounded
             size="lg"
+            text-color="white"
             to="/search"
           />
         </div>
@@ -418,23 +424,6 @@ $gold: #C9A962
 .search-box
   margin: 0 auto 1.5rem
   max-width: 550px
-
-.search-input
-  :deep(.q-field__control)
-    background: white
-    border: 2px solid rgba($amber, 0.3)
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
-    height: 60px
-    padding: 0 0.5rem 0 1.5rem
-    transition: all 0.3s ease
-    &:hover, &:focus-within
-      border-color: $amber
-      box-shadow: 0 6px 30px rgba($amber, 0.15)
-
-.search-btn
-  background: linear-gradient(135deg, $amber 0%, $amber-dark 100%) !important
-  height: 44px
-  width: 44px
 
 .hero-cta-text
   color: $text-secondary
@@ -746,21 +735,18 @@ $gold: #C9A962
   justify-content: center
 
 .cta-primary-btn
-  background: linear-gradient(135deg, $amber 0%, $amber-dark 100%) !important
-  color: white !important
   font-weight: 600
-  padding: 0.9rem 2.5rem !important
+  transition: all 0.2s ease
   &:hover
     box-shadow: 0 6px 20px rgba($amber, 0.4)
     transform: translateY(-2px)
 
 .cta-secondary-btn
-  border: 2px solid rgba(255, 255, 255, 0.3) !important
-  color: white !important
-  padding: 0.9rem 2.5rem !important
+  border-color: rgba(255, 255, 255, 0.3)
+  transition: all 0.2s ease
   &:hover
-    background: rgba(255, 255, 255, 0.1) !important
-    border-color: rgba(255, 255, 255, 0.5) !important
+    background: rgba(255, 255, 255, 0.1)
+    border-color: rgba(255, 255, 255, 0.5)
 
 // Footer
 .landing-footer
