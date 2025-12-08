@@ -216,10 +216,11 @@ jobs:
           # Copy .env file
           scp -o StrictHostKeyChecking=no .env.prod ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/shared/
 
-          # Copy backup scripts
-          scp -o StrictHostKeyChecking=no scripts/backup_database.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
-          scp -o StrictHostKeyChecking=no scripts/setup_backup_cron.sh ${{ secrets.SERVER_HOST }}:/home/bitnami/
-          ssh ${{ secrets.SERVER_HOST }} "chmod +x /home/bitnami/*.sh"
+          # Copy backup scripts to user's home directory
+          ssh ${{ secrets.SERVER_HOST }} "mkdir -p ~/scripts"
+          scp -o StrictHostKeyChecking=no scripts/backup_database.sh ${{ secrets.SERVER_HOST }}:~/scripts/
+          scp -o StrictHostKeyChecking=no scripts/setup_backup_cron.sh ${{ secrets.SERVER_HOST }}:~/scripts/
+          ssh ${{ secrets.SERVER_HOST }} "chmod +x ~/scripts/*.sh"
 
           echo "✅ Files copied successfully"
 
@@ -422,7 +423,7 @@ jobs:
       - name: Setup backup automation
         run: |
           echo "⚙️ Setting up backup automation for production..."
-          ssh ${{ secrets.SERVER_HOST }} "/home/bitnami/setup_backup_cron.sh"
+          ssh ${{ secrets.SERVER_HOST }} "~/scripts/setup_backup_cron.sh"
 
       - name: Post-deployment verification
         run: |
