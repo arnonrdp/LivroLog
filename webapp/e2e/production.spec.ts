@@ -8,7 +8,7 @@
  * Requires: PLAYWRIGHT_USER_PASSWORD environment variable
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 // Production test user - password from environment
 const PROD_USER = {
