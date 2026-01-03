@@ -51,7 +51,7 @@
           dense
           :model-value="modelValue"
           outlined
-          :placeholder="$t('search')"
+          :placeholder="$t('search.button')"
           @update:model-value="$emit('update:model-value', $event)"
         >
           <template v-slot:append>

@@ -1,9 +1,9 @@
 <template>
   <div class="empty-shelf-state">
     <div class="empty-shelf-content">
-      <q-icon color="grey-6" name="auto_stories" size="80px" />
-      <h5 class="q-mt-md q-mb-sm text-grey-7">{{ $t('empty-shelf-title') }}</h5>
-      <p class="text-grey-6 q-mb-lg">{{ $t('empty-shelf-subtitle') }}</p>
+      <q-icon color="grey-4" name="auto_stories" size="80px" />
+      <h5 class="q-mt-md q-mb-sm text-white">{{ $t('empty-shelf-title') }}</h5>
+      <p class="text-grey-3 q-mb-lg">{{ $t('empty-shelf-subtitle') }}</p>
 
       <div class="button-group">
         <q-btn color="primary" icon="add" :label="$t('add-book')" unelevated @click="goToAdd" />

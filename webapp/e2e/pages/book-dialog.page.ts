@@ -111,4 +111,15 @@ export class BookDialogPage {
     // Just check if the user has any review on this book
     await expect(this.page.locator('[data-testid="user-review"]')).toBeVisible({ timeout: 10000 })
   }
+
+  async getReadDate(): Promise<string> {
+    const input = this.page.locator('[data-testid="read-date-input"]')
+    await input.waitFor({ state: 'visible', timeout: 10000 })
+    return await input.inputValue()
+  }
+
+  async expectReadDate(expectedDate: string) {
+    const actualDate = await this.getReadDate()
+    await expect(actualDate).toBe(expectedDate)
+  }
 }

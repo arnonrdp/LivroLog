@@ -828,7 +828,8 @@ class BookController extends Controller
     {
         // Determine which user's pivot data to get
         $targetUserId = $request->input('user_id');
-        $currentUser = $request->user();
+        // Use sanctum guard explicitly since this can be called from public routes
+        $currentUser = auth('sanctum')->user();
 
         if ($targetUserId) {
             // Getting pivot for specific user

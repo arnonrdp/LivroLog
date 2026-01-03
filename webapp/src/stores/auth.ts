@@ -1,10 +1,19 @@
-import { i18n, type SupportedLocale } from '@/locales'
+import { i18n, localeOptions, type SupportedLocale } from '@/locales'
 import type { AuthResponse, User } from '@/models'
 import router from '@/router'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
 import { LocalStorage, Notify } from 'quasar'
 import { useUserStore } from './user'
+
+function applyUserLocale(user: User) {
+  if (user.locale && typeof user.locale === 'string') {
+    const supportedLocales = localeOptions.map((l) => l.value)
+    if (supportedLocales.includes(user.locale as SupportedLocale)) {
+      i18n.global.locale.value = user.locale as SupportedLocale
+    }
+  }
+}
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -49,6 +58,7 @@ export const useAuthStore = defineStore('auth', {
         .then((response) => {
           userStore.setMe(response.data)
           LocalStorage.set('user', response.data)
+          applyUserLocale(response.data)
 
           // Handle email verification notifications
           if (status === 'verified') {
@@ -121,6 +131,7 @@ export const useAuthStore = defineStore('auth', {
           }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
+          applyUserLocale(authData.user)
           this.handlePostLoginRedirect()
           return authData
         })
@@ -145,6 +156,7 @@ export const useAuthStore = defineStore('auth', {
           }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
+          applyUserLocale(authData.user)
           this.handlePostLoginRedirect()
           return authData
         })
@@ -244,6 +256,7 @@ export const useAuthStore = defineStore('auth', {
           }
           LocalStorage.set('user', authData.user)
           userStore.setMe(authData.user)
+          applyUserLocale(authData.user)
           Notify.create({ message: 'Login with Google successful!', type: 'positive' })
           this.handlePostLoginRedirect()
           return authData
@@ -303,6 +316,7 @@ export const useAuthStore = defineStore('auth', {
 
       if (userData && typeof userData === 'object') {
         userStore.setMe(userData as User)
+        applyUserLocale(userData as User)
         return true
       }
 
