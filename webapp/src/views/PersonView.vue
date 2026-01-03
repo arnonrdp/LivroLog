@@ -36,10 +36,26 @@
         <div class="flex items-center">
           <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
           <q-space />
-          <ShelfDialog v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
+          <q-btn-toggle
+            v-model="activeTab"
+            class="q-mr-sm"
+            :options="tabOptions"
+            rounded
+            toggle-color="primary"
+            unelevated
+          />
+          <ShelfDialog v-if="activeTab === 'shelf'" v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
         </div>
 
-        <TheShelf :books="filteredBooks" data-testid="profile-books" :user-identifier="person.username" />
+        <q-tab-panels v-model="activeTab" animated class="bg-transparent">
+          <q-tab-panel name="shelf" class="q-pa-none">
+            <TheShelf :books="filteredBooks" data-testid="profile-books" :user-identifier="person.username" />
+          </q-tab-panel>
+
+          <q-tab-panel name="stats" class="q-pa-none">
+            <ReadingStats v-if="person.username" :username="person.username" />
+          </q-tab-panel>
+        </q-tab-panels>
       </div>
     </div>
 
@@ -65,6 +81,7 @@
 <script setup lang="ts">
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
+import ReadingStats from '@/components/profile/ReadingStats.vue'
 import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -82,10 +99,16 @@ const authStore = useAuthStore()
 const userStore = useUserStore()
 const followStore = useFollowStore()
 
+const activeTab = ref('shelf')
 const ascDesc = ref('desc')
 const filter = ref('')
 const showUnfollowDialog = ref(false)
 const sortKey = ref<string | number>('readIn')
+
+const tabOptions = computed(() => [
+  { value: 'shelf', icon: 'auto_stories', attrs: { 'aria-label': t('bookshelf') } },
+  { value: 'stats', icon: 'bar_chart', attrs: { 'aria-label': t('reading-stats') } }
+])
 
 const person = computed(() => {
   const username = route.params.username as string
@@ -259,6 +282,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   followStore.clearFollowStatus()
+
+  // Clear user data to avoid showing stale data in other views
+  userStore.$patch({ _user: {} })
 
   // Clean up meta tags
   const metaTags = document.querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')
