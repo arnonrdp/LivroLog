@@ -240,5 +240,14 @@
   "verification-email-sent": "確認メールが正常に送信されました",
   "verify-email": "メールを確認します",
   "visibility": "可視性",
-  "want-to-read": "読みたい"
+  "want-to-read": "読みたい",
+
+  "reading-statuses": {
+    "want_to_read": "読みたい",
+    "reading": "読書中",
+    "read": "読了",
+    "abandoned": "中断",
+    "on_hold": "保留中",
+    "re_reading": "再読中"
+  }
 }

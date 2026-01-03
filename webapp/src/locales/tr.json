@@ -240,5 +240,14 @@
   "verification-email-sent": "Doğrulama e -postası başarıyla gönderildi",
   "verify-email": "E -postayı doğrulayın",
   "visibility": "Görünürlük",
-  "want-to-read": "Okumak istiyorum"
+  "want-to-read": "Okumak istiyorum",
+
+  "reading-statuses": {
+    "want_to_read": "Okumak İstiyorum",
+    "reading": "Okuyorum",
+    "read": "Okudum",
+    "abandoned": "Bıraktım",
+    "on_hold": "Beklemede",
+    "re_reading": "Tekrar Okuyorum"
+  }
 }

@@ -80,7 +80,7 @@
                 <q-list>
                   <q-item v-for="status in readingStatuses" :key="status.value" v-close-popup clickable @click="addToLibrary(status.value)">
                     <q-item-section>
-                      <q-item-label>{{ $t(`reading-status.${status.value}`) }}</q-item-label>
+                      <q-item-label>{{ $t(`reading-statuses.${status.value}`) }}</q-item-label>
                     </q-item-section>
                   </q-item>
                 </q-list>
