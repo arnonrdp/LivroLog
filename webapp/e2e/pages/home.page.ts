@@ -50,4 +50,14 @@ export class HomePage {
     await this.page.goto('/home')
     await expect(this.page.locator('[data-testid="library-book"]').filter({ hasText: bookTitle })).not.toBeVisible()
   }
+
+  async clickOnLibraryBook(index: number = 0) {
+    await this.page.goto('/home')
+    // Wait for library books to load
+    await this.page.waitForSelector('[data-testid="library-book"]', { timeout: 10000 })
+    // Click on the book cover to open the BookDialog
+    await this.page.locator('[data-testid="library-book"]').nth(index).locator('.book-cover').click()
+    // Wait for dialog to appear
+    await this.page.waitForSelector('[data-testid="close-dialog-btn"]', { timeout: 10000 })
+  }
 }

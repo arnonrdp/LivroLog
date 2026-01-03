@@ -75,4 +75,37 @@ test.describe('Books', () => {
     // Verify the checkbox is checked
     await expect(page.locator('[data-testid="private-book-checkbox"]')).toBeChecked()
   })
+
+  test('read date persists after closing and reopening dialog', async ({ page }) => {
+    // Add a book to the library
+    await homePage.searchBooks(testBooks.searchQuery)
+    await homePage.clickOnBookResult(0)
+    await bookDialog.addToLibrary()
+
+    // Set a specific read date
+    const testDate = '2024-06-15'
+    await bookDialog.setReadDate(testDate)
+
+    // Wait for save to complete
+    await page.waitForTimeout(2000)
+
+    // Verify the date is set before closing
+    const dateBeforeClose = await bookDialog.getReadDate()
+    expect(dateBeforeClose).toBe(testDate)
+
+    // Close the dialog
+    await bookDialog.close()
+
+    // Wait for dialog to fully close
+    await page.waitForSelector('[data-testid="close-dialog-btn"]', { state: 'hidden', timeout: 5000 })
+
+    // Reopen the book from the library
+    await homePage.clickOnLibraryBook(0)
+
+    // Wait for data to load
+    await page.waitForTimeout(1000)
+
+    // Verify the date is still there
+    await bookDialog.expectReadDate(testDate)
+  })
 })

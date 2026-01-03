@@ -166,6 +166,7 @@
               data-testid="read-date-input"
               dense
               :label="$t('read-date')"
+              :loading="isSaving"
               outlined
               type="date"
               @blur="() => onUpdateBookData({ read_at: form.read_at })"
@@ -440,6 +441,7 @@ const allPollingIntervals = new Set<number>()
 const initialPrivacy = ref<boolean | null>(null)
 const isBookInLibrary = ref(false)
 const isInitializing = ref(false)
+const isSaving = ref(false)
 const libraryLoading = ref(false)
 const loading = ref(false)
 const MAX_POLLING_TIME = 120000
@@ -681,13 +683,31 @@ watch(
   { immediate: true }
 )
 
-watch(showDialog, (newValue) => {
+watch(showDialog, async (newValue) => {
   if (newValue) {
     if (book.value?.asin_status === 'processing' || book.value?.asin_status === 'pending') {
       startPolling()
     }
   } else {
     stopPolling()
+
+    // Wait for any pending saves to complete before clearing stores
+    if (isSaving.value) {
+      await new Promise<void>((resolve) => {
+        const checkSaving = setInterval(() => {
+          if (!isSaving.value) {
+            clearInterval(checkSaving)
+            resolve()
+          }
+        }, 50)
+        // Timeout after 3 seconds
+        setTimeout(() => {
+          clearInterval(checkSaving)
+          resolve()
+        }, 3000)
+      })
+    }
+
     if (!props.bookData) {
       bookStore.$patch({ _book: null })
       userBookStore.$patch({ _book: {} as Book })
@@ -851,7 +871,22 @@ async function onUpdateBookData(updates: { read_at?: string; is_private?: boolea
     return
   }
 
-  await userBookStore.patchUserBook(bookId, updates)
+  isSaving.value = true
+  await userBookStore
+    .patchUserBook(bookId, updates)
+    .then(() => {
+      // Also update the book in userBookStore to keep it in sync
+      if (userBookStore.book && userBookStore.book.pivot) {
+        const updatedPivot = { ...userBookStore.book.pivot }
+        if (updates.read_at !== undefined) updatedPivot.read_at = updates.read_at
+        if (updates.is_private !== undefined) updatedPivot.is_private = updates.is_private
+        if (updates.reading_status !== undefined) updatedPivot.reading_status = updates.reading_status
+        userBookStore.$patch({ _book: { ...userBookStore.book, pivot: updatedPivot } })
+      }
+    })
+    .finally(() => {
+      isSaving.value = false
+    })
 
   // Handle specific post-update actions
   if (updates.is_private !== undefined) {
