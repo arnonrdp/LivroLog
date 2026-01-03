@@ -259,4 +259,36 @@ class UserBookStatusTest extends TestCase
             'reading_status' => 're_reading',
         ]);
     }
+
+    /**
+     * Test user can update book using google_id instead of internal book id.
+     */
+    public function test_user_can_update_book_using_google_id(): void
+    {
+        $user = User::factory()->create();
+        $googleId = 'qDYQCwAAQBAJ';
+        $book = Book::factory()->create([
+            'google_id' => $googleId,
+        ]);
+
+        $user->books()->attach($book->id, [
+            'added_at' => now(),
+            'reading_status' => 'reading',
+        ]);
+
+        Sanctum::actingAs($user);
+
+        // Use google_id in the URL instead of internal book id
+        $response = $this->patchJson("/user/books/{$googleId}", [
+            'read_at' => '2025-12-22',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('users_books', [
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'read_at' => '2025-12-22',
+        ]);
+    }
 }
