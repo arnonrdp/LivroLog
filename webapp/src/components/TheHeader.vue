@@ -188,6 +188,10 @@ img[alt='Logotipo']
   position: relative
   z-index: 1
 
+// Apply CSS filter to colorize SVG image icons when tab is active
+.tab--active :deep(.q-icon img)
+  filter: invert(52%) sepia(89%) saturate(352%) hue-rotate(127deg) brightness(91%) contrast(87%)
+
 .tab--active :deep(.q-tab__indicator)
   display: none !important
   opacity: 0 !important
