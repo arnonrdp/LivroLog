@@ -7,7 +7,6 @@
   "add-review": "Adicionar Review",
   "add-to-library": "Adicionar à Biblioteca",
   "add-to-library-to-review": "Adicione este livro à sua estante para poder avaliá-lo",
-  "added-to-shelf": "Livro adicionado à sua estante",
   "addlabel": "Pesquise por título, autor, editora, lançamento, ISBN...",
   "affiliate-disclosure": "Como participante do Programa de Associados da Amazon, sou remunerado pelas compras qualificadas efetuadas.",
   "already-in-library": "Já estavam na biblioteca",
@@ -195,7 +194,6 @@
   "reviews": "Reviews",
   "save": "Salvar",
   "saved-successfully": "Review salvo com sucesso!",
-  "search": "Procurar",
   "search-for-people": "Procurar pessoas",
   "search-on-amazon": "Buscar na Amazon",
   "searching-amazon-link": "Pesquisando o link da Amazon ...",
@@ -313,13 +311,11 @@
     "add-to-shelf": "Adicionar à Estante",
     "in-library": "Na sua estante",
     "buy-amazon": "Comprar na Amazon",
-    "search-amazon": "Buscar na Amazon",
     "description": "Descrição",
     "details": "Detalhes",
     "pages": "Páginas",
     "language": "Idioma",
     "publisher": "Editora",
-    "published": "Publicado em",
     "reviews": "Avaliações",
     "no-reviews": "Ainda não há avaliações para este livro",
     "see-more": "Ver mais",
@@ -346,11 +342,6 @@
   "reading-statuses": {
     "want_to_read": "Quero Ler",
     "reading": "Lendo",
-    "read": "Lido",
-    "abandoned": "Abandonado",
-    "on_hold": "Em Espera",
-    "re_reading": "Relendo"
-  },
-
-  "search-placeholder": "Pesquisar livros..."
+    "read": "Lido"
+  }
 }
