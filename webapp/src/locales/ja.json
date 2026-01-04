@@ -64,6 +64,7 @@
   "change-password": "パスワードを変更する",
   "close": "閉じる",
   "column-readIn": "読む",
+  "column-status": "ステータス",
   "column-title": "タイトル",
   "confirm": "確認",
   "confirm-password": "パスワードを認証する",
@@ -287,9 +288,9 @@
   "reading-status": "読み取りステータス",
   "reading-status-updated": "読み取りステータスが正常に更新されました！",
   "reading-statuses": {
-    "abandoned": "放棄された",
+    "abandoned": "放棄",
     "on_hold": "保留中",
-    "re_reading": "再読",
+    "re_reading": "再読中",
     "read": "読了",
     "reading": "読書中",
     "want_to_read": "読みたい"

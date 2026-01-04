@@ -54,7 +54,13 @@
     "language-ja",
     "language-pt",
     "language-ru",
-    "language-zh"
+    "language-zh",
+    "reading-statuses.abandoned",
+    "reading-statuses.on_hold",
+    "reading-statuses.re_reading",
+    "reading-statuses.read",
+    "reading-statuses.reading",
+    "reading-statuses.want_to_read"
   ],
   "i18n-ally.keystyle": "nested",
   "i18n-ally.localesPaths": ["webapp/src/locales"],

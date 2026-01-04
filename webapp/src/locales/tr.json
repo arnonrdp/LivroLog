@@ -64,6 +64,7 @@
   "change-password": "Şifre değiştir",
   "close": "Kapatmak için",
   "column-readIn": "Okuyun",
+  "column-status": "Durum",
   "column-title": "Başlik",
   "confirm": "Onayla",
   "confirm-password": "Şifreyi onaylayın",
@@ -287,10 +288,10 @@
   "reading-status": "Okuma durumu",
   "reading-status-updated": "Okuma durumu başarıyla güncellendi!",
   "reading-statuses": {
-    "abandoned": "Terk edilmiş",
+    "abandoned": "Terk Edildi",
     "on_hold": "Beklemede",
-    "re_reading": "Yeniden okuma",
-    "read": "Okudum",
+    "re_reading": "Tekrar Okuyorum",
+    "read": "Okundu",
     "reading": "Okuyorum",
     "want_to_read": "Okumak İstiyorum"
   },
