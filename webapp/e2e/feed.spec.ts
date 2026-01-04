@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/login.page'
+import { createTestUser } from './fixtures/test-data'
 
 test.describe('Feed', () => {
   let loginPage: LoginPage
@@ -8,14 +9,7 @@ test.describe('Feed', () => {
     loginPage = new LoginPage(page)
     await loginPage.goto()
 
-    // Register a new user for testing
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8)
-    const user = {
-      displayName: `Feed${shortId}`,
-      email: `feed.test.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('feed')
     await loginPage.register(user)
   })
 

@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { faker } from '@faker-js/faker'
 import { LoginPage } from './pages/login.page'
+import { createTestUser } from './fixtures/test-data'
 
 test.describe('Authentication', () => {
   let loginPage: LoginPage
@@ -10,27 +12,13 @@ test.describe('Authentication', () => {
   })
 
   test('user can register with valid data', async () => {
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8) // Keep username under 20 chars
-    const user = {
-      displayName: `Reg${shortId}`,
-      email: `register.test.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
-
+    const user = createTestUser('reg')
     await loginPage.register(user)
     await loginPage.expectToBeLoggedIn()
   })
 
   test('user can login with valid credentials', async ({ page }) => {
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8) // Keep username under 20 chars
-    // First register a user
-    const user = {
-      displayName: `Log${shortId}`,
-      email: `login.test.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('log')
     await loginPage.register(user)
 
     // Logout via settings/account
@@ -44,18 +32,13 @@ test.describe('Authentication', () => {
   })
 
   test('login fails with invalid credentials', async () => {
-    await loginPage.login('invalid@email.com', 'WrongPassword123!')
+    const invalidEmail = faker.internet.email()
+    await loginPage.login(invalidEmail, 'WrongPassword123!')
     await loginPage.expectToBeOnLoginPage()
   })
 
   test('user can logout', async ({ page }) => {
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8) // Keep username under 20 chars
-    const user = {
-      displayName: `Out${shortId}`,
-      email: `logout.test.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('out')
     await loginPage.register(user)
 
     // Logout via settings/account
@@ -67,13 +50,7 @@ test.describe('Authentication', () => {
   })
 
   test('registration fails with duplicate email', async ({ page }) => {
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8) // Keep username under 20 chars
-    const user = {
-      displayName: `Dup${shortId}`,
-      email: `duplicate.test.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('dup')
 
     // Register first time
     await loginPage.register(user)
@@ -85,9 +62,10 @@ test.describe('Authentication', () => {
 
     // Try to register again with same email but different display name
     await loginPage.goto()
+    const duplicateUser = createTestUser('dup2')
     await loginPage.attemptRegister({
-      displayName: `Dup2${shortId}`,
-      email: user.email, // Same email
+      displayName: duplicateUser.displayName,
+      email: user.email, // Same email as first user
       password: 'TestPassword123!'
     })
 

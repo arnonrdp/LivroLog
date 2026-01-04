@@ -1,19 +1,6 @@
 import { test, expect, Page } from '@playwright/test'
-import { faker } from '@faker-js/faker'
 import { LoginPage } from './pages/login.page'
-
-// Helper to generate realistic user data
-function generateUser() {
-  const firstName = faker.person.firstName()
-  const lastName = faker.person.lastName()
-  const timestamp = Date.now()
-
-  return {
-    displayName: `${firstName} ${lastName}`,
-    email: `test.${timestamp}.${faker.string.alphanumeric(4)}@test.com`,
-    password: 'TestPassword123!'
-  }
-}
+import { createTestUser } from './fixtures/test-data'
 
 // Helper to search and add a book to shelf
 async function searchAndAddBook(page: Page, searchTerm: string): Promise<{ added: boolean; bookTitle: string }> {
@@ -67,7 +54,7 @@ async function searchAndAddBook(page: Page, searchTerm: string): Promise<{ added
 }
 
 // Helper to register a new user
-async function registerUser(page: Page, user: ReturnType<typeof generateUser>) {
+async function registerUser(page: Page, user: ReturnType<typeof createTestUser>) {
   const loginPage = new LoginPage(page)
   await loginPage.goto()
   await loginPage.register({
@@ -108,8 +95,8 @@ async function getUsername(page: Page): Promise<string> {
 
 test.describe('Feed Complete Flow - Two Users Interaction', () => {
   test('user can see activities from followed user in feed', async ({ page }) => {
-    const user1 = generateUser()
-    const user2 = generateUser()
+    const user1 = createTestUser('flw1')
+    const user2 = createTestUser('flw2')
 
     console.log('User 1:', user1.displayName)
     console.log('User 2:', user2.displayName)

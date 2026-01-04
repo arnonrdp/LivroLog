@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/login.page'
+import { createTestUser } from './fixtures/test-data'
 
 test.describe('Feed Activity - User Profile Integration', () => {
   let loginPage: LoginPage
@@ -8,14 +9,7 @@ test.describe('Feed Activity - User Profile Integration', () => {
     loginPage = new LoginPage(page)
     await loginPage.goto()
 
-    // Register a new user for testing
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8)
-    const user = {
-      displayName: `FeedUser${shortId}`,
-      email: `feed.activity.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('fdusr')
     await loginPage.register(user)
   })
 
@@ -106,13 +100,7 @@ test.describe('Feed Navigation and UI', () => {
     loginPage = new LoginPage(page)
     await loginPage.goto()
 
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8)
-    const user = {
-      displayName: `FeedNav${shortId}`,
-      email: `feed.nav.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('fdnav')
     await loginPage.register(user)
   })
 
@@ -162,13 +150,7 @@ test.describe('Feed Profile Consistency', () => {
     loginPage = new LoginPage(page)
     await loginPage.goto()
 
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8)
-    const user = {
-      displayName: `ProfileFeed${shortId}`,
-      email: `profile.feed.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('fdprf')
     await loginPage.register(user)
   })
 
@@ -278,13 +260,7 @@ test.describe('Feed API Integration', () => {
     loginPage = new LoginPage(page)
     await loginPage.goto()
 
-    const timestamp = Date.now()
-    const shortId = String(timestamp).slice(-8)
-    const user = {
-      displayName: `FeedAPI${shortId}`,
-      email: `feed.api.${timestamp}@test.com`,
-      password: 'TestPassword123!'
-    }
+    const user = createTestUser('fdapi')
     await loginPage.register(user)
   })
 
