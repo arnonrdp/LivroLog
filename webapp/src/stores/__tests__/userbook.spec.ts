@@ -1,6 +1,6 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Book } from '@/models'
+import type { Book, ReadingStatus, User } from '@/models'
 
 // Hoist mock before imports
 const mockAxios = vi.hoisted(() => ({
@@ -53,6 +53,14 @@ describe('UserBook Store', () => {
       }
     }
   ]
+
+  const createMockUser = (books: Book[] = []): User => ({
+    id: 'U-TEST-1234',
+    email: 'test@example.com',
+    display_name: 'Test User',
+    username: 'testuser',
+    books
+  })
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -157,7 +165,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [] } as any
+      userStore._me = createMockUser([])
 
       const result = await store.postUserBooks(mockBook)
 
@@ -185,7 +193,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [] } as any
+      userStore._me = createMockUser([])
 
       await store.postUserBooks(googleBook as Book)
 
@@ -200,7 +208,7 @@ describe('UserBook Store', () => {
     it('should return false if book already in library', async () => {
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       const result = await store.postUserBooks(mockBook)
 
@@ -213,7 +221,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [] } as any
+      userStore._me = createMockUser([])
 
       await store.postUserBooks(mockBook, true, 'reading')
 
@@ -233,7 +241,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [] } as any
+      userStore._me = createMockUser([])
 
       await expect(store.postUserBooks(mockBook)).rejects.toThrow()
       expect(store._isLoading).toBe(false)
@@ -246,7 +254,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await store.patchUserBook('B-TEST-1234', { reading_status: 'reading' })
 
@@ -261,7 +269,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await store.patchUserBook('B-TEST-1234', { read_at: '2024-06-01' })
 
@@ -275,7 +283,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await store.patchUserBook('B-TEST-1234', { is_private: true })
 
@@ -289,7 +297,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await store.patchUserBook('B-TEST-1234', {
         reading_status: 'read',
@@ -309,9 +317,9 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
-      await expect(store.patchUserBook('B-TEST-1234', { reading_status: 'invalid' as any })).rejects.toThrow()
+      await expect(store.patchUserBook('B-TEST-1234', { reading_status: 'invalid' as unknown as ReadingStatus })).rejects.toThrow()
       expect(store._isLoading).toBe(false)
     })
   })
@@ -322,7 +330,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: mockBooks } as any
+      userStore._me = createMockUser(mockBooks)
 
       const result = await store.deleteUserBook('B-TEST-1234')
 
@@ -339,7 +347,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await expect(store.deleteUserBook('B-TEST-1234')).rejects.toThrow()
       expect(store._isLoading).toBe(false)
@@ -353,7 +361,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       const result = await store.replaceUserBook('B-TEST-1234', 'B-NEW-EDITION')
 
@@ -376,7 +384,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await store.replaceUserBook('B-TEST-1234', amazonBook as Book)
 
@@ -396,7 +404,7 @@ describe('UserBook Store', () => {
 
       const store = useUserBookStore()
       const userStore = useUserStore()
-      userStore._me = { id: 'U-TEST-1234', books: [mockBook] } as any
+      userStore._me = createMockUser([mockBook])
 
       await expect(store.replaceUserBook('B-TEST-1234', 'B-INVALID')).rejects.toThrow()
       expect(store._isLoading).toBe(false)
