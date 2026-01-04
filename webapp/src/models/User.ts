@@ -3,6 +3,7 @@ import type { Book } from '@/models'
 export interface User {
   avatar?: string | null
   books?: Book[]
+  books_count?: number
   created_at?: string
   display_name: string
   email_verified_at?: string | null

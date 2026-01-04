@@ -26,9 +26,13 @@
           </q-card-section>
         </router-link>
 
-        <!-- Follow Stats -->
+        <!-- Stats -->
         <q-card-section v-if="user.followers_count !== undefined" class="text-center q-pt-none">
-          <div class="row justify-center q-gutter-sm text-body2 text-grey">
+          <div class="text-body2 text-grey">
+            <strong>{{ user.books_count || 0 }}</strong>
+            {{ $t('books', user.books_count || 0) }}
+          </div>
+          <div class="row justify-center q-gutter-sm text-body2 text-grey q-mt-xs">
             <div>
               <strong>{{ user.followers_count || 0 }}</strong>
               {{ $t('followers') }}
