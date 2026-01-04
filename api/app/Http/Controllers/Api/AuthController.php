@@ -966,6 +966,74 @@ class AuthController extends Controller
             'shelf_name' => 'sometimes|string|max:255',
             'locale' => 'sometimes|string|max:10',
             'is_private' => 'sometimes|boolean',
+            'avatar' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:500',
+                function ($attribute, $value, $fail) {
+                    if (empty($value)) {
+                        return; // Allow null/empty to clear avatar
+                    }
+
+                    // Allow our pre-defined avatars (relative paths)
+                    if (str_starts_with($value, '/avatars/') && preg_match('/^\/avatars\/avatar-\d+\.svg$/', $value)) {
+                        return;
+                    }
+
+                    // SECURITY: For external URLs, enforce strict validation
+                    $parsed = parse_url($value);
+
+                    // Must have a valid scheme
+                    if (! isset($parsed['scheme']) || ! isset($parsed['host'])) {
+                        $fail('The avatar URL is invalid.');
+
+                        return;
+                    }
+
+                    // SECURITY: Only allow HTTPS
+                    if (strtolower($parsed['scheme']) !== 'https') {
+                        $fail('The avatar URL must use HTTPS.');
+
+                        return;
+                    }
+
+                    // SECURITY: Block dangerous patterns
+                    $dangerous = ['javascript:', 'data:', 'vbscript:', 'file:', 'about:', 'blob:'];
+                    foreach ($dangerous as $pattern) {
+                        if (stripos($value, $pattern) !== false) {
+                            $fail('The avatar URL contains forbidden content.');
+
+                            return;
+                        }
+                    }
+
+                    // SECURITY: Block injection characters
+                    if (preg_match('/[<>"\'`]/', $value)) {
+                        $fail('The avatar URL contains invalid characters.');
+
+                        return;
+                    }
+
+                    // SECURITY: Block localhost and private IPs
+                    $host = strtolower($parsed['host']);
+                    $blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'];
+                    if (in_array($host, $blockedHosts)) {
+                        $fail('The avatar URL cannot point to a local address.');
+
+                        return;
+                    }
+
+                    // SECURITY: Block private IP ranges
+                    if (filter_var($host, FILTER_VALIDATE_IP)) {
+                        if (! filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                            $fail('The avatar URL cannot point to a private IP address.');
+
+                            return;
+                        }
+                    }
+                },
+            ],
         ]);
 
         $user->update($request->only([
@@ -975,6 +1043,7 @@ class AuthController extends Controller
             'shelf_name',
             'locale',
             'is_private',
+            'avatar',
         ]));
 
         $user = $user->fresh()

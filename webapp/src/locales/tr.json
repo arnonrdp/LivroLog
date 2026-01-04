@@ -11,6 +11,16 @@
   "affiliate-disclosure": "LivroLog, Amazon İş Ortaklığı Programına katılmaktadır ve uygun satın alımlardan komisyon kazanmaktadır.",
   "already-in-library": "Zaten kütüphanede",
   "amazon-link-not-found": "Amazon bağlantısı bulunamadı",
+  "avatar": {
+    "choose": "Bir avatar seçin",
+    "current": "Mevcut avatar",
+    "custom-url": "Özel resim URL'si kullan",
+    "default": "Varsayılan (avatar yok)",
+    "invalid-image": "Resim yüklenemedi",
+    "paste-url": "Resim URL'sini yapıştırın",
+    "title": "Profil Resmi",
+    "url-hint": "Geçerli bir resim URL'si girin (https://...)"
+  },
   "book": {
     "add-to-shelf": "Rafa Ekle",
     "added-to-library": "Kitap rafa eklendi!",

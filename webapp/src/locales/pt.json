@@ -11,6 +11,16 @@
   "affiliate-disclosure": "O LivroLog participa do Programa de Associados da Amazon e recebe comissões pelas compras qualificadas efetuadas.",
   "already-in-library": "Já estavam na biblioteca",
   "amazon-link-not-found": "Amazon link não encontrado",
+  "avatar": {
+    "choose": "Escolha um avatar",
+    "current": "Avatar atual",
+    "custom-url": "Usar URL de imagem personalizada",
+    "default": "Padrão (sem avatar)",
+    "invalid-image": "Não foi possível carregar a imagem",
+    "paste-url": "Cole a URL da imagem",
+    "title": "Foto de Perfil",
+    "url-hint": "Digite uma URL de imagem válida (https://...)"
+  },
   "book": {
     "add-to-shelf": "Adicionar à Estante",
     "added-to-library": "Livro adicionado à estante!",

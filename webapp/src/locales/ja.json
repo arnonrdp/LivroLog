@@ -11,6 +11,16 @@
   "affiliate-disclosure": "LivroLogはAmazonアソシエイトプログラムに参加しており、対象となる購入から収益を得ています。",
   "already-in-library": "すでに図書館にあります",
   "amazon-link-not-found": "Amazonリンクが見つかりません",
+  "avatar": {
+    "choose": "アバターを選択",
+    "current": "現在のアバター",
+    "custom-url": "カスタム画像URLを使用",
+    "default": "デフォルト（アバターなし）",
+    "invalid-image": "画像を読み込めませんでした",
+    "paste-url": "画像URLを貼り付け",
+    "title": "プロフィール画像",
+    "url-hint": "有効な画像URLを入力してください（https://...）"
+  },
   "book": {
     "add-to-shelf": "棚に追加",
     "added-to-library": "本棚に本が追加されました！",

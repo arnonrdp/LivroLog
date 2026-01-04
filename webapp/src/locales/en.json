@@ -11,6 +11,16 @@
   "affiliate-disclosure": "LivroLog is a participant in the Amazon Associates Program and earns commissions from qualifying purchases.",
   "already-in-library": "Already in library",
   "amazon-link-not-found": "Amazon link not found",
+  "avatar": {
+    "choose": "Choose an avatar",
+    "current": "Current avatar",
+    "custom-url": "Use custom image URL",
+    "default": "Default (no avatar)",
+    "invalid-image": "Could not load image",
+    "paste-url": "Paste image URL",
+    "title": "Profile Picture",
+    "url-hint": "Enter a valid image URL (https://...)"
+  },
   "book": {
     "add-to-shelf": "Add to Shelf",
     "added-to-library": "Book added to shelf!",
