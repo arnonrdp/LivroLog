@@ -40,6 +40,25 @@ class UserStatsTest extends TestCase
     }
 
     /**
+     * Test user with private profile can view their own stats.
+     */
+    public function test_user_with_private_profile_can_view_own_stats(): void
+    {
+        $user = User::factory()->create(['is_private' => true]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson("/users/{$user->username}/stats");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'by_status',
+                'by_month',
+                'by_category',
+            ]);
+    }
+
+    /**
      * Test user can view stats of public profile.
      */
     public function test_user_can_view_public_profile_stats(): void

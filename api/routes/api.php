@@ -64,14 +64,13 @@ Route::get('/image-proxy/stats', [ImageProxyController::class, 'stats']);
 // User shelf images for social sharing (public)
 Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
-// User reading statistics (public, respects profile privacy)
-Route::get('/users/{username}/stats', [UserController::class, 'stats']);
-
-// User activities feed (public, respects profile privacy)
-Route::get('/users/{identifier}/activities', [FeedController::class, 'userActivities']);
-
-// Public user profiles
-Route::get('/users/{identifier}', [UserController::class, 'show']);
+// Public user routes with optional authentication
+// These routes are public but need user context to check profile ownership/following status
+Route::middleware('auth.optional')->group(function () {
+    Route::get('/users/{username}/stats', [UserController::class, 'stats']);
+    Route::get('/users/{identifier}/activities', [FeedController::class, 'userActivities']);
+    Route::get('/users/{identifier}', [UserController::class, 'show']);
+});
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
