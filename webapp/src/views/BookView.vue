@@ -326,7 +326,8 @@ function isAllowedImageHost(url: string): { isGoogle: boolean; isAmazon: boolean
     const hostname = parsed.hostname.toLowerCase()
     return {
       isGoogle: hostname === 'books.google.com' || hostname.endsWith('.books.google.com'),
-      isAmazon: hostname === 'amazon.com' || hostname.endsWith('.amazon.com') || hostname === 'media-amazon.com' || hostname.endsWith('.media-amazon.com')
+      isAmazon:
+        hostname === 'amazon.com' || hostname.endsWith('.amazon.com') || hostname === 'media-amazon.com' || hostname.endsWith('.media-amazon.com')
     }
   } catch {
     return { isGoogle: false, isAmazon: false }

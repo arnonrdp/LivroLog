@@ -53,7 +53,7 @@
 
     <!-- Results Grid -->
     <div v-else class="results-grid">
-      <div v-for="(book, idx) in books" :key="book.id||idx" class="book-card" @click="navigateToBook(book)">
+      <div v-for="(book, idx) in books" :key="book.id || idx" class="book-card" @click="navigateToBook(book)">
         <div class="book-cover">
           <q-img :alt="book.title" fit="cover" :ratio="2 / 3" :src="book.thumbnail || '/no_cover.jpg'">
             <template v-slot:error>

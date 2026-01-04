@@ -97,9 +97,7 @@ describe('ReadingStats', () => {
       {
         main_category: 'Non-Fiction',
         total: 10,
-        subcategories: [
-          { name: 'Biography', count: 10 }
-        ]
+        subcategories: [{ name: 'Biography', count: 10 }]
       }
     ]
   }
