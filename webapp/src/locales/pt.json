@@ -15,6 +15,7 @@
   "book-removed-from-library": "Livro removido da biblioteca com sucesso!",
   "book-updated": "Livro atualizado com sucesso!",
   "bookcase-model": "modelo de estante",
+  "bookshelf": "Estante",
   "books": "Livro | Livros",
   "books-description": "Adicione as datas em que terminou de ler os livros e organize sua estante por data de leitura",
   "bookshelf-add-few": "Comece adicionando alguns.",
@@ -342,6 +343,31 @@
   "reading-statuses": {
     "want_to_read": "Quero Ler",
     "reading": "Lendo",
-    "read": "Lido"
+    "read": "Lido",
+    "abandoned": "Abandonado",
+    "on_hold": "Em Espera",
+    "re_reading": "Relendo"
+  },
+
+  "reading-stats": "Estatísticas de Leitura",
+  "books-per-month": "Livros por Mês",
+  "books-per-year": "Livros por Ano",
+  "month": "Mês",
+  "year": "Ano",
+  "top-categories": "Categorias Mais Lidas",
+
+  "months": {
+    "jan": "Jan",
+    "feb": "Fev",
+    "mar": "Mar",
+    "apr": "Abr",
+    "may": "Mai",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Ago",
+    "sep": "Set",
+    "oct": "Out",
+    "nov": "Nov",
+    "dec": "Dez"
   }
 }

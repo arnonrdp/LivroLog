@@ -36,23 +36,19 @@
         <div class="flex items-center">
           <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
           <q-space />
-          <q-btn-toggle
-            v-model="activeTab"
-            class="q-mr-sm"
-            :options="tabOptions"
-            rounded
-            toggle-color="primary"
-            unelevated
-          />
+          <q-tabs v-model="activeTab" class="q-mr-sm" dense inline-label narrow-indicator>
+            <q-tab :aria-label="$t('bookshelf')" icon="auto_stories" name="shelf" />
+            <q-tab :aria-label="$t('reading-stats')" icon="bar_chart" name="stats" />
+          </q-tabs>
           <ShelfDialog v-if="activeTab === 'shelf'" v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
         </div>
 
         <q-tab-panels v-model="activeTab" animated class="bg-transparent">
-          <q-tab-panel name="shelf" class="q-pa-none">
+          <q-tab-panel class="q-pa-none" name="shelf">
             <TheShelf :books="filteredBooks" data-testid="profile-books" :user-identifier="person.username" />
           </q-tab-panel>
 
-          <q-tab-panel name="stats" class="q-pa-none">
+          <q-tab-panel class="q-pa-none" name="stats">
             <ReadingStats v-if="person.username" :username="person.username" />
           </q-tab-panel>
         </q-tab-panels>
@@ -104,11 +100,6 @@ const ascDesc = ref('desc')
 const filter = ref('')
 const showUnfollowDialog = ref(false)
 const sortKey = ref<string | number>('readIn')
-
-const tabOptions = computed(() => [
-  { value: 'shelf', icon: 'auto_stories', attrs: { 'aria-label': t('bookshelf') } },
-  { value: 'stats', icon: 'bar_chart', attrs: { 'aria-label': t('reading-stats') } }
-])
 
 const person = computed(() => {
   const username = route.params.username as string

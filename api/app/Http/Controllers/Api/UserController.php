@@ -211,24 +211,14 @@ class UserController extends Controller
             ? User::withCount(['followers', 'following'])->findOrFail($identifier)
             : User::withCount(['followers', 'following'])->where('username', $identifier)->firstOrFail();
 
-        // Check if profile is private and user is not the owner or following
-        $isOwner = $currentUser && $currentUser->id === $user->id;
-        // Only consider as following if the follow status is 'accepted'
-        $isFollowing = false;
-        if ($currentUser) {
-            $isFollowing = $currentUser->followingRelationships()
-                ->where('followed_id', $user->id)
-                ->where('status', 'accepted')
-                ->exists();
+        $access = $this->getProfileAccessInfo($currentUser, $user);
 
-        }
-
-        // Load books only if profile is public, user is owner, or user is following
-        if (! $user->is_private || $isOwner || $isFollowing) {
-            $user->load(['books' => function ($query) use ($isOwner) {
+        // Load books only if user has access to the profile
+        if ($access['hasAccess']) {
+            $user->load(['books' => function ($query) use ($access) {
                 $query->orderBy('pivot_added_at', 'desc')->withPivot('is_private', 'reading_status');
                 // Only show private books to the owner
-                if (! $isOwner) {
+                if (! $access['isOwner']) {
                     $query->wherePivot('is_private', false);
                 }
             }]);
@@ -239,7 +229,7 @@ class UserController extends Controller
 
         // Add follow status and request status if user is authenticated
         if ($currentUser && $currentUser->id !== $user->id) {
-            $userData['is_following'] = $isFollowing;
+            $userData['is_following'] = $access['isFollowing'];
 
             $hasPendingRequest = $currentUser->followingRelationships()
                 ->where('followed_id', $user->id)
@@ -361,6 +351,208 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    /**
+     * Get reading statistics for a user
+     *
+     * @OA\Get(
+     *     path="/users/{username}/stats",
+     *     operationId="getUserStats",
+     *     tags={"Users"},
+     *     summary="Get user reading statistics",
+     *     description="Returns reading statistics for a user (by status, by month, by category)",
+     *
+     *     @OA\Parameter(
+     *         name="username",
+     *         in="path",
+     *         description="Username",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="john_doe")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Reading statistics",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="by_status", type="object",
+     *                 @OA\Property(property="want_to_read", type="integer"),
+     *                 @OA\Property(property="reading", type="integer"),
+     *                 @OA\Property(property="read", type="integer"),
+     *                 @OA\Property(property="abandoned", type="integer"),
+     *                 @OA\Property(property="on_hold", type="integer"),
+     *                 @OA\Property(property="re_reading", type="integer")
+     *             ),
+     *             @OA\Property(property="by_month", type="array",
+     *
+     *                 @OA\Items(
+     *
+     *                     @OA\Property(property="year", type="integer"),
+     *                     @OA\Property(property="month", type="integer"),
+     *                     @OA\Property(property="count", type="integer")
+     *                 )
+     *             ),
+     *             @OA\Property(property="by_category", type="array",
+     *
+     *                 @OA\Items(
+     *
+     *                     @OA\Property(property="category", type="string"),
+     *                     @OA\Property(property="count", type="integer")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=403, description="Profile is private and user is not following"),
+     *     @OA\Response(response=404, description="User not found")
+     * )
+     */
+    public function stats(Request $request, string $username)
+    {
+        $currentUser = $request->user();
+        $user = User::where('username', $username)->firstOrFail();
+
+        $access = $this->getProfileAccessInfo($currentUser, $user);
+
+        if (! $access['hasAccess']) {
+            return response()->json(['message' => 'This profile is private'], 403);
+        }
+
+        // Build base query for user's books (respecting privacy)
+        $baseQuery = DB::table('users_books')
+            ->join('books', 'users_books.book_id', '=', 'books.id')
+            ->where('users_books.user_id', $user->id);
+
+        // Only include private books if viewing own profile
+        if (! $access['isOwner']) {
+            $baseQuery->where('users_books.is_private', false);
+        }
+
+        // 1. Count by reading status
+        $byStatus = (clone $baseQuery)
+            ->select('users_books.reading_status', DB::raw('COUNT(*) as count'))
+            ->groupBy('users_books.reading_status')
+            ->pluck('count', 'reading_status')
+            ->toArray();
+
+        // Ensure all statuses are present
+        $allStatuses = ['want_to_read', 'reading', 'read', 'abandoned', 'on_hold', 're_reading'];
+        $byStatusComplete = [];
+        foreach ($allStatuses as $status) {
+            $byStatusComplete[$status] = $byStatus[$status] ?? 0;
+        }
+
+        // 2. Count by month (all books with read_at date)
+        // Use database-agnostic date extraction (SQLite uses strftime, MySQL uses YEAR/MONTH)
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'sqlite') {
+            $yearExpr = "CAST(strftime('%Y', users_books.read_at) AS INTEGER)";
+            $monthExpr = "CAST(strftime('%m', users_books.read_at) AS INTEGER)";
+        } else {
+            $yearExpr = 'YEAR(users_books.read_at)';
+            $monthExpr = 'MONTH(users_books.read_at)';
+        }
+
+        $byMonth = (clone $baseQuery)
+            ->whereNotNull('users_books.read_at')
+            ->select(
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy(DB::raw($yearExpr), DB::raw($monthExpr))
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->map(fn ($row) => [
+                'year' => (int) $row->year,
+                'month' => (int) $row->month,
+                'count' => (int) $row->count,
+            ])
+            ->toArray();
+
+        // 3. Count by category (grouped by main category with subcategories)
+        // Count UNIQUE BOOKS per main category, not sum of subcategory occurrences
+        $booksWithCategories = (clone $baseQuery)
+            ->whereNotNull('books.categories')
+            ->select('books.id', 'books.categories')
+            ->get();
+
+        // Track unique books per main category and subcategory counts
+        $mainCategoryBooks = []; // main_category => Set of book IDs
+        $subcategoryCounts = []; // main_category => [subcategory => count]
+
+        foreach ($booksWithCategories as $book) {
+            $categories = json_decode($book->categories, true);
+            if (! is_array($categories)) {
+                continue;
+            }
+
+            // Track which main categories this book belongs to (to avoid double counting)
+            $bookMainCategories = [];
+
+            foreach ($categories as $category) {
+                $category = trim($category);
+                if (! $category) {
+                    continue;
+                }
+
+                $parts = explode(' / ', $category);
+                $mainCategory = $parts[0];
+                $subcategory = count($parts) > 1 ? implode(' / ', array_slice($parts, 1)) : 'General';
+
+                // Count each book only once per main category
+                if (! in_array($mainCategory, $bookMainCategories)) {
+                    $bookMainCategories[] = $mainCategory;
+                    if (! isset($mainCategoryBooks[$mainCategory])) {
+                        $mainCategoryBooks[$mainCategory] = [];
+                    }
+                    $mainCategoryBooks[$mainCategory][] = $book->id;
+                }
+
+                // Count subcategories (these can be counted multiple times)
+                if (! isset($subcategoryCounts[$mainCategory])) {
+                    $subcategoryCounts[$mainCategory] = [];
+                }
+                $subcategoryCounts[$mainCategory][$subcategory] = ($subcategoryCounts[$mainCategory][$subcategory] ?? 0) + 1;
+            }
+        }
+
+        // Build grouped categories with correct totals
+        $groupedCategories = [];
+        foreach ($mainCategoryBooks as $mainCategory => $bookIds) {
+            $uniqueBookCount = count(array_unique($bookIds));
+
+            $subcategories = [];
+            if (isset($subcategoryCounts[$mainCategory])) {
+                foreach ($subcategoryCounts[$mainCategory] as $subName => $count) {
+                    $subcategories[] = ['name' => $subName, 'count' => $count];
+                }
+                // Sort subcategories by count descending
+                usort($subcategories, fn ($a, $b) => $b['count'] - $a['count']);
+            }
+
+            $groupedCategories[] = [
+                'main_category' => $mainCategory,
+                'total' => $uniqueBookCount,
+                'subcategories' => $subcategories,
+            ];
+        }
+
+        // Sort main categories by total descending
+        usort($groupedCategories, fn ($a, $b) => $b['total'] - $a['total']);
+
+        // Take top 10 main categories
+        $byCategory = array_slice($groupedCategories, 0, 10);
+
+        return response()->json([
+            'by_status' => $byStatusComplete,
+            'by_month' => $byMonth,
+            'by_category' => $byCategory,
+        ]);
     }
 
     /**
@@ -863,8 +1055,31 @@ class UserController extends Controller
     }
 
     /**
-     * Get font path - fallback to default if custom font not available
+     * Check if current user has access to a profile.
+     *
+     * @return array{isOwner: bool, isFollowing: bool, hasAccess: bool}
      */
+    private function getProfileAccessInfo(?User $currentUser, User $targetUser): array
+    {
+        $isOwner = $currentUser && $currentUser->id === $targetUser->id;
+
+        $isFollowing = false;
+        if ($currentUser && ! $isOwner) {
+            $isFollowing = $currentUser->followingRelationships()
+                ->where('followed_id', $targetUser->id)
+                ->where('status', 'accepted')
+                ->exists();
+        }
+
+        $hasAccess = ! $targetUser->is_private || $isOwner || $isFollowing;
+
+        return [
+            'isOwner' => $isOwner,
+            'isFollowing' => $isFollowing,
+            'hasAccess' => $hasAccess,
+        ];
+    }
+
     private function getFontPath()
     {
         // Prefer Roboto (to match frontend), then Arial fallback
