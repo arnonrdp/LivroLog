@@ -180,6 +180,9 @@ class AuthController extends Controller
             'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
         ]);
 
+        // Send email verification notification
+        $user->sendEmailVerificationNotification();
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         $user = $user
