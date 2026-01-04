@@ -362,7 +362,7 @@ const categoryChartOption = computed(() => {
         if (!catData) return ''
 
         const total = catData.total
-        const bookLabel = total === 1 ? t('books', 1) : t('books', 2)
+        const bookLabel = t('books', total)
         let html = `<strong>${catData.main_category}</strong> (${total} ${bookLabel})<br/>`
 
         catData.subcategories.forEach((sub) => {
