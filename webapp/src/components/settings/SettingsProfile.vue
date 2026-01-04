@@ -1,8 +1,13 @@
 <template>
   <q-form class="q-gutter-md q-mb-md" @submit.prevent="updateProfile">
-    <q-input v-model="displayName" :label="$t('shelfname')">
+    <q-input v-model="displayName" :label="$t('name')">
       <template v-slot:prepend>
         <q-icon name="badge" />
+      </template>
+    </q-input>
+    <q-input v-model="shelfName" :label="$t('shelfname')">
+      <template v-slot:prepend>
+        <q-icon name="shelves" />
       </template>
     </q-input>
     <q-input v-model="username" debounce="500" :label="$t('username')" :prefix="hostname" :rules="[(val) => usernameValidator(val)]">
@@ -41,6 +46,7 @@ const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const displayName = ref(userStore.me.display_name)
+const shelfName = ref(userStore.me.shelf_name || '')
 const username = ref(userStore.me.username)
 const isPrivate = ref(userStore.me.is_private || false)
 const hostname = window.location.hostname + '/'
@@ -58,6 +64,7 @@ function usernameValidator(username: User['username']) {
 async function updateProfile() {
   await authStore.putMe({
     display_name: displayName.value,
+    shelf_name: shelfName.value || undefined,
     username: username.value.trim().toLowerCase(),
     is_private: isPrivate.value
   })
