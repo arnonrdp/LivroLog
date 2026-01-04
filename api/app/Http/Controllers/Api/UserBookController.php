@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserBookSimplifiedResource;
+use App\Models\Activity;
 use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
@@ -312,9 +313,35 @@ class UserBookController extends Controller
             }
         }
 
+        // Get current pivot data for activity creation
+        $currentPivot = $user->books()->where('books.id', $book->id)->first()?->pivot;
+        $currentStatus = $currentPivot?->reading_status;
+        $isPrivate = $currentPivot?->is_private ?? false;
+
         // Update the pivot table with provided data
         if (! empty($updateData)) {
             $user->books()->updateExistingPivot($book->id, $updateData);
+
+            // Create activity for reading status changes (if not private)
+            if (! $isPrivate && $request->has('reading_status') && $currentStatus !== $updateData['reading_status']) {
+                $newStatus = $updateData['reading_status'];
+                $activityType = null;
+
+                if ($newStatus === 'reading') {
+                    $activityType = 'book_started';
+                } elseif ($newStatus === 'read') {
+                    $activityType = 'book_read';
+                }
+
+                if ($activityType) {
+                    Activity::create([
+                        'user_id' => $user->id,
+                        'type' => $activityType,
+                        'subject_type' => 'Book',
+                        'subject_id' => $book->id,
+                    ]);
+                }
+            }
         }
 
         return response()->json($responseData);
@@ -653,6 +680,16 @@ class UserBookController extends Controller
 
         $user->books()->attach($book->id, $attachData);
 
+        // Create activity for book added (if not private)
+        if (! $isPrivate) {
+            Activity::create([
+                'user_id' => $user->id,
+                'type' => 'book_added',
+                'subject_type' => 'Book',
+                'subject_id' => $book->id,
+            ]);
+        }
+
         // Reload book with pivot data
         $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
 
@@ -715,6 +752,16 @@ class UserBookController extends Controller
         }
 
         $user->books()->attach($book->id, $attachData);
+
+        // Create activity for book added (if not private)
+        if (! $isPrivate) {
+            Activity::create([
+                'user_id' => $user->id,
+                'type' => 'book_added',
+                'subject_type' => 'Book',
+                'subject_id' => $book->id,
+            ]);
+        }
 
         // If we have minimal data, try to enrich asynchronously
         if ($book->info_quality === 'basic') {
@@ -913,6 +960,16 @@ class UserBookController extends Controller
         }
 
         $user->books()->attach($book->id, $attachData);
+
+        // Create activity for book added (if not private)
+        if (! $isPrivate) {
+            Activity::create([
+                'user_id' => $user->id,
+                'type' => 'book_added',
+                'subject_type' => 'Book',
+                'subject_id' => $book->id,
+            ]);
+        }
 
         // Reload book with pivot data
         $bookWithPivot = $user->books()->where('books.id', $book->id)->first();

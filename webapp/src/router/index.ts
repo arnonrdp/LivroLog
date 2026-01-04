@@ -28,6 +28,12 @@ const routes: Array<RouteRecordRaw> = [
 
   // Authenticated routes
   {
+    path: '/feed',
+    name: 'feed',
+    component: () => import('@/views/FeedView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/home',
     name: 'home',
     component: () => import('@/views/HomeView.vue'),

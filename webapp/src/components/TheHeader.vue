@@ -50,6 +50,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const tabs = [
+  { name: 'feed', icon: 'rss_feed', to: '/feed' },
   { name: 'home', icon: 'img:/books.svg', to: '/home' },
   { name: 'add', icon: 'search', to: '/add' },
   { name: 'people', icon: 'people', to: '/people' },
@@ -60,7 +61,7 @@ const peopleTo = computed(() => {
   const path = route.path || '/'
   if (path.startsWith('/people')) return '/people'
   const segments = path.split('/').filter(Boolean)
-  const reserved = new Set(['home', 'add', 'people', 'settings', 'search', 'books'])
+  const reserved = new Set(['home', 'add', 'people', 'settings', 'search', 'books', 'feed'])
   if (segments.length === 1 && segments[0] && !reserved.has(segments[0])) return path
   return '/people'
 })

@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Follow;
+use App\Models\Review;
+use App\Models\UserBook;
+use App\Observers\FollowObserver;
+use App\Observers\ReviewObserver;
+use App\Observers\UserBookObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
@@ -37,5 +43,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\BookCreated::class,
             \App\Listeners\EnrichBookWithAmazon::class,
         );
+
+        // Register observers for activity feed
+        UserBook::observe(UserBookObserver::class);
+        Review::observe(ReviewObserver::class);
+        Follow::observe(FollowObserver::class);
     }
 }

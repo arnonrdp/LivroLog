@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\GoodReadsImportController;
 use App\Http\Controllers\Api\HealthController;
@@ -65,6 +66,9 @@ Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
 // User reading statistics (public, respects profile privacy)
 Route::get('/users/{username}/stats', [UserController::class, 'stats']);
+
+// User activities feed (public, respects profile privacy)
+Route::get('/users/{identifier}/activities', [FeedController::class, 'userActivities']);
 
 // Public user profiles
 Route::get('/users/{identifier}', [UserController::class, 'show']);
@@ -136,4 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
     Route::post('/reviews/{review}/helpful', [ReviewController::class, 'markAsHelpful']);
+
+    // Feed (activity feed)
+    Route::get('/feeds', [FeedController::class, 'index']);
 });

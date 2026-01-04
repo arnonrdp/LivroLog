@@ -587,6 +587,16 @@ class BookEnrichmentService
                 }
 
                 $book->users()->attach($userId, $attachData);
+
+                // Create activity for book added (if not private)
+                if (! $isPrivate) {
+                    \App\Models\Activity::create([
+                        'user_id' => $userId,
+                        'type' => 'book_added',
+                        'subject_type' => 'Book',
+                        'subject_id' => $book->id,
+                    ]);
+                }
             }
 
             return [
