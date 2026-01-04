@@ -123,6 +123,23 @@ class Book extends Model
     }
 
     /**
+     * Retrieve the model for a bound value.
+     *
+     * Allows route model binding to work with both internal book IDs (B-XXXX-XXXX)
+     * and Google Books IDs for better API flexibility.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where('id', $value)
+            ->orWhere('google_id', $value)
+            ->first();
+    }
+
+    /**
      * The authors that belong to the book.
      */
     public function authors()

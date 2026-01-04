@@ -15,6 +15,7 @@
   "book-removed-from-library": "Book removed from library successfully!",
   "book-updated": "Book updated successfully!",
   "bookcase-model": "Bookcase model",
+  "bookshelf": "Bookshelf",
   "books": "Book | Books",
   "books-description": "Add the dates you finished reading the books and organize your bookshelf by reading date",
   "bookshelf-add-few": "Start by adding a few.",
@@ -342,6 +343,31 @@
   "reading-statuses": {
     "want_to_read": "Want to Read",
     "reading": "Reading",
-    "read": "Read"
+    "read": "Read",
+    "abandoned": "Abandoned",
+    "on_hold": "On Hold",
+    "re_reading": "Re-reading"
+  },
+
+  "reading-stats": "Reading Statistics",
+  "books-per-month": "Books per Month",
+  "books-per-year": "Books per Year",
+  "month": "Month",
+  "year": "Year",
+  "top-categories": "Top Categories",
+
+  "months": {
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec"
   }
 }

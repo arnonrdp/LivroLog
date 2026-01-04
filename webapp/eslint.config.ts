@@ -22,7 +22,15 @@ export default tseslint.config(
         window: 'readonly',
         navigator: 'readonly',
         File: 'readonly',
-        FormData: 'readonly'
+        FormData: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        addEventListener: 'readonly',
+        removeEventListener: 'readonly'
       }
     },
     rules: {
@@ -55,6 +63,6 @@ export default tseslint.config(
     }
   },
   {
-    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/node_modules/**']
+    ignores: ['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/node_modules/**', '**/playwright-report/**']
   }
 )

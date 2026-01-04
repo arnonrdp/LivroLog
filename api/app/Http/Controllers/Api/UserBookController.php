@@ -423,11 +423,11 @@ class UserBookController extends Controller
         $newBookId = $request->input('new_book_id');
 
         // If no new_book_id, try to find/create by ASIN or create from Amazon data
-        if (!$newBookId) {
+        if (! $newBookId) {
             $amazonAsin = $request->input('amazon_asin');
             $title = $request->input('title');
 
-            if (!$amazonAsin && !$title) {
+            if (! $amazonAsin && ! $title) {
                 return response()->json([
                     'message' => 'Either new_book_id or amazon_asin/title is required',
                 ], 422);
@@ -442,7 +442,7 @@ class UserBookController extends Controller
             }
 
             // If still no book found, create from Amazon data
-            if (!$newBookId && $title) {
+            if (! $newBookId && $title) {
                 $newBook = Book::create([
                     'amazon_asin' => $amazonAsin,
                     'title' => $title,

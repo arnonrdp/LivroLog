@@ -127,7 +127,14 @@ const showUnfollowDialog = ref(false)
 const followersDialogTab = ref<'followers' | 'following'>('followers')
 
 const user = computed(() => {
-  if (router.currentRoute.value.path === '/') {
+  const path = router.currentRoute.value.path
+  // Always use userStore.me on home page
+  if (path === '/' || path === '/home') {
+    return userStore.me
+  }
+  // When viewing a profile, check if it's the logged-in user's own profile
+  const username = router.currentRoute.value.params.username as string | undefined
+  if (username?.toLowerCase() === userStore.me?.username?.toLowerCase()) {
     return userStore.me
   }
   return userStore.user
@@ -136,7 +143,16 @@ const user = computed(() => {
 const sortKeyComputed = computed(() => props.sortKey)
 const ascDescComputed = computed(() => props.ascDesc)
 const isAbleToFollow = computed(() => {
-  return router.currentRoute.value.path !== '/' && authStore.isAuthenticated && userStore.user.id !== userStore.me.id
+  const path = router.currentRoute.value.path
+  if (path === '/' || path === '/home') {
+    return false
+  }
+  // Check if viewing own profile by username
+  const username = router.currentRoute.value.params.username as string | undefined
+  if (username?.toLowerCase() === userStore.me?.username?.toLowerCase()) {
+    return false
+  }
+  return authStore.isAuthenticated && userStore.user.id !== userStore.me.id
 })
 const isFollowingPerson = computed(() => {
   if (!userStore.user?.id) return false

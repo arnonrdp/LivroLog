@@ -63,6 +63,9 @@ Route::get('/image-proxy/stats', [ImageProxyController::class, 'stats']);
 // User shelf images for social sharing (public)
 Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
+// User reading statistics (public, respects profile privacy)
+Route::get('/users/{username}/stats', [UserController::class, 'stats']);
+
 // Public user profiles
 Route::get('/users/{identifier}', [UserController::class, 'show']);
 

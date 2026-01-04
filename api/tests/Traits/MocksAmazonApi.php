@@ -192,7 +192,7 @@ trait MocksAmazonApi
                 'categories' => ['Fiction'],
                 'maturity_rating' => null,
                 'preview_link' => null,
-                'info_link' => "https://www.amazon.com/dp/B".strtoupper(substr(md5((string) $i), 0, 9)),
+                'info_link' => 'https://www.amazon.com/dp/B'.strtoupper(substr(md5((string) $i), 0, 9)),
             ], $baseAttributes);
         }
 
