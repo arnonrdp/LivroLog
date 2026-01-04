@@ -27,7 +27,7 @@ class FeedController extends Controller
             ->push($user->id);
 
         $activities = Activity::whereIn('user_id', $userIds)
-            ->with('user')
+            ->with(['user', 'subject', 'subject.book'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
@@ -82,7 +82,7 @@ class FeedController extends Controller
         }
 
         $activities = Activity::where('user_id', $user->id)
-            ->with('user')
+            ->with(['user', 'subject', 'subject.book'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 

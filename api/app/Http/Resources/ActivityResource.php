@@ -32,54 +32,60 @@ class ActivityResource extends JsonResource
         ];
     }
 
+    /**
+     * Format the subject using eager-loaded relation to avoid N+1 queries.
+     */
     private function formatSubject(): ?array
     {
+        // Use eager-loaded subject relation when available
+        $subject = $this->relationLoaded('subject') ? $this->subject : null;
+
         if ($this->subject_type === 'Book') {
-            $book = Book::find($this->subject_id);
-            if (! $book) {
+            if (! $subject instanceof Book) {
                 return null;
             }
 
             return [
                 'type' => 'Book',
-                'id' => $book->id,
-                'title' => $book->title,
-                'authors' => $book->authors,
-                'thumbnail' => $book->thumbnail,
+                'id' => $subject->id,
+                'title' => $subject->title,
+                'authors' => $subject->authors,
+                'thumbnail' => $subject->thumbnail,
             ];
         }
 
         if ($this->subject_type === 'User') {
-            $user = User::find($this->subject_id);
-            if (! $user) {
+            if (! $subject instanceof User) {
                 return null;
             }
 
             return [
                 'type' => 'User',
-                'id' => $user->id,
-                'display_name' => $user->display_name,
-                'username' => $user->username,
-                'avatar' => $user->avatar,
+                'id' => $subject->id,
+                'display_name' => $subject->display_name,
+                'username' => $subject->username,
+                'avatar' => $subject->avatar,
             ];
         }
 
         if ($this->subject_type === 'Review') {
-            $review = Review::with('book')->find($this->subject_id);
-            if (! $review) {
+            if (! $subject instanceof Review) {
                 return null;
             }
 
+            // Use eager-loaded book relation on review
+            $book = $subject->relationLoaded('book') ? $subject->book : null;
+
             return [
                 'type' => 'Review',
-                'id' => $review->id,
-                'rating' => $review->rating,
-                'book' => [
-                    'id' => $review->book?->id,
-                    'title' => $review->book?->title,
-                    'authors' => $review->book?->authors,
-                    'thumbnail' => $review->book?->thumbnail,
-                ],
+                'id' => $subject->id,
+                'rating' => $subject->rating,
+                'book' => $book ? [
+                    'id' => $book->id,
+                    'title' => $book->title,
+                    'authors' => $book->authors,
+                    'thumbnail' => $book->thumbnail,
+                ] : null,
             ];
         }
 

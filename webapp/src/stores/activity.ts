@@ -1,27 +1,31 @@
 import { i18n } from '@/locales'
-import type { ActivityGroup, FeedResponse } from '@/models'
+import type { ActivityGroup, FeedMeta, FeedResponse } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
 
+const defaultMeta: FeedMeta = {
+  total: 0,
+  current_page: 1,
+  per_page: 20,
+  last_page: 1
+}
+
 export const useActivityStore = defineStore('activity', {
   state: () => ({
     _feed: [] as ActivityGroup[],
+    _feedMeta: { ...defaultMeta } as FeedMeta,
     _userActivities: {} as Record<string, ActivityGroup[]>,
-    _isLoading: false,
-    _meta: {
-      total: 0,
-      current_page: 1,
-      per_page: 20,
-      last_page: 1
-    }
+    _userMeta: {} as Record<string, FeedMeta>,
+    _isLoading: false
   }),
 
   getters: {
     feed: (state) => state._feed,
     isLoading: (state) => state._isLoading,
-    meta: (state) => state._meta,
-    getUserActivities: (state) => (userId: string) => state._userActivities[userId] || []
+    meta: (state) => state._feedMeta,
+    getUserActivities: (state) => (userId: string) => state._userActivities[userId] || [],
+    getUserMeta: (state) => (userId: string) => state._userMeta[userId] || { ...defaultMeta }
   },
 
   actions: {
@@ -39,7 +43,7 @@ export const useActivityStore = defineStore('activity', {
             this._feed = [...this._feed, ...data.grouped]
           }
 
-          this._meta = data.meta
+          this._feedMeta = data.meta
           return data
         })
         .catch((error) => {
@@ -68,7 +72,7 @@ export const useActivityStore = defineStore('activity', {
             this._userActivities[userId] = [...(this._userActivities[userId] || []), ...data.grouped]
           }
 
-          this._meta = data.meta
+          this._userMeta[userId] = data.meta
           return data
         })
         .catch((error) => {
@@ -88,19 +92,16 @@ export const useActivityStore = defineStore('activity', {
 
     clearFeed() {
       this._feed = []
-      this._meta = {
-        total: 0,
-        current_page: 1,
-        per_page: 20,
-        last_page: 1
-      }
+      this._feedMeta = { ...defaultMeta }
     },
 
     clearUserActivities(userId?: string) {
       if (userId) {
         delete this._userActivities[userId]
+        delete this._userMeta[userId]
       } else {
         this._userActivities = {}
+        this._userMeta = {}
       }
     }
   }

@@ -586,17 +586,8 @@ class BookEnrichmentService
                     $attachData['read_at'] = now()->format('Y-m-d');
                 }
 
+                // Note: Activity creation is handled by UserBookObserver
                 $book->users()->attach($userId, $attachData);
-
-                // Create activity for book added (if not private)
-                if (! $isPrivate) {
-                    \App\Models\Activity::create([
-                        'user_id' => $userId,
-                        'type' => 'book_added',
-                        'subject_type' => 'Book',
-                        'subject_id' => $book->id,
-                    ]);
-                }
             }
 
             return [

@@ -54,13 +54,15 @@ export interface ActivityGroup {
   activities: Activity[]
 }
 
+export interface FeedMeta {
+  total: number
+  current_page: number
+  per_page: number
+  last_page: number
+}
+
 export interface FeedResponse {
   data: Activity[]
   grouped: ActivityGroup[]
-  meta: {
-    total: number
-    current_page: number
-    per_page: number
-    last_page: number
-  }
+  meta: FeedMeta
 }

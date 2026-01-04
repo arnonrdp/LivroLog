@@ -20,7 +20,16 @@ class OptionalAuth
     {
         // Only attempt authentication if a Bearer token is present
         if ($request->bearerToken()) {
+            // Set the default guard to Sanctum and attempt authentication
             Auth::shouldUse('sanctum');
+
+            // Explicitly attempt to authenticate the user via Sanctum guard
+            // This populates $request->user() if the token is valid
+            try {
+                Auth::guard('sanctum')->user();
+            } catch (\Exception $e) {
+                // Silently ignore authentication failures for optional auth
+            }
         }
 
         return $next($request);
