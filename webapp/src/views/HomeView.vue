@@ -1,7 +1,7 @@
 <template>
   <q-page class="non-selectable" padding>
     <div class="flex items-center">
-      <h1 class="text-primary text-left q-my-none">{{ userStore.me.display_name }}</h1>
+      <h1 class="text-primary text-left q-my-none">{{ userStore.me.shelf_name || userStore.me.display_name }}</h1>
       <q-space />
       <FollowRequestsIndicator class="q-mr-md" />
       <q-btn class="q-mr-sm" dense flat icon="share" @click="showShareDialog = true">

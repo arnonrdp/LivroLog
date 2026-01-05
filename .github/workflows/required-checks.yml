@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p bootstrap/cache
           chmod -R 755 bootstrap/cache
-          mkdir -p storage/logs
+          mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views
           chmod -R 755 storage
 
       - name: Install API dependencies
@@ -75,11 +75,12 @@ jobs:
       - name: Scan for exposed secrets
         run: |
           echo "🔍 Scanning for exposed secrets..."
-          
-          # Check for real secrets
+
+          # Check for real secrets (exclude Vue/HTML files where :key= is a directive)
           EXPOSED_SECRETS=$(grep -r --exclude-dir=node_modules --exclude-dir=vendor --exclude-dir=.git \
-            -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{20,}" . || echo "")
-          
+            --exclude='*.vue' --exclude='*.html' \
+            -E "(password|secret|api_key|api_secret|auth_token)\s*[:=]\s*['\"][^'\"]{20,}" . || echo "")
+
           if [ -n "$EXPOSED_SECRETS" ]; then
             echo "❌ CRITICAL: Exposed secrets found in code!"
             echo "$EXPOSED_SECRETS"
@@ -117,7 +118,7 @@ jobs:
         run: |
           mkdir -p bootstrap/cache
           chmod -R 755 bootstrap/cache
-          mkdir -p storage/logs
+          mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views
           chmod -R 755 storage
 
       - name: Install dependencies

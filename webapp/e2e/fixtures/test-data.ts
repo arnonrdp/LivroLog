@@ -1,44 +1,31 @@
 // Test data factory for E2E tests
-// Each call generates unique data with timestamp
+// Uses faker for realistic data generation
 // Note: Username is auto-generated from displayName (lowercase, no spaces)
 // Backend has 20-char username limit, so displayName must be short
 
-const ts1 = String(Date.now()).slice(-8)
-const ts2 = String(Date.now() + 1).slice(-8)
-const ts3 = String(Date.now() + 2).slice(-8)
-
-export const testUsers = {
-  primary: {
-    displayName: `Usr${ts1}`,
-    email: `testuser.e2e.${Date.now()}@test.com`,
-    username: `usr${ts1}`,
-    password: 'TestPassword123!'
-  },
-  secondary: {
-    displayName: `Sec${ts2}`,
-    email: `secondary.e2e.${Date.now()}@test.com`,
-    username: `sec${ts2}`,
-    password: 'SecondPass123!'
-  },
-  privateUser: {
-    displayName: `Prv${ts3}`,
-    email: `private.e2e.${Date.now()}@test.com`,
-    username: `prv${ts3}`,
-    password: 'PrivatePass123!'
-  }
-}
+import { faker } from '@faker-js/faker'
 
 // Factory function to generate unique user data
 // Username is auto-generated from displayName, keep under 20 chars
 export function createTestUser(prefix: string = 'usr') {
+  const firstName = faker.person.firstName().slice(0, 8)
   const timestamp = Date.now()
-  const shortId = String(timestamp).slice(-8)
+  const shortId = String(timestamp).slice(-4)
+  const displayName = `${prefix}${firstName}${shortId}`.slice(0, 20)
+
   return {
-    displayName: `${prefix}${shortId}`,
-    email: `${prefix}.${timestamp}@test.com`,
-    username: `${prefix}${shortId}`.toLowerCase(),
+    displayName,
+    email: faker.internet.email({ firstName: prefix, lastName: String(timestamp) }),
+    username: displayName.toLowerCase(),
     password: 'TestPassword123!'
   }
+}
+
+// Pre-generated test users (regenerated on import)
+export const testUsers = {
+  primary: createTestUser('usr'),
+  secondary: createTestUser('sec'),
+  privateUser: createTestUser('prv')
 }
 
 export const testBooks = {
@@ -46,6 +33,16 @@ export const testBooks = {
   isbn: '9788525406958'
 }
 
+// Factory function to generate review data
+export function createTestReview() {
+  return {
+    title: faker.lorem.sentence({ min: 2, max: 5 }),
+    content: faker.lorem.paragraph({ min: 1, max: 3 }),
+    rating: faker.number.int({ min: 1, max: 5 })
+  }
+}
+
+// Pre-generated test review (for backwards compatibility)
 export const testReview = {
   title: 'Great Read',
   content: 'This is a fantastic book that I thoroughly enjoyed reading.',

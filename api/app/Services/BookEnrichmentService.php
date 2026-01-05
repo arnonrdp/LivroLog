@@ -586,6 +586,7 @@ class BookEnrichmentService
                     $attachData['read_at'] = now()->format('Y-m-d');
                 }
 
+                // Note: Activity creation is handled by UserBookObserver
                 $book->users()->attach($userId, $attachData);
             }
 

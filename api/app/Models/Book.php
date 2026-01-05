@@ -153,7 +153,8 @@ class Book extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'users_books')
-            ->withPivot('added_at', 'read_at')
+            ->using(UserBook::class)
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
             ->withTimestamps();
     }
 

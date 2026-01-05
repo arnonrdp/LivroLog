@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { LoginPage } from './pages/login.page'
 import { HomePage } from './pages/home.page'
 import { BookDialogPage } from './pages/book-dialog.page'
-import { createTestUser, testBooks } from './fixtures/test-data'
+import { createTestUser, testBooks, createTestReview } from './fixtures/test-data'
 
 test.describe('Reviews', () => {
   let loginPage: LoginPage
@@ -44,15 +44,17 @@ test.describe('Reviews', () => {
   })
 
   test('user can fill review form fields', async ({ page }) => {
+    const review = createTestReview()
+
     // Fill the title field
     const titleInput = page.locator('[data-testid="review-title-input"]')
-    await titleInput.fill('Test Review Title')
-    await expect(titleInput).toHaveValue('Test Review Title')
+    await titleInput.fill(review.title)
+    await expect(titleInput).toHaveValue(review.title)
 
     // Fill the content field
     const contentInput = page.locator('[data-testid="review-content-input"]')
-    await contentInput.fill('This is a test review content.')
-    await expect(contentInput).toHaveValue('This is a test review content.')
+    await contentInput.fill(review.content)
+    await expect(contentInput).toHaveValue(review.content)
   })
 
   test('submit button is visible and clickable', async ({ page }) => {

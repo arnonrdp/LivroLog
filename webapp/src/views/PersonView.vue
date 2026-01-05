@@ -37,8 +37,9 @@
           <h1 class="text-primary text-left q-my-none">{{ person.shelf_name || person.display_name }}</h1>
           <q-space />
           <q-tabs v-model="activeTab" class="q-mr-sm" dense inline-label narrow-indicator>
-            <q-tab :aria-label="$t('bookshelf')" icon="auto_stories" name="shelf" />
-            <q-tab :aria-label="$t('reading-stats')" icon="bar_chart" name="stats" />
+            <q-tab :aria-label="$t('bookshelf')" class="q-pa-none" icon="auto_stories" name="shelf" />
+            <q-tab :aria-label="$t('reading-stats')" class="q-pa-none" icon="bar_chart" name="stats" />
+            <q-tab :aria-label="$t('feed.title')" class="q-pa-none" icon="rss_feed" name="feed" />
           </q-tabs>
           <ShelfDialog v-if="activeTab === 'shelf'" v-model="filter" :asc-desc="ascDesc" :sort-key="sortKey" @sort="onSort" />
         </div>
@@ -50,6 +51,18 @@
 
           <q-tab-panel class="q-pa-none" name="stats">
             <ReadingStats v-if="person.username" :username="person.username" />
+          </q-tab-panel>
+
+          <q-tab-panel class="q-pa-none" name="feed">
+            <div v-if="activityStore.isLoading" class="text-center q-py-lg">
+              <q-spinner color="primary" size="40px" />
+            </div>
+            <div v-else-if="userActivities.length === 0" class="text-center q-py-xl text-grey">
+              {{ $t('feed.no-activities') }}
+            </div>
+            <div v-else>
+              <ActivityGroup v-for="group in userActivities" :key="`${group.user.id}-${group.type}-${group.date}`" :group="group" />
+            </div>
           </q-tab-panel>
         </q-tab-panels>
       </div>
@@ -75,10 +88,11 @@
 </template>
 
 <script setup lang="ts">
+import ActivityGroup from '@/components/feed/ActivityGroup.vue'
 import ShelfDialog from '@/components/home/ShelfDialog.vue'
 import TheShelf from '@/components/home/TheShelf.vue'
 import ReadingStats from '@/components/profile/ReadingStats.vue'
-import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
+import { useActivityStore, useAuthStore, useFollowStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -91,6 +105,7 @@ defineProps<{
 const route = useRoute()
 const { t } = useI18n()
 
+const activityStore = useActivityStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const followStore = useFollowStore()
@@ -126,6 +141,10 @@ const isPrivateAndNotAccessible = computed(() => {
   // 2. No books are loaded (meaning the current user doesn't have access)
   const books = person.value?.books
   return person.value?.is_private && (!Array.isArray(books) || books.length === 0)
+})
+
+const userActivities = computed(() => {
+  return person.value?.id ? activityStore.getUserActivities(person.value.id) : []
 })
 
 const canSendFollowRequest = computed(() => {
@@ -258,6 +277,13 @@ watch(
     }
   }
 )
+
+// Load activities when feed tab is selected
+watch(activeTab, (newTab) => {
+  if (newTab === 'feed' && person.value?.id) {
+    activityStore.fetchUserActivities(person.value.id)
+  }
+})
 
 onMounted(async () => {
   const username = route.params.username as string

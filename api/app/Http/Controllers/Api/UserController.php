@@ -99,6 +99,9 @@ class UserController extends Controller
             });
         }
 
+        // Order by books count descending (users with more books first)
+        $query->orderByDesc('books_count');
+
         $users = $this->applyPagination($query, $request);
 
         return new PaginatedUserResource($users);

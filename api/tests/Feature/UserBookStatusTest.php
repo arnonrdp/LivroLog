@@ -116,11 +116,8 @@ class UserBookStatusTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseHas('users_books', [
-            'user_id' => $user->id,
-            'book_id' => $book->id,
-            'read_at' => $readDate,
-        ]);
+        $pivot = $user->books()->where('book_id', $book->id)->first()->pivot;
+        $this->assertEquals($readDate, $pivot->read_at->format('Y-m-d'));
     }
 
     /**
@@ -176,13 +173,10 @@ class UserBookStatusTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseHas('users_books', [
-            'user_id' => $user->id,
-            'book_id' => $book->id,
-            'reading_status' => 'read',
-            'read_at' => '2024-06-01',
-            'is_private' => true,
-        ]);
+        $pivot = $user->books()->where('book_id', $book->id)->first()->pivot;
+        $this->assertEquals('read', $pivot->reading_status);
+        $this->assertEquals('2024-06-01', $pivot->read_at->format('Y-m-d'));
+        $this->assertTrue((bool) $pivot->is_private);
     }
 
     /**
@@ -285,10 +279,7 @@ class UserBookStatusTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseHas('users_books', [
-            'user_id' => $user->id,
-            'book_id' => $book->id,
-            'read_at' => '2025-12-22',
-        ]);
+        $pivot = $user->books()->where('book_id', $book->id)->first()->pivot;
+        $this->assertEquals('2025-12-22', $pivot->read_at->format('Y-m-d'));
     }
 }

@@ -313,6 +313,7 @@ class UserBookController extends Controller
         }
 
         // Update the pivot table with provided data
+        // Note: Activity creation is handled by UserBookObserver
         if (! empty($updateData)) {
             $user->books()->updateExistingPivot($book->id, $updateData);
         }
@@ -651,6 +652,7 @@ class UserBookController extends Controller
             $attachData['read_at'] = now()->format('Y-m-d');
         }
 
+        // Note: Activity creation is handled by UserBookObserver
         $user->books()->attach($book->id, $attachData);
 
         // Reload book with pivot data
@@ -714,6 +716,7 @@ class UserBookController extends Controller
             $attachData['read_at'] = now()->format('Y-m-d');
         }
 
+        // Note: Activity creation is handled by UserBookObserver
         $user->books()->attach($book->id, $attachData);
 
         // If we have minimal data, try to enrich asynchronously
@@ -912,6 +915,7 @@ class UserBookController extends Controller
             $attachData['read_at'] = now()->format('Y-m-d');
         }
 
+        // Note: Activity creation is handled by UserBookObserver
         $user->books()->attach($book->id, $attachData);
 
         // Reload book with pivot data

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\GoodReadsImportController;
 use App\Http\Controllers\Api\HealthController;
@@ -63,11 +64,13 @@ Route::get('/image-proxy/stats', [ImageProxyController::class, 'stats']);
 // User shelf images for social sharing (public)
 Route::get('/users/{id}/shelf-image', [UserController::class, 'shelfImage']);
 
-// User reading statistics (public, respects profile privacy)
-Route::get('/users/{username}/stats', [UserController::class, 'stats']);
-
-// Public user profiles
-Route::get('/users/{identifier}', [UserController::class, 'show']);
+// Public user routes with optional authentication
+// These routes are public but need user context to check profile ownership/following status
+Route::middleware('auth.optional')->group(function () {
+    Route::get('/users/{username}/stats', [UserController::class, 'stats']);
+    Route::get('/users/{identifier}/activities', [FeedController::class, 'userActivities']);
+    Route::get('/users/{identifier}', [UserController::class, 'show']);
+});
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
@@ -136,4 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
     Route::post('/reviews/{review}/helpful', [ReviewController::class, 'markAsHelpful']);
+
+    // Feed (activity feed)
+    Route::get('/feeds', [FeedController::class, 'index']);
 });

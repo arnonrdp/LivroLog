@@ -1,3 +1,4 @@
+export { useActivityStore } from './activity'
 export { useAuthStore } from './auth'
 export { useBookStore } from './book'
 export { useFollowStore } from './follow'

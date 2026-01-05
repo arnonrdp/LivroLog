@@ -226,9 +226,11 @@ const statusChartOption = computed(() => {
         type: 'radar',
         symbol: 'circle',
         symbolSize: 10,
+        tooltip: { show: false },
         data: [
           {
             value: values.map((v) => (v > 0 ? v : null)),
+            name: t('reading-stats'),
             itemStyle: {
               color: (params: { dataIndex: number }) => {
                 const status = STATUS_ORDER[params.dataIndex]

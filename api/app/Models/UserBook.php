@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * @OA\Schema(
@@ -21,9 +21,11 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
  */
-class UserBook extends Model
+class UserBook extends Pivot
 {
     protected $table = 'users_books';
+
+    public $incrementing = false;
 
     protected $fillable = [
         'user_id',
@@ -40,4 +42,20 @@ class UserBook extends Model
         'is_private' => 'boolean',
         'reading_status' => 'string',
     ];
+
+    /**
+     * Get the user that owns this book relationship.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the book in this relationship.
+     */
+    public function book()
+    {
+        return $this->belongsTo(Book::class);
+    }
 }

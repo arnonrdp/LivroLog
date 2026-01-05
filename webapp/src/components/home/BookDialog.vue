@@ -578,11 +578,11 @@ const visibilityOptions = computed(() => [
 
 const readingStatusOptions = computed(() => [
   { label: t('want-to-read'), value: 'want_to_read' },
+  { label: t('on-hold'), value: 'on_hold' },
   { label: t('reading'), value: 'reading' },
   { label: t('read'), value: 'read' },
-  { label: t('abandoned'), value: 'abandoned' },
-  { label: t('on-hold'), value: 'on_hold' },
-  { label: t('re-reading'), value: 're_reading' }
+  { label: t('re-reading'), value: 're_reading' },
+  { label: t('abandoned'), value: 'abandoned' }
 ])
 
 const displayLanguage = computed(() => {

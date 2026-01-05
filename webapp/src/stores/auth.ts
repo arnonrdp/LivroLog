@@ -85,7 +85,15 @@ export const useAuthStore = defineStore('auth', {
         .finally(() => (this._isLoading = false))
     },
 
-    async putMe(data: { display_name?: string; username?: string; email?: string; shelf_name?: string; locale?: string; is_private?: boolean }) {
+    async putMe(data: {
+      avatar?: string | null
+      display_name?: string
+      username?: string
+      email?: string
+      shelf_name?: string
+      locale?: string
+      is_private?: boolean
+    }) {
       this._isLoading = true
       return await api
         .put('/auth/me', data)
