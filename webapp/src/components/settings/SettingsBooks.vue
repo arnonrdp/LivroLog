@@ -1,46 +1,76 @@
 <template>
   <p>{{ $t('books-description') }}</p>
-  <p v-if="books?.length == 0">
-    {{ $t('bookshelf-empty') }}
-    <router-link to="/add">{{ $t('bookshelf-add-few') }}</router-link>
-  </p>
-  <table v-else class="q-mx-auto">
-    <thead>
-      <tr>
-        <th>{{ $t('column-title') }}</th>
-        <th>{{ $t('column-status') }}</th>
-        <th>{{ $t('column-readIn') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="book in books" :key="book.id">
-        <td class="text-left q-pr-md">{{ book.title }}</td>
-        <td class="q-pr-md">
-          <q-select v-model="readingStatuses[book.id]" dense emit-value map-options :options="readingStatusOptions" />
-        </td>
-        <td>
-          <q-input class="q-ml-xs" dense mask="####-##-##" :model-value="readDates[book.id]" readonly>
-            <template v-slot:append>
-              <q-icon class="cursor-pointer" name="event">
-                <q-popup-proxy ref="qDateProxy">
-                  <q-date v-model="readDates[book.id]" mask="YYYY-MM-DD" minimal />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+
+  <q-table
+    class="books-table"
+    :columns="columns"
+    :dense="$q.screen.lt.md"
+    flat
+    hide-bottom
+    hide-pagination
+    row-key="id"
+    :rows="books"
+    :rows-per-page-options="[0]"
+  >
+    <template v-slot:no-data>
+      <div class="full-width text-center q-py-lg">
+        {{ $t('bookshelf-empty') }}
+        <router-link to="/add">{{ $t('bookshelf-add-few') }}</router-link>
+      </div>
+    </template>
+
+    <template v-slot:body-cell-status="props">
+      <q-td :props="props">
+        <q-select
+          v-model="readingStatuses[props.row.id]"
+          borderless
+          dense
+          emit-value
+          :loading="isUpdating[props.row.id]"
+          map-options
+          :options="readingStatusOptions"
+        />
+      </q-td>
+    </template>
+
+    <template v-slot:body-cell-readDate="props">
+      <q-td :props="props">
+        <q-input
+          borderless
+          class="read-date-input"
+          dense
+          :loading="isUpdating[props.row.id]"
+          mask="####-##-##"
+          :model-value="readDates[props.row.id]"
+          readonly
+        >
+          <template v-slot:append>
+            <q-icon class="cursor-pointer" name="event">
+              <q-popup-proxy cover transition-hide="scale" transition-show="scale">
+                <q-date v-model="readDates[props.row.id]" mask="YYYY-MM-DD" minimal>
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup color="primary" flat :label="$t('close')" />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </q-td>
+    </template>
+  </q-table>
 </template>
 
 <script setup lang="ts">
-import type { ReadingStatus } from '@/models'
+import type { Book, ReadingStatus } from '@/models'
 import { useUserBookStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
+import type { QTableColumn } from 'quasar'
+import { useQuasar } from 'quasar'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+const $q = useQuasar()
 const { t } = useI18n()
 
 const userBookStore = useUserBookStore()
@@ -48,11 +78,31 @@ const userStore = useUserStore()
 
 document.title = `LivroLog | ${t('books')}`
 
-const readDates = ref<Record<string, string>>({})
-const originalDates = ref<Record<string, string>>({})
-const readingStatuses = ref<Record<string, ReadingStatus>>({})
-const originalStatuses = ref<Record<string, ReadingStatus>>({})
 const isUpdating = ref<Record<string, boolean>>({})
+const originalDates = ref<Record<string, string>>({})
+const originalStatuses = ref<Record<string, ReadingStatus>>({})
+const readDates = ref<Record<string, string>>({})
+const readingStatuses = ref<Record<string, ReadingStatus>>({})
+
+const columns = computed<QTableColumn<Book>[]>(() => [
+  { name: 'title', label: t('column-title'), field: 'title', align: 'left', sortable: true },
+  {
+    name: 'status',
+    label: t('column-status'),
+    field: (row: Book) => row.pivot?.reading_status,
+    align: 'left',
+    sortable: true,
+    style: 'width: 140px'
+  },
+  {
+    name: 'readDate',
+    label: t('column-readIn'),
+    field: (row: Book) => row.pivot?.read_at,
+    align: 'left',
+    sortable: true,
+    style: 'width: 160px; min-width: 160px'
+  }
+])
 
 const readingStatusOptions = computed(() => [
   { label: t('want-to-read'), value: 'want_to_read' },
@@ -68,6 +118,10 @@ const books = computed(() => {
   return sortBooks(filtered, 'read_at', 'desc')
 })
 
+onMounted(() => {
+  userBookStore.getUserBooks()
+})
+
 watch(
   () => userStore.me.books,
   () => {
@@ -76,7 +130,6 @@ watch(
     const statuses: Record<string, ReadingStatus> = {}
     const statusOriginals: Record<string, ReadingStatus> = {}
     books.value.forEach((book) => {
-      // Extract read_at and reading_status from pivot data returned by GET /user/books
       const readDate = book.pivot?.read_at || ''
       dates[book.id] = readDate
       dateOriginals[book.id] = readDate
@@ -93,23 +146,18 @@ watch(
   { immediate: true, deep: true }
 )
 
-onMounted(() => {
-  userBookStore.getUserBooks()
-})
-
 watch(
   readDates,
-  async (newDates) => {
+  (newDates) => {
     for (const bookId in newDates) {
       const newDate = newDates[bookId]
       const originalDate = originalDates.value[bookId] || ''
 
-      // Only update if date actually changed and we're not already updating this book
       if (newDate !== originalDate && !isUpdating.value[bookId]) {
         const dateOnly = newDate ? newDate.substring(0, 10) : ''
 
         isUpdating.value[bookId] = true
-        await userBookStore
+        userBookStore
           .patchUserBook(bookId, { read_at: dateOnly })
           .then(() => (originalDates.value[bookId] = dateOnly))
           .catch(() => (readDates.value[bookId] = originalDate))
@@ -122,15 +170,14 @@ watch(
 
 watch(
   readingStatuses,
-  async (newStatuses) => {
+  (newStatuses) => {
     for (const bookId in newStatuses) {
       const newStatus = newStatuses[bookId] || 'read'
       const originalStatus = originalStatuses.value[bookId] || 'read'
 
-      // Only update if status actually changed and we're not already updating this book
       if (newStatus !== originalStatus && !isUpdating.value[bookId]) {
         isUpdating.value[bookId] = true
-        await userBookStore
+        userBookStore
           .patchUserBook(bookId, { reading_status: newStatus })
           .then(() => (originalStatuses.value[bookId] = newStatus))
           .catch(() => (readingStatuses.value[bookId] = originalStatus))
@@ -141,3 +188,12 @@ watch(
   { deep: true }
 )
 </script>
+
+<style scoped lang="sass">
+.books-table
+  max-width: 800px
+  margin: 0 auto
+
+.read-date-input
+  min-width: 140px
+</style>
