@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ActivityResource;
 use App\Models\Activity;
 use App\Models\Follow;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,14 @@ class FeedController extends Controller
             ->push($user->id);
 
         $activities = Activity::whereIn('user_id', $userIds)
-            ->with(['user', 'subject', 'subject.book'])
+            ->with([
+                'user',
+                'subject' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        Review::class => ['book'],
+                    ]);
+                },
+            ])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
@@ -82,7 +90,14 @@ class FeedController extends Controller
         }
 
         $activities = Activity::where('user_id', $user->id)
-            ->with(['user', 'subject', 'subject.book'])
+            ->with([
+                'user',
+                'subject' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        Review::class => ['book'],
+                    ]);
+                },
+            ])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
