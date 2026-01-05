@@ -308,6 +308,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'username' => 'required|string|max:100|unique:users,username,'.$user->id,
             'shelf_name' => 'nullable|string|max:255',
+            'role' => 'nullable|string|in:user,admin',
         ]);
 
         $user->update($request->all());

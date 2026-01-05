@@ -17,7 +17,7 @@
         :exact="t.name === 'home'"
         :icon="t.icon"
         :name="t.name"
-        :to="t.name === 'settings' ? settingsTo : t.name === 'people' ? peopleTo : t.to"
+        :to="t.name === 'settings' ? settingsTo : t.name === 'people' ? peopleTo : t.name === 'admin' ? adminTo : t.to"
         @click="createRipple"
       />
     </q-tabs>
@@ -42,20 +42,30 @@
 
 <script setup lang="ts">
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
-import { useAuthStore } from '@/stores'
+import { useAuthStore, useUserStore } from '@/stores'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
-const tabs = [
+const isAdmin = computed(() => userStore.me.role === 'admin')
+
+const baseTabs = [
   { name: 'feed', icon: 'rss_feed', to: '/feed' },
   { name: 'home', icon: 'img:/books.svg', to: '/home' },
   { name: 'add', icon: 'search', to: '/add' },
   { name: 'people', icon: 'people', to: '/people' },
   { name: 'settings', icon: 'settings', to: '/settings' }
 ]
+
+const tabs = computed(() => {
+  if (isAdmin.value) {
+    return [...baseTabs, { name: 'admin', icon: 'admin_panel_settings', to: '/admin' }]
+  }
+  return baseTabs
+})
 
 const peopleTo = computed(() => {
   const path = route.path || '/'
@@ -67,6 +77,7 @@ const peopleTo = computed(() => {
 })
 
 const settingsTo = computed(() => `/settings/${route.params.tab || 'books'}`)
+const adminTo = computed(() => `/admin/${route.params.tab || 'users'}`)
 
 function openLogin() {
   authStore.openAuthModal('login')

@@ -375,6 +375,7 @@ class AuthController extends Controller
         $userData['email_verified_at'] = $user->email_verified_at;
         $userData['has_password_set'] = $user->hasPasswordSet();
         $userData['has_google_connected'] = $user->hasGoogleConnected();
+        $userData['role'] = $user->role;
 
         return response()->json($userData);
     }

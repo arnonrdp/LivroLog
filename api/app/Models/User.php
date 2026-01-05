@@ -55,6 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'locale',
         'avatar',
         'is_private',
+        'role',
     ];
 
     public $incrementing = false;
@@ -123,6 +124,22 @@ class User extends Authenticatable implements MustVerifyEmail
     public function goodreadsImports()
     {
         return $this->hasMany(GoodReadsImport::class);
+    }
+
+    /**
+     * Get the activities for this user.
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Get the last activity for this user.
+     */
+    public function lastActivity()
+    {
+        return $this->hasOne(Activity::class)->latestOfMany('created_at');
     }
 
     /**

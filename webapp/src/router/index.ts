@@ -61,6 +61,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/admin',
+    redirect: '/admin/users'
+  },
+  {
+    path: '/admin/:tab',
+    name: 'admin',
+    component: () => import('@/views/AdminView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
 
   // Legacy redirect: old /login route → landing page
   {
@@ -132,6 +142,21 @@ router.beforeEach(async (to, _from, next) => {
     } else {
       next({ path: '/' })
     }
+  } else if (to.meta.requiresAdmin) {
+    // For admin routes, always verify role from server if not already admin
+    if (userStore.me.role !== 'admin' && hasToken) {
+      try {
+        await authStore.getMe()
+      } catch {
+        // Failed to verify, block access
+      }
+    }
+    // Block access for non-admin users
+    if (userStore.me.role !== 'admin') {
+      next({ path: '/home' })
+      return
+    }
+    next()
   } else {
     next()
   }
