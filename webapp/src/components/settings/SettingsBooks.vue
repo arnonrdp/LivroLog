@@ -2,7 +2,6 @@
   <p>{{ $t('books-description') }}</p>
 
   <q-table
-    class="books-table"
     :columns="columns"
     :dense="$q.screen.lt.md"
     flat
@@ -190,10 +189,6 @@ watch(
 </script>
 
 <style scoped lang="sass">
-.books-table
-  max-width: 800px
-  margin: 0 auto
-
 .read-date-input
   min-width: 140px
 </style>

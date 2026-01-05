@@ -47,6 +47,6 @@ const activePanel = computed(() => {
 .q-page {
   margin: 0 auto;
   max-width: 100vw;
-  width: 40rem;
+  width: 56rem;
 }
 </style>
