@@ -130,32 +130,38 @@ router.beforeEach(async (to, _from, next) => {
   // Re-check authentication status after potential restoration
   const isAuthenticated = authStore.isAuthenticated
 
-  // Only block access for routes that require authentication
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    // Store the intended destination for redirect after login
-    authStore.setRedirectPath(to.fullPath)
-    // Open auth modal instead of redirecting (handled by the component)
-    authStore.openAuthModal('login')
-    // Stay on current page or go to landing if no current page
-    if (_from.name) {
-      next(false)
-    } else {
-      next({ path: '/' })
-    }
-  } else if (to.meta.requiresAdmin) {
-    // For admin routes, always verify role from server if not already admin
-    if (userStore.me.role !== 'admin' && hasToken) {
-      try {
-        await authStore.getMe()
-      } catch {
-        // Failed to verify, block access
+  // Handle routes that require authentication
+  if (to.meta.requiresAuth) {
+    if (!isAuthenticated) {
+      // Store the intended destination for redirect after login
+      authStore.setRedirectPath(to.fullPath)
+      // Open auth modal instead of redirecting (handled by the component)
+      authStore.openAuthModal('login')
+      // Stay on current page or go to landing if no current page
+      if (_from.name) {
+        next(false)
+      } else {
+        next({ path: '/' })
       }
-    }
-    // Block access for non-admin users
-    if (userStore.me.role !== 'admin') {
-      next({ path: '/home' })
       return
     }
+
+    // For admin routes, verify role from server if not already admin
+    if (to.meta.requiresAdmin) {
+      if (userStore.me.role !== 'admin') {
+        try {
+          await authStore.getMe()
+        } catch {
+          // Failed to verify, block access
+        }
+      }
+      // Block access for non-admin users
+      if (userStore.me.role !== 'admin') {
+        next({ path: '/home' })
+        return
+      }
+    }
+
     next()
   } else {
     next()

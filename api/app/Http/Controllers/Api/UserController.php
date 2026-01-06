@@ -311,7 +311,13 @@ class UserController extends Controller
             'role' => 'nullable|string|in:user,admin',
         ]);
 
-        $user->update($request->all());
+        // Only admins can change user roles
+        $data = $request->all();
+        if (! $request->user()->isAdmin()) {
+            unset($data['role']);
+        }
+
+        $user->update($data);
 
         return new UserResource($user);
     }

@@ -5,7 +5,7 @@
       <q-route-tab icon="menu_book" :label="$t('admin.books')" to="/admin/books" />
     </q-tabs>
 
-    <q-tab-panels v-model="activePanel" animated swipeable transition-next="jump-up" transition-prev="jump-up">
+    <q-tab-panels :model-value="activePanel" animated swipeable transition-next="jump-up" transition-prev="jump-up">
       <q-tab-panel name="users">
         <AdminUsers />
       </q-tab-panel>

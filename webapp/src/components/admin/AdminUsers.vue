@@ -202,16 +202,16 @@ const columns = computed<QTableColumn<AdminUser>[]>(() => [
   { name: 'actions', label: '', field: () => null, align: 'center', style: 'width: 100px' }
 ])
 
-const activityLabels: Record<string, string> = {
-  book_added: t('admin.activity.book-added'),
-  book_started: t('admin.activity.book-started'),
-  book_read: t('admin.activity.book-read'),
-  review_written: t('admin.activity.review-written'),
-  user_followed: t('admin.activity.user-followed')
-}
-
 function formatActivityType(type: string): string {
-  return activityLabels[type] || type
+  const activityKeys: Record<string, string> = {
+    book_added: 'admin.activity.book-added',
+    book_started: 'admin.activity.book-started',
+    book_read: 'admin.activity.book-read',
+    review_written: 'admin.activity.review-written',
+    user_followed: 'admin.activity.user-followed'
+  }
+  const key = activityKeys[type]
+  return key ? t(key) : type
 }
 
 function formatDate(dateString: string): string {
