@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\EmailVerificationController;
@@ -76,6 +77,10 @@ Route::middleware('auth.optional')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     // Admin-only routes
     Route::middleware('admin')->group(function () {
+        // Admin dashboard
+        Route::get('/admin/users', [AdminController::class, 'users']);
+        Route::get('/admin/books', [AdminController::class, 'books']);
+
         // Merge authors
         Route::post('/authors/merge', [\App\Http\Controllers\Api\AuthorMergeController::class, 'merge']);
 

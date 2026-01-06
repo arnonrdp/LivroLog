@@ -542,10 +542,12 @@ class BookController extends Controller
     public function update(Request $request, string $id)
     {
         $book = Book::findOrFail($id);
+        $this->authorize('update', $book);
 
         $request->validate([
             'title' => 'required|string|max:255',
             'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$book->id,
+            'amazon_asin' => 'nullable|string|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
             'thumbnail' => ['nullable', 'url', 'max:512', function ($attribute, $value, $fail) {
                 if (! $this->isAllowedThumbnailDomain($value)) {
@@ -630,6 +632,7 @@ class BookController extends Controller
     public function destroy(string $id)
     {
         $book = Book::findOrFail($id);
+        $this->authorize('delete', $book);
 
         // This will also cascade delete from users_books pivot table
         $book->delete();
