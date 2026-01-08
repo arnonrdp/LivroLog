@@ -10,7 +10,7 @@
       <!-- Make the book image clickable only for authenticated users on other shelves -->
       <div :class="['book-cover', { clickable: canOpenBookDialog }]" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
-        <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
+        <BookCoverPlaceholder v-else :title="book.title" />
       </div>
 
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">
@@ -27,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, User } from '@/models'
 import { useAuthStore } from '@/stores'
 import { computed, ref } from 'vue'

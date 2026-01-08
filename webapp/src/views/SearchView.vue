@@ -55,11 +55,12 @@
     <div v-else class="results-grid">
       <div v-for="(book, idx) in books" :key="book.id || idx" class="book-card" @click="navigateToBook(book)">
         <div class="book-cover">
-          <q-img :alt="book.title" fit="cover" :ratio="2 / 3" :src="book.thumbnail || '/no_cover.jpg'">
+          <q-img v-if="book.thumbnail" :alt="book.title" fit="cover" :ratio="2 / 3" :src="book.thumbnail">
             <template v-slot:error>
-              <q-img fit="cover" :ratio="2 / 3" src="/no_cover.jpg" />
+              <BookCoverPlaceholder :title="book.title" />
             </template>
           </q-img>
+          <BookCoverPlaceholder v-else :title="book.title" />
         </div>
         <div class="book-info">
           <h4 class="book-title">{{ book.title }}</h4>
@@ -71,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book } from '@/models'
 import { useBookStore } from '@/stores'
 import { Notify, useMeta } from 'quasar'
