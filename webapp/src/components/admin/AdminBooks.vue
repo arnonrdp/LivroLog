@@ -107,7 +107,20 @@
           </template>
         </q-input>
         <q-input v-model="editForm.thumbnail" class="q-mb-sm" dense :label="$t('admin.book-thumbnail')" />
-        <q-input v-model="editForm.description" autogrow class="q-mb-sm" dense :label="$t('admin.book-description')" type="textarea" />
+        <div class="q-mb-sm">
+          <div class="text-caption q-mb-xs text-grey-7">{{ $t('admin.book-description') }}</div>
+          <q-editor
+            v-model="editForm.description"
+            :dense="$q.screen.lt.md"
+            flat
+            min-height="150px"
+            :toolbar="[
+              ['bold', 'italic', 'underline'],
+              ['unordered', 'ordered'],
+              ['undo', 'redo']
+            ]"
+          />
+        </div>
       </q-card-section>
 
       <q-card-actions align="right">

@@ -128,9 +128,7 @@
       <!-- Description Section -->
       <section v-if="book.description" class="section description-section">
         <h2>{{ $t('book.description') }}</h2>
-        <div :class="['description-content', { expanded: descriptionExpanded }]">
-          <p>{{ book.description }}</p>
-        </div>
+        <div :class="['description-content', { expanded: descriptionExpanded }]" v-html="book.description"></div>
         <q-btn
           v-if="book.description && book.description.length > 300"
           class="q-mt-sm"
@@ -703,8 +701,22 @@ function formatRatingCount(count: number): string {
     position: absolute
     right: 0
 
-  p
-    margin: 0
+  :deep(p)
+    margin: 0 0 0.75rem
+    &:last-child
+      margin-bottom: 0
+
+  :deep(ul), :deep(ol)
+    margin: 0 0 0.75rem
+    padding-left: 1.5rem
+
+  :deep(li)
+    margin-bottom: 0.25rem
+
+  :deep(br)
+    display: block
+    content: ""
+    margin-top: 0.5rem
 
 .details-grid
   display: grid
