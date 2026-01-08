@@ -147,6 +147,7 @@ class AdminController extends Controller
                 'publisher' => $book->publisher,
                 'published_date' => $book->published_date,
                 'thumbnail' => $book->thumbnail,
+                'description' => $book->description,
                 'users_count' => $book->users_count,
                 'created_at' => $book->created_at,
             ]),
