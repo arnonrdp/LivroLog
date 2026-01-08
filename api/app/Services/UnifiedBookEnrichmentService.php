@@ -131,17 +131,19 @@ class UnifiedBookEnrichmentService
 
     /**
      * Creates a new enriched book directly from Google Books with automatic Amazon processing
+     *
+     * @param  array  $additionalData  Optional additional data to merge (e.g., amazon_asin from search results)
      */
-    public function createEnrichedBookFromGoogle(string $googleId, ?string $userId = null, bool $isPrivate = false, string $readingStatus = 'read'): array
+    public function createEnrichedBookFromGoogle(string $googleId, ?string $userId = null, bool $isPrivate = false, string $readingStatus = 'read', array $additionalData = []): array
     {
         try {
-            // Create book with Google Books data
-            $result = $this->googleEnrichmentService->createEnrichedBookFromGoogle($googleId, $userId, $isPrivate, $readingStatus);
+            // Create book with Google Books data (and any additional data like amazon_asin)
+            $result = $this->googleEnrichmentService->createEnrichedBookFromGoogle($googleId, $userId, $isPrivate, $readingStatus, $additionalData);
 
             if ($result['success'] && isset($result['book'])) {
                 $book = $result['book'];
 
-                // Dispatch Amazon enrichment for the new book
+                // Dispatch Amazon enrichment for the new book (only if it doesn't already have ASIN)
                 if ($this->shouldEnrichWithAmazon($book)) {
                     Log::info("Dispatching Amazon enrichment job for newly created book: {$book->title} (ID: {$book->id})");
 
@@ -152,6 +154,10 @@ class UnifiedBookEnrichmentService
                     $result['message'] .= ' + Amazon enrichment queued';
                 } else {
                     $result['amazon_dispatched'] = false;
+                    // If book already has ASIN from search results, note it
+                    if ($book->amazon_asin) {
+                        $result['message'] .= ' (ASIN already provided)';
+                    }
                 }
             }
 
