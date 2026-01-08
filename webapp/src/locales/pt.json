@@ -27,6 +27,7 @@
     "book-publisher": "Editora",
     "book-thumbnail": "URL da capa",
     "book-title": "Título",
+    "book-title-required": "O título do livro é obrigatório",
     "book-updated": "Livro atualizado com sucesso",
     "book-users": "Usuários",
     "books": "Livros",

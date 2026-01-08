@@ -27,6 +27,7 @@
     "book-publisher": "出版社",
     "book-thumbnail": "表紙URL",
     "book-title": "タイトル",
+    "book-title-required": "書籍のタイトルは必須です",
     "book-updated": "書籍を更新しました",
     "book-users": "ユーザー数",
     "books": "書籍",

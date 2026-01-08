@@ -27,6 +27,7 @@
     "book-publisher": "Yayınevi",
     "book-thumbnail": "Kapak URL",
     "book-title": "Başlık",
+    "book-title-required": "Kitap başlığı gereklidir",
     "book-updated": "Kitap başarıyla güncellendi",
     "book-users": "Kullanıcı",
     "books": "Kitaplar",

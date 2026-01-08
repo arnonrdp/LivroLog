@@ -65,7 +65,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
-        <q-input v-model="editForm.title" class="q-mb-sm" dense :label="$t('admin.book-title') + ' *'" :rules="[(v) => !!v || $t('admin.book-title') + ' is required']" />
+        <q-input v-model="editForm.title" class="q-mb-sm" dense :label="$t('admin.book-title') + ' *'" :rules="[(v) => !!v || $t('admin.book-title-required')]" />
         <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
         <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
         <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
@@ -284,7 +284,7 @@ function openEditDialog(book: AdminBook) {
 
 function saveBook() {
   if (!editForm.value.title.trim()) {
-    Notify.create({ message: t('admin.book-title') + ' is required', type: 'negative' })
+    Notify.create({ message: t('admin.book-title-required'), type: 'negative' })
     return
   }
 

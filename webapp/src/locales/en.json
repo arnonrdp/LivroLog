@@ -27,6 +27,7 @@
     "book-publisher": "Publisher",
     "book-thumbnail": "Cover URL",
     "book-title": "Title",
+    "book-title-required": "Book title is required",
     "book-updated": "Book updated successfully",
     "book-users": "Users",
     "books": "Books",
