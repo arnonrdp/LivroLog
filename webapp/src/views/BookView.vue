@@ -128,7 +128,7 @@
       <!-- Description Section -->
       <section v-if="book.description" class="section description-section">
         <h2>{{ $t('book.description') }}</h2>
-        <div :class="['description-content', { expanded: descriptionExpanded }]" v-html="book.description"></div>
+        <div :class="['description-content', { expanded: descriptionExpanded }]" v-html="sanitizedDescription"></div>
         <q-btn
           v-if="book.description && book.description.length > 300"
           class="q-mt-sm"
@@ -231,6 +231,7 @@
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
 import api from '@/utils/axios'
+import DOMPurify from 'dompurify'
 import { useMeta } from 'quasar'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -260,6 +261,11 @@ const isLoading = ref(true)
 const isLoadingReviews = ref(false)
 const error = ref(false)
 const descriptionExpanded = ref(false)
+
+const sanitizedDescription = computed(() => {
+  if (!book.value?.description) return ''
+  return DOMPurify.sanitize(book.value.description)
+})
 
 const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
 
@@ -715,7 +721,6 @@ function formatRatingCount(count: number): string {
 
   :deep(br)
     display: block
-    content: ""
     margin-top: 0.5rem
 
 .details-grid
