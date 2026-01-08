@@ -32,15 +32,28 @@ import SettingsAccount from '@/components/settings/SettingsAccount.vue'
 import SettingsBooks from '@/components/settings/SettingsBooks.vue'
 import SettingsLanguage from '@/components/settings/SettingsLanguage.vue'
 import SettingsProfile from '@/components/settings/SettingsProfile.vue'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
+
+const validTabs = ['books', 'profile', 'language', 'account']
 
 const activePanel = computed(() => {
   const routeTab = route.params.tab as string
-  return routeTab || 'books'
+  return validTabs.includes(routeTab) ? routeTab : 'books'
 })
+
+watch(
+  () => route.params.tab,
+  (tab) => {
+    if (tab && !validTabs.includes(tab as string)) {
+      router.replace('/settings/books')
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
