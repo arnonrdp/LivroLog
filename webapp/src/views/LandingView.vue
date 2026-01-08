@@ -280,6 +280,7 @@
         </div>
       </div>
       <div class="footer-bottom">
+        <p class="affiliate-disclosure">{{ $t('affiliate-disclosure') }}</p>
         <p>&copy; {{ new Date().getFullYear() }} LivroLog. {{ $t('landing.footer-rights') }}</p>
       </div>
     </footer>
@@ -781,4 +782,7 @@ $gold: #C9A962
     color: rgba(255, 255, 255, 0.5)
     font-size: 0.85rem
     margin: 0
+  .affiliate-disclosure
+    font-size: 0.75rem
+    margin-bottom: 0.75rem
 </style>

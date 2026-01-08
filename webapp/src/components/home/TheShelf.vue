@@ -19,11 +19,6 @@
     </figure>
   </section>
 
-  <!-- Amazon Associates disclosure placed under the shelf -->
-  <div v-if="books && books.length > 0" class="text-caption text-grey-7 q-mt-xs q-mb-md">
-    {{ $t('affiliate-disclosure') }}
-  </div>
-
   <!-- Book Dialog -->
   <BookDialog v-model="showBookDialog" :book-id="selectedBookId" :user-identifier="props.userIdentifier" />
 
