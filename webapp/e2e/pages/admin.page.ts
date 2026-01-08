@@ -51,6 +51,15 @@ export class AdminPage {
     await this.page.locator('.q-table tbody tr').first().locator('button:has(.text-negative), button.text-negative').first().click()
   }
 
+  async clickAddBookButton() {
+    await this.page.locator('button:has-text("Adicionar livro"), button:has-text("Add book")').click()
+  }
+
+  async expectAddDialogVisible() {
+    await expect(this.page.locator('.q-dialog')).toBeVisible()
+    await expect(this.page.locator('.q-dialog .text-h6:has-text("Adicionar livro"), .q-dialog .text-h6:has-text("Add book")')).toBeVisible()
+  }
+
   async expectEditDialogVisible() {
     await expect(this.page.locator('.q-dialog')).toBeVisible()
     await expect(this.page.locator('.q-dialog .text-h6')).toBeVisible()
@@ -61,16 +70,51 @@ export class AdminPage {
     await expect(this.page.locator('.q-dialog .q-icon[style*="warning"], .q-dialog i:text("warning")')).toBeVisible()
   }
 
-  async fillEditForm(data: { title?: string; authors?: string; isbn?: string }) {
+  async fillBookForm(data: {
+    title?: string
+    authors?: string
+    isbn?: string
+    amazonAsin?: string
+    googleId?: string
+    language?: string
+    publisher?: string
+    pageCount?: string
+    description?: string
+  }) {
+    const inputs = this.page.locator('.q-dialog input')
+    const textarea = this.page.locator('.q-dialog textarea')
+
     if (data.title) {
-      await this.page.locator('.q-dialog input').first().fill(data.title)
+      await inputs.nth(0).fill(data.title) // Title
     }
     if (data.authors) {
-      await this.page.locator('.q-dialog input').nth(1).fill(data.authors)
+      await inputs.nth(1).fill(data.authors) // Authors
     }
     if (data.isbn) {
-      await this.page.locator('.q-dialog input').nth(2).fill(data.isbn)
+      await inputs.nth(2).fill(data.isbn) // ISBN
     }
+    if (data.amazonAsin) {
+      await inputs.nth(3).fill(data.amazonAsin) // Amazon ASIN
+    }
+    if (data.googleId) {
+      await inputs.nth(4).fill(data.googleId) // Google ID
+    }
+    if (data.language) {
+      await inputs.nth(5).fill(data.language) // Language
+    }
+    if (data.publisher) {
+      await inputs.nth(6).fill(data.publisher) // Publisher
+    }
+    if (data.pageCount) {
+      await inputs.nth(7).fill(data.pageCount) // Page count
+    }
+    if (data.description) {
+      await textarea.fill(data.description) // Description
+    }
+  }
+
+  async fillEditForm(data: { title?: string; authors?: string; isbn?: string }) {
+    await this.fillBookForm(data)
   }
 
   async saveEdit() {

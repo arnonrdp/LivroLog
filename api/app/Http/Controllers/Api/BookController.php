@@ -575,6 +575,9 @@ class BookController extends Controller
             'lh3.googleusercontent.com',
             'ssl.gstatic.com',
             'covers.openlibrary.org',
+            'm.media-amazon.com',
+            'images-na.ssl-images-amazon.com',
+            'images-eu.ssl-images-amazon.com',
         ];
 
         $parsed = parse_url($url);

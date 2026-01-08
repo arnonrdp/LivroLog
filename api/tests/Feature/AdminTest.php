@@ -557,6 +557,159 @@ class AdminTest extends TestCase
         $this->assertEquals($sortedTitles, $titles);
     }
 
+    // ==================== Book Create Tests ====================
+
+    public function test_admin_can_create_book(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'title' => 'Admin Created Book',
+            'authors' => 'Test Author',
+            'isbn' => '9780123456789',
+            'language' => 'en',
+            'publisher' => 'Test Publisher',
+            'page_count' => 300,
+            'published_date' => '2024-01-15',
+            'description' => 'A book created by admin for testing purposes.',
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'Admin Created Book',
+            'authors' => 'Test Author',
+            'isbn' => '9780123456789',
+            'language' => 'en',
+            'publisher' => 'Test Publisher',
+            'page_count' => 300,
+            'description' => 'A book created by admin for testing purposes.',
+        ]);
+    }
+
+    public function test_admin_can_create_book_with_amazon_asin(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'title' => 'Book With Amazon ASIN',
+            'authors' => 'ASIN Author',
+            'amazon_asin' => 'B08TESTCODE',
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'Book With Amazon ASIN',
+            'amazon_asin' => 'B08TESTCODE',
+        ]);
+    }
+
+    public function test_admin_can_create_book_with_google_id(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'title' => 'Book With Google ID',
+            'authors' => 'Google Author',
+            'google_id' => 'google_test_id_123',
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'Book With Google ID',
+            'google_id' => 'google_test_id_123',
+        ]);
+    }
+
+    public function test_admin_can_create_book_with_minimal_data(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'title' => 'Minimal Book Title',
+        ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('books', [
+            'title' => 'Minimal Book Title',
+        ]);
+    }
+
+    public function test_create_book_requires_title(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'authors' => 'Some Author',
+            'isbn' => '9780123456789',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['title']);
+    }
+
+    public function test_admin_can_create_book_with_year_only_published_date(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'title' => 'Book With Year Only',
+            'published_date' => '2024',
+        ]);
+
+        $response->assertStatus(201);
+
+        // Year-only dates are converted to YYYY-01-01 format in the database
+        $this->assertDatabaseHas('books', [
+            'title' => 'Book With Year Only',
+        ]);
+
+        $book = Book::where('title', 'Book With Year Only')->first();
+        $this->assertNotNull($book);
+        $this->assertStringStartsWith('2024', $book->published_date);
+    }
+
+    public function test_admin_can_create_book_with_year_month_published_date(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $response = $this->postJson('/books', [
+            'title' => 'Book With Year Month',
+            'published_date' => '2024-06',
+        ]);
+
+        $response->assertStatus(201);
+
+        // Year-month dates are converted to YYYY-MM-01 format in the database
+        $this->assertDatabaseHas('books', [
+            'title' => 'Book With Year Month',
+        ]);
+
+        $book = Book::where('title', 'Book With Year Month')->first();
+        $this->assertNotNull($book);
+        $this->assertStringStartsWith('2024-06', $book->published_date);
+    }
+
+    public function test_admin_books_endpoint_returns_description(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $book = Book::factory()->create([
+            'description' => 'This is a test description for the book.',
+        ]);
+
+        $response = $this->getJson('/admin/books');
+
+        $response->assertStatus(200);
+
+        $data = $response->json('data');
+        $bookData = collect($data)->firstWhere('id', $book->id);
+        $this->assertEquals('This is a test description for the book.', $bookData['description']);
+    }
+
     // ==================== Book Update Tests ====================
 
     public function test_admin_can_update_book(): void

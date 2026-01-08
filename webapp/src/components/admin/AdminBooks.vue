@@ -12,11 +12,15 @@
     @request="onRequest"
   >
     <template v-slot:top>
-      <q-input v-model="filter" class="q-mb-md" clearable debounce="300" dense :placeholder="$t('admin.search-books')" style="width: 300px">
-        <template v-slot:prepend>
-          <q-icon name="search" />
-        </template>
-      </q-input>
+      <div class="row items-center full-width q-mb-md" style="gap: 16px">
+        <q-input v-model="filter" clearable debounce="300" dense :placeholder="$t('admin.search-books')" style="width: 300px">
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+        <q-space />
+        <q-btn color="primary" icon="add" :label="$t('admin.add-book')" @click="openCreateDialog" />
+      </div>
     </template>
 
     <template v-slot:body-cell-title="props">
@@ -49,26 +53,27 @@
     </template>
   </q-table>
 
-  <!-- Edit Dialog -->
+  <!-- Edit/Create Dialog -->
   <q-dialog v-model="editDialog" persistent>
-    <q-card style="min-width: 500px">
+    <q-card style="min-width: 500px; max-width: 600px">
       <q-card-section>
-        <div class="text-h6">{{ $t('admin.edit-book') }}</div>
+        <div class="text-h6">{{ isEditMode ? $t('admin.edit-book') : $t('admin.add-book') }}</div>
       </q-card-section>
 
       <q-card-section v-if="editForm.thumbnail" class="q-pt-none text-center">
-        <img :src="editForm.thumbnail" alt="Cover" class="book-cover-preview" />
+        <img alt="Cover" class="book-cover-preview" :src="editForm.thumbnail" />
       </q-card-section>
 
-      <q-card-section class="q-pt-none">
-        <q-input v-model="editForm.title" dense :label="$t('admin.book-title')" class="q-mb-sm" />
-        <q-input v-model="editForm.authors" dense :label="$t('admin.book-authors')" class="q-mb-sm" />
-        <q-input v-model="editForm.isbn" dense label="ISBN" class="q-mb-sm" />
-        <q-input v-model="editForm.amazon_asin" dense label="Amazon ASIN" class="q-mb-sm" />
-        <q-input v-model="editForm.language" dense :label="$t('admin.book-language')" class="q-mb-sm" />
-        <q-input v-model="editForm.publisher" dense :label="$t('admin.book-publisher')" class="q-mb-sm" />
-        <q-input v-model="editForm.page_count" dense :label="$t('admin.book-pages')" type="number" class="q-mb-sm" />
-        <q-input v-model="editForm.published_date" dense :label="$t('admin.book-published-date')" mask="####-##-##" class="q-mb-sm">
+      <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
+        <q-input v-model="editForm.title" class="q-mb-sm" dense :label="$t('admin.book-title') + ' *'" :rules="[(v) => !!v || $t('admin.book-title-required')]" />
+        <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
+        <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
+        <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
+        <q-input v-model="editForm.google_id" class="q-mb-sm" dense :label="$t('admin.book-google-id')" />
+        <q-input v-model="editForm.language" class="q-mb-sm" dense :label="$t('admin.book-language')" />
+        <q-input v-model="editForm.publisher" class="q-mb-sm" dense :label="$t('admin.book-publisher')" />
+        <q-input v-model="editForm.page_count" class="q-mb-sm" dense :label="$t('admin.book-pages')" type="number" />
+        <q-input v-model="editForm.published_date" class="q-mb-sm" dense :label="$t('admin.book-published-date')" mask="####-##-##">
           <template v-slot:append>
             <q-icon class="cursor-pointer" name="event">
               <q-popup-proxy cover transition-hide="scale" transition-show="scale">
@@ -81,7 +86,8 @@
             </q-icon>
           </template>
         </q-input>
-        <q-input v-model="editForm.thumbnail" dense :label="$t('admin.book-thumbnail')" class="q-mb-sm" />
+        <q-input v-model="editForm.thumbnail" class="q-mb-sm" dense :label="$t('admin.book-thumbnail')" />
+        <q-input v-model="editForm.description" autogrow class="q-mb-sm" dense :label="$t('admin.book-description')" type="textarea" />
       </q-card-section>
 
       <q-card-actions align="right">
@@ -95,7 +101,7 @@
   <q-dialog v-model="deleteDialog" persistent>
     <q-card>
       <q-card-section class="row items-center">
-        <q-icon color="negative" name="warning" size="2em" class="q-mr-sm" />
+        <q-icon class="q-mr-sm" color="negative" name="warning" size="2em" />
         <span>{{ $t('admin.confirm-delete-book', { title: bookToDelete?.title }) }}</span>
       </q-card-section>
 
@@ -125,7 +131,8 @@ interface AdminBook {
   page_count: number | null
   publisher: string | null
   published_date: string | null
-  thumbnail?: string | null
+  thumbnail: string | null
+  description: string | null
   users_count: number
   created_at: string
 }
@@ -136,11 +143,13 @@ interface EditForm {
   authors: string
   isbn: string
   amazon_asin: string
+  google_id: string
   language: string
   publisher: string
   page_count: number | null
   published_date: string
   thumbnail: string
+  description: string
 }
 
 const $q = useQuasar()
@@ -162,17 +171,20 @@ const pagination = ref({
 const editDialog = ref(false)
 const deleteDialog = ref(false)
 const bookToDelete = ref<AdminBook | null>(null)
+const isEditMode = ref(false)
 const editForm = ref<EditForm>({
   id: '',
   title: '',
   authors: '',
   isbn: '',
   amazon_asin: '',
+  google_id: '',
   language: '',
   publisher: '',
   page_count: null,
   published_date: '',
-  thumbnail: ''
+  thumbnail: '',
+  description: ''
 })
 
 const columns = computed<QTableColumn<AdminBook>[]>(() => [
@@ -231,7 +243,27 @@ function onRequest(props: Parameters<NonNullable<QTableProps['onRequest']>>[0]) 
   fetchBooks(page, rowsPerPage, filter.value, pagination.value.sortBy, pagination.value.descending)
 }
 
+function openCreateDialog() {
+  isEditMode.value = false
+  editForm.value = {
+    id: '',
+    title: '',
+    authors: '',
+    isbn: '',
+    amazon_asin: '',
+    google_id: '',
+    language: '',
+    publisher: '',
+    page_count: null,
+    published_date: '',
+    thumbnail: '',
+    description: ''
+  }
+  editDialog.value = true
+}
+
 function openEditDialog(book: AdminBook) {
+  isEditMode.value = true
   const publishedDate = book.published_date ? book.published_date.substring(0, 10) : ''
   editForm.value = {
     id: book.id,
@@ -239,36 +271,49 @@ function openEditDialog(book: AdminBook) {
     authors: book.authors || '',
     isbn: book.isbn || '',
     amazon_asin: book.amazon_asin || '',
+    google_id: book.google_id || '',
     language: book.language || '',
     publisher: book.publisher || '',
     page_count: book.page_count,
     published_date: publishedDate,
-    thumbnail: book.thumbnail || ''
+    thumbnail: book.thumbnail || '',
+    description: book.description || ''
   }
   editDialog.value = true
 }
 
 function saveBook() {
+  if (!editForm.value.title.trim()) {
+    Notify.create({ message: t('admin.book-title-required'), type: 'negative' })
+    return
+  }
+
   isSaving.value = true
-  api
-    .put(`/books/${editForm.value.id}`, {
-      title: editForm.value.title,
-      authors: editForm.value.authors || null,
-      isbn: editForm.value.isbn || null,
-      amazon_asin: editForm.value.amazon_asin || null,
-      language: editForm.value.language || null,
-      publisher: editForm.value.publisher || null,
-      page_count: editForm.value.page_count,
-      published_date: editForm.value.published_date || null,
-      thumbnail: editForm.value.thumbnail || null
-    })
+
+  const bookData = {
+    title: editForm.value.title,
+    authors: editForm.value.authors || null,
+    isbn: editForm.value.isbn || null,
+    amazon_asin: editForm.value.amazon_asin || null,
+    google_id: editForm.value.google_id || null,
+    language: editForm.value.language || null,
+    publisher: editForm.value.publisher || null,
+    page_count: editForm.value.page_count,
+    published_date: editForm.value.published_date || null,
+    thumbnail: editForm.value.thumbnail || null,
+    description: editForm.value.description || null
+  }
+
+  const request = isEditMode.value ? api.put(`/books/${editForm.value.id}`, bookData) : api.post('/books', bookData)
+
+  request
     .then(() => {
-      Notify.create({ message: t('admin.book-updated'), type: 'positive' })
+      Notify.create({ message: t(isEditMode.value ? 'admin.book-updated' : 'admin.book-created'), type: 'positive' })
       editDialog.value = false
       fetchBooks(pagination.value.page, pagination.value.rowsPerPage, filter.value, pagination.value.sortBy, pagination.value.descending)
     })
     .catch((error) => {
-      Notify.create({ message: error.response?.data?.message || t('admin.error-updating'), type: 'negative' })
+      Notify.create({ message: error.response?.data?.message || t(isEditMode.value ? 'admin.error-updating' : 'admin.error-creating'), type: 'negative' })
     })
     .finally(() => {
       isSaving.value = false
