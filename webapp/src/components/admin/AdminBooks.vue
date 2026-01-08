@@ -23,6 +23,26 @@
       </div>
     </template>
 
+    <template v-slot:body-cell-thumbnail="props">
+      <q-td :props="props">
+        <img
+          v-if="props.row.thumbnail"
+          alt="Cover"
+          class="book-thumbnail cursor-pointer"
+          :src="props.row.thumbnail"
+          @click="expandImage(props.row.thumbnail)"
+        />
+        <q-icon v-else color="grey-5" name="image" size="24px" />
+      </q-td>
+    </template>
+
+    <template v-slot:body-cell-amazon_asin="props">
+      <q-td :props="props">
+        <span v-if="props.row.amazon_asin" class="text-positive">{{ props.row.amazon_asin }}</span>
+        <q-icon v-else color="grey-5" name="remove" size="16px" />
+      </q-td>
+    </template>
+
     <template v-slot:body-cell-title="props">
       <q-td :props="props">
         <router-link :to="`/books/${props.row.id}`">{{ props.row.title }}</router-link>
@@ -111,6 +131,11 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <!-- Image Expand Dialog -->
+  <q-dialog v-model="imageDialog">
+    <img alt="Cover" class="expanded-cover" :src="expandedImage" @click="imageDialog = false" />
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -170,6 +195,8 @@ const pagination = ref({
 
 const editDialog = ref(false)
 const deleteDialog = ref(false)
+const imageDialog = ref(false)
+const expandedImage = ref('')
 const bookToDelete = ref<AdminBook | null>(null)
 const isEditMode = ref(false)
 const editForm = ref<EditForm>({
@@ -188,15 +215,22 @@ const editForm = ref<EditForm>({
 })
 
 const columns = computed<QTableColumn<AdminBook>[]>(() => [
+  { name: 'thumbnail', label: t('admin.book-cover'), field: 'thumbnail', align: 'center', style: 'width: 60px' },
   { name: 'title', label: t('admin.book-title'), field: 'title', align: 'left', sortable: true },
   { name: 'authors', label: t('admin.book-authors'), field: 'authors', align: 'left', sortable: true },
   { name: 'isbn', label: 'ISBN', field: 'isbn', align: 'left', sortable: true },
+  { name: 'amazon_asin', label: 'ASIN', field: 'amazon_asin', align: 'center', sortable: true },
   { name: 'language', label: t('admin.book-language'), field: 'language', align: 'center', sortable: true },
   { name: 'page_count', label: t('admin.book-pages'), field: 'page_count', align: 'center', sortable: true },
   { name: 'users_count', label: t('admin.book-users'), field: 'users_count', align: 'center', sortable: true },
   { name: 'created_at', label: t('admin.added-at'), field: 'created_at', align: 'left', sortable: true },
   { name: 'actions', label: '', field: () => null, align: 'center', style: 'width: 100px' }
 ])
+
+function expandImage(url: string) {
+  expandedImage.value = url
+  imageDialog.value = true
+}
 
 function formatDate(dateString: string): string {
   if (!dateString) return '-'
@@ -363,4 +397,20 @@ a
   object-fit: contain
   border-radius: 4px
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+
+.book-thumbnail
+  width: 32px
+  height: 48px
+  object-fit: cover
+  border-radius: 2px
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)
+  transition: transform 0.2s
+  &:hover
+    transform: scale(1.1)
+
+.expanded-cover
+  max-width: 90vw
+  max-height: 90vh
+  object-fit: contain
+  cursor: pointer
 </style>
