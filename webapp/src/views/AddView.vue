@@ -35,7 +35,7 @@
         />
         <div class="book-cover" @click="showBookReviews(book)">
           <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" style="width: 8rem" />
-          <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" style="width: 8rem" />
+          <BookCoverPlaceholder v-else size="md" :title="book.title" />
         </div>
         <figcaption style="max-width: 8rem">{{ book.title }}</figcaption>
         <figcaption id="authors" style="max-width: 8rem">
@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import TheLoading from '@/components/add/TheLoading.vue'
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import BookDialog from '@/components/home/BookDialog.vue'
 import type { Book } from '@/models'
 import { useBookStore, useUserBookStore, useUserStore } from '@/stores'

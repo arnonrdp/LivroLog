@@ -23,7 +23,8 @@
       <div class="book-header">
         <!-- Cover -->
         <div class="book-cover">
-          <img :alt="book.title" :src="highResThumbnail" @error="(e: Event) => ((e.target as HTMLImageElement).src = '/no_cover.jpg')" />
+          <img v-if="book.thumbnail && !imageError" :alt="book.title" :src="highResThumbnail" @error="handleImageError" />
+          <BookCoverPlaceholder v-else size="lg" :title="book.title" />
         </div>
 
         <!-- Info -->
@@ -228,6 +229,7 @@
 </template>
 
 <script setup lang="ts">
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
 import api from '@/utils/axios'
@@ -261,6 +263,7 @@ const isLoading = ref(true)
 const isLoadingReviews = ref(false)
 const error = ref(false)
 const descriptionExpanded = ref(false)
+const imageError = ref(false)
 
 const sanitizedDescription = computed(() => {
   if (!book.value?.description) return ''
@@ -289,7 +292,7 @@ const pageDescription = computed(() => {
 })
 
 const pageImage = computed(() => {
-  return book.value?.thumbnail || `${baseUrl}/no_cover.jpg`
+  return book.value?.thumbnail || ''
 })
 
 useMeta(() => ({
@@ -361,7 +364,7 @@ function isAllowedImageHost(url: string): { isGoogle: boolean; isAmazon: boolean
 
 // Convert thumbnail URL to high resolution version
 const highResThumbnail = computed(() => {
-  if (!book.value?.thumbnail) return '/no_cover.jpg'
+  if (!book.value?.thumbnail) return ''
 
   const url = book.value.thumbnail
   const { isGoogle, isAmazon } = isAllowedImageHost(url)
@@ -424,6 +427,7 @@ onMounted(() => {
 function loadBook() {
   isLoading.value = true
   error.value = false
+  imageError.value = false
 
   // Load book data
   api
@@ -523,6 +527,10 @@ function formatRatingCount(count: number): string {
     return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
   }
   return count.toString()
+}
+
+function handleImageError() {
+  imageError.value = true
 }
 </script>
 
