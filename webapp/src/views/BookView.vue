@@ -233,7 +233,7 @@
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
 import api from '@/utils/axios'
-import { Notify, useMeta } from 'quasar'
+import { useMeta } from 'quasar'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -314,10 +314,31 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isInLibrary = computed(() => {
   if (!isAuthenticated.value || !book.value) return false
   const userBooks = userStore.me?.books || []
-  return userBooks.some((ub) => ub.id === book.value?.id)
+  return userBooks.some((ub) => {
+    // Check by internal ID
+    if (book.value?.id && book.value.id.startsWith('B-') && ub.id === book.value.id) {
+      return true
+    }
+    // Check by google_id
+    if (book.value?.google_id && ub.google_id === book.value.google_id) {
+      return true
+    }
+    // Legacy check: if book.id is actually a google_id
+    if (book.value?.id && !book.value.id.startsWith('B-') && ub.google_id === book.value.id) {
+      return true
+    }
+    return false
+  })
 })
 
-const readingStatuses: { value: ReadingStatus }[] = [{ value: 'want_to_read' }, { value: 'reading' }, { value: 'read' }]
+const readingStatuses: { value: ReadingStatus }[] = [
+  { value: 'want_to_read' },
+  { value: 'reading' },
+  { value: 'read' },
+  { value: 're_reading' },
+  { value: 'on_hold' },
+  { value: 'abandoned' }
+]
 
 // Helper to safely check URL hostname
 function isAllowedImageHost(url: string): { isGoogle: boolean; isAmazon: boolean } {
@@ -455,17 +476,7 @@ function loadReviews() {
 function addToLibrary(readingStatus: ReadingStatus) {
   if (!book.value) return
 
-  userBookStore
-    .postUserBooks(book.value, false, readingStatus)
-    .then(() => {
-      Notify.create({ message: t('book.added-to-library'), type: 'positive' })
-      // Refresh user data to update isInLibrary
-      authStore.getMe()
-    })
-    .catch((err) => {
-      console.error('Error adding to library:', err)
-      Notify.create({ message: t('book.error-adding'), type: 'negative' })
-    })
+  userBookStore.postUserBooks(book.value, false, readingStatus)
 }
 
 function promptLogin() {
