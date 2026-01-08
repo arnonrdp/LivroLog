@@ -5,7 +5,7 @@
       <q-route-tab icon="menu_book" :label="$t('admin.books')" to="/admin/books" />
     </q-tabs>
 
-    <q-tab-panels :model-value="activePanel" animated swipeable transition-next="jump-up" transition-prev="jump-up">
+    <q-tab-panels animated :model-value="activePanel" swipeable transition-next="jump-up" transition-prev="jump-up">
       <q-tab-panel name="users">
         <AdminUsers />
       </q-tab-panel>
@@ -20,15 +20,28 @@
 <script setup lang="ts">
 import AdminBooks from '@/components/admin/AdminBooks.vue'
 import AdminUsers from '@/components/admin/AdminUsers.vue'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
+
+const validTabs = ['users', 'books']
 
 const activePanel = computed(() => {
   const routeTab = route.params.tab as string
-  return routeTab || 'users'
+  return validTabs.includes(routeTab) ? routeTab : 'users'
 })
+
+watch(
+  () => route.params.tab,
+  (tab) => {
+    if (tab && !validTabs.includes(tab as string)) {
+      router.replace('/admin/users')
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
