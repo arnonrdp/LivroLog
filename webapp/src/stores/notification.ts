@@ -1,5 +1,5 @@
 import { i18n } from '@/locales'
-import type { Notification, NotificationListResponse, NotificationMeta } from '@/models'
+import type { NewNotificationEvent, Notification, NotificationListResponse, NotificationMeta } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
@@ -17,14 +17,16 @@ export const useNotificationStore = defineStore('notification', {
     _notifications: [] as Notification[],
     _meta: { ...defaultMeta } as NotificationMeta,
     _unreadCount: 0,
-    _isLoading: false
+    _isLoading: false,
+    _isWebSocketConnected: false
   }),
 
   getters: {
     notifications: (state) => state._notifications,
     meta: (state) => state._meta,
     unreadCount: (state) => state._unreadCount,
-    isLoading: (state) => state._isLoading
+    isLoading: (state) => state._isLoading,
+    isWebSocketConnected: (state) => state._isWebSocketConnected
   },
 
   actions: {
@@ -105,6 +107,54 @@ export const useNotificationStore = defineStore('notification', {
       this._notifications = []
       this._meta = { ...defaultMeta }
       this._unreadCount = 0
+    },
+
+    // WebSocket-related actions
+    addNotificationFromWebSocket(event: NewNotificationEvent): void {
+      // Convert event to Notification format
+      const notification: Notification = {
+        id: event.id,
+        type: event.type,
+        actor: event.actor,
+        data: event.data,
+        read_at: null,
+        is_read: false,
+        created_at: event.created_at
+      }
+
+      // Add to beginning of list (newest first)
+      this._notifications.unshift(notification)
+      this._unreadCount += 1
+      this._meta.total += 1
+
+      // Show toast notification
+      const actorName = notification.actor.display_name || notification.actor.username
+      let message = ''
+      switch (notification.type) {
+        case 'activity_liked':
+          message = i18n.global.t('notifications.liked-your-activity', { name: actorName })
+          break
+        case 'activity_commented':
+          message = i18n.global.t('notifications.commented-on-your-activity', { name: actorName })
+          break
+        case 'follow_accepted':
+          message = i18n.global.t('notifications.accepted-your-follow', { name: actorName })
+          break
+        default:
+          message = i18n.global.t('notifications.new-notification')
+      }
+
+      Notify.create({
+        message,
+        type: 'info',
+        icon: 'notifications',
+        position: 'top-right',
+        timeout: 5000
+      })
+    },
+
+    setWebSocketConnected(connected: boolean): void {
+      this._isWebSocketConnected = connected
     }
   }
 })

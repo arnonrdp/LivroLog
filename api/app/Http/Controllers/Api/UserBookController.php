@@ -207,6 +207,7 @@ class UserBookController extends Controller
                 ]);
                 $book->refresh();
             }
+
             return $this->addBookToUserLibrary($book, $user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
@@ -217,6 +218,7 @@ class UserBookController extends Controller
             if ($amazonAsin) {
                 $additionalData['amazon_asin'] = $amazonAsin;
             }
+
             return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus, $additionalData);
         }
 

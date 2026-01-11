@@ -31,5 +31,12 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="GOOGLE_BOOKS_API_KEY" value="test-api-key"/>
+        <env name="BROADCAST_CONNECTION" value="reverb"/>
+        <env name="REVERB_APP_ID" value="test-app-id"/>
+        <env name="REVERB_APP_KEY" value="test-app-key"/>
+        <env name="REVERB_APP_SECRET" value="test-app-secret"/>
+        <env name="REVERB_HOST" value="localhost"/>
+        <env name="REVERB_PORT" value="8080"/>
+        <env name="REVERB_SCHEME" value="http"/>
     </php>
 </phpunit>

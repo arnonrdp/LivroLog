@@ -11,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: '', // Remove /api prefix since we're using api.domain.com subdomain
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            // Load broadcast channels without registering default routes
+            // We use a custom route in api.php with auth:sanctum middleware instead
+            require __DIR__.'/../routes/channels.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

@@ -222,12 +222,12 @@ class AmazonScraperService
                 $candidates = $this->extractCandidatesFromSearchResults($html);
 
                 if (empty($candidates)) {
-                    Log::info("Amazon scraper: No candidates found in search results");
+                    Log::info('Amazon scraper: No candidates found in search results');
 
                     continue;
                 }
 
-                Log::info("Amazon scraper: Found ".count($candidates)." candidates for book {$book->id}");
+                Log::info('Amazon scraper: Found '.count($candidates)." candidates for book {$book->id}");
 
                 // Validate each candidate until we find a match
                 foreach ($candidates as $candidate) {

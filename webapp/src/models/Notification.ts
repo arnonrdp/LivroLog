@@ -33,3 +33,14 @@ export interface NotificationListResponse {
 export interface UnreadCountResponse {
   unread_count: number
 }
+
+// WebSocket event payload from Laravel Reverb
+export interface NewNotificationEvent {
+  id: string
+  type: NotificationType
+  actor: NotificationActor
+  data?: Record<string, unknown>
+  read_at: null
+  is_read: false
+  created_at: string
+}

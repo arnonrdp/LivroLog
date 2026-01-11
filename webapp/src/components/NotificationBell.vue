@@ -43,33 +43,101 @@
 </template>
 
 <script setup lang="ts">
-import type { Notification } from '@/models'
-import { useNotificationStore } from '@/stores'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import type { NewNotificationEvent, Notification } from '@/models'
+import { useNotificationStore, useUserStore } from '@/stores'
+import { disconnectEcho, getEcho, initEcho } from '@/utils/echo'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import NotificationItem from './NotificationItem.vue'
 
 const notificationStore = useNotificationStore()
+const userStore = useUserStore()
 const router = useRouter()
 
 const showNotifications = ref(false)
 let pollInterval: ReturnType<typeof setInterval> | null = null
+let channelSubscribed = false
 
 const notifications = computed(() => notificationStore.notifications)
 const unreadCount = computed(() => notificationStore.unreadCount)
 const isLoading = computed(() => notificationStore.isLoading)
+const userId = computed(() => userStore.me?.id)
 
-onMounted(() => {
-  notificationStore.getNotifications()
-  // Poll for unread count every 30 seconds
+// Subscribe to WebSocket channel
+function subscribeToNotifications(): void {
+  const echo = getEcho() || initEcho()
+
+  if (!echo || !userId.value) {
+    // Fallback to polling if WebSocket not available
+    startPolling()
+    return
+  }
+
+  echo
+    .private(`notifications.${userId.value}`)
+    .listen('.notification.new', (event: NewNotificationEvent) => {
+      notificationStore.addNotificationFromWebSocket(event)
+    })
+    .subscribed(() => {
+      channelSubscribed = true
+      notificationStore.setWebSocketConnected(true)
+      // Stop polling when WebSocket is connected
+      stopPolling()
+    })
+    .error(() => {
+      notificationStore.setWebSocketConnected(false)
+      // Fallback to polling on error
+      startPolling()
+    })
+}
+
+// Unsubscribe from WebSocket channel
+function unsubscribeFromNotifications(): void {
+  const echo = getEcho()
+
+  if (echo && userId.value && channelSubscribed) {
+    echo.leave(`notifications.${userId.value}`)
+    channelSubscribed = false
+  }
+
+  notificationStore.setWebSocketConnected(false)
+}
+
+// Fallback polling
+function startPolling(): void {
+  if (pollInterval) return
+
   pollInterval = setInterval(() => {
     notificationStore.getUnreadCount()
   }, 30000)
+}
+
+function stopPolling(): void {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}
+
+onMounted(() => {
+  notificationStore.getNotifications()
+  subscribeToNotifications()
 })
 
 onUnmounted(() => {
-  if (pollInterval) {
-    clearInterval(pollInterval)
+  stopPolling()
+  unsubscribeFromNotifications()
+  disconnectEcho()
+})
+
+// Re-subscribe when user changes (login/logout)
+watch(userId, (newUserId, oldUserId) => {
+  if (oldUserId && oldUserId !== newUserId) {
+    unsubscribeFromNotifications()
+  }
+
+  if (newUserId) {
+    subscribeToNotifications()
   }
 })
 

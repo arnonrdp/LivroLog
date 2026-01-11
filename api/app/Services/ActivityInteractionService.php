@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NewNotification;
 use App\Models\Activity;
 use App\Models\ActivityLike;
 use App\Models\Comment;
@@ -41,7 +42,9 @@ class ActivityInteractionService
             ];
         }
 
-        DB::transaction(function () use ($user, $activity) {
+        $notification = null;
+
+        DB::transaction(function () use ($user, $activity, &$notification) {
             ActivityLike::create([
                 'user_id' => $user->id,
                 'activity_id' => $activity->id,
@@ -51,7 +54,7 @@ class ActivityInteractionService
 
             // Create notification if not liking own activity
             if ($activity->user_id !== $user->id) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $activity->user_id,
                     'actor_id' => $user->id,
                     'type' => 'activity_liked',
@@ -60,6 +63,11 @@ class ActivityInteractionService
                 ]);
             }
         });
+
+        // Broadcast notification via WebSocket
+        if ($notification) {
+            broadcast(new NewNotification($notification))->toOthers();
+        }
 
         return [
             'success' => true,
@@ -120,8 +128,9 @@ class ActivityInteractionService
         }
 
         $content = trim($content);
+        $notification = null;
 
-        $comment = DB::transaction(function () use ($user, $activity, $content) {
+        $comment = DB::transaction(function () use ($user, $activity, $content, &$notification) {
             $comment = Comment::create([
                 'user_id' => $user->id,
                 'activity_id' => $activity->id,
@@ -132,7 +141,7 @@ class ActivityInteractionService
 
             // Create notification if not commenting on own activity
             if ($activity->user_id !== $user->id) {
-                Notification::create([
+                $notification = Notification::create([
                     'user_id' => $activity->user_id,
                     'actor_id' => $user->id,
                     'type' => 'activity_commented',
@@ -144,6 +153,11 @@ class ActivityInteractionService
 
             return $comment;
         });
+
+        // Broadcast notification via WebSocket
+        if ($notification) {
+            broadcast(new NewNotification($notification))->toOthers();
+        }
 
         return [
             'success' => true,

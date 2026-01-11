@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -168,3 +169,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });
+
+// Broadcasting authentication (for private WebSocket channels)
+Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+    $result = Broadcast::auth($request);
+
+    return response()->json($result);
+})->middleware('auth:sanctum');

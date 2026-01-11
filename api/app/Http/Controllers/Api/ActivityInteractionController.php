@@ -141,7 +141,6 @@ class ActivityInteractionController extends Controller
      *                     @OA\Property(property="avatar", type="string", nullable=true)
      *                 )
      *             ),
-     *
      *             @OA\Property(property="total", type="integer", example=10)
      *         )
      *     )
@@ -235,7 +234,6 @@ class ActivityInteractionController extends Controller
      *         response=201,
      *         description="Comment added successfully"
      *     ),
-     *
      *     @OA\Response(response=403, description="Cannot interact with this activity")
      * )
      */
@@ -284,7 +282,6 @@ class ActivityInteractionController extends Controller
      *         response=200,
      *         description="Comment updated successfully"
      *     ),
-     *
      *     @OA\Response(response=403, description="Cannot edit this comment")
      * )
      */
@@ -324,7 +321,6 @@ class ActivityInteractionController extends Controller
      *         response=200,
      *         description="Comment deleted successfully"
      *     ),
-     *
      *     @OA\Response(response=403, description="Cannot delete this comment")
      * )
      */

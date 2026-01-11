@@ -357,6 +357,7 @@
     "error-loading": "通知の読み込みエラー",
     "liked-your-activity": "あなたのアクティビティにいいねしました",
     "mark-all-read": "すべて既読にする",
+    "new-notification": "新しい通知",
     "title": "通知"
   },
   "on-hold": "保留中",

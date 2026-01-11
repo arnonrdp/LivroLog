@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Events\NewNotification;
 use App\Models\Follow;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -51,12 +53,15 @@ class FollowService
             ];
         }
 
-        DB::transaction(function () use ($follower, $following) {
+        $notification = null;
+        $isPrivate = $following->is_private;
+
+        DB::transaction(function () use ($follower, $following, $isPrivate, &$notification) {
             // Determine status based on whether the followed user is private
-            $status = $following->is_private ? 'pending' : 'accepted';
+            $status = $isPrivate ? 'pending' : 'accepted';
 
             // Create follow relationship
-            Follow::create([
+            $follow = Follow::create([
                 'follower_id' => $follower->id,
                 'followed_id' => $following->id,
                 'status' => $status,
@@ -67,9 +72,26 @@ class FollowService
                 $follower->increment('following_count');
                 $following->increment('followers_count');
             }
+
+            // Create notification for the followed user
+            // - new_follower: when public profile (immediate follow)
+            // - follow_request: when private profile (pending approval)
+            $notification = Notification::create([
+                'user_id' => $following->id,
+                'actor_id' => $follower->id,
+                'type' => $isPrivate ? 'follow_request' : 'new_follower',
+                'notifiable_type' => 'User',
+                'notifiable_id' => $following->id,
+                'data' => ['follow_id' => $follow->id],
+            ]);
         });
 
-        $message = $following->is_private ?
+        // Broadcast notification via WebSocket
+        if ($notification) {
+            broadcast(new NewNotification($notification))->toOthers();
+        }
+
+        $message = $isPrivate ?
             'Follow request sent' :
             'Successfully followed user';
 
@@ -81,7 +103,7 @@ class FollowService
                 'following' => $following->only(['id', 'display_name', 'username']),
                 'following_count' => $follower->fresh()->following_count,
                 'followers_count' => $following->fresh()->followers_count,
-                'status' => $following->is_private ? 'pending' : 'accepted',
+                'status' => $isPrivate ? 'pending' : 'accepted',
             ],
         ];
     }
@@ -211,7 +233,9 @@ class FollowService
             ];
         }
 
-        DB::transaction(function () use ($followRequest) {
+        $notification = null;
+
+        DB::transaction(function () use ($followRequest, $user, &$notification) {
             // Update status to accepted
             $followRequest->update(['status' => 'accepted']);
 
@@ -221,7 +245,22 @@ class FollowService
 
             $follower->increment('following_count');
             $following->increment('followers_count');
+
+            // Create notification for the follower that their request was accepted
+            $notification = Notification::create([
+                'user_id' => $followRequest->follower_id,
+                'actor_id' => $user->id,
+                'type' => 'follow_accepted',
+                'notifiable_type' => 'User',
+                'notifiable_id' => $user->id,
+                'data' => ['follow_id' => $followRequest->id],
+            ]);
         });
+
+        // Broadcast notification via WebSocket
+        if ($notification) {
+            broadcast(new NewNotification($notification))->toOthers();
+        }
 
         return [
             'success' => true,

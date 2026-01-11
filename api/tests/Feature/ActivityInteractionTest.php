@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\NewNotification;
 use App\Models\Activity;
 use App\Models\ActivityLike;
 use App\Models\Book;
@@ -10,6 +11,7 @@ use App\Models\Follow;
 use App\Models\User;
 use App\Services\ActivityInteractionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class ActivityInteractionTest extends TestCase
@@ -22,6 +24,9 @@ class ActivityInteractionTest extends TestCase
     {
         parent::setUp();
         $this->interactionService = app(ActivityInteractionService::class);
+
+        // Prevent actual broadcasting to avoid connection errors in tests
+        Event::fake([NewNotification::class]);
     }
 
     // ==================== LIKE TESTS ====================

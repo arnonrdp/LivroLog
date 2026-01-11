@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  *     @OA\Property(property="id", type="string", example="N-3D6Y-9IO8"),
  *     @OA\Property(property="user_id", type="string", example="U-ABC1-DEF2"),
  *     @OA\Property(property="actor_id", type="string", example="U-XYZ3-UVW4"),
- *     @OA\Property(property="type", type="string", enum={"activity_liked", "activity_commented", "follow_accepted"}, example="activity_liked"),
+ *     @OA\Property(property="type", type="string", enum={"activity_liked", "activity_commented", "new_follower", "follow_request", "follow_accepted"}, example="activity_liked"),
  *     @OA\Property(property="notifiable_type", type="string", example="Activity"),
  *     @OA\Property(property="notifiable_id", type="string", example="A-DEF5-GHI6"),
  *     @OA\Property(property="data", type="object", nullable=true),
