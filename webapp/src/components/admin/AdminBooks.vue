@@ -1,6 +1,7 @@
 <template>
   <q-table
     v-model:pagination="pagination"
+    binary-state-sort
     :columns="columns"
     :dense="$q.screen.lt.md"
     :filter="filter"
@@ -85,7 +86,13 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
-        <q-input v-model="editForm.title" class="q-mb-sm" dense :label="$t('admin.book-title') + ' *'" :rules="[(v) => !!v || $t('admin.book-title-required')]" />
+        <q-input
+          v-model="editForm.title"
+          class="q-mb-sm"
+          dense
+          :label="$t('admin.book-title') + ' *'"
+          :rules="[(v) => !!v || $t('admin.book-title-required')]"
+        />
         <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
         <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
         <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
@@ -360,7 +367,10 @@ function saveBook() {
       fetchBooks(pagination.value.page, pagination.value.rowsPerPage, filter.value, pagination.value.sortBy, pagination.value.descending)
     })
     .catch((error) => {
-      Notify.create({ message: error.response?.data?.message || t(isEditMode.value ? 'admin.error-updating' : 'admin.error-creating'), type: 'negative' })
+      Notify.create({
+        message: error.response?.data?.message || t(isEditMode.value ? 'admin.error-updating' : 'admin.error-creating'),
+        type: 'negative'
+      })
     })
     .finally(() => {
       isSaving.value = false

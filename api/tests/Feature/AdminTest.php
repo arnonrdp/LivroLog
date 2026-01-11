@@ -557,6 +557,25 @@ class AdminTest extends TestCase
         $this->assertEquals($sortedTitles, $titles);
     }
 
+    public function test_admin_books_endpoint_supports_sorting_by_amazon_asin(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        Book::factory()->create(['title' => 'Book A', 'amazon_asin' => 'B000000001']);
+        Book::factory()->create(['title' => 'Book B', 'amazon_asin' => 'B000000003']);
+        Book::factory()->create(['title' => 'Book C', 'amazon_asin' => 'B000000002']);
+
+        $response = $this->getJson('/admin/books?sort_by=amazon_asin&sort_desc=false');
+
+        $response->assertStatus(200);
+
+        $data = $response->json('data');
+        $asins = array_column($data, 'amazon_asin');
+        $sortedAsins = $asins;
+        sort($sortedAsins);
+        $this->assertEquals($sortedAsins, $asins);
+    }
+
     // ==================== Book Create Tests ====================
 
     public function test_admin_can_create_book(): void

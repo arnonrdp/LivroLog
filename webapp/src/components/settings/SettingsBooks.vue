@@ -2,6 +2,7 @@
   <p>{{ $t('books-description') }}</p>
 
   <q-table
+    binary-state-sort
     :columns="columns"
     :dense="$q.screen.lt.md"
     flat

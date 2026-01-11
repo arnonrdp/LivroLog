@@ -124,7 +124,7 @@ class AdminController extends Controller
         // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDesc = $request->boolean('sort_desc', true);
-        $allowedSortColumns = ['title', 'authors', 'isbn', 'language', 'page_count', 'users_count', 'created_at'];
+        $allowedSortColumns = ['title', 'authors', 'isbn', 'amazon_asin', 'language', 'page_count', 'users_count', 'created_at'];
 
         if (in_array($sortBy, $allowedSortColumns)) {
             $query->orderBy($sortBy, $sortDesc ? 'desc' : 'asc');

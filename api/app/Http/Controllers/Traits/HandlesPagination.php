@@ -14,8 +14,8 @@ trait HandlesPagination
      */
     public function applyPagination($query, Request $request)
     {
-        $page = $request->input('pagination.page', 1);
-        $perPage = $request->input('pagination.rowsPerPage', 20);
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 20);
 
         return $query->paginate($perPage, ['*'], 'page', $page);
     }

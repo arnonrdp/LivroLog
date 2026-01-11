@@ -1,6 +1,7 @@
 <template>
   <q-table
     v-model:pagination="pagination"
+    binary-state-sort
     :columns="columns"
     :dense="$q.screen.lt.md"
     :filter="filter"
@@ -23,7 +24,7 @@
       <q-td :props="props">
         <div>
           <span class="text-weight-medium">{{ props.row.display_name }}</span>
-          <span class="text-grey-6"> &bull; </span>
+          <span class="text-grey-6">&bull;</span>
           <router-link :to="`/${props.row.username}`">@{{ props.row.username }}</router-link>
         </div>
         <div class="text-caption text-grey-6">{{ props.row.email }}</div>
@@ -87,18 +88,10 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-input v-model="editForm.display_name" dense :label="$t('admin.display-name')" class="q-mb-sm" />
-        <q-input v-model="editForm.username" dense :label="$t('admin.username')" class="q-mb-sm" />
-        <q-input v-model="editForm.email" dense :label="$t('admin.email')" type="email" class="q-mb-sm" />
-        <q-select
-          v-model="editForm.role"
-          dense
-          emit-value
-          :label="$t('admin.role')"
-          map-options
-          :options="roleOptions"
-          class="q-mb-sm"
-        />
+        <q-input v-model="editForm.display_name" class="q-mb-sm" dense :label="$t('admin.display-name')" />
+        <q-input v-model="editForm.username" class="q-mb-sm" dense :label="$t('admin.username')" />
+        <q-input v-model="editForm.email" class="q-mb-sm" dense :label="$t('admin.email')" type="email" />
+        <q-select v-model="editForm.role" class="q-mb-sm" dense emit-value :label="$t('admin.role')" map-options :options="roleOptions" />
       </q-card-section>
 
       <q-card-actions align="right">
@@ -112,7 +105,7 @@
   <q-dialog v-model="deleteDialog" persistent>
     <q-card>
       <q-card-section class="row items-center">
-        <q-icon color="negative" name="warning" size="2em" class="q-mr-sm" />
+        <q-icon class="q-mr-sm" color="negative" name="warning" size="2em" />
         <span>{{ $t('admin.confirm-delete-user', { name: userToDelete?.display_name }) }}</span>
       </q-card-section>
 
