@@ -9,6 +9,212 @@ use Illuminate\Support\Facades\Log;
 class AmazonEnrichmentService
 {
     /**
+     * Enrich book with Amazon data (admin version with scraper fallback)
+     * Returns detailed result for admin UI feedback
+     *
+     * @param  bool  $forceRefresh  If true, will re-fetch even if book has ASIN
+     */
+    public function enrichBookWithAmazonAdmin(Book $book, bool $forceRefresh = false): array
+    {
+        try {
+            // Skip if book already has ASIN and not forcing refresh
+            if ($book->amazon_asin && ! $forceRefresh) {
+                return [
+                    'success' => true,
+                    'message' => 'Book already has ASIN',
+                    'source' => null,
+                    'fields_filled' => [],
+                ];
+            }
+
+            Log::info("Starting admin Amazon enrichment for book: {$book->title} (ID: {$book->id})", [
+                'force_refresh' => $forceRefresh,
+            ]);
+
+            // Step 1: Try PA-API first
+            $amazonData = $this->searchAmazonBook($book);
+            $source = 'pa-api';
+
+            // Step 2: If PA-API failed, try web scraping
+            if (! $amazonData) {
+                Log::info("PA-API failed for book {$book->id}, trying web scraper");
+                $scraperService = app(AmazonScraperService::class);
+                $amazonData = $scraperService->searchAndExtract($book);
+                $source = 'scraper';
+            }
+
+            if ($amazonData) {
+                $filledFields = $this->updateBookWithAmazonDataAdmin($book, $amazonData, $forceRefresh);
+                Log::info("Successfully enriched book {$book->id} with Amazon data via {$source}");
+
+                return [
+                    'success' => true,
+                    'message' => "Book enriched via {$source}",
+                    'source' => $source,
+                    'fields_filled' => $filledFields,
+                ];
+            }
+
+            // Neither PA-API nor scraper found data
+            $book->update([
+                'asin_status' => 'completed',
+                'asin_processed_at' => now(),
+            ]);
+
+            Log::warning("Could not find Amazon data for book {$book->id}: {$book->title}");
+
+            return [
+                'success' => false,
+                'message' => 'Could not find Amazon data',
+                'source' => null,
+                'fields_filled' => [],
+            ];
+
+        } catch (\Exception $e) {
+            $book->update([
+                'asin_status' => 'failed',
+                'asin_processed_at' => now(),
+            ]);
+            Log::error("Admin Amazon enrichment failed for book {$book->id}: {$e->getMessage()}");
+
+            return [
+                'success' => false,
+                'message' => 'Error enriching with Amazon: '.$e->getMessage(),
+                'source' => null,
+                'fields_filled' => [],
+            ];
+        }
+    }
+
+    /**
+     * Try to enrich book using PA-API only (no scraper fallback)
+     * Used by admin endpoint - if this fails, frontend will show URL input dialog
+     */
+    public function enrichBookWithPaApiOnly(Book $book): array
+    {
+        try {
+            Log::info("Trying PA-API only for book: {$book->title} (ID: {$book->id})");
+
+            // Try PA-API
+            $amazonData = $this->searchAmazonBook($book);
+
+            if ($amazonData) {
+                $filledFields = $this->updateBookWithAmazonDataAdmin($book, $amazonData, true);
+                Log::info("Successfully enriched book {$book->id} with PA-API");
+
+                return [
+                    'success' => true,
+                    'message' => 'Book enriched via PA-API',
+                    'source' => 'pa-api',
+                    'fields_filled' => $filledFields,
+                ];
+            }
+
+            // PA-API didn't find data - don't try scraper, let frontend handle it
+            Log::info("PA-API returned no data for book {$book->id}, manual URL needed");
+
+            return [
+                'success' => false,
+                'message' => 'PA-API could not find this book. Please provide Amazon URL manually.',
+                'source' => null,
+                'fields_filled' => [],
+            ];
+
+        } catch (\Exception $e) {
+            Log::error("PA-API failed for book {$book->id}: {$e->getMessage()}");
+
+            return [
+                'success' => false,
+                'message' => 'PA-API error: '.$e->getMessage(),
+                'source' => null,
+                'fields_filled' => [],
+            ];
+        }
+    }
+
+    /**
+     * Update book with Amazon data (admin version - can force overwrite)
+     * Returns list of fields that were filled
+     */
+    private function updateBookWithAmazonDataAdmin(Book $book, array $amazonData, bool $forceUpdate = false): array
+    {
+        $updateData = [
+            'asin_status' => 'completed',
+            'asin_processed_at' => now(),
+        ];
+
+        $filledFields = [];
+
+        // Always update ASIN if available
+        if (isset($amazonData['amazon_asin']) && ! empty($amazonData['amazon_asin'])) {
+            $updateData['amazon_asin'] = $amazonData['amazon_asin'];
+            $filledFields[] = 'amazon_asin';
+        }
+
+        // Update thumbnail if Amazon has one and (book doesn't have one OR current is placeholder OR force update)
+        $needsThumbnail = empty($book->thumbnail) || $this->isPlaceholderThumbnail($book->thumbnail);
+        if (! empty($amazonData['thumbnail']) && ($forceUpdate || $needsThumbnail)) {
+            $updateData['thumbnail'] = $amazonData['thumbnail'];
+            $filledFields[] = 'thumbnail';
+        }
+
+        // Update ISBN if Amazon has one and book doesn't
+        if (! empty($amazonData['isbn']) && empty($book->isbn)) {
+            $updateData['isbn'] = $amazonData['isbn'];
+            $filledFields[] = 'isbn';
+        }
+
+        // Add physical dimensions if available
+        if (! empty($amazonData['height']) && ($forceUpdate || empty($book->height))) {
+            $updateData['height'] = $amazonData['height'];
+            $filledFields[] = 'height';
+        }
+        if (! empty($amazonData['width']) && ($forceUpdate || empty($book->width))) {
+            $updateData['width'] = $amazonData['width'];
+            $filledFields[] = 'width';
+        }
+        if (! empty($amazonData['thickness']) && ($forceUpdate || empty($book->thickness))) {
+            $updateData['thickness'] = $amazonData['thickness'];
+            $filledFields[] = 'thickness';
+        }
+
+        // Update other fields if missing (or force update)
+        if (! empty($amazonData['page_count']) && ($forceUpdate || empty($book->page_count))) {
+            $updateData['page_count'] = $amazonData['page_count'];
+            $filledFields[] = 'page_count';
+        }
+
+        if (! empty($amazonData['description'])) {
+            $existingLength = strlen($book->description ?? '');
+            $newLength = strlen($amazonData['description']);
+            // Update if: forced, no existing description, OR Amazon description is significantly longer (>50% more)
+            if ($forceUpdate || $existingLength === 0 || $newLength > $existingLength * 1.5) {
+                $updateData['description'] = $amazonData['description'];
+                $filledFields[] = 'description';
+            }
+        }
+
+        if (! empty($amazonData['publisher']) && ($forceUpdate || empty($book->publisher))) {
+            $updateData['publisher'] = $amazonData['publisher'];
+            $filledFields[] = 'publisher';
+        }
+
+        if (! empty($amazonData['authors']) && ($forceUpdate || empty($book->authors))) {
+            $updateData['authors'] = $amazonData['authors'];
+            $filledFields[] = 'authors';
+        }
+
+        $book->update($updateData);
+
+        Log::info("Updated book {$book->id} with Amazon data (admin)", [
+            'fields_updated' => $filledFields,
+            'force_update' => $forceUpdate,
+        ]);
+
+        return $filledFields;
+    }
+
+    /**
      * Enrich book with Amazon data synchronously
      * Returns array with success status and filled fields
      */
@@ -395,9 +601,14 @@ class AmazonEnrichmentService
                 $filledFields[] = 'page_count';
             }
 
-            if (! empty($amazonData['description']) && empty($book->description)) {
-                $updateData['description'] = $amazonData['description'];
-                $filledFields[] = 'description';
+            if (! empty($amazonData['description'])) {
+                $existingLength = strlen($book->description ?? '');
+                $newLength = strlen($amazonData['description']);
+                // Update if: no existing description, OR Amazon description is significantly longer (>50% more)
+                if ($existingLength === 0 || $newLength > $existingLength * 1.5) {
+                    $updateData['description'] = $amazonData['description'];
+                    $filledFields[] = 'description';
+                }
             }
 
             if (! empty($amazonData['publisher']) && empty($book->publisher)) {
@@ -419,5 +630,43 @@ class AmazonEnrichmentService
         ]);
 
         return $filledFields;
+    }
+
+    /**
+     * Check if a thumbnail URL is a placeholder or likely invalid
+     */
+    private function isPlaceholderThumbnail(?string $url): bool
+    {
+        if (empty($url)) {
+            return true;
+        }
+
+        // Check for placeholder IDs in Google Books URLs
+        if (str_contains($url, 'books.google.com')) {
+            // id=test or similar placeholder IDs
+            if (preg_match('/[?&]id=(test|placeholder|dummy|example|sample|xxx)/i', $url)) {
+                return true;
+            }
+        }
+
+        // Check for known placeholder image URLs
+        $placeholderPatterns = [
+            'placeholder',
+            'no-image',
+            'noimage',
+            'no_image',
+            'default-cover',
+            'default_cover',
+            'missing-cover',
+        ];
+
+        $urlLower = strtolower($url);
+        foreach ($placeholderPatterns as $pattern) {
+            if (str_contains($urlLower, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

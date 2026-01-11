@@ -267,7 +267,9 @@ const imageError = ref(false)
 
 const sanitizedDescription = computed(() => {
   if (!book.value?.description) return ''
-  return DOMPurify.sanitize(book.value.description)
+  // Convert newlines to <br> tags for proper HTML rendering
+  const withLineBreaks = book.value.description.replace(/\n/g, '<br>')
+  return DOMPurify.sanitize(withLineBreaks)
 })
 
 const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
@@ -369,8 +371,14 @@ const highResThumbnail = computed(() => {
   const url = book.value.thumbnail
   const { isGoogle, isAmazon } = isAllowedImageHost(url)
 
-  // Google Books: change zoom=1 to zoom=0 (max resolution)
+  // Google Books: only upgrade zoom if there's NO imgtk token
+  // The imgtk token is tied to a specific zoom level, changing zoom breaks it
   if (isGoogle) {
+    // If URL has imgtk parameter, don't modify it - the token is zoom-specific
+    if (url.includes('imgtk=')) {
+      return url
+    }
+    // Only modify zoom for URLs without imgtk (older/simpler format)
     return url.replace(/zoom=\d/, 'zoom=0')
   }
 

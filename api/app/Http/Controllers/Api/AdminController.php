@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Traits\HandlesPagination;
 use App\Models\Book;
 use App\Models\User;
+use App\Services\AmazonEnrichmentService;
+use App\Services\AmazonScraperService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -158,5 +161,267 @@ class AdminController extends Controller
                 'total' => $books->total(),
             ],
         ]);
+    }
+
+    /**
+     * Enrich a single book with Amazon data (synchronous, admin only)
+     *
+     * If amazon_url is provided, extracts data directly from that URL.
+     * Otherwise, tries PA-API only. If PA-API fails, returns needs_url=true
+     * so frontend can show dialog for manual URL input.
+     */
+    public function enrichBookWithAmazon(Request $request, Book $book, AmazonEnrichmentService $enrichmentService): JsonResponse
+    {
+        $amazonUrl = $request->input('amazon_url');
+
+        // If URL provided, use direct extraction (manual fallback)
+        if ($amazonUrl) {
+            return $this->enrichFromUrl($book, $amazonUrl);
+        }
+
+        // Try PA-API only (no automatic scraping)
+        $result = $enrichmentService->enrichBookWithPaApiOnly($book);
+
+        // Reload book to get fresh data
+        $book->refresh();
+
+        // If PA-API failed, indicate that manual URL is needed
+        if (! $result['success']) {
+            return response()->json([
+                'success' => false,
+                'needs_url' => true,
+                'message' => $result['message'] ?? 'PA-API unavailable',
+                'source' => null,
+                'fields_filled' => [],
+                'book' => $this->formatBookResponse($book),
+            ]);
+        }
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'source' => $result['source'] ?? 'pa-api',
+            'fields_filled' => $result['fields_filled'],
+            'book' => $this->formatBookResponse($book),
+        ]);
+    }
+
+    /**
+     * Enrich book from a specific Amazon URL
+     */
+    private function enrichFromUrl(Book $book, string $amazonUrl): JsonResponse
+    {
+        // Validate URL is from Amazon
+        if (! $this->isValidAmazonUrl($amazonUrl)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Amazon URL. Please provide a valid amazon.com or amazon.com.br product link.',
+                'source' => null,
+                'fields_filled' => [],
+                'book' => $this->formatBookResponse($book),
+            ], 422);
+        }
+
+        $scraper = app(AmazonScraperService::class);
+        $amazonData = $scraper->extractFromUrl($amazonUrl);
+
+        if (! $amazonData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not extract data from the provided Amazon URL. Please check the URL and try again.',
+                'source' => null,
+                'fields_filled' => [],
+                'book' => $this->formatBookResponse($book),
+            ], 422);
+        }
+
+        // Check if ISBN already exists in another book
+        if (! empty($amazonData['isbn'])) {
+            $existingBook = Book::where('isbn', $amazonData['isbn'])
+                ->where('id', '!=', $book->id)
+                ->first();
+
+            if ($existingBook) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "ISBN {$amazonData['isbn']} already exists in another book: {$existingBook->title}",
+                    'source' => null,
+                    'fields_filled' => [],
+                    'book' => $this->formatBookResponse($book),
+                ], 422);
+            }
+        }
+
+        // Check if ASIN already exists in another book
+        if (! empty($amazonData['amazon_asin'])) {
+            $existingBook = Book::where('amazon_asin', $amazonData['amazon_asin'])
+                ->where('id', '!=', $book->id)
+                ->first();
+
+            if ($existingBook) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "ASIN {$amazonData['amazon_asin']} already exists in another book: {$existingBook->title}",
+                    'source' => null,
+                    'fields_filled' => [],
+                    'book' => $this->formatBookResponse($book),
+                ], 422);
+            }
+        }
+
+        // Update book with ALL available data from Amazon (admin chose this product)
+        $filledFields = $this->updateBookFromAmazonData($book, $amazonData);
+
+        $book->refresh();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Book enriched from Amazon URL',
+            'source' => 'url',
+            'fields_filled' => $filledFields,
+            'book' => $this->formatBookResponse($book),
+        ]);
+    }
+
+    /**
+     * Validate that URL is from Amazon
+     */
+    private function isValidAmazonUrl(string $url): bool
+    {
+        try {
+            $host = parse_url($url, PHP_URL_HOST);
+            if (! $host) {
+                return false;
+            }
+
+            $host = strtolower($host);
+
+            // Check if it's an Amazon domain (including short URLs)
+            $amazonDomains = [
+                'a.co',
+                'amzn.to',
+                'amzn.com',
+                'amazon.com',
+                'amazon.com.br',
+                'amazon.co.uk',
+                'amazon.ca',
+                'amazon.de',
+                'amazon.fr',
+                'amazon.es',
+                'amazon.it',
+                'amazon.co.jp',
+                'www.amazon.com',
+                'www.amazon.com.br',
+                'www.amazon.co.uk',
+                'www.amazon.ca',
+                'www.amazon.de',
+                'www.amazon.fr',
+                'www.amazon.es',
+                'www.amazon.it',
+                'www.amazon.co.jp',
+            ];
+
+            foreach ($amazonDomains as $domain) {
+                if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Update book with Amazon data (overwrites all fields since admin chose the product)
+     */
+    private function updateBookFromAmazonData(Book $book, array $amazonData): array
+    {
+        $updateData = [
+            'asin_status' => 'completed',
+            'asin_processed_at' => now(),
+        ];
+
+        $filledFields = [];
+
+        // ASIN (always update)
+        if (! empty($amazonData['amazon_asin'])) {
+            $updateData['amazon_asin'] = $amazonData['amazon_asin'];
+            $filledFields[] = 'amazon_asin';
+        }
+
+        // Thumbnail (always update if available - admin chose this product)
+        if (! empty($amazonData['thumbnail'])) {
+            $updateData['thumbnail'] = $amazonData['thumbnail'];
+            $filledFields[] = 'thumbnail';
+        }
+
+        // ISBN (update if available)
+        if (! empty($amazonData['isbn'])) {
+            $updateData['isbn'] = $amazonData['isbn'];
+            $filledFields[] = 'isbn';
+        }
+
+        // Page count (update if available)
+        if (! empty($amazonData['page_count'])) {
+            $updateData['page_count'] = $amazonData['page_count'];
+            $filledFields[] = 'page_count';
+        }
+
+        // Description (update if Amazon has a longer/better description)
+        if (! empty($amazonData['description'])) {
+            $existingLength = strlen($book->description ?? '');
+            $newLength = strlen($amazonData['description']);
+
+            // Update if: no existing description, OR Amazon description is significantly longer (>50% more)
+            if ($existingLength === 0 || $newLength > $existingLength * 1.5) {
+                $updateData['description'] = $amazonData['description'];
+                $filledFields[] = 'description';
+            }
+        }
+
+        // Publisher (update if available)
+        if (! empty($amazonData['publisher'])) {
+            $updateData['publisher'] = $amazonData['publisher'];
+            $filledFields[] = 'publisher';
+        }
+
+        // Physical dimensions
+        if (! empty($amazonData['height'])) {
+            $updateData['height'] = $amazonData['height'];
+            $filledFields[] = 'height';
+        }
+        if (! empty($amazonData['width'])) {
+            $updateData['width'] = $amazonData['width'];
+            $filledFields[] = 'width';
+        }
+        if (! empty($amazonData['thickness'])) {
+            $updateData['thickness'] = $amazonData['thickness'];
+            $filledFields[] = 'thickness';
+        }
+
+        $book->update($updateData);
+
+        return $filledFields;
+    }
+
+    /**
+     * Format book data for response
+     */
+    private function formatBookResponse(Book $book): array
+    {
+        return [
+            'id' => $book->id,
+            'title' => $book->title,
+            'amazon_asin' => $book->amazon_asin,
+            'asin_status' => $book->asin_status,
+            'thumbnail' => $book->thumbnail,
+            'isbn' => $book->isbn,
+            'page_count' => $book->page_count,
+            'description' => $book->description,
+            'publisher' => $book->publisher,
+            'authors' => $book->authors,
+        ];
     }
 }
