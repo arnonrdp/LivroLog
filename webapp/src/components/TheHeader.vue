@@ -6,21 +6,29 @@
 
     <q-space />
 
-    <!-- Notification Bell (Authenticated Only) -->
-    <NotificationBell v-if="authStore.isAuthenticated" class="notification-bell" />
-
     <!-- Authenticated User Navigation -->
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
       <LiquidGlassNav />
       <q-route-tab
-        v-for="t in tabs"
+        v-for="t in tabsBeforeSettings"
         :key="t.name"
         active-class="tab--active text-primary"
         class="tab-item"
         :exact="t.name === 'home'"
         :icon="t.icon"
         :name="t.name"
-        :to="t.name === 'settings' ? settingsTo : t.name === 'people' ? peopleTo : t.name === 'admin' ? adminTo : t.to"
+        :to="t.name === 'people' ? peopleTo : t.name === 'admin' ? adminTo : t.to"
+        @click="createRipple"
+      />
+      <!-- Notification Bell -->
+      <NotificationBell class="notification-bell" />
+      <!-- Settings Tab -->
+      <q-route-tab
+        active-class="tab--active text-primary"
+        class="tab-item"
+        icon="settings"
+        name="settings"
+        :to="settingsTo"
         @click="createRipple"
       />
     </q-tabs>
@@ -70,6 +78,8 @@ const tabs = computed(() => {
   }
   return baseTabs
 })
+
+const tabsBeforeSettings = computed(() => tabs.value.filter((t) => t.name !== 'settings'))
 
 const peopleTo = computed(() => {
   const path = route.path || '/'
@@ -265,11 +275,7 @@ img[alt='Logotipo']
     display: none
 
 .notification-bell
-  margin-right: 8px
-  @media screen and (max-width: $breakpoint-xs-max)
-    position: absolute
-    right: 1rem
-    top: 50%
-    transform: translateY(-50%)
-    z-index: 10
+  align-items: center
+  display: flex
+  margin: 0 4px
 </style>
