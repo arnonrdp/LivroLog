@@ -294,7 +294,7 @@ const pageDescription = computed(() => {
 })
 
 const pageImage = computed(() => {
-  return book.value?.thumbnail || ''
+  return book.value?.thumbnail || `${baseUrl}/no_cover.jpg`
 })
 
 useMeta(() => ({

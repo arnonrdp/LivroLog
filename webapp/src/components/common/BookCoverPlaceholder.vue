@@ -32,9 +32,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const sizeClass = computed(() => `size-${props.size}`)
 
-// Generate a consistent color based on the title
+// Normalize the title for consistent color hashing
+const normalizedTitle = computed(() => props.title.trim().toLowerCase())
+
+// Generate a consistent color based on the normalized title
 const backgroundColor = computed(() => {
-  const hash = props.title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
   const colors = [
     '#5c6bc0', // indigo
     '#7e57c2', // purple
@@ -45,6 +47,15 @@ const backgroundColor = computed(() => {
     '#42a5f5', // blue
     '#ab47bc' // violet
   ]
+
+  const title = normalizedTitle.value
+
+  // Fallback for empty/whitespace-only titles
+  if (!title) {
+    return colors[0]
+  }
+
+  const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
   return colors[hash % colors.length]
 })
 
