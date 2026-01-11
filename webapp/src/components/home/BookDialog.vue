@@ -731,7 +731,7 @@ function getBookId(): string | null {
     return book.value.id
   }
 
-  const userBooks = userStore.me.books || []
+  const userBooks = userStore.me?.books || []
   const internalBook = userBooks.find((b) => b.google_id === book.value?.google_id)
 
   if (internalBook && internalBook.id.startsWith('B-')) {
@@ -801,7 +801,7 @@ function updateLibraryStatus() {
     return
   }
 
-  const userBooks = userStore.me.books || []
+  const userBooks = userStore.me?.books || []
 
   const result = userBooks.some((book) => {
     if (bookId && book.id === bookId) return true

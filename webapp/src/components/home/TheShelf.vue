@@ -31,6 +31,7 @@ import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, User } from '@/models'
 import { useAuthStore } from '@/stores'
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import BookDialog from './BookDialog.vue'
 import EmptyShelfState from './EmptyShelfState.vue'
 import GoodReadsImportDialog from './GoodReadsImportDialog.vue'
@@ -45,6 +46,7 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const filter = ref('')
 const showBookDialog = ref(false)
@@ -52,9 +54,9 @@ const showImportDialog = ref(false)
 const selectedBookId = ref<string | undefined>()
 
 const canOpenBookDialog = computed(() => {
-  // Users can always open books from their own shelf
-  // For other users' shelves, only authenticated users can open the dialog
-  return !props.userIdentifier || authStore.isAuthenticated
+  // Books are always clickable - both on own shelf and public profiles
+  // The BookDialog handles authentication-specific features appropriately
+  return true
 })
 
 function onFilter(title: Book['title']) {
@@ -64,6 +66,13 @@ function onFilter(title: Book['title']) {
 function openBookDialog(book: Book) {
   if (!canOpenBookDialog.value) return
 
+  // If viewing another user's shelf and not authenticated, navigate to book page
+  if (props.userIdentifier && !authStore.isAuthenticated) {
+    router.push({ name: 'book', params: { bookId: book.id } })
+    return
+  }
+
+  // Otherwise, open the dialog
   selectedBookId.value = book.id
   showBookDialog.value = true
 }
