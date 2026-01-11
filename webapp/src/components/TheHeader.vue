@@ -6,6 +6,9 @@
 
     <q-space />
 
+    <!-- Notification Bell (Authenticated Only) -->
+    <NotificationBell v-if="authStore.isAuthenticated" class="notification-bell" />
+
     <!-- Authenticated User Navigation -->
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
       <LiquidGlassNav />
@@ -42,6 +45,7 @@
 
 <script setup lang="ts">
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { useAuthStore, useUserStore } from '@/stores'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -119,9 +123,9 @@ const createRipple = (event: globalThis.Event) => {
   min-height: 56px
   text-align: left
   @media screen and (max-width: $breakpoint-xs-max)
-    display: block
-    padding-top: 1rem
-    text-align: center
+    justify-content: center
+    padding: 0.75rem 0
+    position: relative
 
 .logo-container
   align-items: center
@@ -254,4 +258,18 @@ img[alt='Logotipo']
     &:hover
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
       transform: translateY(-1px)
+
+// Hide q-space on mobile
+.header-nav > :deep(.q-space)
+  @media screen and (max-width: $breakpoint-xs-max)
+    display: none
+
+.notification-bell
+  margin-right: 8px
+  @media screen and (max-width: $breakpoint-xs-max)
+    position: absolute
+    right: 1rem
+    top: 50%
+    transform: translateY(-50%)
+    z-index: 10
 </style>

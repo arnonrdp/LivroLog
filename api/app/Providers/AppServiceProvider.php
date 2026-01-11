@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Activity;
 use App\Models\Book;
+use App\Models\Comment;
 use App\Models\Follow;
 use App\Models\Review;
 use App\Models\User;
@@ -34,11 +36,13 @@ class AppServiceProvider extends ServiceProvider
         // Disable data wrapping for all JSON resources
         JsonResource::withoutWrapping();
 
-        // Configure morph map for polymorphic relations (Activity->subject)
+        // Configure morph map for polymorphic relations (Activity->subject, Notification->notifiable)
         Relation::enforceMorphMap([
+            'Activity' => Activity::class,
             'Book' => Book::class,
-            'User' => User::class,
+            'Comment' => Comment::class,
             'Review' => Review::class,
+            'User' => User::class,
         ]);
 
         // Override the reset password URL sent in email to point to frontend page

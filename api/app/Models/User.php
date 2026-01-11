@@ -247,4 +247,36 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return ! is_null($this->google_id);
     }
+
+    /**
+     * Get the activity likes made by this user.
+     */
+    public function activityLikes()
+    {
+        return $this->hasMany(ActivityLike::class);
+    }
+
+    /**
+     * Get the comments made by this user.
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Get the app notifications for this user.
+     */
+    public function appNotifications()
+    {
+        return $this->hasMany(\App\Models\Notification::class);
+    }
+
+    /**
+     * Get the count of unread notifications.
+     */
+    public function unreadNotificationsCount(): int
+    {
+        return $this->appNotifications()->whereNull('read_at')->count();
+    }
 }

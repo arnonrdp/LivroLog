@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityInteractionController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\GoodReadsImportController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ImageProxyController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
@@ -80,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Admin dashboard
         Route::get('/admin/users', [AdminController::class, 'users']);
         Route::get('/admin/books', [AdminController::class, 'books']);
+        Route::post('/admin/books/{book}/enrich-amazon', [AdminController::class, 'enrichBookWithAmazon']);
 
         // Merge authors
         Route::post('/authors/merge', [\App\Http\Controllers\Api\AuthorMergeController::class, 'merge']);
@@ -147,4 +150,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Feed (activity feed)
     Route::get('/feeds', [FeedController::class, 'index']);
+
+    // Activity interactions (likes and comments)
+    Route::post('/activities/{activity}/like', [ActivityInteractionController::class, 'like']);
+    Route::delete('/activities/{activity}/like', [ActivityInteractionController::class, 'unlike']);
+    Route::get('/activities/{activity}/likes', [ActivityInteractionController::class, 'getLikes']);
+    Route::get('/activities/{activity}/comments', [ActivityInteractionController::class, 'getComments']);
+    Route::post('/activities/{activity}/comments', [ActivityInteractionController::class, 'addComment']);
+
+    // Comments
+    Route::put('/comments/{comment}', [ActivityInteractionController::class, 'updateComment']);
+    Route::delete('/comments/{comment}', [ActivityInteractionController::class, 'deleteComment']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });
