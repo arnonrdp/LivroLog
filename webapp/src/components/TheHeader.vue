@@ -31,6 +31,16 @@
         :to="settingsTo"
         @click="createRipple"
       />
+      <!-- Admin Tab (last) -->
+      <q-route-tab
+        v-if="isAdmin"
+        active-class="tab--active text-primary"
+        class="tab-item"
+        icon="admin_panel_settings"
+        name="admin"
+        :to="adminTo"
+        @click="createRipple"
+      />
     </q-tabs>
 
     <!-- Guest User Navigation -->
@@ -79,7 +89,7 @@ const tabs = computed(() => {
   return baseTabs
 })
 
-const tabsBeforeSettings = computed(() => tabs.value.filter((t) => t.name !== 'settings'))
+const tabsBeforeSettings = computed(() => tabs.value.filter((t) => t.name !== 'settings' && t.name !== 'admin'))
 
 const peopleTo = computed(() => {
   const path = route.path || '/'
