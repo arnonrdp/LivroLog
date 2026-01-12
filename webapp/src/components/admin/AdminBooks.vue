@@ -93,59 +93,103 @@
         <div class="text-h6">{{ isEditMode ? $t('admin.edit-book') : $t('admin.add-book') }}</div>
       </q-card-section>
 
-      <q-card-section v-if="editForm.thumbnail" class="q-pt-none text-center">
-        <img alt="Cover" class="book-cover-preview" :src="editForm.thumbnail" />
-      </q-card-section>
+      <!-- Mode selector (only for create mode) -->
+      <q-tabs v-if="!isEditMode" v-model="createMode" active-color="primary" class="text-grey-7" dense indicator-color="primary" no-caps>
+        <q-tab :label="$t('admin.create-from-amazon')" name="amazon" />
+        <q-tab :label="$t('admin.create-manual')" name="manual" />
+      </q-tabs>
+      <q-separator v-if="!isEditMode" />
 
-      <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
-        <q-input
-          v-model="editForm.title"
-          class="q-mb-sm"
-          dense
-          :label="$t('admin.book-title') + ' *'"
-          :rules="[(v) => !!v || $t('admin.book-title-required')]"
-        />
-        <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
-        <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
-        <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
-        <q-input v-model="editForm.google_id" class="q-mb-sm" dense :label="$t('admin.book-google-id')" />
-        <q-input v-model="editForm.language" class="q-mb-sm" dense :label="$t('admin.book-language')" />
-        <q-input v-model="editForm.publisher" class="q-mb-sm" dense :label="$t('admin.book-publisher')" />
-        <q-input v-model="editForm.page_count" class="q-mb-sm" dense :label="$t('admin.book-pages')" type="number" />
-        <q-input v-model="editForm.published_date" class="q-mb-sm" dense :label="$t('admin.book-published-date')" mask="####-##-##">
-          <template v-slot:append>
-            <q-icon class="cursor-pointer" name="event">
-              <q-popup-proxy cover transition-hide="scale" transition-show="scale">
-                <q-date v-model="editForm.published_date" mask="YYYY-MM-DD" minimal>
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup color="primary" flat :label="$t('close')" />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-icon>
-          </template>
-        </q-input>
-        <q-input v-model="editForm.thumbnail" class="q-mb-sm" dense :label="$t('admin.book-thumbnail')" />
-        <div class="q-mb-sm">
-          <div class="text-caption q-mb-xs text-grey-7">{{ $t('admin.book-description') }}</div>
-          <q-editor
-            v-model="editForm.description"
-            :dense="$q.screen.lt.md"
+      <!-- Amazon URL mode -->
+      <template v-if="!isEditMode && createMode === 'amazon'">
+        <q-card-section class="q-pt-lg q-pb-md">
+          <q-input
+            v-model="createAmazonUrl"
+            autofocus
+            dense
+            :error="!!createAmazonUrlError"
+            :error-message="createAmazonUrlError"
+            :hint="$t('admin.amazon-url-hint')"
+            :label="$t('admin.amazon-url')"
+            outlined
+            :placeholder="$t('admin.amazon-url-placeholder')"
+            @keyup.enter="createBookFromAmazon"
+          >
+            <template v-slot:prepend>
+              <q-icon name="link" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn v-close-popup flat :label="$t('cancel')" />
+          <q-btn
+            color="primary"
+            :disable="!createAmazonUrl.trim()"
             flat
-            min-height="150px"
-            :toolbar="[
-              ['bold', 'italic', 'underline'],
-              ['unordered', 'ordered'],
-              ['undo', 'redo']
-            ]"
+            :label="$t('admin.create-book')"
+            :loading="isCreatingFromAmazon"
+            @click="createBookFromAmazon"
           />
-        </div>
-      </q-card-section>
+        </q-card-actions>
+      </template>
 
-      <q-card-actions align="right">
-        <q-btn v-close-popup flat :label="$t('cancel')" />
-        <q-btn color="primary" flat :label="$t('save')" :loading="isSaving" @click="saveBook" />
-      </q-card-actions>
+      <!-- Manual mode / Edit mode -->
+      <template v-else>
+        <q-card-section v-if="editForm.thumbnail" class="q-pt-none text-center">
+          <img alt="Cover" class="book-cover-preview" :src="editForm.thumbnail" />
+        </q-card-section>
+
+        <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
+          <q-input
+            v-model="editForm.title"
+            class="q-mb-sm"
+            dense
+            :label="$t('admin.book-title') + ' *'"
+            :rules="[(v) => !!v || $t('admin.book-title-required')]"
+          />
+          <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
+          <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
+          <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
+          <q-input v-model="editForm.google_id" class="q-mb-sm" dense :label="$t('admin.book-google-id')" />
+          <q-input v-model="editForm.language" class="q-mb-sm" dense :label="$t('admin.book-language')" />
+          <q-input v-model="editForm.publisher" class="q-mb-sm" dense :label="$t('admin.book-publisher')" />
+          <q-input v-model="editForm.page_count" class="q-mb-sm" dense :label="$t('admin.book-pages')" type="number" />
+          <q-input v-model="editForm.published_date" class="q-mb-sm" dense :label="$t('admin.book-published-date')" mask="####-##-##">
+            <template v-slot:append>
+              <q-icon class="cursor-pointer" name="event">
+                <q-popup-proxy cover transition-hide="scale" transition-show="scale">
+                  <q-date v-model="editForm.published_date" mask="YYYY-MM-DD" minimal>
+                    <div class="row items-center justify-end">
+                      <q-btn v-close-popup color="primary" flat :label="$t('close')" />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+          <q-input v-model="editForm.thumbnail" class="q-mb-sm" dense :label="$t('admin.book-thumbnail')" />
+          <div class="q-mb-sm">
+            <div class="text-caption q-mb-xs text-grey-7">{{ $t('admin.book-description') }}</div>
+            <q-editor
+              v-model="editForm.description"
+              :dense="$q.screen.lt.md"
+              flat
+              min-height="150px"
+              :toolbar="[
+                ['bold', 'italic', 'underline'],
+                ['unordered', 'ordered'],
+                ['undo', 'redo']
+              ]"
+            />
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn v-close-popup flat :label="$t('cancel')" />
+          <q-btn color="primary" flat :label="$t('save')" :loading="isSaving" @click="saveBook" />
+        </q-card-actions>
+      </template>
     </q-card>
   </q-dialog>
 
@@ -298,6 +342,12 @@ const amazonBook = ref<AdminBook | null>(null)
 const amazonUrl = ref('')
 const amazonUrlError = ref('')
 const isEnrichingFromUrl = ref(false)
+
+// Create dialog mode: 'manual' or 'amazon'
+const createMode = ref<'manual' | 'amazon'>('amazon')
+const createAmazonUrl = ref('')
+const createAmazonUrlError = ref('')
+const isCreatingFromAmazon = ref(false)
 
 const columns = computed<QTableColumn<AdminBook>[]>(() => [
   { name: 'thumbnail', label: t('admin.book-cover'), field: 'thumbnail', align: 'center', style: 'width: 60px' },
@@ -507,6 +557,9 @@ function onRequest(props: Parameters<NonNullable<QTableProps['onRequest']>>[0]) 
 
 function openCreateDialog() {
   isEditMode.value = false
+  createMode.value = 'amazon'
+  createAmazonUrl.value = ''
+  createAmazonUrlError.value = ''
   editForm.value = {
     id: '',
     title: '',
@@ -542,6 +595,49 @@ function openEditDialog(book: AdminBook) {
     description: book.description || ''
   }
   editDialog.value = true
+}
+
+function createBookFromAmazon() {
+  if (!createAmazonUrl.value.trim()) return
+
+  const url = createAmazonUrl.value.trim()
+
+  if (!isValidAmazonUrl(url)) {
+    createAmazonUrlError.value = t('admin.amazon-url-invalid')
+    return
+  }
+
+  createAmazonUrlError.value = ''
+  isCreatingFromAmazon.value = true
+
+  api
+    .post('/admin/books/create-from-amazon', { amazon_url: url })
+    .then((response) => {
+      const data = response.data
+
+      if (data.success) {
+        Notify.create({
+          message: t('admin.book-created'),
+          type: 'positive',
+          caption: data.book.title
+        })
+        editDialog.value = false
+        fetchBooks(pagination.value.page, pagination.value.rowsPerPage, filter.value, pagination.value.sortBy, pagination.value.descending)
+      } else {
+        createAmazonUrlError.value = data.message || t('admin.error-creating')
+      }
+    })
+    .catch((error) => {
+      const status = error.response?.status
+      if (status >= 500) {
+        createAmazonUrlError.value = t('admin.amazon-enrich-error')
+      } else {
+        createAmazonUrlError.value = error.response?.data?.message || t('admin.error-creating')
+      }
+    })
+    .finally(() => {
+      isCreatingFromAmazon.value = false
+    })
 }
 
 function saveBook() {

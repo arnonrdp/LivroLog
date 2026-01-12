@@ -70,7 +70,10 @@
     "user-deleted": "ユーザーを削除しました",
     "user-updated": "ユーザーを更新しました",
     "username": "ユーザー名",
-    "users": "ユーザー"
+    "users": "ユーザー",
+    "create-manual": "手動",
+    "create-from-amazon": "Amazonからインポート",
+    "create-book": "書籍を作成"
   },
   "affiliate-disclosure": "LivroLogはAmazonアソシエイトプログラムに参加しており、対象となる購入から収益を得ています。",
   "already-in-library": "すでに図書館にあります",

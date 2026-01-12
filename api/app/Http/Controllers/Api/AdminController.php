@@ -424,4 +424,91 @@ class AdminController extends Controller
             'authors' => $book->authors,
         ];
     }
+
+    /**
+     * Create a new book from an Amazon URL
+     *
+     * Extracts book data from the Amazon product page and creates a new book.
+     */
+    public function createBookFromAmazonUrl(Request $request): JsonResponse
+    {
+        $request->validate([
+            'amazon_url' => 'required|string|url',
+        ]);
+
+        $amazonUrl = $request->input('amazon_url');
+
+        // Validate URL is from Amazon
+        if (! $this->isValidAmazonUrl($amazonUrl)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Amazon URL. Please provide a valid Amazon product link.',
+            ], 422);
+        }
+
+        $scraper = app(AmazonScraperService::class);
+        $amazonData = $scraper->extractFromUrl($amazonUrl);
+
+        if (! $amazonData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not extract data from the provided Amazon URL. Please check the URL and try again.',
+            ], 422);
+        }
+
+        // Check for required data (at least title or ASIN)
+        if (empty($amazonData['extracted_title']) && empty($amazonData['amazon_asin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not extract book information from the Amazon page.',
+            ], 422);
+        }
+
+        // Check if ISBN already exists
+        if (! empty($amazonData['isbn'])) {
+            $existingBook = Book::where('isbn', $amazonData['isbn'])->first();
+            if ($existingBook) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "A book with ISBN {$amazonData['isbn']} already exists: {$existingBook->title}",
+                    'existing_book' => $this->formatBookResponse($existingBook),
+                ], 422);
+            }
+        }
+
+        // Check if ASIN already exists
+        if (! empty($amazonData['amazon_asin'])) {
+            $existingBook = Book::where('amazon_asin', $amazonData['amazon_asin'])->first();
+            if ($existingBook) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "A book with ASIN {$amazonData['amazon_asin']} already exists: {$existingBook->title}",
+                    'existing_book' => $this->formatBookResponse($existingBook),
+                ], 422);
+            }
+        }
+
+        // Create the book
+        $book = Book::create([
+            'title' => $amazonData['extracted_title'] ?? 'Untitled',
+            'authors' => $amazonData['authors'] ?? null,
+            'isbn' => $amazonData['isbn'] ?? null,
+            'amazon_asin' => $amazonData['amazon_asin'] ?? null,
+            'thumbnail' => $amazonData['thumbnail'] ?? null,
+            'page_count' => $amazonData['page_count'] ?? null,
+            'description' => $amazonData['description'] ?? null,
+            'publisher' => $amazonData['publisher'] ?? null,
+            'height' => $amazonData['height'] ?? null,
+            'width' => $amazonData['width'] ?? null,
+            'thickness' => $amazonData['thickness'] ?? null,
+            'asin_status' => 'completed',
+            'asin_processed_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Book created successfully from Amazon URL',
+            'book' => $this->formatBookResponse($book),
+        ]);
+    }
 }

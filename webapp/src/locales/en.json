@@ -63,7 +63,10 @@
     "amazon-url-invalid": "Please enter a valid Amazon URL",
     "amazon-enriched": "Amazon enrichment successful ({fields} fields via {source})",
     "amazon-enrich-failed": "Could not find Amazon data for this book",
-    "amazon-enrich-error": "Error enriching with Amazon"
+    "amazon-enrich-error": "Error enriching with Amazon",
+    "create-manual": "Manual",
+    "create-from-amazon": "Import from Amazon",
+    "create-book": "Create book"
   },
   "account-created": "Your account has been created successfully!",
   "add": "Add book",

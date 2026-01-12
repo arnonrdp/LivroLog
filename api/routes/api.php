@@ -85,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/users', [AdminController::class, 'users']);
         Route::get('/admin/books', [AdminController::class, 'books']);
         Route::post('/admin/books/{book}/enrich-amazon', [AdminController::class, 'enrichBookWithAmazon']);
+        Route::post('/admin/books/create-from-amazon', [AdminController::class, 'createBookFromAmazonUrl']);
 
         // Merge authors
         Route::post('/authors/merge', [\App\Http\Controllers\Api\AuthorMergeController::class, 'merge']);
