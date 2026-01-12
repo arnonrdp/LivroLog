@@ -49,4 +49,21 @@
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-Content-Type-Options "nosniff"
     Header set X-XSS-Protection "1; mode=block"
+
+    # Cache de 1 ano para assets com hash (JS, CSS, fontes)
+    <FilesMatch "\.(js|css|woff2?|ttf|eot)$">
+        Header set Cache-Control "max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Cache de 7 dias para imagens
+    <FilesMatch "\.(png|jpg|jpeg|gif|webp|svg|ico)$">
+        Header set Cache-Control "max-age=604800, public"
+    </FilesMatch>
+
+    # SEM cache para index.html e service worker
+    <FilesMatch "(index\.html|sw\.js|site\.webmanifest)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
 </IfModule>

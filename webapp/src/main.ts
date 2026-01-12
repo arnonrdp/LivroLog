@@ -46,7 +46,33 @@ app.use(router)
 app.use(pinia)
 app.use(i18n)
 
-// Register Service Worker
-registerSW({ immediate: true })
+// Register Service Worker with update prompt
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    Notify.create({
+      message: 'Nova versão disponível!',
+      caption: 'Clique para atualizar',
+      icon: 'system_update',
+      color: 'primary',
+      timeout: 0,
+      actions: [
+        {
+          label: 'Atualizar',
+          color: 'white',
+          handler: () => updateSW(true)
+        },
+        {
+          label: 'Depois',
+          color: 'white',
+          handler: () => {}
+        }
+      ]
+    })
+  },
+  onOfflineReady() {
+    console.log('App ready for offline use')
+  }
+})
 
 app.mount('#app')

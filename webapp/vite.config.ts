@@ -75,7 +75,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         manifest: false,
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          cleanupOutdatedCaches: true,
+          globPatterns: ['**/*.{js,css,svg,png,jpg,jpeg,webp,woff,woff2}'],
           runtimeCaching: [
             // API endpoints caching - NetworkFirst strategy for fresh data with fallback
             {
