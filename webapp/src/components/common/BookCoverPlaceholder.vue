@@ -1,17 +1,17 @@
 <template>
   <svg :class="['book-placeholder', sizeClass]" viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
-    <rect width="200" height="300" :fill="backgroundColor" rx="4" />
+    <rect :fill="backgroundColor" height="300" rx="4" width="200" />
     <text
-      x="100"
-      y="150"
-      text-anchor="middle"
       dominant-baseline="middle"
       fill="white"
       font-family="system-ui, -apple-system, sans-serif"
       font-size="18"
       font-weight="500"
+      text-anchor="middle"
+      x="100"
+      y="150"
     >
-      <tspan v-for="(line, i) in titleLines" :key="i" x="100" :dy="i === 0 ? -((titleLines.length - 1) * 12) : 24">
+      <tspan v-for="(line, i) in titleLines" :key="i" :dy="i === 0 ? -((titleLines.length - 1) * 12) : 24" x="100">
         {{ line }}
       </tspan>
     </text>

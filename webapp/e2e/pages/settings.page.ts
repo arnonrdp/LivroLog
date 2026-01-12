@@ -79,6 +79,6 @@ export class SettingsPage {
 
   async getTagBooksCount(tagName: string): Promise<string> {
     const tagRow = this.page.locator('[data-testid="tag-row"]').filter({ hasText: tagName })
-    return await tagRow.locator('[data-testid="tag-books-count"]').textContent() || '0'
+    return (await tagRow.locator('[data-testid="tag-books-count"]').textContent()) || '0'
   }
 }

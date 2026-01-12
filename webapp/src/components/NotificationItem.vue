@@ -1,9 +1,5 @@
 <template>
-  <q-item
-    :class="{ 'bg-blue-1': !notification.is_read }"
-    clickable
-    @click="handleClick"
-  >
+  <q-item :class="{ 'bg-blue-1': !notification.is_read }" clickable @click="handleClick">
     <q-item-section avatar>
       <q-avatar size="40px">
         <q-img v-if="notification.actor.avatar" :src="notification.actor.avatar" />

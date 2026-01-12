@@ -78,10 +78,7 @@
           <!-- No tag option (at top) -->
           <q-item dense tag="label">
             <q-item-section avatar>
-              <q-checkbox
-                :model-value="isNoTagVisible"
-                @update:model-value="toggleNoTagFilter"
-              />
+              <q-checkbox :model-value="isNoTagVisible" @update:model-value="toggleNoTagFilter" />
             </q-item-section>
             <q-item-section avatar>
               <q-icon color="grey" name="label_off" size="xs" />
@@ -93,10 +90,7 @@
 
           <q-item v-for="tag in tags" :key="tag.id" dense tag="label">
             <q-item-section avatar>
-              <q-checkbox
-                :model-value="isTagVisible(tag.id)"
-                @update:model-value="toggleTagFilter(tag.id)"
-              />
+              <q-checkbox :model-value="isTagVisible(tag.id)" @update:model-value="toggleTagFilter(tag.id)" />
             </q-item-section>
             <q-item-section avatar>
               <div class="tag-color-dot" :style="{ backgroundColor: tag.color }"></div>

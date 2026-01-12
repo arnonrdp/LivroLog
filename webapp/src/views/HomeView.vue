@@ -76,9 +76,7 @@ const filteredBooks = computed(() => {
   // Text filter
   if (filter.value) {
     const searchLower = filter.value.toLowerCase()
-    books = books.filter(
-      (book) => book.title.toLowerCase().includes(searchLower) || book.authors?.toLowerCase().includes(searchLower)
-    )
+    books = books.filter((book) => book.title.toLowerCase().includes(searchLower) || book.authors?.toLowerCase().includes(searchLower))
   }
 
   // Tag filter - only apply if we have tags defined AND filter is active

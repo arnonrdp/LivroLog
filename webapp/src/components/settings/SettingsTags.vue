@@ -2,14 +2,7 @@
   <p>{{ $t('tags-description', 'Organize seus livros com etiquetas personalizadas.') }}</p>
 
   <div class="q-mb-md">
-    <q-btn
-      color="primary"
-      data-testid="create-tag-btn"
-      icon="add"
-      :label="$t('tags.create-title')"
-      no-caps
-      @click="openCreateDialog"
-    />
+    <q-btn color="primary" data-testid="create-tag-btn" icon="add" :label="$t('tags.create-title')" no-caps @click="openCreateDialog" />
   </div>
 
   <q-table
@@ -31,7 +24,7 @@
     </template>
 
     <template v-slot:body="props">
-      <q-tr :props="props" data-testid="tag-row">
+      <q-tr data-testid="tag-row" :props="props">
         <q-td key="color" :props="props">
           <div class="tag-color-dot" :style="{ backgroundColor: props.row.color }"></div>
         </q-td>
@@ -44,28 +37,10 @@
           <span data-testid="tag-books-count">{{ props.row.books_count || 0 }}</span>
         </q-td>
         <q-td key="actions" :props="props">
-          <q-btn
-            color="primary"
-            data-testid="edit-tag-btn"
-            dense
-            flat
-            icon="edit"
-            round
-            size="sm"
-            @click="openEditDialog(props.row)"
-          >
+          <q-btn color="primary" data-testid="edit-tag-btn" dense flat icon="edit" round size="sm" @click="openEditDialog(props.row)">
             <q-tooltip>{{ $t('edit') }}</q-tooltip>
           </q-btn>
-          <q-btn
-            color="negative"
-            data-testid="delete-tag-btn"
-            dense
-            flat
-            icon="delete"
-            round
-            size="sm"
-            @click="confirmDelete(props.row)"
-          >
+          <q-btn color="negative" data-testid="delete-tag-btn" dense flat icon="delete" round size="sm" @click="confirmDelete(props.row)">
             <q-tooltip>{{ $t('delete') }}</q-tooltip>
           </q-btn>
         </q-td>
@@ -81,15 +56,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-input
-          v-model="form.name"
-          autofocus
-          data-testid="tag-name-input"
-          dense
-          :label="$t('tags.name')"
-          :maxlength="50"
-          outlined
-        />
+        <q-input v-model="form.name" autofocus data-testid="tag-name-input" dense :label="$t('tags.name')" :maxlength="50" outlined />
 
         <div class="q-mt-md">
           <div class="text-caption text-grey-6 q-mb-sm">{{ $t('tags.choose-color') }}</div>
@@ -135,21 +102,8 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn
-          color="grey-6"
-          data-testid="cancel-delete-btn"
-          flat
-          :label="$t('cancel')"
-          @click="showDeleteDialog = false"
-        />
-        <q-btn
-          color="negative"
-          data-testid="confirm-delete-btn"
-          flat
-          :label="$t('delete')"
-          :loading="isDeleting"
-          @click="deleteTag"
-        />
+        <q-btn color="grey-6" data-testid="cancel-delete-btn" flat :label="$t('cancel')" @click="showDeleteDialog = false" />
+        <q-btn color="negative" data-testid="confirm-delete-btn" flat :label="$t('delete')" :loading="isDeleting" @click="deleteTag" />
       </q-card-actions>
     </q-card>
   </q-dialog>

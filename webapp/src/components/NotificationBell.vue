@@ -6,19 +6,12 @@
     </q-badge>
   </q-btn>
 
-  <q-dialog v-model="showNotifications" position="right" full-height>
+  <q-dialog v-model="showNotifications" full-height position="right">
     <q-card style="width: 400px; max-width: 100vw">
       <q-card-section class="row items-center q-pb-none">
         <div class="text-h6">{{ $t('notifications.title') }}</div>
         <q-space />
-        <q-btn
-          v-if="unreadCount > 0"
-          color="primary"
-          flat
-          :label="$t('notifications.mark-all-read')"
-          no-caps
-          @click="markAllRead"
-        />
+        <q-btn v-if="unreadCount > 0" color="primary" flat :label="$t('notifications.mark-all-read')" no-caps @click="markAllRead" />
         <q-btn v-close-popup flat icon="close" round />
       </q-card-section>
 

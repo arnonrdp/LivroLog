@@ -38,7 +38,7 @@ test.describe('Tags Feature', () => {
       await settingsPage.expectTagExists('Favoritos')
     })
 
-    test('user can create multiple tags', async ({ page }) => {
+    test('user can create multiple tags', async ({ page: _page }) => {
       await settingsPage.gotoTags()
 
       await settingsPage.createTag('Favoritos', 0)
@@ -48,7 +48,7 @@ test.describe('Tags Feature', () => {
       await settingsPage.expectTagCount(3)
     })
 
-    test('user can edit tag name', async ({ page }) => {
+    test('user can edit tag name', async ({ page: _page }) => {
       await settingsPage.gotoTags()
 
       await settingsPage.createTag('Original', 0)
@@ -59,7 +59,7 @@ test.describe('Tags Feature', () => {
       await settingsPage.expectTagNotExists('Original')
     })
 
-    test('user can edit tag color', async ({ page }) => {
+    test('user can edit tag color', async ({ page: _page }) => {
       await settingsPage.gotoTags()
 
       await settingsPage.createTag('TestTag', 0)
@@ -69,7 +69,7 @@ test.describe('Tags Feature', () => {
       await settingsPage.expectTagExists('TestTag')
     })
 
-    test('user can delete tag', async ({ page }) => {
+    test('user can delete tag', async ({ page: _page }) => {
       await settingsPage.gotoTags()
 
       await settingsPage.createTag('ToDelete', 0)

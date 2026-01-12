@@ -23,14 +23,7 @@
       <!-- Notification Bell -->
       <NotificationBell class="notification-bell" />
       <!-- Settings Tab -->
-      <q-route-tab
-        active-class="tab--active text-primary"
-        class="tab-item"
-        icon="settings"
-        name="settings"
-        :to="settingsTo"
-        @click="createRipple"
-      />
+      <q-route-tab active-class="tab--active text-primary" class="tab-item" icon="settings" name="settings" :to="settingsTo" @click="createRipple" />
       <!-- Admin Tab (last) -->
       <q-route-tab
         v-if="isAdmin"

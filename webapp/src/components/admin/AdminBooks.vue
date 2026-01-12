@@ -244,14 +244,7 @@
 
       <q-card-actions align="right">
         <q-btn v-close-popup flat :label="$t('cancel')" @click="closeAmazonDialog" />
-        <q-btn
-          color="primary"
-          :disable="!amazonUrl.trim()"
-          flat
-          :label="$t('admin.enrich')"
-          :loading="isEnrichingFromUrl"
-          @click="submitAmazonUrl"
-        />
+        <q-btn color="primary" :disable="!amazonUrl.trim()" flat :label="$t('admin.enrich')" :loading="isEnrichingFromUrl" @click="submitAmazonUrl" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -414,7 +407,7 @@ function enrichWithAmazon(book: AdminBook) {
         })
       }
     })
-    .catch((error) => {
+    .catch((_error) => {
       // On error, open dialog as fallback
       amazonBook.value = book
       amazonUrl.value = ''
@@ -438,7 +431,20 @@ function isValidAmazonUrl(url: string): boolean {
     const parsed = new URL(url)
     const host = parsed.hostname.toLowerCase()
     // Accept amazon domains and short URL domains
-    const validDomains = ['amazon.com', 'amazon.com.br', 'amazon.co.uk', 'amazon.ca', 'amazon.de', 'amazon.fr', 'amazon.es', 'amazon.it', 'amazon.co.jp', 'a.co', 'amzn.to', 'amzn.com']
+    const validDomains = [
+      'amazon.com',
+      'amazon.com.br',
+      'amazon.co.uk',
+      'amazon.ca',
+      'amazon.de',
+      'amazon.fr',
+      'amazon.es',
+      'amazon.it',
+      'amazon.co.jp',
+      'a.co',
+      'amzn.to',
+      'amzn.com'
+    ]
     return validDomains.some((domain) => host === domain || host === `www.${domain}` || host.endsWith(`.${domain}`))
   } catch {
     return false

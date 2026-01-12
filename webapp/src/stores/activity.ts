@@ -143,9 +143,7 @@ export const useActivityStore = defineStore('activity', {
 
     updateActivityLikeState(activityId: string, isLiked: boolean, likesCount: number) {
       // Find and update the activity group containing this activity
-      const group = this._feed.find(
-        (g) => g.first_activity_id === activityId || g.activities.some((a) => a.id === activityId)
-      )
+      const group = this._feed.find((g) => g.first_activity_id === activityId || g.activities.some((a) => a.id === activityId))
       if (group) {
         group.is_liked = isLiked
         group.likes_count = likesCount
@@ -164,9 +162,7 @@ export const useActivityStore = defineStore('activity', {
         .post(`/activities/${activityId}/comments`, { content })
         .then((response) => {
           if (response.data.success) {
-            const group = this._feed.find(
-              (g) => g.first_activity_id === activityId || g.activities.some((a) => a.id === activityId)
-            )
+            const group = this._feed.find((g) => g.first_activity_id === activityId || g.activities.some((a) => a.id === activityId))
             if (group) {
               group.comments_count++
             }
@@ -210,9 +206,7 @@ export const useActivityStore = defineStore('activity', {
         .delete(`/comments/${commentId}`)
         .then((response) => {
           if (response.data.success) {
-            const group = this._feed.find(
-              (g) => g.first_activity_id === activityId || g.activities.some((a) => a.id === activityId)
-            )
+            const group = this._feed.find((g) => g.first_activity_id === activityId || g.activities.some((a) => a.id === activityId))
             if (group) {
               group.comments_count = Math.max(0, group.comments_count - 1)
             }

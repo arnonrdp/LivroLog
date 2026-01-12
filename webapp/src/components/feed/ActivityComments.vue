@@ -22,15 +22,7 @@
                 {{ formatDate(comment.created_at) }}
               </span>
               <q-space />
-              <q-btn
-                v-if="comment.is_owner"
-                color="grey"
-                flat
-                icon="delete"
-                round
-                size="xs"
-                @click="handleDeleteComment(comment.id)"
-              />
+              <q-btn v-if="comment.is_owner" color="grey" flat icon="delete" round size="xs" @click="handleDeleteComment(comment.id)" />
             </div>
             <p class="q-mb-none text-body2">{{ comment.content }}</p>
           </div>
@@ -45,16 +37,8 @@
 
     <!-- Add Comment Form -->
     <div class="add-comment row items-center q-mt-sm">
-      <q-input
-        v-model="newComment"
-        class="col"
-        dense
-        :label="$t('feed.add-comment')"
-        maxlength="1000"
-        outlined
-        @keyup.enter="submitComment"
-      />
-      <q-btn :disable="!newComment.trim() || isSubmitting" color="primary" flat icon="send" round @click="submitComment">
+      <q-input v-model="newComment" class="col" dense :label="$t('feed.add-comment')" maxlength="1000" outlined @keyup.enter="submitComment" />
+      <q-btn color="primary" :disable="!newComment.trim() || isSubmitting" flat icon="send" round @click="submitComment">
         <q-spinner v-if="isSubmitting" color="primary" size="16px" />
       </q-btn>
     </div>

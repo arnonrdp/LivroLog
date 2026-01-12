@@ -1,14 +1,7 @@
 <template>
   <div class="activity-actions row items-center q-mt-sm">
     <!-- Like Button -->
-    <q-btn
-      :color="group.is_liked ? 'red' : 'grey'"
-      flat
-      :icon="group.is_liked ? 'favorite' : 'favorite_border'"
-      round
-      size="sm"
-      @click="toggleLike"
-    >
+    <q-btn :color="group.is_liked ? 'red' : 'grey'" flat :icon="group.is_liked ? 'favorite' : 'favorite_border'" round size="sm" @click="toggleLike">
       <q-tooltip>{{ group.is_liked ? $t('feed.unlike') : $t('feed.like') }}</q-tooltip>
     </q-btn>
     <span v-if="group.likes_count > 0" class="text-caption text-grey q-ml-xs">

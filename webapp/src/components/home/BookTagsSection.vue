@@ -26,7 +26,7 @@
       <q-btn color="grey-5" data-testid="add-tag-btn" dense flat icon="add" round size="sm">
         <q-tooltip>{{ $t('tags.add') }}</q-tooltip>
 
-        <q-menu v-model="showTagMenu" anchor="bottom left" data-testid="add-tag-menu" self="top left" :offset="[0, 5]">
+        <q-menu v-model="showTagMenu" anchor="bottom left" data-testid="add-tag-menu" :offset="[0, 5]" self="top left">
           <q-card style="min-width: 250px; max-width: 300px">
             <q-card-section class="q-pb-none">
               <q-input
@@ -75,7 +75,7 @@
                 >
                   <div class="tag-color-dot" :style="{ backgroundColor: tag.color }"></div>
                   <span class="tag-option-name">{{ tag.name }}</span>
-                  <q-icon v-if="isTagOnBook(tag.id)" color="positive" name="check" size="xs" class="tag-option-check" />
+                  <q-icon v-if="isTagOnBook(tag.id)" class="tag-option-check" color="positive" name="check" size="xs" />
                 </div>
               </div>
 
@@ -112,15 +112,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-input
-          v-model="newTagName"
-          autofocus
-          data-testid="new-tag-name-input"
-          dense
-          :label="$t('tags.name')"
-          :maxlength="50"
-          outlined
-        />
+        <q-input v-model="newTagName" autofocus data-testid="new-tag-name-input" dense :label="$t('tags.name')" :maxlength="50" outlined />
 
         <div class="q-mt-md">
           <div class="text-caption text-grey-6 q-mb-sm">{{ $t('tags.choose-color') }}</div>

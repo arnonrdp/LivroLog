@@ -14,12 +14,7 @@
 
         <!-- Tag dots - shown when sorted by tags -->
         <div v-if="showTagDots && getBookTags(book.id).length > 0" class="tag-dots">
-          <div
-            v-for="tag in getBookTags(book.id).slice(0, 3)"
-            :key="tag.id"
-            class="tag-dot"
-            :style="{ backgroundColor: tag.color }"
-          >
+          <div v-for="tag in getBookTags(book.id).slice(0, 3)" :key="tag.id" class="tag-dot" :style="{ backgroundColor: tag.color }">
             <q-tooltip>{{ tag.name }}</q-tooltip>
           </div>
         </div>

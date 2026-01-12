@@ -194,12 +194,7 @@
       <q-separator v-if="(!props.userIdentifier && isBookInLibrary) || (props.userIdentifier && book?.pivot)" />
 
       <!-- Tags Section -->
-      <BookTagsSection
-        v-if="book?.id"
-        :book-id="book.id"
-        :is-book-in-library="isBookInLibrary"
-        :user-identifier="props.userIdentifier"
-      />
+      <BookTagsSection v-if="book?.id" :book-id="book.id" :is-book-in-library="isBookInLibrary" :user-identifier="props.userIdentifier" />
 
       <q-separator v-if="!props.userIdentifier && isBookInLibrary && book?.id" />
 

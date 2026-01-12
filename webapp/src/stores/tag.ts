@@ -1,13 +1,5 @@
 import { i18n } from '@/locales'
-import type {
-  Book,
-  CreateTagRequest,
-  Tag,
-  TagListResponse,
-  TagMeta,
-  TagResponse,
-  UpdateTagRequest
-} from '@/models'
+import type { Book, CreateTagRequest, Tag, TagListResponse, TagMeta, TagResponse, UpdateTagRequest } from '@/models'
 import { TAG_COLORS } from '@/models'
 import api from '@/utils/axios'
 import { defineStore } from 'pinia'
@@ -219,9 +211,7 @@ export const useTagStore = defineStore('tag', {
       const books = userStore.me.books || []
       const bookIndex = books.findIndex((b) => b.id === bookId)
       if (bookIndex !== -1) {
-        const updatedBooks = books.map((book, index) =>
-          index === bookIndex ? { ...book, tags } : book
-        )
+        const updatedBooks = books.map((book, index) => (index === bookIndex ? { ...book, tags } : book))
         userStore.updateMe({ books: updatedBooks })
       }
     },
