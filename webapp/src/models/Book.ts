@@ -1,4 +1,5 @@
 import type { Review } from './Review'
+import type { Tag } from './Tag'
 
 export type ReadingStatus = 'want_to_read' | 'reading' | 'read' | 'abandoned' | 'on_hold' | 're_reading'
 export type AsinStatus = 'pending' | 'processing' | 'completed' | 'failed'
@@ -64,6 +65,7 @@ export interface Book {
   readIn?: string | number
   reviews?: Review[]
   subtitle?: string | null
+  tags?: Tag[]
   thumbnail?: string | null
   title: string
   updated_at?: string

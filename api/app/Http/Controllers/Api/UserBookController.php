@@ -49,6 +49,27 @@ class UserBookController extends Controller
             ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
             ->get();
 
+        // Load tags for each book
+        $bookIds = $books->pluck('id')->toArray();
+        $bookTags = DB::table('user_book_tags')
+            ->join('tags', 'user_book_tags.tag_id', '=', 'tags.id')
+            ->where('user_book_tags.user_id', $user->id)
+            ->whereIn('user_book_tags.book_id', $bookIds)
+            ->select('user_book_tags.book_id', 'tags.id', 'tags.name', 'tags.color')
+            ->get()
+            ->groupBy('book_id');
+
+        // Attach tags to each book
+        $books->each(function ($book) use ($bookTags) {
+            $book->tags = $bookTags->get($book->id, collect())->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                    'color' => $tag->color,
+                ];
+            })->values()->toArray();
+        });
+
         return UserBookSimplifiedResource::collection($books);
     }
 

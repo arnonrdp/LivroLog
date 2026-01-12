@@ -273,6 +273,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the tags created by this user.
+     */
+    public function tags()
+    {
+        return $this->hasMany(Tag::class);
+    }
+
+    /**
      * Get the count of unread notifications.
      */
     public function unreadNotificationsCount(): int

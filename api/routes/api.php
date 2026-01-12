@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\GoodReadsImportController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ImageProxyController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
@@ -168,6 +169,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
+    // Tags
+    Route::get('/tags', [TagController::class, 'index']);
+    Route::post('/tags', [TagController::class, 'store']);
+    Route::get('/tags/{tag}', [TagController::class, 'show']);
+    Route::put('/tags/{tag}', [TagController::class, 'update']);
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
+
+    // Book Tags (associate/disassociate tags with books)
+    Route::get('/user/books/{book}/tags', [TagController::class, 'getBookTags']);
+    Route::post('/user/books/{book}/tags', [TagController::class, 'syncBookTags']);
+    Route::post('/user/books/{book}/tags/{tag}', [TagController::class, 'addTagToBook']);
+    Route::delete('/user/books/{book}/tags/{tag}', [TagController::class, 'removeTagFromBook']);
 });
 
 // Broadcasting authentication (for private WebSocket channels)
