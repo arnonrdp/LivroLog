@@ -151,8 +151,9 @@ section figure
   &:not(.clickable)
     cursor: default
 
-img
+img, :deep(.book-placeholder)
   height: 115px
+  width: auto
 
 .tag-dots
   position: absolute
