@@ -24,6 +24,10 @@ on:
           - 'main'
           - 'dev'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PHP_VERSION: '8.3'
   NODE_VERSION: '20'
