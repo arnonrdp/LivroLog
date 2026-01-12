@@ -545,8 +545,10 @@ class BookEnrichmentService
 
     /**
      * Creates a new enriched book directly from Google Books
+     *
+     * @param  array  $additionalData  Optional additional data to merge (e.g., amazon_asin)
      */
-    public function createEnrichedBookFromGoogle(string $googleId, ?string $userId = null, bool $isPrivate = false, string $readingStatus = 'read'): array
+    public function createEnrichedBookFromGoogle(string $googleId, ?string $userId = null, bool $isPrivate = false, string $readingStatus = 'read', array $additionalData = []): array
     {
         try {
             $googleBookData = $this->fetchBookFromGoogle($googleId);
@@ -570,6 +572,13 @@ class BookEnrichmentService
                     ? str_replace('http:', 'https:', $volumeInfo['imageLinks']['thumbnail'])
                     : null,
             ], $enrichedData);
+
+            // Merge additional data (e.g., amazon_asin from search results)
+            if (! empty($additionalData['amazon_asin'])) {
+                $bookData['amazon_asin'] = $additionalData['amazon_asin'];
+                $bookData['asin_status'] = 'completed';
+                $bookData['asin_processed_at'] = now();
+            }
 
             $book = Book::create($bookData);
 

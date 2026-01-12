@@ -10,14 +10,28 @@
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
       <LiquidGlassNav />
       <q-route-tab
-        v-for="t in tabs"
+        v-for="t in tabsBeforeSettings"
         :key="t.name"
         active-class="tab--active text-primary"
         class="tab-item"
         :exact="t.name === 'home'"
         :icon="t.icon"
         :name="t.name"
-        :to="t.name === 'settings' ? settingsTo : t.name === 'people' ? peopleTo : t.name === 'admin' ? adminTo : t.to"
+        :to="t.name === 'people' ? peopleTo : t.name === 'admin' ? adminTo : t.to"
+        @click="createRipple"
+      />
+      <!-- Notification Bell -->
+      <NotificationBell class="notification-bell" />
+      <!-- Settings Tab -->
+      <q-route-tab active-class="tab--active text-primary" class="tab-item" icon="settings" name="settings" :to="settingsTo" @click="createRipple" />
+      <!-- Admin Tab (last) -->
+      <q-route-tab
+        v-if="isAdmin"
+        active-class="tab--active text-primary"
+        class="tab-item"
+        icon="admin_panel_settings"
+        name="admin"
+        :to="adminTo"
         @click="createRipple"
       />
     </q-tabs>
@@ -42,6 +56,7 @@
 
 <script setup lang="ts">
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { useAuthStore, useUserStore } from '@/stores'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -66,6 +81,8 @@ const tabs = computed(() => {
   }
   return baseTabs
 })
+
+const tabsBeforeSettings = computed(() => tabs.value.filter((t) => t.name !== 'settings' && t.name !== 'admin'))
 
 const peopleTo = computed(() => {
   const path = route.path || '/'
@@ -119,9 +136,9 @@ const createRipple = (event: globalThis.Event) => {
   min-height: 56px
   text-align: left
   @media screen and (max-width: $breakpoint-xs-max)
-    display: block
-    padding-top: 1rem
-    text-align: center
+    justify-content: center
+    padding: 0.75rem 0
+    position: relative
 
 .logo-container
   align-items: center
@@ -254,4 +271,14 @@ img[alt='Logotipo']
     &:hover
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
       transform: translateY(-1px)
+
+// Hide q-space on mobile
+.header-nav > :deep(.q-space)
+  @media screen and (max-width: $breakpoint-xs-max)
+    display: none
+
+.notification-bell
+  align-items: center
+  display: flex
+  margin: 0 4px
 </style>

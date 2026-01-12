@@ -2,16 +2,26 @@
 
 namespace Tests\Feature;
 
+use App\Events\NewNotification;
 use App\Models\Book;
 use App\Models\Follow;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PrivacyTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Prevent actual broadcasting to avoid connection errors in tests
+        Event::fake([NewNotification::class]);
+    }
 
     /**
      * Test public profile shows books to everyone.

@@ -1,6 +1,7 @@
 <template>
   <q-table
     v-model:pagination="pagination"
+    binary-state-sort
     :columns="columns"
     :dense="$q.screen.lt.md"
     :filter="filter"
@@ -57,6 +58,18 @@
 
     <template v-slot:body-cell-actions="props">
       <q-td :props="props">
+        <q-btn
+          :color="props.row.amazon_asin ? 'positive' : 'orange'"
+          dense
+          flat
+          :icon="props.row.amazon_asin ? 'check_circle' : 'cloud_download'"
+          :loading="isEnriching(props.row.id)"
+          round
+          size="sm"
+          @click="enrichWithAmazon(props.row)"
+        >
+          <q-tooltip>{{ props.row.amazon_asin ? $t('admin.refresh-amazon') : $t('admin.enrich-amazon') }}</q-tooltip>
+        </q-btn>
         <q-btn dense flat icon="edit" round size="sm" @click="openEditDialog(props.row)">
           <q-tooltip>{{ $t('admin.edit') }}</q-tooltip>
         </q-btn>
@@ -80,53 +93,103 @@
         <div class="text-h6">{{ isEditMode ? $t('admin.edit-book') : $t('admin.add-book') }}</div>
       </q-card-section>
 
-      <q-card-section v-if="editForm.thumbnail" class="q-pt-none text-center">
-        <img alt="Cover" class="book-cover-preview" :src="editForm.thumbnail" />
-      </q-card-section>
+      <!-- Mode selector (only for create mode) -->
+      <q-tabs v-if="!isEditMode" v-model="createMode" active-color="primary" class="text-grey-7" dense indicator-color="primary" no-caps>
+        <q-tab :label="$t('admin.create-from-amazon')" name="amazon" />
+        <q-tab :label="$t('admin.create-manual')" name="manual" />
+      </q-tabs>
+      <q-separator v-if="!isEditMode" />
 
-      <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
-        <q-input v-model="editForm.title" class="q-mb-sm" dense :label="$t('admin.book-title') + ' *'" :rules="[(v) => !!v || $t('admin.book-title-required')]" />
-        <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
-        <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
-        <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
-        <q-input v-model="editForm.google_id" class="q-mb-sm" dense :label="$t('admin.book-google-id')" />
-        <q-input v-model="editForm.language" class="q-mb-sm" dense :label="$t('admin.book-language')" />
-        <q-input v-model="editForm.publisher" class="q-mb-sm" dense :label="$t('admin.book-publisher')" />
-        <q-input v-model="editForm.page_count" class="q-mb-sm" dense :label="$t('admin.book-pages')" type="number" />
-        <q-input v-model="editForm.published_date" class="q-mb-sm" dense :label="$t('admin.book-published-date')" mask="####-##-##">
-          <template v-slot:append>
-            <q-icon class="cursor-pointer" name="event">
-              <q-popup-proxy cover transition-hide="scale" transition-show="scale">
-                <q-date v-model="editForm.published_date" mask="YYYY-MM-DD" minimal>
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup color="primary" flat :label="$t('close')" />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-icon>
-          </template>
-        </q-input>
-        <q-input v-model="editForm.thumbnail" class="q-mb-sm" dense :label="$t('admin.book-thumbnail')" />
-        <div class="q-mb-sm">
-          <div class="text-caption q-mb-xs text-grey-7">{{ $t('admin.book-description') }}</div>
-          <q-editor
-            v-model="editForm.description"
-            :dense="$q.screen.lt.md"
+      <!-- Amazon URL mode -->
+      <template v-if="!isEditMode && createMode === 'amazon'">
+        <q-card-section class="q-pt-lg q-pb-md">
+          <q-input
+            v-model="createAmazonUrl"
+            autofocus
+            dense
+            :error="!!createAmazonUrlError"
+            :error-message="createAmazonUrlError"
+            :hint="$t('admin.amazon-url-hint')"
+            :label="$t('admin.amazon-url')"
+            outlined
+            :placeholder="$t('admin.amazon-url-placeholder')"
+            @keyup.enter="createBookFromAmazon"
+          >
+            <template v-slot:prepend>
+              <q-icon name="link" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn v-close-popup flat :label="$t('cancel')" />
+          <q-btn
+            color="primary"
+            :disable="!createAmazonUrl.trim()"
             flat
-            min-height="150px"
-            :toolbar="[
-              ['bold', 'italic', 'underline'],
-              ['unordered', 'ordered'],
-              ['undo', 'redo']
-            ]"
+            :label="$t('admin.create-book')"
+            :loading="isCreatingFromAmazon"
+            @click="createBookFromAmazon"
           />
-        </div>
-      </q-card-section>
+        </q-card-actions>
+      </template>
 
-      <q-card-actions align="right">
-        <q-btn v-close-popup flat :label="$t('cancel')" />
-        <q-btn color="primary" flat :label="$t('save')" :loading="isSaving" @click="saveBook" />
-      </q-card-actions>
+      <!-- Manual mode / Edit mode -->
+      <template v-else>
+        <q-card-section v-if="editForm.thumbnail" class="q-pt-none text-center">
+          <img alt="Cover" class="book-cover-preview" :src="editForm.thumbnail" />
+        </q-card-section>
+
+        <q-card-section class="q-pt-none" style="max-height: 60vh; overflow-y: auto">
+          <q-input
+            v-model="editForm.title"
+            class="q-mb-sm"
+            dense
+            :label="$t('admin.book-title') + ' *'"
+            :rules="[(v) => !!v || $t('admin.book-title-required')]"
+          />
+          <q-input v-model="editForm.authors" class="q-mb-sm" dense :label="$t('admin.book-authors')" />
+          <q-input v-model="editForm.isbn" class="q-mb-sm" dense label="ISBN" />
+          <q-input v-model="editForm.amazon_asin" class="q-mb-sm" dense label="Amazon ASIN" />
+          <q-input v-model="editForm.google_id" class="q-mb-sm" dense :label="$t('admin.book-google-id')" />
+          <q-input v-model="editForm.language" class="q-mb-sm" dense :label="$t('admin.book-language')" />
+          <q-input v-model="editForm.publisher" class="q-mb-sm" dense :label="$t('admin.book-publisher')" />
+          <q-input v-model="editForm.page_count" class="q-mb-sm" dense :label="$t('admin.book-pages')" type="number" />
+          <q-input v-model="editForm.published_date" class="q-mb-sm" dense :label="$t('admin.book-published-date')" mask="####-##-##">
+            <template v-slot:append>
+              <q-icon class="cursor-pointer" name="event">
+                <q-popup-proxy cover transition-hide="scale" transition-show="scale">
+                  <q-date v-model="editForm.published_date" mask="YYYY-MM-DD" minimal>
+                    <div class="row items-center justify-end">
+                      <q-btn v-close-popup color="primary" flat :label="$t('close')" />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+          <q-input v-model="editForm.thumbnail" class="q-mb-sm" dense :label="$t('admin.book-thumbnail')" />
+          <div class="q-mb-sm">
+            <div class="text-caption q-mb-xs text-grey-7">{{ $t('admin.book-description') }}</div>
+            <q-editor
+              v-model="editForm.description"
+              :dense="$q.screen.lt.md"
+              flat
+              min-height="150px"
+              :toolbar="[
+                ['bold', 'italic', 'underline'],
+                ['unordered', 'ordered'],
+                ['undo', 'redo']
+              ]"
+            />
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn v-close-popup flat :label="$t('cancel')" />
+          <q-btn color="primary" flat :label="$t('save')" :loading="isSaving" @click="saveBook" />
+        </q-card-actions>
+      </template>
     </q-card>
   </q-dialog>
 
@@ -148,6 +211,42 @@
   <!-- Image Expand Dialog -->
   <q-dialog v-model="imageDialog">
     <img alt="Cover" class="expanded-cover" :src="expandedImage" @click="imageDialog = false" />
+  </q-dialog>
+
+  <!-- Amazon Enrichment Dialog -->
+  <q-dialog v-model="amazonDialog" persistent>
+    <q-card style="min-width: 450px">
+      <q-card-section>
+        <div class="text-h6">{{ $t('admin.enrich-amazon') }}</div>
+        <div class="text-caption text-grey-7 q-mt-sm">
+          {{ amazonBook?.title }}
+        </div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        <q-input
+          v-model="amazonUrl"
+          autofocus
+          dense
+          :error="!!amazonUrlError"
+          :error-message="amazonUrlError"
+          :hint="$t('admin.amazon-url-hint')"
+          :label="$t('admin.amazon-url')"
+          outlined
+          :placeholder="$t('admin.amazon-url-placeholder')"
+          @keyup.enter="submitAmazonUrl"
+        >
+          <template v-slot:prepend>
+            <q-icon name="link" />
+          </template>
+        </q-input>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn v-close-popup flat :label="$t('cancel')" @click="closeAmazonDialog" />
+        <q-btn color="primary" :disable="!amazonUrl.trim()" flat :label="$t('admin.enrich')" :loading="isEnrichingFromUrl" @click="submitAmazonUrl" />
+      </q-card-actions>
+    </q-card>
   </q-dialog>
 </template>
 
@@ -227,6 +326,22 @@ const editForm = ref<EditForm>({
   description: ''
 })
 
+// Track which books are being enriched (for loading states)
+const enrichingBooks = ref<Set<string>>(new Set())
+
+// Amazon enrichment dialog state
+const amazonDialog = ref(false)
+const amazonBook = ref<AdminBook | null>(null)
+const amazonUrl = ref('')
+const amazonUrlError = ref('')
+const isEnrichingFromUrl = ref(false)
+
+// Create dialog mode: 'manual' or 'amazon'
+const createMode = ref<'manual' | 'amazon'>('amazon')
+const createAmazonUrl = ref('')
+const createAmazonUrlError = ref('')
+const isCreatingFromAmazon = ref(false)
+
 const columns = computed<QTableColumn<AdminBook>[]>(() => [
   { name: 'thumbnail', label: t('admin.book-cover'), field: 'thumbnail', align: 'center', style: 'width: 60px' },
   { name: 'title', label: t('admin.book-title'), field: 'title', align: 'left', sortable: true },
@@ -237,12 +352,168 @@ const columns = computed<QTableColumn<AdminBook>[]>(() => [
   { name: 'page_count', label: t('admin.book-pages'), field: 'page_count', align: 'center', sortable: true },
   { name: 'users_count', label: t('admin.book-users'), field: 'users_count', align: 'center', sortable: true },
   { name: 'created_at', label: t('admin.added-at'), field: 'created_at', align: 'left', sortable: true },
-  { name: 'actions', label: '', field: () => null, align: 'center', style: 'width: 100px' }
+  { name: 'actions', label: '', field: () => null, align: 'center', style: 'width: 130px' }
 ])
 
 function expandImage(url: string) {
   expandedImage.value = url
   imageDialog.value = true
+}
+
+function isEnriching(bookId: string): boolean {
+  return enrichingBooks.value.has(bookId)
+}
+
+function enrichWithAmazon(book: AdminBook) {
+  // First, try PA-API automatically
+  enrichingBooks.value.add(book.id)
+
+  api
+    .post(`/admin/books/${book.id}/enrich-amazon`, {})
+    .then((response) => {
+      const data = response.data
+
+      if (data.success) {
+        // PA-API worked! Update the book in the local list
+        const index = books.value.findIndex((b) => b.id === book.id)
+        if (index !== -1 && books.value[index]) {
+          Object.assign(books.value[index], {
+            amazon_asin: data.book.amazon_asin,
+            thumbnail: data.book.thumbnail,
+            isbn: data.book.isbn,
+            page_count: data.book.page_count,
+            publisher: data.book.publisher
+          })
+        }
+
+        Notify.create({
+          message: t('admin.amazon-enriched', {
+            fields: data.fields_filled.length,
+            source: data.source
+          }),
+          type: 'positive',
+          caption: data.fields_filled.join(', ')
+        })
+      } else if (data.needs_url) {
+        // PA-API failed, open dialog for manual URL input
+        amazonBook.value = book
+        amazonUrl.value = ''
+        amazonUrlError.value = ''
+        amazonDialog.value = true
+      } else {
+        Notify.create({
+          message: data.message || t('admin.amazon-enrich-failed'),
+          type: 'warning'
+        })
+      }
+    })
+    .catch((_error) => {
+      // On error, open dialog as fallback
+      amazonBook.value = book
+      amazonUrl.value = ''
+      amazonUrlError.value = ''
+      amazonDialog.value = true
+    })
+    .finally(() => {
+      enrichingBooks.value.delete(book.id)
+    })
+}
+
+function closeAmazonDialog() {
+  amazonDialog.value = false
+  amazonBook.value = null
+  amazonUrl.value = ''
+  amazonUrlError.value = ''
+}
+
+function isValidAmazonUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    const host = parsed.hostname.toLowerCase()
+    // Accept amazon domains and short URL domains
+    const validDomains = [
+      'amazon.com',
+      'amazon.com.br',
+      'amazon.co.uk',
+      'amazon.ca',
+      'amazon.de',
+      'amazon.fr',
+      'amazon.es',
+      'amazon.it',
+      'amazon.co.jp',
+      'a.co',
+      'amzn.to',
+      'amzn.com'
+    ]
+    return validDomains.some((domain) => host === domain || host === `www.${domain}` || host.endsWith(`.${domain}`))
+  } catch {
+    return false
+  }
+}
+
+function submitAmazonUrl() {
+  if (!amazonBook.value || !amazonUrl.value.trim()) return
+
+  const url = amazonUrl.value.trim()
+
+  // Validate Amazon URL (including short URLs)
+  if (!isValidAmazonUrl(url)) {
+    amazonUrlError.value = t('admin.amazon-url-invalid')
+    return
+  }
+
+  amazonUrlError.value = ''
+  isEnrichingFromUrl.value = true
+  enrichingBooks.value.add(amazonBook.value.id)
+
+  const bookId = amazonBook.value.id
+
+  api
+    .post(`/admin/books/${bookId}/enrich-amazon`, { amazon_url: url })
+    .then((response) => {
+      const data = response.data
+
+      if (data.success) {
+        // Update the book in the local list
+        const index = books.value.findIndex((b) => b.id === bookId)
+        if (index !== -1 && books.value[index]) {
+          Object.assign(books.value[index], {
+            amazon_asin: data.book.amazon_asin,
+            thumbnail: data.book.thumbnail,
+            isbn: data.book.isbn,
+            page_count: data.book.page_count,
+            publisher: data.book.publisher
+          })
+        }
+
+        Notify.create({
+          message: t('admin.amazon-enriched', {
+            fields: data.fields_filled.length,
+            source: data.source
+          }),
+          type: 'positive',
+          caption: data.fields_filled.join(', ')
+        })
+
+        closeAmazonDialog()
+      } else {
+        amazonUrlError.value = data.message || t('admin.amazon-enrich-failed')
+      }
+    })
+    .catch((error) => {
+      // For 500 errors, show generic message (don't expose technical details)
+      // For 4xx errors, show the backend message (which are user-friendly)
+      const status = error.response?.status
+      if (status >= 500) {
+        amazonUrlError.value = t('admin.amazon-enrich-error')
+      } else {
+        amazonUrlError.value = error.response?.data?.message || t('admin.amazon-enrich-error')
+      }
+    })
+    .finally(() => {
+      isEnrichingFromUrl.value = false
+      enrichingBooks.value.delete(bookId)
+    })
 }
 
 function formatDate(dateString: string): string {
@@ -292,6 +563,9 @@ function onRequest(props: Parameters<NonNullable<QTableProps['onRequest']>>[0]) 
 
 function openCreateDialog() {
   isEditMode.value = false
+  createMode.value = 'amazon'
+  createAmazonUrl.value = ''
+  createAmazonUrlError.value = ''
   editForm.value = {
     id: '',
     title: '',
@@ -329,6 +603,49 @@ function openEditDialog(book: AdminBook) {
   editDialog.value = true
 }
 
+function createBookFromAmazon() {
+  if (!createAmazonUrl.value.trim()) return
+
+  const url = createAmazonUrl.value.trim()
+
+  if (!isValidAmazonUrl(url)) {
+    createAmazonUrlError.value = t('admin.amazon-url-invalid')
+    return
+  }
+
+  createAmazonUrlError.value = ''
+  isCreatingFromAmazon.value = true
+
+  api
+    .post('/admin/books/create-from-amazon', { amazon_url: url })
+    .then((response) => {
+      const data = response.data
+
+      if (data.success) {
+        Notify.create({
+          message: t('admin.book-created'),
+          type: 'positive',
+          caption: data.book.title
+        })
+        editDialog.value = false
+        fetchBooks(pagination.value.page, pagination.value.rowsPerPage, filter.value, pagination.value.sortBy, pagination.value.descending)
+      } else {
+        createAmazonUrlError.value = data.message || t('admin.error-creating')
+      }
+    })
+    .catch((error) => {
+      const status = error.response?.status
+      if (status >= 500) {
+        createAmazonUrlError.value = t('admin.amazon-enrich-error')
+      } else {
+        createAmazonUrlError.value = error.response?.data?.message || t('admin.error-creating')
+      }
+    })
+    .finally(() => {
+      isCreatingFromAmazon.value = false
+    })
+}
+
 function saveBook() {
   if (!editForm.value.title.trim()) {
     Notify.create({ message: t('admin.book-title-required'), type: 'negative' })
@@ -360,7 +677,10 @@ function saveBook() {
       fetchBooks(pagination.value.page, pagination.value.rowsPerPage, filter.value, pagination.value.sortBy, pagination.value.descending)
     })
     .catch((error) => {
-      Notify.create({ message: error.response?.data?.message || t(isEditMode.value ? 'admin.error-updating' : 'admin.error-creating'), type: 'negative' })
+      Notify.create({
+        message: error.response?.data?.message || t(isEditMode.value ? 'admin.error-updating' : 'admin.error-creating'),
+        type: 'negative'
+      })
     })
     .finally(() => {
       isSaving.value = false

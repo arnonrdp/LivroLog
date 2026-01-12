@@ -10,7 +10,14 @@
       <!-- Make the book image clickable only for authenticated users on other shelves -->
       <div :class="['book-cover', { clickable: canOpenBookDialog }]" @click="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
-        <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
+        <BookCoverPlaceholder v-else :title="book.title" />
+
+        <!-- Tag dots - shown when sorted by tags -->
+        <div v-if="showTagDots && getBookTags(book.id).length > 0" class="tag-dots">
+          <div v-for="tag in getBookTags(book.id).slice(0, 3)" :key="tag.id" class="tag-dot" :style="{ backgroundColor: tag.color }">
+            <q-tooltip>{{ tag.name }}</q-tooltip>
+          </div>
+        </div>
       </div>
 
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">
@@ -18,11 +25,6 @@
       </q-tooltip>
     </figure>
   </section>
-
-  <!-- Amazon Associates disclosure placed under the shelf -->
-  <div v-if="books && books.length > 0" class="text-caption text-grey-7 q-mt-xs q-mb-md">
-    {{ $t('affiliate-disclosure') }}
-  </div>
 
   <!-- Book Dialog -->
   <BookDialog v-model="showBookDialog" :book-id="selectedBookId" :user-identifier="props.userIdentifier" />
@@ -32,9 +34,11 @@
 </template>
 
 <script setup lang="ts">
-import type { Book, User } from '@/models'
-import { useAuthStore } from '@/stores'
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
+import type { Book, Tag, User } from '@/models'
+import { useAuthStore, useTagStore } from '@/stores'
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import BookDialog from './BookDialog.vue'
 import EmptyShelfState from './EmptyShelfState.vue'
 import GoodReadsImportDialog from './GoodReadsImportDialog.vue'
@@ -42,6 +46,7 @@ import GoodReadsImportDialog from './GoodReadsImportDialog.vue'
 const props = defineProps<{
   books?: User['books']
   userIdentifier?: string // if provided, means viewing another user's shelf
+  showTagDots?: boolean // Show tag color dots on book covers
 }>()
 
 const emit = defineEmits<{
@@ -49,6 +54,8 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const tagStore = useTagStore()
+const router = useRouter()
 
 const filter = ref('')
 const showBookDialog = ref(false)
@@ -56,9 +63,9 @@ const showImportDialog = ref(false)
 const selectedBookId = ref<string | undefined>()
 
 const canOpenBookDialog = computed(() => {
-  // Users can always open books from their own shelf
-  // For other users' shelves, only authenticated users can open the dialog
-  return !props.userIdentifier || authStore.isAuthenticated
+  // Books are always clickable - both on own shelf and public profiles
+  // The BookDialog handles authentication-specific features appropriately
+  return true
 })
 
 function onFilter(title: Book['title']) {
@@ -68,6 +75,13 @@ function onFilter(title: Book['title']) {
 function openBookDialog(book: Book) {
   if (!canOpenBookDialog.value) return
 
+  // If viewing another user's shelf and not authenticated, navigate to book page
+  if (props.userIdentifier && !authStore.isAuthenticated) {
+    router.push({ name: 'book', params: { bookId: book.id } })
+    return
+  }
+
+  // Otherwise, open the dialog
   selectedBookId.value = book.id
   showBookDialog.value = true
 }
@@ -78,6 +92,21 @@ function handleImport() {
 
 function onImportCompleted() {
   emit('import-completed')
+}
+
+// Extended book type with tags
+interface BookWithTags extends Book {
+  tags?: Tag[]
+}
+
+function getBookTags(bookId: string): Tag[] {
+  // First check if book has tags property
+  const book = props.books?.find((b) => b.id === bookId) as BookWithTags | undefined
+  if (book?.tags && book.tags.length > 0) {
+    return book.tags
+  }
+  // Otherwise get from tag store
+  return tagStore.getTagsForBook(bookId)
 }
 </script>
 
@@ -124,4 +153,19 @@ section figure
 
 img
   height: 115px
+
+.tag-dots
+  position: absolute
+  top: 4px
+  right: 4px
+  display: flex
+  gap: 2px
+  flex-direction: row-reverse
+
+.tag-dot
+  width: 10px
+  height: 10px
+  border-radius: 50%
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3)
+  cursor: help
 </style>

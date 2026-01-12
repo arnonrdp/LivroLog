@@ -99,7 +99,7 @@ export const useUserBookStore = defineStore('userbook', {
         return false
       }
 
-      // Send identifiers and book data for Amazon books - backend handles the rest
+      // Send identifiers and book data - backend handles the rest
       const bookData: {
         book_id?: string
         isbn?: string
@@ -117,6 +117,11 @@ export const useUserBookStore = defineStore('userbook', {
         reading_status: readingStatus
       }
 
+      // Always send amazon_asin if available (regardless of other identifiers)
+      if (book.amazon_asin) {
+        bookData.amazon_asin = book.amazon_asin
+      }
+
       // Check if book.id is an internal book ID (starts with 'B-') or external (Google ID)
       if (book.id && book.id.startsWith('B-')) {
         // Internal book - use book_id
@@ -131,9 +136,10 @@ export const useUserBookStore = defineStore('userbook', {
         }
       } else if (book.google_id) {
         bookData.google_id = book.google_id
-      } else if (book.amazon_asin) {
-        // Amazon book without ISBN - send full book data
-        bookData.amazon_asin = book.amazon_asin
+      }
+
+      // If we only have amazon_asin (no other identifiers), send full book data
+      if (book.amazon_asin && !bookData.book_id && !bookData.isbn && !bookData.google_id) {
         bookData.title = book.title
         if (book.authors && book.authors !== '') bookData.authors = book.authors
         if (book.thumbnail && book.thumbnail !== '') bookData.thumbnail = book.thumbnail

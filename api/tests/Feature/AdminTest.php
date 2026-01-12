@@ -557,6 +557,25 @@ class AdminTest extends TestCase
         $this->assertEquals($sortedTitles, $titles);
     }
 
+    public function test_admin_books_endpoint_supports_sorting_by_amazon_asin(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        Book::factory()->create(['title' => 'Book A', 'amazon_asin' => 'B000000001']);
+        Book::factory()->create(['title' => 'Book B', 'amazon_asin' => 'B000000003']);
+        Book::factory()->create(['title' => 'Book C', 'amazon_asin' => 'B000000002']);
+
+        $response = $this->getJson('/admin/books?sort_by=amazon_asin&sort_desc=false');
+
+        $response->assertStatus(200);
+
+        $data = $response->json('data');
+        $asins = array_column($data, 'amazon_asin');
+        $sortedAsins = $asins;
+        sort($sortedAsins);
+        $this->assertEquals($sortedAsins, $asins);
+    }
+
     // ==================== Book Create Tests ====================
 
     public function test_admin_can_create_book(): void
@@ -1055,5 +1074,292 @@ class AdminTest extends TestCase
         $this->assertNotNull($userData['last_activity']);
         $this->assertEquals('review_written', $userData['last_activity']['type']);
         $this->assertEquals($book->title, $userData['last_activity']['subject_name']);
+    }
+
+    // ==================== Amazon Enrichment Tests ====================
+
+    public function test_admin_can_enrich_book_with_amazon_url(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $book = Book::factory()->create([
+            'title' => 'Test Book',
+            'amazon_asin' => null,
+            'isbn' => null,
+        ]);
+
+        // Mock the AmazonScraperService
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0TESTASIN1',
+                'thumbnail' => 'https://example.com/image.jpg',
+                'isbn' => '9781234567890',
+                'page_count' => 300,
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0TESTASIN1',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'source' => 'url',
+            ]);
+
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'amazon_asin' => 'B0TESTASIN1',
+            'isbn' => '9781234567890',
+        ]);
+    }
+
+    public function test_admin_enrichment_rejects_invalid_amazon_url(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $book = Book::factory()->create();
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.google.com/some-page',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ]);
+    }
+
+    public function test_admin_enrichment_accepts_short_amazon_urls(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        $book = Book::factory()->create([
+            'amazon_asin' => null,
+            'isbn' => null,
+        ]);
+
+        // Mock the AmazonScraperService
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0SHORTURL1',
+                'thumbnail' => 'https://example.com/image.jpg',
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://a.co/d/abc1234',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ]);
+    }
+
+    public function test_admin_enrichment_rejects_duplicate_isbn(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Create a book with an existing ISBN
+        $existingBook = Book::factory()->create([
+            'title' => 'Existing Book',
+            'isbn' => '9781234567890',
+        ]);
+
+        // Create a new book to enrich
+        $newBook = Book::factory()->create([
+            'title' => 'New Book',
+            'isbn' => null,
+        ]);
+
+        // Mock the AmazonScraperService to return the same ISBN
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0NEWASIN01',
+                'isbn' => '9781234567890', // Same ISBN as existing book
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$newBook->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0NEWASIN01',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ])
+            ->assertJsonFragment([
+                'message' => "ISBN 9781234567890 already exists in another book: {$existingBook->title}",
+            ]);
+    }
+
+    public function test_admin_enrichment_rejects_duplicate_asin(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Create a book with an existing ASIN
+        $existingBook = Book::factory()->create([
+            'title' => 'Existing Book',
+            'amazon_asin' => 'B0EXISTASIN',
+        ]);
+
+        // Create a new book to enrich
+        $newBook = Book::factory()->create([
+            'title' => 'New Book',
+            'amazon_asin' => null,
+        ]);
+
+        // Mock the AmazonScraperService to return the same ASIN
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0EXISTASIN', // Same ASIN as existing book
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$newBook->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0EXISTASIN',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ])
+            ->assertJsonFragment([
+                'message' => "ASIN B0EXISTASIN already exists in another book: {$existingBook->title}",
+            ]);
+    }
+
+    public function test_admin_enrichment_allows_same_isbn_for_same_book(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Create a book with an existing ISBN
+        $book = Book::factory()->create([
+            'title' => 'My Book',
+            'isbn' => '9781234567890',
+            'amazon_asin' => null,
+        ]);
+
+        // Mock the AmazonScraperService to return the same ISBN
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0NEWASINNW',
+                'isbn' => '9781234567890', // Same ISBN as the book itself
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0NEWASINNW',
+        ]);
+
+        // Should succeed because the ISBN belongs to the same book
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ]);
+    }
+
+    public function test_regular_user_cannot_enrich_book(): void
+    {
+        Sanctum::actingAs($this->regularUser);
+
+        $book = Book::factory()->create();
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0TESTASIN1',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_enrichment_updates_description_when_amazon_has_longer(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Create a book with a short description
+        $book = Book::factory()->create([
+            'title' => 'Test Book',
+            'description' => 'Short description.', // 18 chars
+        ]);
+
+        // Mock the AmazonScraperService to return a much longer description
+        $longDescription = str_repeat('This is a much longer description. ', 20); // ~700 chars
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0TESTDESC1',
+                'description' => $longDescription,
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0TESTDESC1',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonFragment(['description']);
+
+        // Verify the description was updated
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'description' => $longDescription,
+        ]);
+    }
+
+    public function test_admin_enrichment_keeps_description_when_amazon_has_shorter(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Create a book with a long description
+        $originalDescription = str_repeat('This is the original long description. ', 20); // ~800 chars
+        $book = Book::factory()->create([
+            'title' => 'Test Book',
+            'description' => $originalDescription,
+        ]);
+
+        // Mock the AmazonScraperService to return a shorter description
+        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper->shouldReceive('extractFromUrl')
+            ->once()
+            ->andReturn([
+                'amazon_asin' => 'B0TESTDESC2',
+                'description' => 'Short Amazon description.', // Much shorter
+            ]);
+
+        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+
+        $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
+            'amazon_url' => 'https://www.amazon.com/dp/B0TESTDESC2',
+        ]);
+
+        $response->assertStatus(200);
+
+        // Verify the description was NOT updated (kept original)
+        $this->assertDatabaseHas('books', [
+            'id' => $book->id,
+            'description' => $originalDescription,
+        ]);
     }
 }

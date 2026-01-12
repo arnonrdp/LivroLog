@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Events\NewNotification;
 use App\Models\Follow;
 use App\Models\User;
 use App\Services\FollowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class FollowSystemTest extends TestCase
@@ -18,6 +20,9 @@ class FollowSystemTest extends TestCase
     {
         parent::setUp();
         $this->followService = app(FollowService::class);
+
+        // Prevent actual broadcasting to avoid connection errors in tests
+        Event::fake([NewNotification::class]);
     }
 
     public function test_user_can_follow_another_user()

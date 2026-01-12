@@ -1,4 +1,4 @@
-import type { Book } from '@/models'
+import type { Book, Tag } from '@/models'
 
 type Accessor = (b: Book) => string
 
@@ -9,7 +9,19 @@ const sortAccessors: Record<string, Accessor> = {
   created_at: (b) => String(b.created_at || ''),
   readIn: (b) => String(b.pivot?.read_at || ''),
   read_at: (b) => String(b.pivot?.read_at || ''),
+  tags: (b) => {
+    // Sort by first tag name alphabetically, books without tags go last
+    const tags = (b as BookWithTags).tags || []
+    if (tags.length === 0) return '\uffff' // Unicode max to sort last
+    const sortedTags = [...tags].sort((a, b) => a.name.localeCompare(b.name))
+    return sortedTags[0]?.name || '\uffff'
+  },
   title: (b) => b.title || ''
+}
+
+// Extended Book type with tags
+interface BookWithTags extends Book {
+  tags?: Tag[]
 }
 
 export function sortBooks(books: Book[], sortKey: string | number, ascDesc: string): Book[] {

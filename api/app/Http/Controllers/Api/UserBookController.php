@@ -49,6 +49,27 @@ class UserBookController extends Controller
             ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
             ->get();
 
+        // Load tags for each book
+        $bookIds = $books->pluck('id')->toArray();
+        $bookTags = DB::table('user_book_tags')
+            ->join('tags', 'user_book_tags.tag_id', '=', 'tags.id')
+            ->where('user_book_tags.user_id', $user->id)
+            ->whereIn('user_book_tags.book_id', $bookIds)
+            ->select('user_book_tags.book_id', 'tags.id', 'tags.name', 'tags.color')
+            ->get()
+            ->groupBy('book_id');
+
+        // Attach tags to each book
+        $books->each(function ($book) use ($bookTags) {
+            $book->tags = $bookTags->get($book->id, collect())->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                    'color' => $tag->color,
+                ];
+            })->values()->toArray();
+        });
+
         return UserBookSimplifiedResource::collection($books);
     }
 
@@ -198,12 +219,28 @@ class UserBookController extends Controller
         $book = $this->findBookByIdentifiers($bookId, $isbn, $googleId, $amazonAsin);
 
         if ($book) {
+            // If book exists but doesn't have ASIN and we're providing one, update it
+            if ($amazonAsin && ! $book->amazon_asin) {
+                $book->update([
+                    'amazon_asin' => $amazonAsin,
+                    'asin_status' => 'completed',
+                    'asin_processed_at' => now(),
+                ]);
+                $book->refresh();
+            }
+
             return $this->addBookToUserLibrary($book, $user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
         }
 
         // If no book found and we have google_id, create new book with enrichment
         if ($googleId) {
-            return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus);
+            // Pass amazon_asin if provided so it's saved with the new book
+            $additionalData = [];
+            if ($amazonAsin) {
+                $additionalData['amazon_asin'] = $amazonAsin;
+            }
+
+            return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus, $additionalData);
         }
 
         // If no book found but we have ISBN only, try to create a basic book
@@ -668,11 +705,13 @@ class UserBookController extends Controller
 
     /**
      * Create new book and add to user's library
+     *
+     * @param  array  $additionalData  Optional additional data to merge (e.g., amazon_asin from search results)
      */
-    private function createBookAndAddToLibrary($user, UnifiedBookEnrichmentService $unifiedEnrichmentService, string $googleId, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
+    private function createBookAndAddToLibrary($user, UnifiedBookEnrichmentService $unifiedEnrichmentService, string $googleId, bool $isPrivate = false, string $readingStatus = 'read', array $additionalData = []): JsonResponse
     {
-        // Create and enrich book from Google Books in one step
-        $enrichmentResult = $unifiedEnrichmentService->createEnrichedBookFromGoogle($googleId, $user->id, $isPrivate, $readingStatus);
+        // Create and enrich book from Google Books in one step (with any additional data like amazon_asin)
+        $enrichmentResult = $unifiedEnrichmentService->createEnrichedBookFromGoogle($googleId, $user->id, $isPrivate, $readingStatus, $additionalData);
 
         if (! $enrichmentResult['success']) {
             return response()->json([

@@ -88,18 +88,30 @@
           </div>
         </router-link>
       </div>
+
+      <!-- Actions (Like and Comment) -->
+      <ActivityGroupActions :group="group" @toggle-comments="showComments = !showComments" />
+
+      <!-- Comments Section -->
+      <q-slide-transition>
+        <ActivityComments v-if="showComments" :activity-id="group.first_activity_id" />
+      </q-slide-transition>
     </q-card-section>
   </q-card>
 </template>
 
 <script setup lang="ts">
 import type { ActivityGroup } from '@/models'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ActivityComments from './ActivityComments.vue'
+import ActivityGroupActions from './ActivityGroupActions.vue'
 
 const props = defineProps<{
   group: ActivityGroup
 }>()
+
+const showComments = ref(false)
 
 const { t, d } = useI18n()
 

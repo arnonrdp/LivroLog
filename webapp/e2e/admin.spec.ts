@@ -176,7 +176,7 @@ test.describe('Admin Panel', () => {
     test.skip('admin can create a new book', async ({ page }) => {
       await adminPage.gotoBooks()
 
-      const initialRowCount = await adminPage.getTableRowsCount()
+      const _initialRowCount = await adminPage.getTableRowsCount()
 
       await adminPage.clickAddBookButton()
       await adminPage.expectAddDialogVisible()

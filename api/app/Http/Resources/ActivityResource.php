@@ -17,6 +17,8 @@ class ActivityResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $currentUser = $request->user();
+
         return [
             'id' => $this->id,
             'type' => $this->type,
@@ -29,6 +31,11 @@ class ActivityResource extends JsonResource
             ],
             'subject' => $this->formatSubject(),
             'metadata' => $this->metadata,
+            'likes_count' => $this->likes_count ?? 0,
+            'comments_count' => $this->comments_count ?? 0,
+            'is_liked' => $currentUser
+                ? $this->likes()->where('user_id', $currentUser->id)->exists()
+                : false,
         ];
     }
 

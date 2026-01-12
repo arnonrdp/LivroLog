@@ -70,6 +70,43 @@
           </q-item>
         </q-list>
       </q-card-section>
+
+      <!-- Tags Filter Section -->
+      <q-card-section v-if="isOwnProfile && tags.length > 0">
+        {{ $t('tags.filter-title') }}:
+        <q-list bordered class="non-selectable">
+          <!-- No tag option (at top) -->
+          <q-item dense tag="label">
+            <q-item-section avatar>
+              <q-checkbox :model-value="isNoTagVisible" @update:model-value="toggleNoTagFilter" />
+            </q-item-section>
+            <q-item-section avatar>
+              <q-icon color="grey" name="label_off" size="xs" />
+            </q-item-section>
+            <q-item-section>{{ $t('tags.no-tags-filter') }}</q-item-section>
+          </q-item>
+
+          <q-separator />
+
+          <q-item v-for="tag in tags" :key="tag.id" dense tag="label">
+            <q-item-section avatar>
+              <q-checkbox :model-value="isTagVisible(tag.id)" @update:model-value="toggleTagFilter(tag.id)" />
+            </q-item-section>
+            <q-item-section avatar>
+              <div class="tag-color-dot" :style="{ backgroundColor: tag.color }"></div>
+            </q-item-section>
+            <q-item-section>{{ tag.name }}</q-item-section>
+            <q-item-section side>
+              <span class="text-caption text-grey">({{ tag.books_count || 0 }})</span>
+            </q-item-section>
+          </q-item>
+        </q-list>
+
+        <!-- Link to manage tags -->
+        <div class="q-mt-sm text-center">
+          <q-btn color="primary" dense flat :label="$t('tags.manage')" no-caps size="sm" to="/settings/tags" />
+        </div>
+      </q-card-section>
     </q-card>
   </q-dialog>
 
@@ -96,16 +133,18 @@
 
 <script setup lang="ts">
 import FollowersDialog from '@/components/social/FollowersDialog.vue'
-import { useAuthStore, useFollowStore, useUserStore } from '@/stores'
-import { computed, ref } from 'vue'
+import { useAuthStore, useFollowStore, useTagStore, useUserStore } from '@/stores'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-defineEmits(['sort', 'update:model-value'])
+const emit = defineEmits(['sort', 'update:model-value', 'update:visible-tags', 'update:show-no-tag'])
 const props = defineProps<{
   modelValue: string
   sortKey?: string | number
   ascDesc?: string
+  visibleTags?: string[] | null // IDs of visible tags (null/undefined = show all, [] = show none)
+  showNoTag?: boolean // Whether to show books without tags
 }>()
 
 const { t } = useI18n()
@@ -113,12 +152,14 @@ const router = useRouter()
 
 const authStore = useAuthStore()
 const followStore = useFollowStore()
+const tagStore = useTagStore()
 const userStore = useUserStore()
 
 const bookLabels = {
   authors: t('order-by-author'),
   addedIn: t('order-by-date'),
   readIn: t('order-by-read'),
+  tags: t('order-by-tags'),
   title: t('order-by-title')
 }
 const shelfMenu = ref(false)
@@ -199,4 +240,62 @@ function openFollowersDialog(tab: 'followers' | 'following') {
   followersDialogTab.value = tab
   showFollowersDialog.value = true
 }
+
+// Tags logic
+const tags = computed(() => tagStore.tags)
+
+// null/undefined = show all, string[] = show only those IDs
+const isShowingAll = computed(() => props.visibleTags === null || props.visibleTags === undefined)
+const isNoTagVisible = computed(() => props.showNoTag !== false)
+
+function isTagVisible(tagId: string): boolean {
+  // If no filter is set (null/undefined), all tags are visible
+  if (isShowingAll.value) return true
+  return (props.visibleTags || []).includes(tagId)
+}
+
+function toggleTagFilter(tagId: string): void {
+  // If currently showing all, initialize with all tag IDs then remove the one being unchecked
+  if (isShowingAll.value) {
+    const allExceptThis = tags.value.filter((t) => t.id !== tagId).map((t) => t.id)
+    emit('update:visible-tags', allExceptThis)
+    return
+  }
+
+  const current = [...(props.visibleTags || [])]
+  const index = current.indexOf(tagId)
+
+  if (index === -1) {
+    // Adding a tag back
+    current.push(tagId)
+    // If all tags are now selected, switch back to "show all" mode
+    if (current.length === tags.value.length) {
+      emit('update:visible-tags', null)
+    } else {
+      emit('update:visible-tags', current)
+    }
+  } else {
+    // Removing a tag - always keep the array (even if empty)
+    current.splice(index, 1)
+    emit('update:visible-tags', current)
+  }
+}
+
+function toggleNoTagFilter(): void {
+  emit('update:show-no-tag', !isNoTagVisible.value)
+}
+
+// Load tags on mount if on own profile
+onMounted(() => {
+  if (isOwnProfile.value && tags.value.length === 0) {
+    tagStore.getTags()
+  }
+})
 </script>
+
+<style scoped lang="sass">
+.tag-color-dot
+  width: 12px
+  height: 12px
+  border-radius: 50%
+</style>

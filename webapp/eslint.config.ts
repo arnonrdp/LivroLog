@@ -39,6 +39,14 @@ export default tseslint.config(
       quotes: ['warn', 'single', { avoidEscape: true }],
       semi: ['warn', 'never'],
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_'
+        }
+      ],
       'vue/attributes-order': [
         'warn',
         {

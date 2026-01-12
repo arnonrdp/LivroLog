@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -23,6 +24,8 @@ use Illuminate\Support\Str;
  */
 class Activity extends Model
 {
+    use HasFactory;
+
     public $timestamps = false;
 
     protected $keyType = 'string';
@@ -97,5 +100,29 @@ class Activity extends Model
             ->pluck('followed_id');
 
         return $query->whereIn('user_id', $followingIds);
+    }
+
+    /**
+     * Get the likes for this activity.
+     */
+    public function likes()
+    {
+        return $this->hasMany(ActivityLike::class);
+    }
+
+    /**
+     * Get the comments for this activity.
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Check if a user has liked this activity.
+     */
+    public function likedBy(User $user): bool
+    {
+        return $this->likes()->where('user_id', $user->id)->exists();
     }
 }

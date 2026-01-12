@@ -3,13 +3,14 @@
     <figure v-for="book of shuffledShowcase" :key="book.id">
       <div>
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
-        <img v-else :alt="`No cover available for ${book.title}`" src="@/assets/no_cover.jpg" />
+        <BookCoverPlaceholder v-else :title="book.title" />
       </div>
     </figure>
   </section>
 </template>
 
 <script setup lang="ts">
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book } from '@/models'
 import { useBookStore } from '@/stores'
 import { onMounted, ref } from 'vue'

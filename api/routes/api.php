@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityInteractionController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookController;
@@ -9,9 +10,12 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\GoodReadsImportController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ImageProxyController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -80,6 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Admin dashboard
         Route::get('/admin/users', [AdminController::class, 'users']);
         Route::get('/admin/books', [AdminController::class, 'books']);
+        Route::post('/admin/books/{book}/enrich-amazon', [AdminController::class, 'enrichBookWithAmazon']);
+        Route::post('/admin/books/create-from-amazon', [AdminController::class, 'createBookFromAmazonUrl']);
 
         // Merge authors
         Route::post('/authors/merge', [\App\Http\Controllers\Api\AuthorMergeController::class, 'merge']);
@@ -147,4 +153,41 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Feed (activity feed)
     Route::get('/feeds', [FeedController::class, 'index']);
+
+    // Activity interactions (likes and comments)
+    Route::post('/activities/{activity}/like', [ActivityInteractionController::class, 'like']);
+    Route::delete('/activities/{activity}/like', [ActivityInteractionController::class, 'unlike']);
+    Route::get('/activities/{activity}/likes', [ActivityInteractionController::class, 'getLikes']);
+    Route::get('/activities/{activity}/comments', [ActivityInteractionController::class, 'getComments']);
+    Route::post('/activities/{activity}/comments', [ActivityInteractionController::class, 'addComment']);
+
+    // Comments
+    Route::put('/comments/{comment}', [ActivityInteractionController::class, 'updateComment']);
+    Route::delete('/comments/{comment}', [ActivityInteractionController::class, 'deleteComment']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
+    // Tags
+    Route::get('/tags', [TagController::class, 'index']);
+    Route::post('/tags', [TagController::class, 'store']);
+    Route::get('/tags/{tag}', [TagController::class, 'show']);
+    Route::put('/tags/{tag}', [TagController::class, 'update']);
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy']);
+
+    // Book Tags (associate/disassociate tags with books)
+    Route::get('/user/books/{book}/tags', [TagController::class, 'getBookTags']);
+    Route::post('/user/books/{book}/tags', [TagController::class, 'syncBookTags']);
+    Route::post('/user/books/{book}/tags/{tag}', [TagController::class, 'addTagToBook']);
+    Route::delete('/user/books/{book}/tags/{tag}', [TagController::class, 'removeTagFromBook']);
 });
+
+// Broadcasting authentication (for private WebSocket channels)
+Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+    $result = Broadcast::auth($request);
+
+    return response()->json($result);
+})->middleware('auth:sanctum');

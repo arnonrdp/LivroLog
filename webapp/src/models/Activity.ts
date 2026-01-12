@@ -44,6 +44,9 @@ export interface Activity {
   user: ActivityUser
   subject: ActivitySubject
   metadata?: Record<string, unknown>
+  likes_count: number
+  comments_count: number
+  is_liked: boolean
 }
 
 export interface ActivityGroup {
@@ -52,6 +55,10 @@ export interface ActivityGroup {
   date: string
   count: number
   activities: Activity[]
+  first_activity_id: string
+  likes_count: number
+  comments_count: number
+  is_liked: boolean
 }
 
 export interface FeedMeta {

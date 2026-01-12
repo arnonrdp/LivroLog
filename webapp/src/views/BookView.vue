@@ -23,7 +23,8 @@
       <div class="book-header">
         <!-- Cover -->
         <div class="book-cover">
-          <img :alt="book.title" :src="highResThumbnail" @error="(e: Event) => ((e.target as HTMLImageElement).src = '/no_cover.jpg')" />
+          <img v-if="book.thumbnail && !imageError" :alt="book.title" :src="highResThumbnail" @error="handleImageError" />
+          <BookCoverPlaceholder v-else size="lg" :title="book.title" />
         </div>
 
         <!-- Info -->
@@ -228,6 +229,7 @@
 </template>
 
 <script setup lang="ts">
+import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
 import api from '@/utils/axios'
@@ -261,10 +263,13 @@ const isLoading = ref(true)
 const isLoadingReviews = ref(false)
 const error = ref(false)
 const descriptionExpanded = ref(false)
+const imageError = ref(false)
 
 const sanitizedDescription = computed(() => {
   if (!book.value?.description) return ''
-  return DOMPurify.sanitize(book.value.description)
+  // Convert newlines to <br> tags for proper HTML rendering
+  const withLineBreaks = book.value.description.replace(/\n/g, '<br>')
+  return DOMPurify.sanitize(withLineBreaks)
 })
 
 const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
@@ -361,13 +366,19 @@ function isAllowedImageHost(url: string): { isGoogle: boolean; isAmazon: boolean
 
 // Convert thumbnail URL to high resolution version
 const highResThumbnail = computed(() => {
-  if (!book.value?.thumbnail) return '/no_cover.jpg'
+  if (!book.value?.thumbnail) return ''
 
   const url = book.value.thumbnail
   const { isGoogle, isAmazon } = isAllowedImageHost(url)
 
-  // Google Books: change zoom=1 to zoom=0 (max resolution)
+  // Google Books: only upgrade zoom if there's NO imgtk token
+  // The imgtk token is tied to a specific zoom level, changing zoom breaks it
   if (isGoogle) {
+    // If URL has imgtk parameter, don't modify it - the token is zoom-specific
+    if (url.includes('imgtk=')) {
+      return url
+    }
+    // Only modify zoom for URLs without imgtk (older/simpler format)
     return url.replace(/zoom=\d/, 'zoom=0')
   }
 
@@ -424,6 +435,7 @@ onMounted(() => {
 function loadBook() {
   isLoading.value = true
   error.value = false
+  imageError.value = false
 
   // Load book data
   api
@@ -523,6 +535,10 @@ function formatRatingCount(count: number): string {
     return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
   }
   return count.toString()
+}
+
+function handleImageError() {
+  imageError.value = true
 }
 </script>
 

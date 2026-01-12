@@ -122,6 +122,7 @@ class FeedController extends Controller
     private function groupActivities(array $activities): array
     {
         $grouped = [];
+        $currentUser = request()->user();
 
         foreach ($activities as $activity) {
             $date = $activity->created_at->format('Y-m-d');
@@ -140,6 +141,12 @@ class FeedController extends Controller
                     'count' => 0,
                     'activities' => [],
                     'seen_subjects' => [], // Track unique subjects
+                    'first_activity_id' => $activity->id, // Store first activity for interactions
+                    'likes_count' => $activity->likes_count ?? 0,
+                    'comments_count' => $activity->comments_count ?? 0,
+                    'is_liked' => $currentUser
+                        ? $activity->likes()->where('user_id', $currentUser->id)->exists()
+                        : false,
                 ];
             }
 

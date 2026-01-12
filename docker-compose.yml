@@ -110,6 +110,31 @@ services:
     networks:
       - local_network
 
+  reverb:
+    container_name: livrolog-reverb
+    build:
+      context: .
+      dockerfile: ./api/docker/Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - './api:/var/www/html'
+    networks:
+      - local_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - '${REVERB_PORT:-8080}:8080'
+    environment:
+      WWWUSER: '${WWWUSER}'
+    entrypoint: |
+      sh -c '
+        composer install --no-interaction
+        php artisan reverb:start --host=0.0.0.0 --port=8080
+      '
+
   frontend:
     container_name: livrolog-frontend
     image: node:20-alpine

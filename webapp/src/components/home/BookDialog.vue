@@ -193,6 +193,11 @@
 
       <q-separator v-if="(!props.userIdentifier && isBookInLibrary) || (props.userIdentifier && book?.pivot)" />
 
+      <!-- Tags Section -->
+      <BookTagsSection v-if="book?.id" :book-id="book.id" :is-book-in-library="isBookInLibrary" :user-identifier="props.userIdentifier" />
+
+      <q-separator v-if="!props.userIdentifier && isBookInLibrary && book?.id" />
+
       <q-card-section>
         <div class="text-subtitle1 q-mb-md row items-center">
           <q-icon class="q-mr-sm" name="rate_review" />
@@ -409,6 +414,7 @@
 
 <script setup lang="ts">
 import FormattedDescription from '@/components/common/FormattedDescription.vue'
+import BookTagsSection from '@/components/home/BookTagsSection.vue'
 import ChangeCoverDialog from '@/components/home/ChangeCoverDialog.vue'
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
 import { useBookStore, useReviewStore, useUserBookStore, useUserStore } from '@/stores'
@@ -731,7 +737,7 @@ function getBookId(): string | null {
     return book.value.id
   }
 
-  const userBooks = userStore.me.books || []
+  const userBooks = userStore.me?.books || []
   const internalBook = userBooks.find((b) => b.google_id === book.value?.google_id)
 
   if (internalBook && internalBook.id.startsWith('B-')) {
@@ -801,7 +807,7 @@ function updateLibraryStatus() {
     return
   }
 
-  const userBooks = userStore.me.books || []
+  const userBooks = userStore.me?.books || []
 
   const result = userBooks.some((book) => {
     if (bookId && book.id === bookId) return true

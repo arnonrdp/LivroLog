@@ -24,6 +24,7 @@ class UserBookSimplifiedResource extends JsonResource
             'formatted_published_date' => $this->formatted_published_date,
             'average_rating' => $this->average_rating,
             'reviews_count' => $this->reviews_count,
+            'tags' => $this->tags ?? [],
             'pivot' => [
                 'added_at' => $this->pivot->added_at ?? null,
                 'read_at' => $this->pivot->read_at ?? null,
