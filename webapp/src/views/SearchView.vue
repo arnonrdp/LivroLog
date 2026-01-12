@@ -299,6 +299,11 @@ function navigateToBook(book: Book) {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
   overflow: hidden
   transition: box-shadow 0.2s ease
+  aspect-ratio: 2 / 3
+
+  :deep(.book-placeholder)
+    width: 100%
+    height: 100%
 
 .book-info
   padding: 0.75rem 0

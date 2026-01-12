@@ -47,7 +47,9 @@ section > figure {
   margin: 0 1.5rem;
 }
 
-section > figure img {
+section > figure img,
+section > figure :deep(.book-placeholder) {
   height: 11rem;
+  width: auto;
 }
 </style>
