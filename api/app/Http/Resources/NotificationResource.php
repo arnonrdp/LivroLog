@@ -24,7 +24,7 @@ class NotificationResource extends JsonResource
                 'avatar' => $this->actor?->avatar,
             ],
             'data' => $this->data,
-            'activity_id' => $this->notifiable_type === 'App\\Models\\Activity' ? $this->notifiable_id : null,
+            'activity_id' => in_array($this->notifiable_type, ['Activity', 'App\\Models\\Activity']) ? $this->notifiable_id : null,
             'read_at' => $this->read_at,
             'is_read' => ! is_null($this->read_at),
             'created_at' => $this->created_at,

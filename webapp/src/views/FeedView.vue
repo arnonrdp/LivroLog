@@ -15,6 +15,7 @@
         :key="`${group.user.id}-${group.type}-${group.date}`"
         :group="group"
         :initial-show-comments="shouldExpandComments(group.first_activity_id)"
+        :is-highlighted="highlightedActivityId === group.first_activity_id"
         @comments-opened="handleCommentsOpened"
       />
     </div>
@@ -54,6 +55,7 @@ const notificationStore = useNotificationStore()
 const currentPage = ref(1)
 const isLoading = ref(false)
 const activityRefs = ref<Record<string, Element | null>>({})
+const highlightedActivityId = ref<string | null>(null)
 
 const hasMorePages = computed(() => activityStore.meta.current_page < activityStore.meta.last_page)
 
@@ -80,6 +82,17 @@ function scrollToActivity(activityId: string) {
     const el = activityRefs.value[activityId]
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      // Highlight the activity after scroll completes
+      setTimeout(() => {
+        highlightedActivityId.value = activityId
+
+        // Clear highlight after animation (1.5s)
+        setTimeout(() => {
+          highlightedActivityId.value = null
+        }, 1500)
+      }, 500) // Wait for scroll to complete
+
       router.replace({ path: '/feed' })
     }
   })

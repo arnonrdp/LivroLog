@@ -1,5 +1,5 @@
 <template>
-  <q-card class="activity-group q-mb-md">
+  <q-card :class="['activity-group', 'q-mb-md', { 'activity-highlight': isHighlighted }]">
     <q-card-section class="row items-center q-pb-none">
       <router-link class="user-link row items-center" :to="`/${group.user.username}`">
         <q-avatar class="q-mr-sm" size="40px">
@@ -110,6 +110,7 @@ import ActivityGroupActions from './ActivityGroupActions.vue'
 const props = defineProps<{
   group: ActivityGroup
   initialShowComments?: boolean
+  isHighlighted?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -205,6 +206,18 @@ function formatDate(dateStr: string): string {
 .activity-group
   max-width: 600px
   margin: 0 auto 16px auto
+  transition: box-shadow 0.3s ease, background-color 0.3s ease
+
+.activity-highlight
+  animation: highlight-pulse 1.5s ease-out
+
+@keyframes highlight-pulse
+  0%
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.6)
+    background-color: rgba(255, 193, 7, 0.15)
+  100%
+    box-shadow: none
+    background-color: transparent
 
 .user-link
   text-decoration: none
