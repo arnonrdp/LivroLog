@@ -9,7 +9,14 @@
 
     <!-- Activity groups -->
     <div v-else class="feed-container">
-      <ActivityGroup v-for="group in activityStore.feed" :key="`${group.user.id}-${group.type}-${group.date}`" :group="group" />
+      <ActivityGroup
+        v-for="group in activityStore.feed"
+        :ref="(el) => setActivityRef(group.first_activity_id, el)"
+        :key="`${group.user.id}-${group.type}-${group.date}`"
+        :group="group"
+        :initial-show-comments="shouldExpandComments(group.first_activity_id)"
+        @comments-opened="handleCommentsOpened"
+      />
     </div>
 
     <!-- Loading state -->
@@ -30,19 +37,53 @@
 
 <script setup lang="ts">
 import ActivityGroup from '@/components/feed/ActivityGroup.vue'
-import { useActivityStore } from '@/stores'
-import { computed, onMounted, ref } from 'vue'
+import { useActivityStore, useNotificationStore } from '@/stores'
+import type { ComponentPublicInstance } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 
 const { t } = useI18n()
 document.title = `LivroLog | ${t('feed.title')}`
 
+const route = useRoute()
+const router = useRouter()
 const activityStore = useActivityStore()
+const notificationStore = useNotificationStore()
 
 const currentPage = ref(1)
 const isLoading = ref(false)
+const activityRefs = ref<Record<string, Element | null>>({})
 
 const hasMorePages = computed(() => activityStore.meta.current_page < activityStore.meta.last_page)
+
+// Deep link parameters
+const targetActivityId = computed(() => route.query.activity as string | undefined)
+const shouldExpandCommentsParam = computed(() => route.query.expand === 'comments')
+
+function setActivityRef(activityId: string, el: Element | ComponentPublicInstance | null) {
+  activityRefs.value[activityId] = el ? (el as unknown as { $el: Element }).$el || (el as Element) : null
+}
+
+function shouldExpandComments(activityId: string): boolean {
+  return targetActivityId.value === activityId && shouldExpandCommentsParam.value
+}
+
+function handleCommentsOpened(activityId: string) {
+  if (notificationStore.hasUnreadNotificationForActivity(activityId)) {
+    notificationStore.postReadByActivity(activityId)
+  }
+}
+
+function scrollToActivity(activityId: string) {
+  nextTick(() => {
+    const el = activityRefs.value[activityId]
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      router.replace({ path: '/feed' })
+    }
+  })
+}
 
 onMounted(() => {
   loadFeed()
@@ -50,9 +91,15 @@ onMounted(() => {
 
 function loadFeed() {
   isLoading.value = true
-  activityStore.getFeeds(1).finally(() => {
-    isLoading.value = false
-  })
+  activityStore.getFeeds(1)
+    .then(() => {
+      if (targetActivityId.value) {
+        scrollToActivity(targetActivityId.value)
+      }
+    })
+    .finally(() => {
+      isLoading.value = false
+    })
 }
 
 function loadMore(_index: number, done: () => void) {

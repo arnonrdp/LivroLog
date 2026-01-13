@@ -12,6 +12,7 @@ export interface Notification {
   type: NotificationType
   actor: NotificationActor
   data?: Record<string, unknown>
+  activity_id?: string | null
   read_at: string | null
   is_read: boolean
   created_at: string
@@ -40,6 +41,7 @@ export interface NewNotificationEvent {
   type: NotificationType
   actor: NotificationActor
   data?: Record<string, unknown>
+  activity_id?: string | null
   read_at: null
   is_read: false
   created_at: string

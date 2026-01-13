@@ -59,4 +59,16 @@ class NotificationService
             ->where('read_at', '<', now()->subDays($daysOld))
             ->delete();
     }
+
+    /**
+     * Mark all notifications as read for a specific activity.
+     */
+    public function markAsReadByActivity(User $user, string $activityId): int
+    {
+        return Notification::forUser($user->id)
+            ->unread()
+            ->where('notifiable_type', 'App\\Models\\Activity')
+            ->where('notifiable_id', $activityId)
+            ->update(['read_at' => now()]);
+    }
 }

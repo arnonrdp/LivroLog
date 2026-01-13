@@ -90,7 +90,7 @@
       </div>
 
       <!-- Actions (Like and Comment) -->
-      <ActivityGroupActions :group="group" @toggle-comments="showComments = !showComments" />
+      <ActivityGroupActions :group="group" @toggle-comments="toggleComments" />
 
       <!-- Comments Section -->
       <q-slide-transition>
@@ -102,16 +102,35 @@
 
 <script setup lang="ts">
 import type { ActivityGroup } from '@/models'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ActivityComments from './ActivityComments.vue'
 import ActivityGroupActions from './ActivityGroupActions.vue'
 
 const props = defineProps<{
   group: ActivityGroup
+  initialShowComments?: boolean
+}>()
+
+const emit = defineEmits<{
+  commentsOpened: [activityId: string]
 }>()
 
 const showComments = ref(false)
+
+onMounted(() => {
+  if (props.initialShowComments) {
+    showComments.value = true
+    emit('commentsOpened', props.group.first_activity_id)
+  }
+})
+
+function toggleComments() {
+  showComments.value = !showComments.value
+  if (showComments.value) {
+    emit('commentsOpened', props.group.first_activity_id)
+  }
+}
 
 const { t, d } = useI18n()
 

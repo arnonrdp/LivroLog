@@ -144,8 +144,18 @@ function handleNotificationClick(notification: Notification) {
 
   switch (notification.type) {
     case 'activity_liked':
+      if (notification.activity_id) {
+        router.push({ path: '/feed', query: { activity: notification.activity_id } })
+      } else {
+        router.push('/feed')
+      }
+      break
     case 'activity_commented':
-      router.push('/feed')
+      if (notification.activity_id) {
+        router.push({ path: '/feed', query: { activity: notification.activity_id, expand: 'comments' } })
+      } else {
+        router.push('/feed')
+      }
       break
     case 'follow_accepted':
       router.push(`/${notification.actor.username}`)
