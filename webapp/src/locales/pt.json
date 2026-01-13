@@ -66,7 +66,13 @@
     "amazon-enrich-error": "Erro ao enriquecer com Amazon",
     "create-manual": "Manual",
     "create-from-amazon": "Importar da Amazon",
-    "create-book": "Criar livro"
+    "create-book": "Criar livro",
+    "set-new-password": "Definir Nova Senha",
+    "password-optional-hint": "Deixe em branco para manter a senha atual",
+    "new-password": "Nova Senha",
+    "confirm-password": "Confirmar Senha",
+    "passwords-dont-match": "As senhas não coincidem",
+    "password-requirements": "Mínimo 8 caracteres, com maiúsculas, minúsculas, número e caractere especial (@$!%*?&)"
   },
   "account-created": "Sua conta foi criada com sucesso!",
   "add": "Adicionar livro",

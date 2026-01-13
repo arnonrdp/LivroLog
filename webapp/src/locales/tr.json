@@ -73,7 +73,13 @@
     "users": "Kullanıcılar",
     "create-manual": "Manuel",
     "create-from-amazon": "Amazon'dan içe aktar",
-    "create-book": "Kitap oluştur"
+    "create-book": "Kitap oluştur",
+    "set-new-password": "Yeni Şifre Belirle",
+    "password-optional-hint": "Mevcut şifreyi korumak için boş bırakın",
+    "new-password": "Yeni Şifre",
+    "confirm-password": "Şifreyi Onayla",
+    "passwords-dont-match": "Şifreler eşleşmiyor",
+    "password-requirements": "En az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter (@$!%*?&) içermelidir"
   },
   "affiliate-disclosure": "LivroLog, Amazon İş Ortaklığı Programına katılmaktadır ve uygun satın alımlardan komisyon kazanmaktadır.",
   "already-in-library": "Zaten kütüphanede",

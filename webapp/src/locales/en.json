@@ -66,7 +66,13 @@
     "amazon-enrich-error": "Error enriching with Amazon",
     "create-manual": "Manual",
     "create-from-amazon": "Import from Amazon",
-    "create-book": "Create book"
+    "create-book": "Create book",
+    "set-new-password": "Set New Password",
+    "password-optional-hint": "Leave blank to keep current password",
+    "new-password": "New Password",
+    "confirm-password": "Confirm Password",
+    "passwords-dont-match": "Passwords don't match",
+    "password-requirements": "Min 8 characters, with uppercase, lowercase, number and special character (@$!%*?&)"
   },
   "account-created": "Your account has been created successfully!",
   "add": "Add book",

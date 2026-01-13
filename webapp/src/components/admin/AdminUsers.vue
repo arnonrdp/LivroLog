@@ -92,6 +92,13 @@
         <q-input v-model="editForm.username" class="q-mb-sm" dense :label="$t('admin.username')" />
         <q-input v-model="editForm.email" class="q-mb-sm" dense :label="$t('admin.email')" type="email" />
         <q-select v-model="editForm.role" class="q-mb-sm" dense emit-value :label="$t('admin.role')" map-options :options="roleOptions" />
+
+        <q-separator class="q-my-md" />
+        <div class="text-subtitle2 q-mb-sm">{{ $t('admin.set-new-password') }}</div>
+        <div class="text-caption text-grey-6 q-mb-sm">{{ $t('admin.password-optional-hint') }}</div>
+        <q-input v-model="editForm.password" autocomplete="new-password" class="q-mb-sm" dense :label="$t('admin.new-password')" type="password" />
+        <q-input v-model="editForm.password_confirmation" autocomplete="new-password" class="q-mb-sm" dense :label="$t('admin.confirm-password')" type="password" />
+        <div class="text-caption text-grey-6">{{ $t('admin.password-requirements') }}</div>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -151,6 +158,8 @@ interface EditForm {
   email: string
   avatar: string | null
   role: string
+  password: string
+  password_confirmation: string
 }
 
 const $q = useQuasar()
@@ -178,7 +187,9 @@ const editForm = ref<EditForm>({
   username: '',
   email: '',
   avatar: null,
-  role: 'user'
+  role: 'user',
+  password: '',
+  password_confirmation: ''
 })
 
 const roleOptions = [
@@ -276,20 +287,42 @@ function openEditDialog(user: AdminUser) {
     username: user.username || '',
     email: user.email || '',
     avatar: user.avatar,
-    role: user.role || 'user'
+    role: user.role || 'user',
+    password: '',
+    password_confirmation: ''
   }
   editDialog.value = true
 }
 
 function saveUser() {
+  // Validate password if provided
+  if (editForm.value.password) {
+    if (editForm.value.password !== editForm.value.password_confirmation) {
+      Notify.create({ message: t('admin.passwords-dont-match'), type: 'negative' })
+      return
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    if (!passwordRegex.test(editForm.value.password)) {
+      Notify.create({ message: t('admin.password-requirements'), type: 'negative' })
+      return
+    }
+  }
+
   isSaving.value = true
+
+  const payload: Record<string, string> = {
+    display_name: editForm.value.display_name,
+    username: editForm.value.username,
+    email: editForm.value.email,
+    role: editForm.value.role
+  }
+
+  if (editForm.value.password) {
+    payload.password = editForm.value.password
+  }
+
   api
-    .put(`/users/${editForm.value.id}`, {
-      display_name: editForm.value.display_name,
-      username: editForm.value.username,
-      email: editForm.value.email,
-      role: editForm.value.role
-    })
+    .put(`/users/${editForm.value.id}`, payload)
     .then(() => {
       Notify.create({ message: t('admin.user-updated'), type: 'positive' })
       editDialog.value = false

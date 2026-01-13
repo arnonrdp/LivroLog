@@ -73,7 +73,13 @@
     "users": "ユーザー",
     "create-manual": "手動",
     "create-from-amazon": "Amazonからインポート",
-    "create-book": "書籍を作成"
+    "create-book": "書籍を作成",
+    "set-new-password": "新しいパスワードを設定",
+    "password-optional-hint": "現在のパスワードを維持する場合は空白のままにしてください",
+    "new-password": "新しいパスワード",
+    "confirm-password": "パスワードを確認",
+    "passwords-dont-match": "パスワードが一致しません",
+    "password-requirements": "8文字以上、大文字、小文字、数字、特殊文字（@$!%*?&）を含む必要があります"
   },
   "affiliate-disclosure": "LivroLogはAmazonアソシエイトプログラムに参加しており、対象となる購入から収益を得ています。",
   "already-in-library": "すでに図書館にあります",
