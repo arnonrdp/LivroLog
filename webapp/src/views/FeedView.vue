@@ -40,7 +40,7 @@
 import ActivityGroup from '@/components/feed/ActivityGroup.vue'
 import { useActivityStore, useNotificationStore } from '@/stores'
 import type { ComponentPublicInstance } from 'vue'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -67,8 +67,15 @@ function setActivityRef(activityId: string, el: Element | ComponentPublicInstanc
   activityRefs.value[activityId] = el ? (el as unknown as { $el: Element }).$el || (el as Element) : null
 }
 
-function shouldExpandComments(activityId: string): boolean {
-  return targetActivityId.value === activityId && shouldExpandCommentsParam.value
+function shouldExpandComments(groupFirstActivityId: string): boolean {
+  if (!targetActivityId.value || !shouldExpandCommentsParam.value) return false
+
+  // Direct match first
+  if (targetActivityId.value === groupFirstActivityId) return true
+
+  // Then check if this group contains the target activity
+  const targetGroupId = findActivityInFeed(targetActivityId.value)
+  return targetGroupId === groupFirstActivityId
 }
 
 function handleCommentsOpened(activityId: string) {
@@ -77,26 +84,63 @@ function handleCommentsOpened(activityId: string) {
   }
 }
 
-function scrollToActivity(activityId: string) {
+function findActivityInFeed(activityId: string): string | null {
+  // First try direct match with first_activity_id
+  const directMatch = activityStore.feed.find(g => g.first_activity_id === activityId)
+  if (directMatch) return directMatch.first_activity_id
+
+  // If not found, search within activities of each group
+  for (const group of activityStore.feed) {
+    const found = group.activities?.some(a => a.id === activityId)
+    if (found) return group.first_activity_id
+  }
+
+  return null
+}
+
+function scrollToActivity(activityId: string, retryCount = 0) {
   nextTick(() => {
-    const el = activityRefs.value[activityId]
+    // Find the correct group ID (might differ from activityId)
+    const groupId = findActivityInFeed(activityId) || activityId
+    const el = activityRefs.value[groupId]
+
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
       // Highlight the activity after scroll completes
       setTimeout(() => {
-        highlightedActivityId.value = activityId
+        highlightedActivityId.value = groupId
 
-        // Clear highlight after animation (1.5s)
+        // Clear highlight after animation (2s to match new animation duration)
         setTimeout(() => {
           highlightedActivityId.value = null
-        }, 1500)
+        }, 2000)
       }, 500) // Wait for scroll to complete
 
       router.replace({ path: '/feed' })
+    } else if (retryCount < 20) {
+      // Retry if element not ready yet (DOM might still be updating)
+      setTimeout(() => scrollToActivity(activityId, retryCount + 1), 150)
     }
   })
 }
+
+// Watch for route query changes (when clicking notification while already on /feed)
+watch(
+  () => route.query,
+  (newQuery) => {
+    if (newQuery.activity) {
+      const activityId = newQuery.activity as string
+      // If feed is already loaded, scroll immediately
+      if (activityStore.feed.length > 0) {
+        scrollToActivity(activityId)
+      } else {
+        // Otherwise, wait for feed to load
+        loadFeed()
+      }
+    }
+  }
+)
 
 onMounted(() => {
   loadFeed()

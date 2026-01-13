@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import type { ActivityGroup } from '@/models'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ActivityComments from './ActivityComments.vue'
 import ActivityGroupActions from './ActivityGroupActions.vue'
@@ -125,6 +125,17 @@ onMounted(() => {
     emit('commentsOpened', props.group.first_activity_id)
   }
 })
+
+// Watch for prop changes (when navigating from notification while already on feed)
+watch(
+  () => props.initialShowComments,
+  (newValue) => {
+    if (newValue && !showComments.value) {
+      showComments.value = true
+      emit('commentsOpened', props.group.first_activity_id)
+    }
+  }
+)
 
 function toggleComments() {
   showComments.value = !showComments.value
@@ -208,16 +219,7 @@ function formatDate(dateStr: string): string {
   margin: 0 auto 16px auto
   transition: box-shadow 0.3s ease, background-color 0.3s ease
 
-.activity-highlight
-  animation: highlight-pulse 1.5s ease-out
-
-@keyframes highlight-pulse
-  0%
-    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.6)
-    background-color: rgba(255, 193, 7, 0.15)
-  100%
-    box-shadow: none
-    background-color: transparent
+// Animation defined globally in main.sass
 
 .user-link
   text-decoration: none
