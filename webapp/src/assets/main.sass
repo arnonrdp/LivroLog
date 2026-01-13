@@ -15,3 +15,24 @@ input:-webkit-autofill
 
 input:-moz-autofill
   box-shadow: 0 0 0 1000px white inset !important
+
+// Activity highlight animation for notification deep linking
+.activity-highlight
+  animation: highlight-pulse 2s ease-in-out
+
+@keyframes highlight-pulse
+  0%
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2), 0 2px 2px rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12)
+    background-color: white
+  15%
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.7), 0 0 20px rgba(255, 193, 7, 0.4)
+    background-color: rgba(255, 248, 225, 1)
+  40%
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.5), 0 0 15px rgba(255, 193, 7, 0.3)
+    background-color: rgba(255, 248, 225, 0.8)
+  70%
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3), 0 0 10px rgba(255, 193, 7, 0.2)
+    background-color: rgba(255, 248, 225, 0.4)
+  100%
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2), 0 2px 2px rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12)
+    background-color: white

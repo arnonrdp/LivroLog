@@ -67,7 +67,7 @@ class NotificationService
     {
         return Notification::forUser($user->id)
             ->unread()
-            ->where('notifiable_type', 'App\\Models\\Activity')
+            ->whereIn('notifiable_type', ['Activity', 'App\\Models\\Activity'])
             ->where('notifiable_id', $activityId)
             ->update(['read_at' => now()]);
     }

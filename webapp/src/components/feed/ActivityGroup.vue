@@ -1,5 +1,5 @@
 <template>
-  <q-card class="activity-group q-mb-md">
+  <q-card :class="['activity-group', 'q-mb-md', { 'activity-highlight': isHighlighted }]">
     <q-card-section class="row items-center q-pb-none">
       <router-link class="user-link row items-center" :to="`/${group.user.username}`">
         <q-avatar class="q-mr-sm" size="40px">
@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import type { ActivityGroup } from '@/models'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ActivityComments from './ActivityComments.vue'
 import ActivityGroupActions from './ActivityGroupActions.vue'
@@ -110,6 +110,7 @@ import ActivityGroupActions from './ActivityGroupActions.vue'
 const props = defineProps<{
   group: ActivityGroup
   initialShowComments?: boolean
+  isHighlighted?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -124,6 +125,17 @@ onMounted(() => {
     emit('commentsOpened', props.group.first_activity_id)
   }
 })
+
+// Watch for prop changes (when navigating from notification while already on feed)
+watch(
+  () => props.initialShowComments,
+  (newValue) => {
+    if (newValue && !showComments.value) {
+      showComments.value = true
+      emit('commentsOpened', props.group.first_activity_id)
+    }
+  }
+)
 
 function toggleComments() {
   showComments.value = !showComments.value
@@ -205,6 +217,9 @@ function formatDate(dateStr: string): string {
 .activity-group
   max-width: 600px
   margin: 0 auto 16px auto
+  transition: box-shadow 0.3s ease, background-color 0.3s ease
+
+// Animation defined globally in main.sass
 
 .user-link
   text-decoration: none
