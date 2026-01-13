@@ -314,16 +314,8 @@ async function switchToGoogleAccount() {
 }
 
 function isPasswordValid(password: string) {
-  if (!password || password.length < 8) {
+  if (!password || password.length < 6) {
     return t('password-min-length')
-  }
-  const hasUpperCase = /[A-Z]/.test(password)
-  const hasLowerCase = /[a-z]/.test(password)
-  const hasDigit = /\d/.test(password)
-  const hasSpecialChar = /[@$!%*?&]/.test(password)
-
-  if (!hasUpperCase || !hasLowerCase || !hasDigit || !hasSpecialChar) {
-    return t('password-requirements')
   }
   return true
 }

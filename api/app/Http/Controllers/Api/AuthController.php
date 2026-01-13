@@ -102,8 +102,7 @@ class AuthController extends Controller
     private const VALIDATION_PASSWORD_RULES = [
         'required',
         'string',
-        'min:8',
-        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+        'min:6',
     ];
 
     /**

@@ -19,7 +19,7 @@
                   :label="$t('new-password')"
                   lazy-rules
                   required
-                  :rules="[(val) => val.length >= 8 || $t('password-min-length')]"
+                  :rules="[(val) => val.length >= 6 || $t('password-min-length')]"
                   type="password"
                 >
                   <template v-slot:prepend>

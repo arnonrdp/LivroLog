@@ -314,7 +314,7 @@ class UserController extends Controller
 
         // Only admins can set password for users
         if ($request->user()->isAdmin() && $request->filled('password')) {
-            $rules['password'] = 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/';
+            $rules['password'] = 'required|string|min:6';
         }
 
         $request->validate($rules);

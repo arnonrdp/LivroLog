@@ -20,7 +20,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'John Doe',
             'email' => 'john@example.com',
             'username' => 'johndoe',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(201)
@@ -52,7 +52,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'John Doe',
             'email' => 'invalid-email',
             'username' => 'johndoe',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(422)
@@ -60,15 +60,15 @@ class AuthenticationTest extends TestCase
     }
 
     /**
-     * Test registration fails with weak password.
+     * Test registration fails with password shorter than 6 characters.
      */
-    public function test_registration_fails_with_weak_password(): void
+    public function test_registration_fails_with_short_password(): void
     {
         $response = $this->postJson('/auth/register', [
             'display_name' => 'John Doe',
             'email' => 'john@example.com',
             'username' => 'johndoe',
-            'password' => 'weak',
+            'password' => '12345',
         ]);
 
         $response->assertStatus(422)
@@ -76,35 +76,18 @@ class AuthenticationTest extends TestCase
     }
 
     /**
-     * Test registration fails with password missing uppercase.
+     * Test registration succeeds with simple 6+ character password.
      */
-    public function test_registration_fails_with_password_missing_uppercase(): void
+    public function test_registration_succeeds_with_simple_password(): void
     {
         $response = $this->postJson('/auth/register', [
             'display_name' => 'John Doe',
-            'email' => 'john@example.com',
-            'username' => 'johndoe',
-            'password' => 'securepass@123',
+            'email' => 'john2@example.com',
+            'username' => 'johndoe2',
+            'password' => 'simple',
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['password']);
-    }
-
-    /**
-     * Test registration fails with password missing special character.
-     */
-    public function test_registration_fails_with_password_missing_special_char(): void
-    {
-        $response = $this->postJson('/auth/register', [
-            'display_name' => 'John Doe',
-            'email' => 'john@example.com',
-            'username' => 'johndoe',
-            'password' => 'SecurePass123',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['password']);
+        $response->assertStatus(201);
     }
 
     /**
@@ -118,7 +101,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'John Doe',
             'email' => 'existing@example.com',
             'username' => 'johndoe',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(422)
@@ -136,7 +119,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'John Doe',
             'email' => 'john@example.com',
             'username' => 'existinguser',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(422)
@@ -153,7 +136,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'John Doe',
             'email' => 'john@example.com',
             'username' => 'admin',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(422)
@@ -169,7 +152,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'John Doe',
             'email' => 'john@example.com',
             'username' => 'john-doe!',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(422)
@@ -183,12 +166,12 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'john@example.com',
-            'password' => bcrypt('SecurePass@123'),
+            'password' => bcrypt('password123'),
         ]);
 
         $response = $this->postJson('/auth/login', [
             'email' => 'john@example.com',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(200)
@@ -213,7 +196,7 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'john@example.com',
-            'password' => bcrypt('SecurePass@123'),
+            'password' => bcrypt('password123'),
         ]);
 
         $response = $this->postJson('/auth/login', [
@@ -232,7 +215,7 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->postJson('/auth/login', [
             'email' => 'nonexistent@example.com',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(422)
@@ -246,12 +229,12 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'john@example.com',
-            'password' => bcrypt('SecurePass@123'),
+            'password' => bcrypt('password123'),
         ]);
 
         $response = $this->postJson('/auth/login', [
             'email' => 'john@example.com',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
         ]);
 
         $response->assertStatus(200);
@@ -419,7 +402,7 @@ class AuthenticationTest extends TestCase
             'display_name' => 'João Silva',
             'email' => 'joao@example.com',
             'username' => 'joaosilva',
-            'password' => 'SecurePass@123',
+            'password' => 'password123',
             'locale' => 'pt-BR',
         ]);
 
@@ -438,29 +421,29 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'changepass@example.com',
-            'password' => bcrypt('OldPass@123'),
+            'password' => bcrypt('oldpass123'),
         ]);
 
         // Login to get a real token
         $loginResponse = $this->postJson('/auth/login', [
             'email' => 'changepass@example.com',
-            'password' => 'OldPass@123',
+            'password' => 'oldpass123',
         ]);
 
         $token = $loginResponse->json('access_token');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/auth/password', [
-                'current_password' => 'OldPass@123',
-                'password' => 'NewPass@456',
-                'password_confirmation' => 'NewPass@456',
+                'current_password' => 'oldpass123',
+                'password' => 'newpass456',
+                'password_confirmation' => 'newpass456',
             ]);
 
         $response->assertStatus(200);
 
         // Verify password was changed by checking database hash
         $user->refresh();
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewPass@456', $user->password));
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpass456', $user->password));
     }
 
     /**
@@ -470,22 +453,22 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'wrongpass@example.com',
-            'password' => bcrypt('OldPass@123'),
+            'password' => bcrypt('oldpass123'),
         ]);
 
         // Login to get a real token
         $loginResponse = $this->postJson('/auth/login', [
             'email' => 'wrongpass@example.com',
-            'password' => 'OldPass@123',
+            'password' => 'oldpass123',
         ]);
 
         $token = $loginResponse->json('access_token');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/auth/password', [
-                'current_password' => 'WrongPassword!1',
-                'password' => 'NewPass@456',
-                'password_confirmation' => 'NewPass@456',
+                'current_password' => 'wrongpass1',
+                'password' => 'newpass456',
+                'password_confirmation' => 'newpass456',
             ]);
 
         $response->assertStatus(422);
