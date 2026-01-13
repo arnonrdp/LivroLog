@@ -11,10 +11,6 @@ on:
       - staging
   workflow_call:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   security-critical:
     runs-on: ubuntu-latest
