@@ -10,6 +10,7 @@ use App\Http\Resources\UserWithBooksResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -303,18 +304,30 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $this->authorize('update', $user);
 
-        $request->validate([
+        $rules = [
             'display_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'username' => 'required|string|max:100|unique:users,username,'.$user->id,
             'shelf_name' => 'nullable|string|max:255',
             'role' => 'nullable|string|in:user,admin',
-        ]);
+        ];
 
-        // Only admins can change user roles
-        $data = $request->all();
-        if (! $request->user()->isAdmin()) {
-            unset($data['role']);
+        // Only admins can set password for users
+        if ($request->user()->isAdmin() && $request->filled('password')) {
+            $rules['password'] = 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/';
+        }
+
+        $request->validate($rules);
+
+        // Only admins can change user roles and set passwords
+        $data = $request->only(['display_name', 'email', 'username', 'shelf_name']);
+        if ($request->user()->isAdmin()) {
+            if ($request->has('role')) {
+                $data['role'] = $request->input('role');
+            }
+            if ($request->filled('password')) {
+                $data['password'] = Hash::make($request->input('password'));
+            }
         }
 
         $user->update($data);

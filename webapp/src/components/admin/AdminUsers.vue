@@ -61,6 +61,9 @@
         <q-btn dense flat icon="edit" round size="sm" @click="openEditDialog(props.row)">
           <q-tooltip>{{ $t('admin.edit') }}</q-tooltip>
         </q-btn>
+        <q-btn dense flat icon="lock_reset" round size="sm" @click="confirmPasswordReset(props.row)">
+          <q-tooltip>{{ $t('admin.send-password-reset') }}</q-tooltip>
+        </q-btn>
         <q-btn color="negative" dense flat icon="delete" round size="sm" @click="confirmDelete(props.row)">
           <q-tooltip>{{ $t('admin.delete') }}</q-tooltip>
         </q-btn>
@@ -92,6 +95,13 @@
         <q-input v-model="editForm.username" class="q-mb-sm" dense :label="$t('admin.username')" />
         <q-input v-model="editForm.email" class="q-mb-sm" dense :label="$t('admin.email')" type="email" />
         <q-select v-model="editForm.role" class="q-mb-sm" dense emit-value :label="$t('admin.role')" map-options :options="roleOptions" />
+
+        <q-separator class="q-my-md" />
+        <div class="text-subtitle2 q-mb-sm">{{ $t('admin.set-new-password') }}</div>
+        <div class="text-caption text-grey-6 q-mb-sm">{{ $t('admin.password-optional-hint') }}</div>
+        <q-input v-model="editForm.password" autocomplete="new-password" class="q-mb-sm" dense :label="$t('admin.new-password')" type="password" />
+        <q-input v-model="editForm.password_confirmation" autocomplete="new-password" class="q-mb-sm" dense :label="$t('admin.confirm-password')" type="password" />
+        <div class="text-caption text-grey-6">{{ $t('admin.password-requirements') }}</div>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -112,6 +122,21 @@
       <q-card-actions align="right">
         <q-btn v-close-popup flat :label="$t('cancel')" />
         <q-btn color="negative" flat :label="$t('admin.delete')" :loading="isDeleting" @click="deleteUser" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <!-- Password Reset Confirmation Dialog -->
+  <q-dialog v-model="passwordResetDialog" persistent>
+    <q-card>
+      <q-card-section class="row items-center">
+        <q-icon class="q-mr-sm" color="primary" name="mail" size="2em" />
+        <span>{{ $t('admin.confirm-send-password-reset', { email: userToReset?.email }) }}</span>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn v-close-popup flat :label="$t('cancel')" />
+        <q-btn color="primary" flat :label="$t('admin.send')" :loading="isSendingReset" @click="sendPasswordReset" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -151,6 +176,8 @@ interface EditForm {
   email: string
   avatar: string | null
   role: string
+  password: string
+  password_confirmation: string
 }
 
 const $q = useQuasar()
@@ -171,14 +198,19 @@ const pagination = ref({
 
 const editDialog = ref(false)
 const deleteDialog = ref(false)
+const passwordResetDialog = ref(false)
 const userToDelete = ref<AdminUser | null>(null)
+const userToReset = ref<AdminUser | null>(null)
+const isSendingReset = ref(false)
 const editForm = ref<EditForm>({
   id: '',
   display_name: '',
   username: '',
   email: '',
   avatar: null,
-  role: 'user'
+  role: 'user',
+  password: '',
+  password_confirmation: ''
 })
 
 const roleOptions = [
@@ -276,20 +308,42 @@ function openEditDialog(user: AdminUser) {
     username: user.username || '',
     email: user.email || '',
     avatar: user.avatar,
-    role: user.role || 'user'
+    role: user.role || 'user',
+    password: '',
+    password_confirmation: ''
   }
   editDialog.value = true
 }
 
 function saveUser() {
+  // Validate password if provided
+  if (editForm.value.password) {
+    if (editForm.value.password !== editForm.value.password_confirmation) {
+      Notify.create({ message: t('admin.passwords-dont-match'), type: 'negative' })
+      return
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    if (!passwordRegex.test(editForm.value.password)) {
+      Notify.create({ message: t('admin.password-requirements'), type: 'negative' })
+      return
+    }
+  }
+
   isSaving.value = true
+
+  const payload: Record<string, string> = {
+    display_name: editForm.value.display_name,
+    username: editForm.value.username,
+    email: editForm.value.email,
+    role: editForm.value.role
+  }
+
+  if (editForm.value.password) {
+    payload.password = editForm.value.password
+  }
+
   api
-    .put(`/users/${editForm.value.id}`, {
-      display_name: editForm.value.display_name,
-      username: editForm.value.username,
-      email: editForm.value.email,
-      role: editForm.value.role
-    })
+    .put(`/users/${editForm.value.id}`, payload)
     .then(() => {
       Notify.create({ message: t('admin.user-updated'), type: 'positive' })
       editDialog.value = false
@@ -325,6 +379,30 @@ function deleteUser() {
     })
     .finally(() => {
       isDeleting.value = false
+    })
+}
+
+function confirmPasswordReset(user: AdminUser) {
+  userToReset.value = user
+  passwordResetDialog.value = true
+}
+
+function sendPasswordReset() {
+  if (!userToReset.value) return
+
+  isSendingReset.value = true
+  api
+    .post(`/users/${userToReset.value.id}/send-password-reset`)
+    .then(() => {
+      Notify.create({ message: t('admin.password-reset-sent'), type: 'positive' })
+      passwordResetDialog.value = false
+      userToReset.value = null
+    })
+    .catch((error) => {
+      Notify.create({ message: error.response?.data?.message || t('admin.error-sending-reset'), type: 'negative' })
+    })
+    .finally(() => {
+      isSendingReset.value = false
     })
 }
 

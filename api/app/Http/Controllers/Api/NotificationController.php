@@ -172,4 +172,43 @@ class NotificationController extends Controller
             'marked_count' => $count,
         ]);
     }
+
+    /**
+     * Mark notifications as read for a specific activity.
+     *
+     * @OA\Post(
+     *     path="/notifications/read-by-activity/{activityId}",
+     *     summary="Mark notifications as read for a specific activity",
+     *     tags={"Notifications"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="activityId",
+     *         in="path",
+     *         required=true,
+     *
+     *         @OA\Schema(type="string", example="A-3D6Y-9IO8")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notifications marked as read",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="marked_count", type="integer", example=2)
+     *         )
+     *     )
+     * )
+     */
+    public function markAsReadByActivity(Request $request, string $activityId): JsonResponse
+    {
+        $count = $this->service->markAsReadByActivity($request->user(), $activityId);
+
+        return response()->json([
+            'success' => true,
+            'marked_count' => $count,
+        ]);
+    }
 }

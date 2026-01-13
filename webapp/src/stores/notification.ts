@@ -109,6 +109,30 @@ export const useNotificationStore = defineStore('notification', {
       this._unreadCount = 0
     },
 
+    postReadByActivity(activityId: string): Promise<number> {
+      return api
+        .post(`/notifications/read-by-activity/${activityId}`)
+        .then((response) => {
+          if (response.data.success) {
+            const markedCount = response.data.marked_count
+            this._notifications.forEach((n) => {
+              if (n.activity_id === activityId && !n.is_read) {
+                n.is_read = true
+                n.read_at = new Date().toISOString()
+              }
+            })
+            this._unreadCount = Math.max(0, this._unreadCount - markedCount)
+            return markedCount
+          }
+          return 0
+        })
+        .catch(() => 0)
+    },
+
+    hasUnreadNotificationForActivity(activityId: string): boolean {
+      return this._notifications.some((n) => n.activity_id === activityId && !n.is_read)
+    },
+
     // WebSocket-related actions
     addNotificationFromWebSocket(event: NewNotificationEvent): void {
       // Convert event to Notification format
@@ -117,6 +141,7 @@ export const useNotificationStore = defineStore('notification', {
         type: event.type,
         actor: event.actor,
         data: event.data,
+        activity_id: event.activity_id,
         read_at: null,
         is_read: false,
         created_at: event.created_at
