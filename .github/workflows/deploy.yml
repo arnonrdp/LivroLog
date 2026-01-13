@@ -160,48 +160,42 @@ jobs:
       - name: Create production .env file
         run: |
           echo "📝 Creating production .env file locally..."
-          cat > .env.prod << EOF
-          APP_NAME=LivroLog
-          APP_ENV=production
-          APP_KEY=${{ secrets.APP_KEY }}
-          APP_DEBUG=false
-          APP_TIMEZONE=UTC
-          APP_URL=https://api.livrolog.com
-          APP_FRONTEND_URL=${{ vars.APP_FRONTEND_URL }}
-
-          DB_CONNECTION=mysql
-          DB_HOST=mariadb
-          DB_PORT=3306
-          DB_DATABASE=livrolog
-          DB_USERNAME=${{ secrets.DB_USERNAME || 'root' }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-
-          REDIS_CLIENT=predis
-          REDIS_HOST=redis
-          REDIS_PASSWORD=null
-          REDIS_PORT=6379
-
-          QUEUE_CONNECTION=redis
-          SESSION_DRIVER=redis
-          SESSION_LIFETIME=120
-          CACHE_DRIVER=redis
-          MAIL_MAILER=resend
-          MAIL_FROM_ADDRESS=noreply@livrolog.com
-          MAIL_FROM_NAME=\${APP_NAME}
-          LOG_CHANNEL=stack
-          LOG_LEVEL=error
-
-          RESEND_KEY=${{ secrets.RESEND_KEY }}
-
-          GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
-          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}
-          AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}
-          AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}
-          AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}
-          EOF
-
+          {
+            echo "APP_NAME=LivroLog"
+            echo "APP_ENV=production"
+            echo "APP_KEY=${{ secrets.APP_KEY }}"
+            echo "APP_DEBUG=false"
+            echo "APP_TIMEZONE=UTC"
+            echo "APP_URL=https://api.livrolog.com"
+            echo "APP_FRONTEND_URL=${{ vars.APP_FRONTEND_URL || 'https://livrolog.com' }}"
+            echo "DB_CONNECTION=mysql"
+            echo "DB_HOST=mariadb"
+            echo "DB_PORT=3306"
+            echo "DB_DATABASE=livrolog"
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}"
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+            echo "REDIS_CLIENT=predis"
+            echo "REDIS_HOST=redis"
+            echo "REDIS_PASSWORD=null"
+            echo "REDIS_PORT=6379"
+            echo "QUEUE_CONNECTION=redis"
+            echo "SESSION_DRIVER=redis"
+            echo "SESSION_LIFETIME=120"
+            echo "CACHE_DRIVER=redis"
+            echo "MAIL_MAILER=resend"
+            echo "MAIL_FROM_ADDRESS=noreply@livrolog.com"
+            echo "MAIL_FROM_NAME=LivroLog"
+            echo "LOG_CHANNEL=stack"
+            echo "LOG_LEVEL=error"
+            echo "RESEND_KEY=${{ secrets.RESEND_KEY }}"
+            echo "GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}"
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            echo "AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}"
+            echo "AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}"
+            echo "AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}"
+            echo "AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}"
+          } > .env.prod
           echo "✅ Production .env file created locally"
 
       - name: Copy compose file and env to server
