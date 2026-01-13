@@ -79,7 +79,12 @@
     "new-password": "新しいパスワード",
     "confirm-password": "パスワードを確認",
     "passwords-dont-match": "パスワードが一致しません",
-    "password-requirements": "8文字以上、大文字、小文字、数字、特殊文字（@$!%*?&）を含む必要があります"
+    "password-requirements": "8文字以上、大文字、小文字、数字、特殊文字（@$!%*?&）を含む必要があります",
+    "send-password-reset": "パスワードリセットメールを送信",
+    "confirm-send-password-reset": "{email}にパスワードリセットメールを送信しますか？",
+    "send": "送信",
+    "password-reset-sent": "パスワードリセットメールを送信しました",
+    "error-sending-reset": "パスワードリセットメールの送信エラー"
   },
   "affiliate-disclosure": "LivroLogはAmazonアソシエイトプログラムに参加しており、対象となる購入から収益を得ています。",
   "already-in-library": "すでに図書館にあります",

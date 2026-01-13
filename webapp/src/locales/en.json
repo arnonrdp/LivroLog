@@ -72,7 +72,12 @@
     "new-password": "New Password",
     "confirm-password": "Confirm Password",
     "passwords-dont-match": "Passwords don't match",
-    "password-requirements": "Min 8 characters, with uppercase, lowercase, number and special character (@$!%*?&)"
+    "password-requirements": "Min 8 characters, with uppercase, lowercase, number and special character (@$!%*?&)",
+    "send-password-reset": "Send password reset email",
+    "confirm-send-password-reset": "Send password reset email to {email}?",
+    "send": "Send",
+    "password-reset-sent": "Password reset email sent successfully",
+    "error-sending-reset": "Error sending password reset email"
   },
   "account-created": "Your account has been created successfully!",
   "add": "Add book",

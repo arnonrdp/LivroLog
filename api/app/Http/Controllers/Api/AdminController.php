@@ -10,6 +10,7 @@ use App\Services\AmazonEnrichmentService;
 use App\Services\AmazonScraperService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 
 class AdminController extends Controller
 {
@@ -510,5 +511,27 @@ class AdminController extends Controller
             'message' => 'Book created successfully from Amazon URL',
             'book' => $this->formatBookResponse($book),
         ]);
+    }
+
+    /**
+     * Send password reset email to a user (admin only)
+     */
+    public function sendPasswordReset(string $id): JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset email sent successfully',
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => __($status),
+        ], 400);
     }
 }

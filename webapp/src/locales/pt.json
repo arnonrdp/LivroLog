@@ -72,7 +72,12 @@
     "new-password": "Nova Senha",
     "confirm-password": "Confirmar Senha",
     "passwords-dont-match": "As senhas não coincidem",
-    "password-requirements": "Mínimo 8 caracteres, com maiúsculas, minúsculas, número e caractere especial (@$!%*?&)"
+    "password-requirements": "Mínimo 8 caracteres, com maiúsculas, minúsculas, número e caractere especial (@$!%*?&)",
+    "send-password-reset": "Enviar email de redefinição de senha",
+    "confirm-send-password-reset": "Enviar email de redefinição de senha para {email}?",
+    "send": "Enviar",
+    "password-reset-sent": "Email de redefinição de senha enviado com sucesso",
+    "error-sending-reset": "Erro ao enviar email de redefinição"
   },
   "account-created": "Sua conta foi criada com sucesso!",
   "add": "Adicionar livro",

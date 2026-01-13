@@ -79,7 +79,12 @@
     "new-password": "Yeni Şifre",
     "confirm-password": "Şifreyi Onayla",
     "passwords-dont-match": "Şifreler eşleşmiyor",
-    "password-requirements": "En az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter (@$!%*?&) içermelidir"
+    "password-requirements": "En az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter (@$!%*?&) içermelidir",
+    "send-password-reset": "Şifre sıfırlama e-postası gönder",
+    "confirm-send-password-reset": "{email} adresine şifre sıfırlama e-postası gönderilsin mi?",
+    "send": "Gönder",
+    "password-reset-sent": "Şifre sıfırlama e-postası başarıyla gönderildi",
+    "error-sending-reset": "Şifre sıfırlama e-postası gönderilirken hata oluştu"
   },
   "affiliate-disclosure": "LivroLog, Amazon İş Ortaklığı Programına katılmaktadır ve uygun satın alımlardan komisyon kazanmaktadır.",
   "already-in-library": "Zaten kütüphanede",

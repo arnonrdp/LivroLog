@@ -61,6 +61,9 @@
         <q-btn dense flat icon="edit" round size="sm" @click="openEditDialog(props.row)">
           <q-tooltip>{{ $t('admin.edit') }}</q-tooltip>
         </q-btn>
+        <q-btn dense flat icon="lock_reset" round size="sm" @click="confirmPasswordReset(props.row)">
+          <q-tooltip>{{ $t('admin.send-password-reset') }}</q-tooltip>
+        </q-btn>
         <q-btn color="negative" dense flat icon="delete" round size="sm" @click="confirmDelete(props.row)">
           <q-tooltip>{{ $t('admin.delete') }}</q-tooltip>
         </q-btn>
@@ -122,6 +125,21 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <!-- Password Reset Confirmation Dialog -->
+  <q-dialog v-model="passwordResetDialog" persistent>
+    <q-card>
+      <q-card-section class="row items-center">
+        <q-icon class="q-mr-sm" color="primary" name="mail" size="2em" />
+        <span>{{ $t('admin.confirm-send-password-reset', { email: userToReset?.email }) }}</span>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn v-close-popup flat :label="$t('cancel')" />
+        <q-btn color="primary" flat :label="$t('admin.send')" :loading="isSendingReset" @click="sendPasswordReset" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -180,7 +198,10 @@ const pagination = ref({
 
 const editDialog = ref(false)
 const deleteDialog = ref(false)
+const passwordResetDialog = ref(false)
 const userToDelete = ref<AdminUser | null>(null)
+const userToReset = ref<AdminUser | null>(null)
+const isSendingReset = ref(false)
 const editForm = ref<EditForm>({
   id: '',
   display_name: '',
@@ -358,6 +379,30 @@ function deleteUser() {
     })
     .finally(() => {
       isDeleting.value = false
+    })
+}
+
+function confirmPasswordReset(user: AdminUser) {
+  userToReset.value = user
+  passwordResetDialog.value = true
+}
+
+function sendPasswordReset() {
+  if (!userToReset.value) return
+
+  isSendingReset.value = true
+  api
+    .post(`/users/${userToReset.value.id}/send-password-reset`)
+    .then(() => {
+      Notify.create({ message: t('admin.password-reset-sent'), type: 'positive' })
+      passwordResetDialog.value = false
+      userToReset.value = null
+    })
+    .catch((error) => {
+      Notify.create({ message: error.response?.data?.message || t('admin.error-sending-reset'), type: 'negative' })
+    })
+    .finally(() => {
+      isSendingReset.value = false
     })
 }
 
