@@ -81,6 +81,7 @@ class TagController extends Controller
      *
      *         @OA\JsonContent(ref="#/components/schemas/Tag")
      *     ),
+     *
      *     @OA\Response(response=422, description="Validation error")
      * )
      */
@@ -134,6 +135,7 @@ class TagController extends Controller
      *
      *         @OA\JsonContent(ref="#/components/schemas/Tag")
      *     ),
+     *
      *     @OA\Response(response=404, description="Tag not found")
      * )
      */
@@ -183,6 +185,7 @@ class TagController extends Controller
      *
      *         @OA\JsonContent(ref="#/components/schemas/Tag")
      *     ),
+     *
      *     @OA\Response(response=404, description="Tag not found"),
      *     @OA\Response(response=422, description="Validation error")
      * )
@@ -250,6 +253,7 @@ class TagController extends Controller
      *             @OA\Property(property="message", type="string", example="Tag deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Tag not found")
      * )
      */
@@ -294,6 +298,7 @@ class TagController extends Controller
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Tag"))
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Book not found in library")
      * )
      */
@@ -350,6 +355,7 @@ class TagController extends Controller
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Tag"))
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Book not found in library")
      * )
      */
@@ -393,6 +399,7 @@ class TagController extends Controller
      *
      *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="tag",
      *         in="path",
@@ -411,6 +418,7 @@ class TagController extends Controller
      *             @OA\Property(property="message", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Book or tag not found")
      * )
      */
@@ -451,6 +459,7 @@ class TagController extends Controller
      *
      *         @OA\Schema(type="string", example="B-1ABC-2DEF")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="tag",
      *         in="path",
@@ -469,6 +478,7 @@ class TagController extends Controller
      *             @OA\Property(property="message", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Tag not associated with this book")
      * )
      */

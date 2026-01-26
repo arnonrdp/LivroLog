@@ -52,11 +52,25 @@ return [
 
     // Amazon integration
     'amazon' => [
+        // Legacy PA-API 5.0 configuration
         'enabled' => env('AMAZON_PA_API_ENABLED', false),
         'associate_tag' => env('AMAZON_ASSOCIATE_TAG', 'livrolog01-20'),
         'pa_api_key' => env('AMAZON_PA_API_KEY'),
         'pa_secret_key' => env('AMAZON_PA_SECRET_KEY'),
         'sitestripe_enabled' => env('AMAZON_SITESTRIPE_ENABLED', false),
+
+        // Creators API configuration (OAuth 2.0)
+        'creators_api' => [
+            'enabled' => env('AMAZON_CREATORS_API_ENABLED', true),
+            'credential_id' => env('AMAZON_CREATORS_CREDENTIAL_ID'),
+            'credential_secret' => env('AMAZON_CREATORS_CREDENTIAL_SECRET'),
+            'application_id' => env('AMAZON_CREATORS_APPLICATION_ID'),
+            'token_endpoint' => 'https://api.amazon.com/auth/O2/token',
+            'api_version' => '2.1',
+        ],
+
+        // Provider selection: 'creators' (OAuth 2.0) or 'pa-api' (AWS Signature)
+        'provider' => env('AMAZON_API_PROVIDER', 'creators'),
 
         // Regional configurations with hardcoded associate tags
         'regions' => [
