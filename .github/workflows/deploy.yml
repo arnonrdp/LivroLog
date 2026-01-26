@@ -195,6 +195,11 @@ jobs:
             echo "AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}"
             echo "AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}"
             echo "AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}"
+            echo "AMAZON_CREATORS_API_ENABLED=true"
+            echo "AMAZON_CREATORS_CREDENTIAL_ID=${{ secrets.AMAZON_CREATORS_CREDENTIAL_ID }}"
+            echo "AMAZON_CREATORS_CREDENTIAL_SECRET=${{ secrets.AMAZON_CREATORS_CREDENTIAL_SECRET }}"
+            echo "AMAZON_CREATORS_APPLICATION_ID=livrolog01-20.livrolog"
+            echo "AMAZON_API_PROVIDER=creators"
           } > .env.prod
           echo "✅ Production .env file created locally"
 
