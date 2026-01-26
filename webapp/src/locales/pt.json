@@ -458,11 +458,18 @@
   "save": "Salvar",
   "saved-successfully": "Review salvo com sucesso!",
   "search": {
+    "add-book-button": "Adicionar Livro",
+    "add-book-description": "Por enquanto só é possível adicionar a partir de links da Amazon. Cole o link do seu livro aqui e nós o adicionaremos na sua estante para você.",
+    "add-book-title": "Adicionar seu próprio livro",
+    "amazon-url-label": "Link da Amazon",
+    "amazon-url-placeholder": "https://www.amazon.com.br/dp/...",
+    "book-added-success": "Livro adicionado à sua estante com sucesso!",
     "button": "Buscar",
     "initial-hint": "Digite o título, autor ou ISBN do livro que você procura",
     "initial-title": "Pesquise por livros",
     "no-results": "Nenhum livro encontrado",
     "no-results-hint": "Tente buscar por outro título, autor ou ISBN",
+    "not-found-add-own": "Não encontrou o que buscava? Adicione seu próprio livro",
     "placeholder": "Pesquisar livros...",
     "results-for": "Resultados para \"{query}\"",
     "unknown-author": "Autor desconhecido"

@@ -458,11 +458,18 @@
   "save": "Save",
   "saved-successfully": "Review saved successfully!",
   "search": {
+    "add-book-button": "Add Book",
+    "add-book-description": "For now, you can only add books from Amazon links. Paste the link to your book here and we'll add it to your shelf for you.",
+    "add-book-title": "Add your own book",
+    "amazon-url-label": "Amazon Link",
+    "amazon-url-placeholder": "https://www.amazon.com/dp/...",
+    "book-added-success": "Book added to your shelf successfully!",
     "button": "Search",
     "initial-hint": "Enter the title, author or ISBN of the book you're looking for",
     "initial-title": "Search for books",
     "no-results": "No books found",
     "no-results-hint": "Try searching for another title, author or ISBN",
+    "not-found-add-own": "Didn't find what you were looking for? Add your own book",
     "placeholder": "Search books...",
     "results-for": "Results for \"{query}\"",
     "unknown-author": "Unknown author"

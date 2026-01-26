@@ -434,11 +434,18 @@
   "save": "Kaydetmek",
   "saved-successfully": "İnceleme başarıyla kaydedildi!",
   "search": {
+    "add-book-button": "Kitap Ekle",
+    "add-book-description": "Şimdilik yalnızca Amazon bağlantılarından kitap ekleyebilirsiniz. Kitabınızın bağlantısını buraya yapıştırın, biz de rafınıza ekleyelim.",
+    "add-book-title": "Kendi kitabınızı ekleyin",
+    "amazon-url-label": "Amazon Bağlantısı",
+    "amazon-url-placeholder": "https://www.amazon.com/dp/...",
+    "book-added-success": "Kitap rafınıza başarıyla eklendi!",
     "button": "Ara",
     "initial-hint": "Aradığınız kitabın başlığını, yazarını veya ISBN'sini girin",
     "initial-title": "Kitap ara",
     "no-results": "Kitap bulunamadı",
     "no-results-hint": "Başka bir başlık, yazar veya ISBN ile aramayı deneyin",
+    "not-found-add-own": "Aradığınızı bulamadınız mı? Kendi kitabınızı ekleyin",
     "placeholder": "Kitap ara...",
     "results-for": "\"{query}\" için sonuçlar",
     "unknown-author": "Bilinmeyen yazar"

@@ -8,6 +8,7 @@ use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
 use App\Services\AmazonLinkEnrichmentService;
+use App\Services\AmazonScraperService;
 use App\Services\UnifiedBookEnrichmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -966,6 +967,299 @@ class UserBookController extends Controller
             'already_in_library' => false,
             'message' => 'Book added to your library successfully',
         ], 201);
+    }
+
+    /**
+     * Create a book from an Amazon URL and add it to user's library
+     *
+     * This allows regular users to add books that don't exist in the database
+     * by providing an Amazon product URL. The URL must be for a book product.
+     */
+    public function createFromAmazonUrl(Request $request, AmazonScraperService $scraper): JsonResponse
+    {
+        $request->validate([
+            'amazon_url' => 'required|string|url',
+            'is_private' => 'boolean',
+            'reading_status' => 'nullable|string|in:want_to_read,reading,read,abandoned,on_hold,re_reading',
+        ]);
+
+        $user = $request->user();
+        $amazonUrl = $request->input('amazon_url');
+        $isPrivate = $request->boolean('is_private', false);
+        $readingStatus = $request->input('reading_status', 'read');
+
+        // Validate URL is from Amazon
+        if (! $this->isValidAmazonUrl($amazonUrl)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'URL inválida. Por favor, forneça um link válido de produto da Amazon.',
+            ], 422);
+        }
+
+        // Extract data from Amazon URL
+        $amazonData = $scraper->extractFromUrl($amazonUrl);
+
+        if (! $amazonData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Não foi possível extrair dados da URL fornecida. Verifique se o link está correto.',
+            ], 422);
+        }
+
+        // Validate that the product is a book (must have book-like attributes)
+        if (! $this->isBookProduct($amazonData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este link não parece ser de um livro. Por favor, forneça um link de um livro da Amazon.',
+            ], 422);
+        }
+
+        // Check for required data (at least title or ASIN)
+        if (empty($amazonData['extracted_title']) && empty($amazonData['amazon_asin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Não foi possível extrair informações do livro da página da Amazon.',
+            ], 422);
+        }
+
+        // Check if book already exists by ISBN
+        $existingBook = null;
+        if (! empty($amazonData['isbn'])) {
+            $existingBook = Book::where('isbn', $amazonData['isbn'])->first();
+        }
+
+        // Check if book already exists by ASIN
+        if (! $existingBook && ! empty($amazonData['amazon_asin'])) {
+            $existingBook = Book::where('amazon_asin', $amazonData['amazon_asin'])->first();
+        }
+
+        if ($existingBook) {
+            // Book exists, check if already in user's library
+            if ($user->books()->where('books.id', $existingBook->id)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este livro já está na sua estante.',
+                    'book' => $existingBook,
+                    'already_in_library' => true,
+                ], 200);
+            }
+
+            // Add existing book to user's library
+            $attachData = [
+                'added_at' => now(),
+                'is_private' => $isPrivate,
+                'reading_status' => $readingStatus,
+            ];
+
+            if ($readingStatus === 'read') {
+                $attachData['read_at'] = now()->format('Y-m-d');
+            }
+
+            $user->books()->attach($existingBook->id, $attachData);
+
+            $bookWithPivot = $user->books()->where('books.id', $existingBook->id)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Livro adicionado à sua estante com sucesso!',
+                'book' => $bookWithPivot,
+                'already_in_library' => false,
+            ], 201);
+        }
+
+        // Create new book
+        $book = Book::create([
+            'title' => $amazonData['extracted_title'] ?? 'Sem título',
+            'authors' => $amazonData['authors'] ?? null,
+            'isbn' => $amazonData['isbn'] ?? null,
+            'amazon_asin' => $amazonData['amazon_asin'] ?? null,
+            'thumbnail' => $amazonData['thumbnail'] ?? null,
+            'page_count' => $amazonData['page_count'] ?? null,
+            'description' => $amazonData['description'] ?? null,
+            'publisher' => $amazonData['publisher'] ?? null,
+            'height' => $amazonData['height'] ?? null,
+            'width' => $amazonData['width'] ?? null,
+            'thickness' => $amazonData['thickness'] ?? null,
+            'asin_status' => 'completed',
+            'asin_processed_at' => now(),
+            'info_quality' => 'enhanced',
+        ]);
+
+        Log::info('User created book from Amazon URL', [
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'amazon_asin' => $amazonData['amazon_asin'],
+        ]);
+
+        // Add book to user's library
+        $attachData = [
+            'added_at' => now(),
+            'is_private' => $isPrivate,
+            'reading_status' => $readingStatus,
+        ];
+
+        if ($readingStatus === 'read') {
+            $attachData['read_at'] = now()->format('Y-m-d');
+        }
+
+        $user->books()->attach($book->id, $attachData);
+
+        $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Livro criado e adicionado à sua estante com sucesso!',
+            'book' => $bookWithPivot,
+            'already_in_library' => false,
+        ], 201);
+    }
+
+    /**
+     * Check if a URL is a valid Amazon product URL
+     */
+    private function isValidAmazonUrl(string $url): bool
+    {
+        try {
+            $host = parse_url($url, PHP_URL_HOST);
+            if (! $host) {
+                return false;
+            }
+
+            $host = strtolower($host);
+
+            // Check if it's an Amazon domain (including short URLs)
+            $amazonDomains = [
+                'a.co',
+                'amzn.to',
+                'amzn.com',
+                'amazon.com',
+                'amazon.com.br',
+                'amazon.co.uk',
+                'amazon.ca',
+                'amazon.de',
+                'amazon.fr',
+                'amazon.es',
+                'amazon.it',
+                'amazon.co.jp',
+                'www.amazon.com',
+                'www.amazon.com.br',
+                'www.amazon.co.uk',
+                'www.amazon.ca',
+                'www.amazon.de',
+                'www.amazon.fr',
+                'www.amazon.es',
+                'www.amazon.it',
+                'www.amazon.co.jp',
+            ];
+
+            foreach ($amazonDomains as $domain) {
+                if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if the extracted Amazon data represents a book product
+     *
+     * Books MUST have: ISBN, page_count, or publisher
+     * Title-based detection is only used as secondary confirmation, not as sole criteria
+     */
+    private function isBookProduct(array $amazonData): bool
+    {
+        $title = $amazonData['extracted_title'] ?? '';
+        $lowerTitle = mb_strtolower($title, 'UTF-8');
+
+        // First, check for NON-BOOK indicators in the title
+        // These products should NEVER be accepted, even if they somehow have book-like attributes
+        $nonBookIndicators = [
+            // Toys and collectibles
+            'funko', 'pop!', 'vinyl', 'figure', 'figurine', 'action figure',
+            'toy', 'brinquedo', 'boneco', 'boneca', 'pelúcia', 'plush',
+            'lego', 'playset', 'playmobil',
+            // Electronics
+            'tv', 'televisão', 'monitor', 'smartphone', 'celular', 'tablet',
+            'notebook', 'laptop', 'computador', 'computer', 'headphone',
+            'fone de ouvido', 'speaker', 'caixa de som', 'camera', 'câmera',
+            // Home appliances
+            'liquidificador', 'blender', 'microondas', 'microwave', 'geladeira',
+            'refrigerator', 'fogão', 'stove', 'aspirador', 'vacuum',
+            // Clothing and accessories
+            'camiseta', 't-shirt', 'camisa', 'calça', 'vestido', 'dress',
+            'sapato', 'shoe', 'tênis', 'sneaker', 'bolsa', 'bag', 'mochila',
+            // Games and media (non-book)
+            'playstation', 'xbox', 'nintendo', 'blu-ray', 'dvd', 'cd ',
+            'video game', 'videogame', 'jogo de', 'game ',
+            // Other non-book products
+            'poster', 'pôster', 'quadro', 'frame', 'caneca', 'mug',
+            'chaveiro', 'keychain', 'adesivo', 'sticker',
+        ];
+
+        foreach ($nonBookIndicators as $indicator) {
+            if (str_contains($lowerTitle, $indicator)) {
+                return false;
+            }
+        }
+
+        // Now check for book-specific attributes
+        // ISBN is the strongest indicator - if present, it's definitely a book
+        if (! empty($amazonData['isbn'])) {
+            return true;
+        }
+
+        // Page count is a strong indicator for books
+        if (! empty($amazonData['page_count']) && $amazonData['page_count'] > 0) {
+            return true;
+        }
+
+        // Publisher is a good indicator
+        if (! empty($amazonData['publisher'])) {
+            return true;
+        }
+
+        // Authors + description together suggest a book/audiobook
+        // (audiobooks often don't have ISBN or page_count)
+        if (! empty($amazonData['authors']) && ! empty($amazonData['description'])) {
+            $description = mb_strtolower($amazonData['description'], 'UTF-8');
+            // Check if description looks like a book/audiobook description
+            $bookDescriptionIndicators = [
+                'story', 'história', 'romance', 'novel', 'tale', 'conto',
+                'adventure', 'aventura', 'chapter', 'capítulo', 'author', 'autor',
+                'read', 'leitura', 'book', 'livro', 'audio', 'narrat',
+                'bestseller', 'best-seller', 'published', 'publicado',
+            ];
+            foreach ($bookDescriptionIndicators as $indicator) {
+                if (str_contains($description, $indicator)) {
+                    return true;
+                }
+            }
+        }
+
+        // Without ISBN, page_count, or publisher, we need to be very strict
+        // Only accept if title has VERY specific book indicators
+        $strictBookIndicators = [
+            'paperback', 'hardcover', 'capa dura', 'capa mole', 'brochura',
+            'ebook', 'e-book', 'kindle edition', 'edição kindle',
+            'audiobook', 'audiolivro', 'audible',
+            ': um romance', ': a novel', 'livro 1', 'livro 2', 'livro 3',
+            'book 1', 'book 2', 'book 3', 'vol. 1', 'vol. 2', 'vol. 3',
+            'volume 1', 'volume 2', 'volume 3', 'tomo 1', 'tomo 2',
+        ];
+
+        foreach ($strictBookIndicators as $indicator) {
+            if (str_contains($lowerTitle, $indicator)) {
+                return true;
+            }
+        }
+
+        // If none of the above, reject the product
+        // It's better to reject a valid book than accept a Funko Pop
+        return false;
     }
 
     /**

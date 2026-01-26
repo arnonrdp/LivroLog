@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/books', [UserBookController::class, 'index']);
     Route::get('/user/books/{book}', [UserBookController::class, 'show']);
     Route::post('/user/books', [UserBookController::class, 'store']);
+    Route::post('/user/books/from-amazon', [UserBookController::class, 'createFromAmazonUrl']);
     Route::patch('/user/books/{book}', [UserBookController::class, 'update']);
     Route::put('/user/books/{book}/replace', [UserBookController::class, 'replaceBook']);
     Route::delete('/user/books/{book}', [UserBookController::class, 'destroy']);
