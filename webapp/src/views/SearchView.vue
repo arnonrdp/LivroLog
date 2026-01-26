@@ -68,13 +68,64 @@
         </div>
       </div>
     </div>
+
+    <!-- Add Your Own Book Section (for authenticated users only) -->
+    <div v-if="hasSearched && !isLoading && authStore.isAuthenticated" class="add-own-book-section" data-testid="add-own-book-section">
+      <q-separator class="q-my-lg" />
+      <div class="add-own-book-content">
+        <p class="add-own-book-text">{{ $t('search.not-found-add-own') }}</p>
+        <q-btn color="primary" data-testid="add-own-book-btn" no-caps outline @click="showAddBookDialog = true">
+          {{ $t('search.add-book-button') }}
+        </q-btn>
+      </div>
+    </div>
+
+    <!-- Add Book from Amazon Dialog -->
+    <q-dialog v-model="showAddBookDialog">
+      <q-card class="add-book-dialog" data-testid="add-book-amazon-dialog">
+        <q-card-section>
+          <div class="text-h6">{{ $t('search.add-book-title') }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <p class="text-body2 q-mb-md">{{ $t('search.add-book-description') }}</p>
+          <q-input
+            v-model="amazonUrl"
+            autofocus
+            clearable
+            data-testid="amazon-url-input"
+            dense
+            :error="!!amazonUrlError"
+            :error-message="amazonUrlError"
+            :label="$t('search.amazon-url-label')"
+            outlined
+            :placeholder="$t('search.amazon-url-placeholder')"
+            @keydown.enter="submitAmazonUrl"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn v-close-popup color="grey" data-testid="cancel-add-book-btn" flat :label="$t('cancel')" no-caps />
+          <q-btn
+            color="primary"
+            data-testid="submit-amazon-url-btn"
+            :disable="!amazonUrl || isAddingBook"
+            :label="$t('add-book')"
+            :loading="isAddingBook"
+            no-caps
+            @click="submitAmazonUrl"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book } from '@/models'
-import { useBookStore } from '@/stores'
+import { useAuthStore, useBookStore } from '@/stores'
+import api from '@/utils/axios'
 import { Notify, useMeta } from 'quasar'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -83,6 +134,7 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 const bookStore = useBookStore()
+const authStore = useAuthStore()
 const { t } = useI18n()
 
 const searchQuery = ref('')
@@ -90,6 +142,12 @@ const lastSearchQuery = ref('')
 const books = ref<Book[]>([])
 const isLoading = ref(false)
 const hasSearched = ref(false)
+
+// Add book from Amazon dialog state
+const showAddBookDialog = ref(false)
+const amazonUrl = ref('')
+const amazonUrlError = ref('')
+const isAddingBook = ref(false)
 
 const baseUrl = import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'
 
@@ -221,6 +279,40 @@ function navigateToBook(book: Book) {
       })
   }
 }
+
+function submitAmazonUrl() {
+  if (!amazonUrl.value.trim()) return
+
+  amazonUrlError.value = ''
+  isAddingBook.value = true
+
+  api
+    .post('/user/books/from-amazon', {
+      amazon_url: amazonUrl.value.trim(),
+      reading_status: 'read'
+    })
+    .then((response) => {
+      const data = response.data
+      if (data.success) {
+        showAddBookDialog.value = false
+        amazonUrl.value = ''
+        Notify.create({ message: t('search.book-added-success'), type: 'positive' })
+        // Navigate to the book page
+        if (data.book?.id) {
+          router.push(`/books/${data.book.id}`)
+        }
+      } else {
+        amazonUrlError.value = data.message || t('error-occurred')
+      }
+    })
+    .catch((error) => {
+      const message = error.response?.data?.message || t('error-occurred')
+      amazonUrlError.value = message
+    })
+    .finally(() => {
+      isAddingBook.value = false
+    })
+}
 </script>
 
 <style scoped lang="sass">
@@ -327,4 +419,21 @@ function navigateToBook(book: Book) {
   font-size: 0.8rem
   margin: 0
   overflow: hidden
+
+.add-own-book-section
+  margin-top: 2rem
+
+.add-own-book-content
+  text-align: center
+  padding: 1.5rem 1rem
+
+  .add-own-book-text
+    color: #6b6b8d
+    font-size: 1rem
+    margin: 0 0 1rem
+
+.add-book-dialog
+  min-width: 320px
+  max-width: 450px
+  width: 100%
 </style>

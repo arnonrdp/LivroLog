@@ -434,11 +434,18 @@
   "save": "保存",
   "saved-successfully": "レビューは正常に保存されました！",
   "search": {
+    "add-book-button": "本を追加",
+    "add-book-description": "現在、Amazonリンクからのみ追加できます。本のリンクをここに貼り付けると、本棚に追加されます。",
+    "add-book-title": "自分の本を追加",
+    "amazon-url-label": "Amazonリンク",
+    "amazon-url-placeholder": "https://www.amazon.co.jp/dp/...",
+    "book-added-success": "本が本棚に追加されました！",
     "button": "検索",
     "initial-hint": "お探しの本のタイトル、著者、またはISBNを入力してください",
     "initial-title": "本を検索",
     "no-results": "本が見つかりませんでした",
     "no-results-hint": "別のタイトル、著者、またはISBNで検索してみてください",
+    "not-found-add-own": "お探しのものが見つかりませんでしたか？自分の本を追加してください",
     "placeholder": "本を検索...",
     "results-for": "「{query}」の検索結果",
     "unknown-author": "作者不明"
