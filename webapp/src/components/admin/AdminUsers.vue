@@ -100,7 +100,14 @@
         <div class="text-subtitle2 q-mb-sm">{{ $t('admin.set-new-password') }}</div>
         <div class="text-caption text-grey-6 q-mb-sm">{{ $t('admin.password-optional-hint') }}</div>
         <q-input v-model="editForm.password" autocomplete="new-password" class="q-mb-sm" dense :label="$t('admin.new-password')" type="password" />
-        <q-input v-model="editForm.password_confirmation" autocomplete="new-password" class="q-mb-sm" dense :label="$t('admin.confirm-password')" type="password" />
+        <q-input
+          v-model="editForm.password_confirmation"
+          autocomplete="new-password"
+          class="q-mb-sm"
+          dense
+          :label="$t('admin.confirm-password')"
+          type="password"
+        />
         <div class="text-caption text-grey-6">{{ $t('admin.password-requirements') }}</div>
       </q-card-section>
 

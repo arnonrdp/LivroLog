@@ -4,7 +4,7 @@
       <q-route-tab exact icon="event" :label="$t('books', 0)" to="/settings/books" />
       <q-route-tab icon="label" :label="$t('tags.title')" to="/settings/tags" />
       <q-route-tab icon="person" :label="$t('profile')" to="/settings/profile" />
-      <q-route-tab icon="translate" :label="$t('language')" to="/settings/language" />
+      <q-route-tab icon="translate" :label="$t('language-and-store')" to="/settings/language" />
       <q-route-tab icon="security" label="Account & Security" to="/settings/account" />
     </q-tabs>
 

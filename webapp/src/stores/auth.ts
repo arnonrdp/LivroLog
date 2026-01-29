@@ -92,6 +92,7 @@ export const useAuthStore = defineStore('auth', {
       email?: string
       shelf_name?: string
       locale?: string
+      preferred_amazon_region?: string | null
       is_private?: boolean
     }) {
       this._isLoading = true
