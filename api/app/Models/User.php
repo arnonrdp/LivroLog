@@ -53,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'shelf_name',
         'password',
         'locale',
+        'preferred_amazon_region',
         'avatar',
         'is_private',
         'role',

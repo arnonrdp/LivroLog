@@ -5,9 +5,20 @@ namespace App\Services;
 class AmazonLinkEnrichmentService
 {
     private array $regionConfig = [
+        // Americas
         'US' => [
             'domain' => 'amazon.com',
             'search_url' => 'https://www.amazon.com/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'CA' => [
+            'domain' => 'amazon.ca',
+            'search_url' => 'https://www.amazon.ca/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'MX' => [
+            'domain' => 'amazon.com.mx',
+            'search_url' => 'https://www.amazon.com.mx/s',
             'associate_tag' => 'livrolog-20',
         ],
         'BR' => [
@@ -15,14 +26,102 @@ class AmazonLinkEnrichmentService
             'search_url' => 'https://www.amazon.com.br/s',
             'associate_tag' => 'livrolog01-20',
         ],
+        // Europe
         'UK' => [
             'domain' => 'amazon.co.uk',
             'search_url' => 'https://www.amazon.co.uk/s',
             'associate_tag' => 'livrolog-20',
         ],
-        'CA' => [
-            'domain' => 'amazon.ca',
-            'search_url' => 'https://www.amazon.ca/s',
+        'DE' => [
+            'domain' => 'amazon.de',
+            'search_url' => 'https://www.amazon.de/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'FR' => [
+            'domain' => 'amazon.fr',
+            'search_url' => 'https://www.amazon.fr/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'IT' => [
+            'domain' => 'amazon.it',
+            'search_url' => 'https://www.amazon.it/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'ES' => [
+            'domain' => 'amazon.es',
+            'search_url' => 'https://www.amazon.es/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'NL' => [
+            'domain' => 'amazon.nl',
+            'search_url' => 'https://www.amazon.nl/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'SE' => [
+            'domain' => 'amazon.se',
+            'search_url' => 'https://www.amazon.se/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'PL' => [
+            'domain' => 'amazon.pl',
+            'search_url' => 'https://www.amazon.pl/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'BE' => [
+            'domain' => 'amazon.com.be',
+            'search_url' => 'https://www.amazon.com.be/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'TR' => [
+            'domain' => 'amazon.com.tr',
+            'search_url' => 'https://www.amazon.com.tr/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'IE' => [
+            'domain' => 'amazon.ie',
+            'search_url' => 'https://www.amazon.ie/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        // Asia-Pacific
+        'JP' => [
+            'domain' => 'amazon.co.jp',
+            'search_url' => 'https://www.amazon.co.jp/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'IN' => [
+            'domain' => 'amazon.in',
+            'search_url' => 'https://www.amazon.in/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'AU' => [
+            'domain' => 'amazon.com.au',
+            'search_url' => 'https://www.amazon.com.au/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'SG' => [
+            'domain' => 'amazon.sg',
+            'search_url' => 'https://www.amazon.sg/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        // Middle East & Africa
+        'AE' => [
+            'domain' => 'amazon.ae',
+            'search_url' => 'https://www.amazon.ae/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'SA' => [
+            'domain' => 'amazon.sa',
+            'search_url' => 'https://www.amazon.sa/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'EG' => [
+            'domain' => 'amazon.eg',
+            'search_url' => 'https://www.amazon.eg/s',
+            'associate_tag' => 'livrolog-20',
+        ],
+        'ZA' => [
+            'domain' => 'amazon.co.za',
+            'search_url' => 'https://www.amazon.co.za/s',
             'associate_tag' => 'livrolog-20',
         ],
     ];
@@ -200,10 +299,33 @@ class AmazonLinkEnrichmentService
     private function getRegionLabel(string $region): string
     {
         $labels = [
-            'BR' => 'Amazon Brazil',
+            // Americas
             'US' => 'Amazon United States',
-            'UK' => 'Amazon United Kingdom',
             'CA' => 'Amazon Canada',
+            'MX' => 'Amazon Mexico',
+            'BR' => 'Amazon Brazil',
+            // Europe
+            'UK' => 'Amazon United Kingdom',
+            'DE' => 'Amazon Germany',
+            'FR' => 'Amazon France',
+            'IT' => 'Amazon Italy',
+            'ES' => 'Amazon Spain',
+            'NL' => 'Amazon Netherlands',
+            'SE' => 'Amazon Sweden',
+            'PL' => 'Amazon Poland',
+            'BE' => 'Amazon Belgium',
+            'TR' => 'Amazon Turkey',
+            'IE' => 'Amazon Ireland',
+            // Asia-Pacific
+            'JP' => 'Amazon Japan',
+            'IN' => 'Amazon India',
+            'AU' => 'Amazon Australia',
+            'SG' => 'Amazon Singapore',
+            // Middle East & Africa
+            'AE' => 'Amazon UAE',
+            'SA' => 'Amazon Saudi Arabia',
+            'EG' => 'Amazon Egypt',
+            'ZA' => 'Amazon South Africa',
         ];
 
         return $labels[$region] ?? "Amazon {$region}";

@@ -177,6 +177,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'shelf_name' => $request->shelf_name ?? $request->display_name.self::LIBRARY_SUFFIX,
             'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
+            'preferred_amazon_region' => $this->detectAmazonRegion($request->input('locale')),
         ]);
 
         // Send email verification notification
@@ -260,6 +261,12 @@ class AuthController extends Controller
         // Set locale if not already set
         if (is_null($user->locale) && $request->has('locale')) {
             $user->locale = $this->normalizeLocale($request->input('locale'));
+            $user->save();
+        }
+
+        // Set preferred Amazon region if not already set (only on first login)
+        if (is_null($user->preferred_amazon_region) && $request->has('locale')) {
+            $user->preferred_amazon_region = $this->detectAmazonRegion($request->input('locale'));
             $user->save();
         }
 
@@ -375,6 +382,8 @@ class AuthController extends Controller
         $userData['has_password_set'] = $user->hasPasswordSet();
         $userData['has_google_connected'] = $user->hasGoogleConnected();
         $userData['role'] = $user->role;
+        $userData['locale'] = $user->locale;
+        $userData['preferred_amazon_region'] = $user->preferred_amazon_region;
 
         return response()->json($userData);
     }
@@ -798,6 +807,10 @@ class AuthController extends Controller
                     if (is_null($user->locale) && $request->has('locale')) {
                         $user->locale = $this->normalizeLocale($request->input('locale'));
                     }
+                    // Set preferred Amazon region if not already set
+                    if (is_null($user->preferred_amazon_region) && $request->has('locale')) {
+                        $user->preferred_amazon_region = $this->detectAmazonRegion($request->input('locale'));
+                    }
                     $user->save();
                 } else {
                     // Create new user
@@ -811,6 +824,7 @@ class AuthController extends Controller
                         'password' => null, // No password for Google users
                         'shelf_name' => $name.self::LIBRARY_SUFFIX,
                         'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
+                        'preferred_amazon_region' => $this->detectAmazonRegion($request->input('locale')),
                     ]);
                     $user->google_id = $googleId;
                     $user->email_verified = true; // Google accounts are always verified
@@ -907,6 +921,78 @@ class AuthController extends Controller
     }
 
     /**
+     * Detect the preferred Amazon region based on browser locale.
+     * Maps browser locale to one of 21 supported Amazon marketplaces.
+     */
+    private function detectAmazonRegion(?string $locale): ?string
+    {
+        if (! $locale) {
+            return null;
+        }
+
+        $locale = strtolower($locale);
+
+        // Specific locale to region mapping (most precise)
+        $localeToRegion = [
+            // Americas
+            'pt-br' => 'BR', 'pt_br' => 'BR',
+            'en-us' => 'US', 'en_us' => 'US',
+            'en-ca' => 'CA', 'en_ca' => 'CA', 'fr-ca' => 'CA', 'fr_ca' => 'CA',
+            'es-mx' => 'MX', 'es_mx' => 'MX',
+            // Europe
+            'en-gb' => 'UK', 'en_gb' => 'UK',
+            'de-de' => 'DE', 'de_de' => 'DE', 'de-at' => 'DE', 'de_at' => 'DE', 'de-ch' => 'DE', 'de_ch' => 'DE',
+            'fr-fr' => 'FR', 'fr_fr' => 'FR', 'fr-be' => 'FR', 'fr_be' => 'FR', 'fr-ch' => 'FR', 'fr_ch' => 'FR',
+            'it-it' => 'IT', 'it_it' => 'IT', 'it-ch' => 'IT', 'it_ch' => 'IT',
+            'es-es' => 'ES', 'es_es' => 'ES',
+            'nl-nl' => 'NL', 'nl_nl' => 'NL',
+            'sv-se' => 'SE', 'sv_se' => 'SE',
+            'pl-pl' => 'PL', 'pl_pl' => 'PL',
+            'nl-be' => 'BE', 'nl_be' => 'BE',
+            'tr-tr' => 'TR', 'tr_tr' => 'TR',
+            'en-ie' => 'IE', 'en_ie' => 'IE',
+            // Asia-Pacific
+            'ja-jp' => 'JP', 'ja_jp' => 'JP', 'ja' => 'JP',
+            'en-in' => 'IN', 'en_in' => 'IN', 'hi-in' => 'IN', 'hi_in' => 'IN',
+            'en-au' => 'AU', 'en_au' => 'AU',
+            'en-sg' => 'SG', 'en_sg' => 'SG', 'zh-sg' => 'SG', 'zh_sg' => 'SG',
+            // Middle East & Africa
+            'ar-ae' => 'AE', 'ar_ae' => 'AE', 'en-ae' => 'AE', 'en_ae' => 'AE',
+            'ar-sa' => 'SA', 'ar_sa' => 'SA',
+            'ar-eg' => 'EG', 'ar_eg' => 'EG',
+            'en-za' => 'ZA', 'en_za' => 'ZA',
+        ];
+
+        // Check for exact locale match
+        foreach ($localeToRegion as $key => $region) {
+            if (str_starts_with($locale, $key)) {
+                return $region;
+            }
+        }
+
+        // Fallback by language code (less precise)
+        $languageFallbacks = [
+            'pt' => 'BR',  // Portuguese -> Brazil
+            'en' => 'US',  // English -> USA
+            'de' => 'DE',  // German -> Germany
+            'fr' => 'FR',  // French -> France
+            'it' => 'IT',  // Italian -> Italy
+            'es' => 'ES',  // Spanish -> Spain
+            'nl' => 'NL',  // Dutch -> Netherlands
+            'pl' => 'PL',  // Polish -> Poland
+            'sv' => 'SE',  // Swedish -> Sweden
+            'tr' => 'TR',  // Turkish -> Turkey
+            'ja' => 'JP',  // Japanese -> Japan
+            'ar' => 'AE',  // Arabic -> UAE
+            'hi' => 'IN',  // Hindi -> India
+        ];
+
+        $lang = explode('-', str_replace('_', '-', $locale))[0];
+
+        return $languageFallbacks[$lang] ?? 'US';
+    }
+
+    /**
      * @OA\Put(
      *     path="/auth/me",
      *     operationId="updateUserProfile",
@@ -965,6 +1051,7 @@ class AuthController extends Controller
             'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
             'shelf_name' => 'sometimes|string|max:255',
             'locale' => 'sometimes|string|max:10',
+            'preferred_amazon_region' => 'sometimes|nullable|string|max:5',
             'is_private' => 'sometimes|boolean',
             'avatar' => [
                 'sometimes',
@@ -1042,6 +1129,7 @@ class AuthController extends Controller
             'email',
             'shelf_name',
             'locale',
+            'preferred_amazon_region',
             'is_private',
             'avatar',
         ]));

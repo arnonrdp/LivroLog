@@ -8,40 +8,21 @@
         </div>
         <q-space />
         <q-btn
-          v-if="shouldShowAmazonButton"
+          v-if="shouldShowAmazonButton && preferredAmazonLink"
           class="q-mr-sm"
           :color="amazonButtonColor"
+          data-testid="amazon-btn"
           dense
           :disable="book?.asin_status === 'failed'"
           flat
+          :href="preferredAmazonLink.url"
           icon="shopping_cart"
           :loading="isAmazonLoading"
           round
+          target="_blank"
+          type="a"
         >
           <q-tooltip anchor="center left" self="center right">{{ amazonTooltipText }}</q-tooltip>
-
-          <q-menu anchor="bottom right" self="top right">
-            <q-list style="min-width: 200px">
-              <q-item v-for="link in amazonLinks" :key="link.region" v-close-popup class="q-py-sm" clickable :href="link.url" target="_blank">
-                <q-item-section avatar>
-                  <q-icon name="shopping_cart" size="sm" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ link.label }}</q-item-label>
-                  <q-item-label caption>{{ link.domain }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-icon name="open_in_new" size="xs" />
-                </q-item-section>
-              </q-item>
-
-              <q-item v-if="!amazonLinks.length" class="text-grey-6">
-                <q-item-section>
-                  <q-item-label>{{ $t('loading-amazon-links') }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
         </q-btn>
         <q-btn v-close-popup data-testid="close-dialog-btn" dense flat icon="close" round />
       </q-card-section>
@@ -489,28 +470,50 @@ const bookReviews = computed(() => {
   return book.value?.reviews || []
 })
 
-const amazonLinks = computed(() => {
+interface AmazonLink {
+  region: string
+  label: string
+  url: string
+  domain: string
+  isPreferred?: boolean
+}
+
+const amazonLinks = computed((): AmazonLink[] => {
   if (!book.value) return []
+
+  const preferredRegion = userStore.me?.preferred_amazon_region || 'US'
+  let links: AmazonLink[] = []
 
   // Priority 1: Use amazon_links from API if available (books in database)
   if (book.value.amazon_links && Array.isArray(book.value.amazon_links) && book.value.amazon_links.length > 0) {
-    return book.value.amazon_links
-  }
-
-  // Priority 2: Fallback to amazon_buy_link for external search results
-  if (book.value.amazon_buy_link) {
-    return [
+    links = book.value.amazon_links.map((link) => ({
+      ...link,
+      isPreferred: link.region === preferredRegion
+    }))
+  } else if (book.value.amazon_buy_link) {
+    // Priority 2: Fallback to amazon_buy_link for external search results
+    const region = book.value.amazon_region || 'BR'
+    links = [
       {
-        region: book.value.amazon_region || 'BR',
-        label: `Amazon ${book.value.amazon_region || 'BR'}`,
+        region,
+        label: `Amazon ${region}`,
         url: book.value.amazon_buy_link,
-        domain: book.value.amazon_region === 'US' ? 'amazon.com' : 'amazon.com.br'
+        domain: region === 'US' ? 'amazon.com' : 'amazon.com.br',
+        isPreferred: region === preferredRegion
       }
     ]
   }
 
-  // Only show empty if still processing/pending AND no links available yet
-  return []
+  // Sort to put preferred store first
+  return links.sort((a, b) => {
+    if (a.isPreferred && !b.isPreferred) return -1
+    if (!a.isPreferred && b.isPreferred) return 1
+    return 0
+  })
+})
+
+const preferredAmazonLink = computed(() => {
+  return amazonLinks.value[0] || null
 })
 
 const userReview = computed(() => {

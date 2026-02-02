@@ -24,6 +24,7 @@ export interface User {
   locale?: object | string
   modified_at?: string
   pending_follow_requests_count?: number
+  preferred_amazon_region?: string | null
   role?: 'admin' | 'user'
   shelf_name?: string
   updated_at?: string

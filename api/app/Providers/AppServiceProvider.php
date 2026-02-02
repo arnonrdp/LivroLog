@@ -12,6 +12,7 @@ use App\Models\UserBook;
 use App\Observers\FollowObserver;
 use App\Observers\ReviewObserver;
 use App\Observers\UserBookObserver;
+use App\Services\Amazon\AmazonProviderFactory;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -25,7 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register Amazon Provider Factory as singleton
+        $this->app->singleton(AmazonProviderFactory::class);
     }
 
     /**

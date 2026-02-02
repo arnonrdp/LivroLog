@@ -86,12 +86,12 @@ function handleCommentsOpened(activityId: string) {
 
 function findActivityInFeed(activityId: string): string | null {
   // First try direct match with first_activity_id
-  const directMatch = activityStore.feed.find(g => g.first_activity_id === activityId)
+  const directMatch = activityStore.feed.find((g) => g.first_activity_id === activityId)
   if (directMatch) return directMatch.first_activity_id
 
   // If not found, search within activities of each group
   for (const group of activityStore.feed) {
-    const found = group.activities?.some(a => a.id === activityId)
+    const found = group.activities?.some((a) => a.id === activityId)
     if (found) return group.first_activity_id
   }
 
@@ -148,7 +148,8 @@ onMounted(() => {
 
 function loadFeed() {
   isLoading.value = true
-  activityStore.getFeeds(1)
+  activityStore
+    .getFeeds(1)
     .then(() => {
       if (targetActivityId.value) {
         scrollToActivity(targetActivityId.value)
