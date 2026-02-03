@@ -1129,11 +1129,16 @@ class UserBookController extends Controller
 
             // Check if it's an Amazon domain (including short URLs)
             // This list must stay in sync with AMAZON_STORES in webapp/src/config/amazon.ts
-            $amazonDomains = [
-                // Short/redirect domains
+
+            // Short/redirect domains that should not receive www. variants
+            $shortDomains = [
                 'a.co',
                 'amzn.to',
                 'amzn.com',
+            ];
+
+            $amazonDomains = [
+                ...$shortDomains,
                 // Americas
                 'amazon.com',
                 'amazon.ca',
@@ -1163,10 +1168,10 @@ class UserBookController extends Controller
                 'amazon.co.za',
             ];
 
-            // Add www. variants dynamically
+            // Add www. variants dynamically (excluding short/redirect domains)
             $amazonDomainsWithWww = $amazonDomains;
             foreach ($amazonDomains as $domain) {
-                if (! str_starts_with($domain, 'www.') && ! in_array($domain, ['a.co', 'amzn.to', 'amzn.com'])) {
+                if (! str_starts_with($domain, 'www.') && ! in_array($domain, $shortDomains, true)) {
                     $amazonDomainsWithWww[] = 'www.'.$domain;
                 }
             }
@@ -1179,7 +1184,7 @@ class UserBookController extends Controller
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return false;
         }
     }
