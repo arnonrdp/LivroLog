@@ -18,10 +18,10 @@
         <q-icon name="shopping_cart" />
       </template>
       <template v-slot:option="scope">
-        <q-item v-bind="scope.itemProps" :data-testid="`amazon-store-option-${scope.opt.value}`">
+        <q-item v-bind="scope.itemProps" :data-testid="scope.opt.disable ? undefined : `amazon-store-option-${scope.opt.value}`">
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
-            <q-item-label caption>{{ scope.opt.domain }}</q-item-label>
+            <q-item-label v-if="!scope.opt.disable && scope.opt.domain" caption>{{ scope.opt.domain }}</q-item-label>
           </q-item-section>
         </q-item>
       </template>

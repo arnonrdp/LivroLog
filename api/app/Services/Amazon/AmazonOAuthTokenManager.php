@@ -27,20 +27,30 @@ class AmazonOAuthTokenManager
 
     private string $version;
 
+    private string $tokenEndpoint;
+
     public function __construct()
     {
         $this->credentialId = config('services.amazon.creators_api.credential_id', '');
         $this->credentialSecret = config('services.amazon.creators_api.credential_secret', '');
         $this->version = config('services.amazon.creators_api.api_version', '2.1');
+
+        // Allow explicit configuration of token endpoint, falling back to version-based defaults
+        $configuredEndpoint = config('services.amazon.creators_api.token_endpoint');
+
+        if (! empty($configuredEndpoint)) {
+            $this->tokenEndpoint = $configuredEndpoint;
+        } else {
+            $this->tokenEndpoint = self::TOKEN_ENDPOINTS[$this->version] ?? self::TOKEN_ENDPOINTS['2.1'];
+        }
     }
 
     /**
-     * Get the token endpoint URL based on credential version
+     * Get the token endpoint URL based on credential version or config override
      */
     private function getTokenEndpoint(): string
     {
-        return self::TOKEN_ENDPOINTS[$this->version]
-            ?? self::TOKEN_ENDPOINTS['2.1'];
+        return $this->tokenEndpoint;
     }
 
     /**

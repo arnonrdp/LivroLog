@@ -1,5 +1,22 @@
+/**
+ * Manual exploratory browser script.
+ *
+ * This helper is intended to be run locally by developers and is NOT
+ * executed as part of the automated Playwright test suite or CI.
+ *
+ * Usage:
+ *   npx ts-node webapp/e2e/browser-test.ts
+ *
+ * Note: This script opens a visible browser and runs interactive tests
+ * for Amazon store detection and preference persistence.
+ */
 import { chromium } from '@playwright/test'
 
+/**
+ * Manual exploratory test used to interact with the app in the browser.
+ * This is intentionally NOT a Playwright test() and is not picked up by
+ * the Playwright test runner.
+ */
 async function browserTest() {
   console.log('🚀 Teste interativo no navegador\n')
   console.log('═══════════════════════════════════════════════════════════════\n')
@@ -165,4 +182,13 @@ async function browserTest() {
   await browser.close()
 }
 
-browserTest().catch(console.error)
+// Run the manual helper only in non-CI environments.
+// This prevents accidental execution during automated CI pipelines.
+if (!process.env.CI) {
+  browserTest().catch((error) => {
+    console.error('browserTest failed:', error)
+    process.exit(1)
+  })
+} else {
+  console.log('browserTest is a manual exploratory script and is skipped in CI.')
+}
