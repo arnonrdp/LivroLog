@@ -1037,7 +1037,7 @@ class UserBookController extends Controller
             // Book exists, check if already in user's library
             if ($user->books()->where('books.id', $existingBook->id)->exists()) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
                     'message' => 'Este livro já está na sua estante.',
                     'book' => $existingBook,
                     'already_in_library' => true,
@@ -1128,29 +1128,54 @@ class UserBookController extends Controller
             $host = strtolower($host);
 
             // Check if it's an Amazon domain (including short URLs)
-            $amazonDomains = [
+            // This list must stay in sync with AMAZON_STORES in webapp/src/config/amazon.ts
+
+            // Short/redirect domains that should not receive www. variants
+            $shortDomains = [
                 'a.co',
                 'amzn.to',
                 'amzn.com',
+            ];
+
+            $amazonDomains = [
+                ...$shortDomains,
+                // Americas
                 'amazon.com',
-                'amazon.com.br',
-                'amazon.co.uk',
                 'amazon.ca',
+                'amazon.com.mx',
+                'amazon.com.br',
+                // Europe
+                'amazon.co.uk',
                 'amazon.de',
                 'amazon.fr',
-                'amazon.es',
                 'amazon.it',
+                'amazon.es',
+                'amazon.nl',
+                'amazon.se',
+                'amazon.pl',
+                'amazon.com.be',
+                'amazon.com.tr',
+                'amazon.ie',
+                // Asia-Pacific
                 'amazon.co.jp',
-                'www.amazon.com',
-                'www.amazon.com.br',
-                'www.amazon.co.uk',
-                'www.amazon.ca',
-                'www.amazon.de',
-                'www.amazon.fr',
-                'www.amazon.es',
-                'www.amazon.it',
-                'www.amazon.co.jp',
+                'amazon.in',
+                'amazon.com.au',
+                'amazon.sg',
+                // Middle East & Africa
+                'amazon.ae',
+                'amazon.sa',
+                'amazon.eg',
+                'amazon.co.za',
             ];
+
+            // Add www. variants dynamically (excluding short/redirect domains)
+            $amazonDomainsWithWww = $amazonDomains;
+            foreach ($amazonDomains as $domain) {
+                if (! str_starts_with($domain, 'www.') && ! in_array($domain, $shortDomains, true)) {
+                    $amazonDomainsWithWww[] = 'www.'.$domain;
+                }
+            }
+            $amazonDomains = $amazonDomainsWithWww;
 
             foreach ($amazonDomains as $domain) {
                 if ($host === $domain || str_ends_with($host, '.'.$domain)) {
@@ -1159,7 +1184,7 @@ class UserBookController extends Controller
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return false;
         }
     }
