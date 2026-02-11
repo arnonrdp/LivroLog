@@ -25,7 +25,7 @@
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
     "@quasar/extras": "^1.17.0",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "date-fns": "^4.1.0",
     "dompurify": "^3.3.1",
     "echarts": "^6.0.0",
