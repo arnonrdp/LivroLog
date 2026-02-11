@@ -1282,6 +1282,14 @@ class UserBookController extends Controller
             }
         }
 
+        // If we have a title and ASIN but couldn't extract book-specific metadata,
+        // accept it anyway. The user explicitly provided the URL, so we trust them.
+        // Non-book products were already filtered out by the non-book indicators above.
+        // This handles international Amazon pages where HTML patterns may differ.
+        if (! empty($amazonData['extracted_title']) && ! empty($amazonData['amazon_asin'])) {
+            return true;
+        }
+
         // If none of the above, reject the product
         // It's better to reject a valid book than accept a Funko Pop
         return false;
