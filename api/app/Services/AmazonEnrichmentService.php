@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Book;
-use App\Services\Providers\AmazonBooksProvider;
+use App\Services\Amazon\AmazonProviderFactory;
 use Illuminate\Support\Facades\Log;
 
 class AmazonEnrichmentService
@@ -31,13 +31,13 @@ class AmazonEnrichmentService
                 'force_refresh' => $forceRefresh,
             ]);
 
-            // Step 1: Try PA-API first
+            // Step 1: Try Amazon API first (Creators API or PA-API)
             $amazonData = $this->searchAmazonBook($book);
-            $source = 'pa-api';
+            $source = 'api';
 
-            // Step 2: If PA-API failed, try web scraping
+            // Step 2: If API failed, try web scraping
             if (! $amazonData) {
-                Log::info("PA-API failed for book {$book->id}, trying web scraper");
+                Log::info("Amazon API failed for book {$book->id}, trying web scraper");
                 $scraperService = app(AmazonScraperService::class);
                 $amazonData = $scraperService->searchAndExtract($book);
                 $source = 'scraper';
@@ -87,45 +87,43 @@ class AmazonEnrichmentService
     }
 
     /**
-     * Try to enrich book using PA-API only (no scraper fallback)
+     * Try to enrich book using Amazon API only (no scraper fallback)
      * Used by admin endpoint - if this fails, frontend will show URL input dialog
      */
     public function enrichBookWithPaApiOnly(Book $book): array
     {
         try {
-            Log::info("Trying PA-API only for book: {$book->title} (ID: {$book->id})");
+            Log::info("Trying Amazon API only for book: {$book->title} (ID: {$book->id})");
 
-            // Try PA-API
             $amazonData = $this->searchAmazonBook($book);
 
             if ($amazonData) {
                 $filledFields = $this->updateBookWithAmazonDataAdmin($book, $amazonData, true);
-                Log::info("Successfully enriched book {$book->id} with PA-API");
+                Log::info("Successfully enriched book {$book->id} with Amazon API");
 
                 return [
                     'success' => true,
-                    'message' => 'Book enriched via PA-API',
-                    'source' => 'pa-api',
+                    'message' => 'Book enriched via Amazon API',
+                    'source' => 'api',
                     'fields_filled' => $filledFields,
                 ];
             }
 
-            // PA-API didn't find data - don't try scraper, let frontend handle it
-            Log::info("PA-API returned no data for book {$book->id}, manual URL needed");
+            Log::info("Amazon API returned no data for book {$book->id}, manual URL needed");
 
             return [
                 'success' => false,
-                'message' => 'PA-API could not find this book. Please provide Amazon URL manually.',
+                'message' => 'Amazon API could not find this book. Please provide Amazon URL manually.',
                 'source' => null,
                 'fields_filled' => [],
             ];
 
         } catch (\Exception $e) {
-            Log::error("PA-API failed for book {$book->id}: {$e->getMessage()}");
+            Log::error("Amazon API failed for book {$book->id}: {$e->getMessage()}");
 
             return [
                 'success' => false,
-                'message' => 'PA-API error: '.$e->getMessage(),
+                'message' => 'Amazon API error: '.$e->getMessage(),
                 'source' => null,
                 'fields_filled' => [],
             ];
@@ -279,26 +277,22 @@ class AmazonEnrichmentService
     }
 
     /**
-     * Search for book data on Amazon using PA-API ONLY
+     * Search for book data on Amazon using the configured provider (Creators API or PA-API)
      */
     private function searchAmazonBook(Book $book): ?array
     {
-        if (! config('services.amazon.enabled', false)) {
-            Log::warning("Amazon PA-API is disabled for book {$book->id}");
-
-            return null;
-        }
-
         try {
-            $amazonProvider = app(AmazonBooksProvider::class);
+            $factory = app(AmazonProviderFactory::class);
 
-            if (! $amazonProvider->isEnabled()) {
-                Log::warning("Amazon PA-API provider not available for book {$book->id}");
+            if (! $factory->isAnyProviderEnabled()) {
+                Log::warning("No Amazon provider is enabled for book {$book->id}");
 
                 return null;
             }
 
-            Log::info("Using Amazon PA-API for book {$book->id}");
+            $amazonProvider = $factory->create();
+
+            Log::info("Using {$amazonProvider->getName()} for book {$book->id}");
 
             // Build search query - prefer ISBN, fallback to title + author
             $searchQuery = $this->buildSearchQuery($book);
@@ -312,18 +306,18 @@ class AmazonEnrichmentService
                 if ($this->validateBookMatch($book, $amazonBook)) {
                     Log::info("Found Amazon data for book {$book->id}", [
                         'asin' => $amazonBook['amazon_asin'],
-                        'source' => 'pa-api',
+                        'source' => $amazonProvider->getName(),
                     ]);
 
                     return $amazonBook;
                 }
 
-                Log::warning("Amazon PA-API result doesn't match our book {$book->id}");
+                Log::warning("Amazon result doesn't match our book {$book->id}");
             } else {
-                Log::info("No Amazon PA-API results found for book {$book->id}");
+                Log::info("No Amazon results found for book {$book->id}");
             }
         } catch (\Exception $e) {
-            Log::error("Amazon PA-API search failed for book {$book->id}: {$e->getMessage()}");
+            Log::error("Amazon search failed for book {$book->id}: {$e->getMessage()}");
         }
 
         return null;
@@ -351,12 +345,9 @@ class AmazonEnrichmentService
      */
     private function validateBookMatch(Book $book, array $amazonBook): bool
     {
-        // If both have ISBN, they should match (normalize before comparing)
+        // If both have ISBN, they should match (handles ISBN-10 vs ISBN-13)
         if (! empty($book->isbn) && ! empty($amazonBook['isbn'])) {
-            $normalizedBookIsbn = $this->normalizeIsbn($book->isbn);
-            $normalizedAmazonIsbn = $this->normalizeIsbn($amazonBook['isbn']);
-
-            return $normalizedBookIsbn === $normalizedAmazonIsbn;
+            return $this->isbnMatch($book->isbn, $amazonBook['isbn']);
         }
 
         // Title similarity check (when no ISBN available)
@@ -555,6 +546,48 @@ class AmazonEnrichmentService
     private function normalizeIsbn(string $isbn): string
     {
         return preg_replace('/[^0-9X]/i', '', $isbn);
+    }
+
+    /**
+     * Check if two ISBNs refer to the same book (handles ISBN-10 vs ISBN-13)
+     */
+    private function isbnMatch(string $isbn1, string $isbn2): bool
+    {
+        $a = $this->normalizeIsbn($isbn1);
+        $b = $this->normalizeIsbn($isbn2);
+
+        if ($a === $b) {
+            return true;
+        }
+
+        // Convert both to ISBN-13 for comparison
+        return $this->toIsbn13($a) === $this->toIsbn13($b);
+    }
+
+    /**
+     * Convert an ISBN-10 to ISBN-13 format. Returns as-is if already ISBN-13.
+     */
+    private function toIsbn13(string $isbn): string
+    {
+        if (strlen($isbn) === 13) {
+            return $isbn;
+        }
+
+        if (strlen($isbn) !== 10) {
+            return $isbn;
+        }
+
+        // Take first 9 digits, prepend 978
+        $base = '978'.substr($isbn, 0, 9);
+
+        // Calculate ISBN-13 check digit
+        $sum = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $sum += intval($base[$i]) * ($i % 2 === 0 ? 1 : 3);
+        }
+        $check = (10 - ($sum % 10)) % 10;
+
+        return $base.$check;
     }
 
     /**
