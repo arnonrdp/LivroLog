@@ -168,18 +168,20 @@ function submitAmazonUrl() {
       if (data.success) {
         showAddBookDialog.value = false
         amazonUrl.value = ''
-        Notify.create({ message: t('search.book-added-success'), type: 'positive' })
+        const messageKey = data.message_key ? `search.${data.message_key}` : 'search.book-added-success'
+        Notify.create({ message: t(messageKey), type: 'positive' })
         // Navigate to the book page
         if (data.book?.id) {
           router.push(`/books/${data.book.id}`)
         }
       } else {
-        amazonUrlError.value = data.message || t('error-occurred')
+        const messageKey = data.message_key ? `search.${data.message_key}` : ''
+        amazonUrlError.value = messageKey ? t(messageKey) : t('error-occurred')
       }
     })
     .catch((error) => {
-      const message = error.response?.data?.message || t('error-occurred')
-      amazonUrlError.value = message
+      const messageKey = error.response?.data?.message_key
+      amazonUrlError.value = messageKey ? t(`search.${messageKey}`) : t('error-occurred')
     })
     .finally(() => {
       isAddingBook.value = false

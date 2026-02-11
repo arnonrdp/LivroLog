@@ -193,6 +193,9 @@ class AmazonCreatorsApiClient
 
         $data = $response->json();
 
+        // Normalize camelCase keys to PascalCase (matching PA-API 5.0 format)
+        $data = $this->normalizeResponseKeys($data);
+
         // Check for API-level errors
         if (isset($data['Errors']) && ! empty($data['Errors'])) {
             $errorMessage = $data['Errors'][0]['Message'] ?? 'Unknown API error';
@@ -245,6 +248,80 @@ class AmazonCreatorsApiClient
     private function getVariationResources(): array
     {
         return $this->getSearchResources();
+    }
+
+    /**
+     * Normalize Creators API response keys from camelCase to PascalCase
+     * to maintain compatibility with PA-API 5.0 format expected by downstream code.
+     */
+    private function normalizeResponseKeys(array $data): array
+    {
+        $result = [];
+
+        foreach ($data as $key => $value) {
+            if (is_int($key)) {
+                $result[$key] = is_array($value) ? $this->normalizeResponseKeys($value) : $value;
+
+                continue;
+            }
+
+            if (! is_array($value)) {
+                $result[$this->normalizeKey($key)] = $value;
+
+                continue;
+            }
+
+            // Split 'isbns' into 'ISBN13s' and 'ISBN10s' based on value length
+            if ($key === 'isbns') {
+                $normalizedValue = $this->normalizeResponseKeys($value);
+                $displayValues = $normalizedValue['DisplayValues'] ?? [];
+                $isbn13s = [];
+                $isbn10s = [];
+
+                foreach ($displayValues as $isbn) {
+                    $clean = str_replace(['-', ' '], '', $isbn);
+                    if (strlen($clean) === 13) {
+                        $isbn13s[] = $isbn;
+                    } elseif (strlen($clean) === 10) {
+                        $isbn10s[] = $isbn;
+                    }
+                }
+
+                $base = $normalizedValue;
+                unset($base['DisplayValues']);
+
+                if (! empty($isbn13s)) {
+                    $result['ISBN13s'] = array_merge($base, ['DisplayValues' => $isbn13s]);
+                }
+                if (! empty($isbn10s)) {
+                    $result['ISBN10s'] = array_merge($base, ['DisplayValues' => $isbn10s]);
+                }
+
+                continue;
+            }
+
+            $result[$this->normalizeKey($key)] = $this->normalizeResponseKeys($value);
+        }
+
+        return $result;
+    }
+
+    private function normalizeKey(string $key): string
+    {
+        static $exactMap = [
+            'asin' => 'ASIN',
+            'url' => 'URL',
+            'ean' => 'EAN',
+            'eans' => 'EANs',
+            'isbn' => 'ISBN',
+            'isbns' => 'ISBNs',
+        ];
+
+        if (isset($exactMap[$key])) {
+            return $exactMap[$key];
+        }
+
+        return ucfirst($key);
     }
 
     /**

@@ -65,7 +65,6 @@ return [
             'credential_id' => env('AMAZON_CREATORS_CREDENTIAL_ID'),
             'credential_secret' => env('AMAZON_CREATORS_CREDENTIAL_SECRET'),
             'application_id' => env('AMAZON_CREATORS_APPLICATION_ID'),
-            'token_endpoint' => 'https://api.amazon.com/auth/O2/token',
             'api_version' => '2.1',
         ],
 
