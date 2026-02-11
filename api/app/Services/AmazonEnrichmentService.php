@@ -35,6 +35,15 @@ class AmazonEnrichmentService
             $amazonData = $this->searchAmazonBook($book);
             $source = 'api';
 
+            // If API returned data but no description, scrape it
+            if ($amazonData && empty($amazonData['description']) && ! empty($amazonData['amazon_asin'])) {
+                $scraper = app(AmazonScraperService::class);
+                $description = $scraper->scrapeDescriptionByAsin($amazonData['amazon_asin']);
+                if ($description) {
+                    $amazonData['description'] = $description;
+                }
+            }
+
             // Step 2: If API failed, try web scraping
             if (! $amazonData) {
                 Log::info("Amazon API failed for book {$book->id}, trying web scraper");
@@ -98,6 +107,16 @@ class AmazonEnrichmentService
             $amazonData = $this->searchAmazonBook($book);
 
             if ($amazonData) {
+                // If API returned no description, scrape it from the product page
+                if (empty($amazonData['description']) && ! empty($amazonData['amazon_asin'])) {
+                    Log::info("enrichBookWithPaApiOnly: API returned no description, scraping product page for book {$book->id}");
+                    $scraper = app(AmazonScraperService::class);
+                    $description = $scraper->scrapeDescriptionByAsin($amazonData['amazon_asin']);
+                    if ($description) {
+                        $amazonData['description'] = $description;
+                    }
+                }
+
                 $filledFields = $this->updateBookWithAmazonDataAdmin($book, $amazonData, true);
                 Log::info("Successfully enriched book {$book->id} with Amazon API");
 
@@ -285,6 +304,7 @@ class AmazonEnrichmentService
     {
         $factory = app(AmazonProviderFactory::class);
         $options = ['region' => $region];
+        $bookData = null;
 
         // 1. Try PA-API first
         $paApi = $factory->getPaApiProvider();
@@ -294,8 +314,7 @@ class AmazonEnrichmentService
                 $result = $paApi->getItems([$asin], $options);
                 if ($result['success'] && ! empty($result['books'])) {
                     Log::info("getBookByAsin: PA-API found data for ASIN {$asin}");
-
-                    return $result['books'][0];
+                    $bookData = $result['books'][0];
                 }
             } catch (\Exception $e) {
                 Log::warning("getBookByAsin: PA-API failed for ASIN {$asin}: {$e->getMessage()}");
@@ -303,24 +322,40 @@ class AmazonEnrichmentService
         }
 
         // 2. Try Creators API
-        $creators = $factory->getCreatorsProvider();
-        if ($creators->isEnabled()) {
-            try {
-                Log::info("getBookByAsin: Trying Creators API for ASIN {$asin} in region {$region}");
-                $result = $creators->getItems([$asin], $options);
-                if ($result['success'] && ! empty($result['books'])) {
-                    Log::info("getBookByAsin: Creators API found data for ASIN {$asin}");
-
-                    return $result['books'][0];
+        if (! $bookData) {
+            $creators = $factory->getCreatorsProvider();
+            if ($creators->isEnabled()) {
+                try {
+                    Log::info("getBookByAsin: Trying Creators API for ASIN {$asin} in region {$region}");
+                    $result = $creators->getItems([$asin], $options);
+                    if ($result['success'] && ! empty($result['books'])) {
+                        Log::info("getBookByAsin: Creators API found data for ASIN {$asin}");
+                        $bookData = $result['books'][0];
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("getBookByAsin: Creators API failed for ASIN {$asin}: {$e->getMessage()}");
                 }
-            } catch (\Exception $e) {
-                Log::warning("getBookByAsin: Creators API failed for ASIN {$asin}: {$e->getMessage()}");
             }
         }
 
-        Log::info("getBookByAsin: No API returned data for ASIN {$asin}");
+        if (! $bookData) {
+            Log::info("getBookByAsin: No API returned data for ASIN {$asin}");
 
-        return null;
+            return null;
+        }
+
+        // 3. If API returned no description, scrape it from the product page
+        if (empty($bookData['description'])) {
+            Log::info("getBookByAsin: API returned no description for ASIN {$asin}, scraping product page");
+            $scraper = app(AmazonScraperService::class);
+            $description = $scraper->scrapeDescriptionByAsin($asin, $region);
+            if ($description) {
+                $bookData['description'] = $description;
+                Log::info("getBookByAsin: Scraped description for ASIN {$asin}");
+            }
+        }
+
+        return $bookData;
     }
 
     /**

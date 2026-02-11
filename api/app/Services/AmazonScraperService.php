@@ -198,6 +198,37 @@ class AmazonScraperService
     }
 
     /**
+     * Scrape only the description from an Amazon product page by ASIN
+     */
+    public function scrapeDescriptionByAsin(string $asin, string $region = 'US'): ?string
+    {
+        try {
+            $regionConfig = config("services.amazon.regions.{$region}")
+                ?? config('services.amazon.regions.BR');
+
+            $domain = $regionConfig['domain'] ?? 'amazon.com';
+            $url = "https://www.{$domain}/dp/{$asin}";
+
+            $response = Http::timeout(self::TIMEOUT)
+                ->withHeaders($this->getRequestHeaders($regionConfig))
+                ->get($url);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $html = $response->body();
+            $productData = $this->extractProductData($html);
+
+            return $productData['description'] ?? null;
+        } catch (\Exception $e) {
+            Log::warning("scrapeDescriptionByAsin: Failed for ASIN {$asin}: {$e->getMessage()}");
+
+            return null;
+        }
+    }
+
+    /**
      * Get region code (e.g., 'US', 'CA', 'BR') from an Amazon URL domain
      */
     public static function getRegionFromUrl(string $url): string
