@@ -7,6 +7,7 @@ use App\Http\Resources\UserBookSimplifiedResource;
 use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
+use App\Services\AmazonEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
 use App\Services\AmazonScraperService;
 use App\Services\UnifiedBookEnrichmentService;
@@ -975,7 +976,7 @@ class UserBookController extends Controller
      * This allows regular users to add books that don't exist in the database
      * by providing an Amazon product URL. The URL must be for a book product.
      */
-    public function createFromAmazonUrl(Request $request, AmazonScraperService $scraper): JsonResponse
+    public function createFromAmazonUrl(Request $request, AmazonScraperService $scraper, AmazonEnrichmentService $enrichment): JsonResponse
     {
         $request->validate([
             'amazon_url' => 'required|string|url',
@@ -996,45 +997,82 @@ class UserBookController extends Controller
             ], 422);
         }
 
-        // Extract data from Amazon URL
-        $amazonData = $scraper->extractFromUrl($amazonUrl);
+        // Extract ASIN and region from URL
+        $asin = $scraper->extractAsinFromUrl($amazonUrl);
+        $region = AmazonScraperService::getRegionFromUrl($amazonUrl);
 
+        // For short URLs (a.co, amzn.to), resolve redirect to get real ASIN
+        if (! $asin) {
+            $asin = $this->resolveAsinFromShortUrl($amazonUrl, $scraper);
+        }
+
+        $amazonData = null;
+        $source = null;
+
+        // Strategy: PA-API → Creators API → Scraper
+        if ($asin) {
+            $amazonData = $enrichment->getBookByAsin($asin, $region);
+            if ($amazonData) {
+                $source = 'api';
+            }
+        }
+
+        // Fallback to scraper if APIs failed
         if (! $amazonData) {
-            return response()->json([
-                'success' => false,
-                'message_key' => 'amazon-extract-failed',
-            ], 422);
+            Log::info('createFromAmazonUrl: APIs failed, falling back to scraper', ['url' => $amazonUrl]);
+            $scraperData = $scraper->extractFromUrl($amazonUrl);
+
+            if (! $scraperData) {
+                return response()->json([
+                    'success' => false,
+                    'message_key' => 'amazon-extract-failed',
+                ], 422);
+            }
+
+            if (! $this->isBookProduct($scraperData)) {
+                return response()->json([
+                    'success' => false,
+                    'message_key' => 'amazon-not-a-book',
+                ], 422);
+            }
+
+            if (empty($scraperData['extracted_title']) && empty($scraperData['amazon_asin'])) {
+                return response()->json([
+                    'success' => false,
+                    'message_key' => 'amazon-extract-failed',
+                ], 422);
+            }
+
+            // Normalize scraper data to match API format
+            $amazonData = [
+                'title' => $scraperData['extracted_title'] ?? null,
+                'authors' => $scraperData['authors'] ?? null,
+                'isbn' => $scraperData['isbn'] ?? null,
+                'amazon_asin' => $scraperData['amazon_asin'] ?? null,
+                'thumbnail' => $scraperData['thumbnail'] ?? null,
+                'page_count' => $scraperData['page_count'] ?? null,
+                'description' => $scraperData['description'] ?? null,
+                'publisher' => $scraperData['publisher'] ?? null,
+                'height' => $scraperData['height'] ?? null,
+                'width' => $scraperData['width'] ?? null,
+                'thickness' => $scraperData['thickness'] ?? null,
+            ];
+            $source = 'scraper';
         }
 
-        // Validate that the product is a book (must have book-like attributes)
-        if (! $this->isBookProduct($amazonData)) {
-            return response()->json([
-                'success' => false,
-                'message_key' => 'amazon-not-a-book',
-            ], 422);
-        }
+        $title = $amazonData['title'] ?? $amazonData['extracted_title'] ?? null;
+        $asinValue = $amazonData['amazon_asin'] ?? null;
 
-        // Check for required data (at least title or ASIN)
-        if (empty($amazonData['extracted_title']) && empty($amazonData['amazon_asin'])) {
-            return response()->json([
-                'success' => false,
-                'message_key' => 'amazon-extract-failed',
-            ], 422);
-        }
-
-        // Check if book already exists by ISBN
+        // Check if book already exists by ISBN or ASIN
         $existingBook = null;
         if (! empty($amazonData['isbn'])) {
             $existingBook = Book::where('isbn', $amazonData['isbn'])->first();
         }
-
-        // Check if book already exists by ASIN
-        if (! $existingBook && ! empty($amazonData['amazon_asin'])) {
-            $existingBook = Book::where('amazon_asin', $amazonData['amazon_asin'])->first();
+        if (! $existingBook && $asinValue) {
+            $existingBook = Book::where('amazon_asin', $asinValue)->first();
         }
 
         if ($existingBook) {
-            // Book exists, check if already in user's library
             if ($user->books()->where('books.id', $existingBook->id)->exists()) {
                 return response()->json([
                     'success' => true,
@@ -1044,7 +1082,6 @@ class UserBookController extends Controller
                 ], 200);
             }
 
-            // Add existing book to user's library
             $attachData = [
                 'added_at' => now(),
                 'is_private' => $isPrivate,
@@ -1056,7 +1093,6 @@ class UserBookController extends Controller
             }
 
             $user->books()->attach($existingBook->id, $attachData);
-
             $bookWithPivot = $user->books()->where('books.id', $existingBook->id)->first();
 
             return response()->json([
@@ -1069,14 +1105,19 @@ class UserBookController extends Controller
 
         // Create new book
         $book = Book::create([
-            'title' => $amazonData['extracted_title'] ?? 'Sem título',
+            'title' => $title ?? 'Untitled',
             'authors' => $amazonData['authors'] ?? null,
             'isbn' => $amazonData['isbn'] ?? null,
-            'amazon_asin' => $amazonData['amazon_asin'] ?? null,
+            'amazon_asin' => $asinValue,
             'thumbnail' => $amazonData['thumbnail'] ?? null,
             'page_count' => $amazonData['page_count'] ?? null,
             'description' => $amazonData['description'] ?? null,
             'publisher' => $amazonData['publisher'] ?? null,
+            'published_date' => $amazonData['published_date'] ?? null,
+            'language' => $amazonData['language'] ?? null,
+            'categories' => $amazonData['categories'] ?? null,
+            'amazon_rating' => $amazonData['amazon_rating'] ?? null,
+            'amazon_rating_count' => $amazonData['amazon_rating_count'] ?? null,
             'height' => $amazonData['height'] ?? null,
             'width' => $amazonData['width'] ?? null,
             'thickness' => $amazonData['thickness'] ?? null,
@@ -1088,10 +1129,10 @@ class UserBookController extends Controller
         Log::info('User created book from Amazon URL', [
             'user_id' => $user->id,
             'book_id' => $book->id,
-            'amazon_asin' => $amazonData['amazon_asin'],
+            'amazon_asin' => $asinValue,
+            'source' => $source,
         ]);
 
-        // Add book to user's library
         $attachData = [
             'added_at' => now(),
             'is_private' => $isPrivate,
@@ -1103,7 +1144,6 @@ class UserBookController extends Controller
         }
 
         $user->books()->attach($book->id, $attachData);
-
         $bookWithPivot = $user->books()->where('books.id', $book->id)->first();
 
         return response()->json([
@@ -1112,6 +1152,27 @@ class UserBookController extends Controller
             'book' => $bookWithPivot,
             'already_in_library' => false,
         ], 201);
+    }
+
+    /**
+     * Resolve ASIN from short URL (a.co, amzn.to) by following the redirect
+     */
+    private function resolveAsinFromShortUrl(string $url, AmazonScraperService $scraper): ?string
+    {
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->get($url);
+
+            $effectiveUrl = $response->effectiveUri()?->__toString();
+            if ($effectiveUrl) {
+                return $scraper->extractAsinFromUrl($effectiveUrl);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to resolve short URL', ['url' => $url, 'error' => $e->getMessage()]);
+        }
+
+        return null;
     }
 
     /**

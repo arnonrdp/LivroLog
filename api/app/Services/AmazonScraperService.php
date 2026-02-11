@@ -48,6 +48,11 @@ class AmazonScraperService
                     'status' => $response->status(),
                 ]);
 
+                // Fallback: if 404, try searching by title extracted from URL slug
+                if ($response->status() === 404) {
+                    return $this->fallbackSearchFromUrl($amazonUrl, $regionConfig);
+                }
+
                 return null;
             }
 
@@ -107,6 +112,73 @@ class AmazonScraperService
     }
 
     /**
+     * Fallback: when a product URL returns 404 (delisted edition),
+     * extract the title from the URL slug and search on the same Amazon domain.
+     */
+    private function fallbackSearchFromUrl(string $amazonUrl, array $regionConfig): ?array
+    {
+        // Extract title from URL slug (e.g., /Values-Building-Better-World-All/dp/...)
+        if (! preg_match('/amazon\.[^\/]+\/([^\/]+)\/dp\//i', $amazonUrl, $matches)) {
+            return null;
+        }
+
+        $slug = $matches[1];
+        $searchQuery = str_replace('-', ' ', $slug);
+
+        Log::info('Amazon scraper: Fallback search from URL slug', [
+            'url' => $amazonUrl,
+            'search_query' => $searchQuery,
+        ]);
+
+        $domain = $regionConfig['domain'] ?? 'amazon.com';
+        $searchUrl = "https://www.{$domain}/s?k=".urlencode($searchQuery).'&i=stripbooks';
+
+        $response = Http::timeout(self::TIMEOUT)
+            ->withHeaders($this->getRequestHeaders($regionConfig))
+            ->get($searchUrl);
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $html = $response->body();
+        $candidates = $this->extractCandidatesFromSearchResults($html);
+
+        if (empty($candidates)) {
+            return null;
+        }
+
+        // Fetch the first candidate's product page
+        $asin = $candidates[0]['asin'];
+        $productUrl = "https://www.{$domain}/dp/{$asin}";
+
+        $productResponse = Http::timeout(self::TIMEOUT)
+            ->withHeaders($this->getRequestHeaders($regionConfig))
+            ->get($productUrl);
+
+        if (! $productResponse->successful()) {
+            return null;
+        }
+
+        $productHtml = $productResponse->body();
+        $productData = $this->extractProductData($productHtml);
+        $productData['amazon_asin'] = $asin;
+
+        $title = $this->extractProductTitle($productHtml);
+        if ($title) {
+            $productData['extracted_title'] = $title;
+        }
+
+        Log::info('Amazon scraper: Fallback search found product', [
+            'original_url' => $amazonUrl,
+            'found_asin' => $asin,
+            'title' => $title,
+        ]);
+
+        return $productData;
+    }
+
+    /**
      * Extract ASIN from Amazon URL
      * Supports formats: /dp/ASIN, /gp/product/ASIN, /ASIN/, etc.
      */
@@ -123,6 +195,47 @@ class AmazonScraperService
         }
 
         return null;
+    }
+
+    /**
+     * Get region code (e.g., 'US', 'CA', 'BR') from an Amazon URL domain
+     */
+    public static function getRegionFromUrl(string $url): string
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if (! $host) {
+            return 'US';
+        }
+
+        $host = strtolower($host);
+
+        $shortUrlDomains = ['a.co', 'amzn.to', 'amzn.com'];
+        foreach ($shortUrlDomains as $shortDomain) {
+            if ($host === $shortDomain || str_ends_with($host, '.'.$shortDomain)) {
+                return 'US';
+            }
+        }
+
+        $domainToRegion = [
+            'amazon.com.br' => 'BR',
+            'amazon.com.mx' => 'US',
+            'amazon.com' => 'US',
+            'amazon.co.uk' => 'UK',
+            'amazon.ca' => 'CA',
+            'amazon.de' => 'DE',
+            'amazon.fr' => 'FR',
+            'amazon.es' => 'ES',
+            'amazon.it' => 'IT',
+            'amazon.co.jp' => 'JP',
+        ];
+
+        foreach ($domainToRegion as $domain => $region) {
+            if (str_contains($host, $domain)) {
+                return $region;
+            }
+        }
+
+        return 'US';
     }
 
     /**

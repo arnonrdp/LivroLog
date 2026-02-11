@@ -277,6 +277,53 @@ class AmazonEnrichmentService
     }
 
     /**
+     * Get book data by ASIN using Amazon APIs (PA-API first, then Creators API)
+     * Used when the user provides a direct Amazon URL with a known ASIN.
+     * Falls back through providers in order: PA-API → Creators API
+     */
+    public function getBookByAsin(string $asin, string $region = 'US'): ?array
+    {
+        $factory = app(AmazonProviderFactory::class);
+        $options = ['region' => $region];
+
+        // 1. Try PA-API first
+        $paApi = $factory->getPaApiProvider();
+        if ($paApi->isEnabled()) {
+            try {
+                Log::info("getBookByAsin: Trying PA-API for ASIN {$asin} in region {$region}");
+                $result = $paApi->getItems([$asin], $options);
+                if ($result['success'] && ! empty($result['books'])) {
+                    Log::info("getBookByAsin: PA-API found data for ASIN {$asin}");
+
+                    return $result['books'][0];
+                }
+            } catch (\Exception $e) {
+                Log::warning("getBookByAsin: PA-API failed for ASIN {$asin}: {$e->getMessage()}");
+            }
+        }
+
+        // 2. Try Creators API
+        $creators = $factory->getCreatorsProvider();
+        if ($creators->isEnabled()) {
+            try {
+                Log::info("getBookByAsin: Trying Creators API for ASIN {$asin} in region {$region}");
+                $result = $creators->getItems([$asin], $options);
+                if ($result['success'] && ! empty($result['books'])) {
+                    Log::info("getBookByAsin: Creators API found data for ASIN {$asin}");
+
+                    return $result['books'][0];
+                }
+            } catch (\Exception $e) {
+                Log::warning("getBookByAsin: Creators API failed for ASIN {$asin}: {$e->getMessage()}");
+            }
+        }
+
+        Log::info("getBookByAsin: No API returned data for ASIN {$asin}");
+
+        return null;
+    }
+
+    /**
      * Search for book data on Amazon using the configured provider (Creators API or PA-API)
      */
     private function searchAmazonBook(Book $book): ?array
