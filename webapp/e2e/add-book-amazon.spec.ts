@@ -95,7 +95,7 @@ test.describe('Add Book from Amazon', () => {
 
     // Should show error message
     await page.waitForTimeout(2000)
-    await expect(page.locator('[data-testid="add-book-amazon-dialog"]')).toContainText('URL inválida')
+    await expect(page.locator('[data-testid="add-book-amazon-dialog"]')).toContainText('Invalid URL')
   })
 
   test('shows error for non-book Amazon product (TV)', async ({ page }) => {
@@ -120,8 +120,8 @@ test.describe('Add Book from Amazon', () => {
     // Dialog should still be visible with an error message
     await expect(page.locator('[data-testid="add-book-amazon-dialog"]')).toBeVisible()
     const dialogText = await page.locator('[data-testid="add-book-amazon-dialog"]').textContent()
-    // Accept any error that prevents adding the product
-    expect(dialogText).toMatch(/(não parece ser de um livro|Não foi possível extrair|extrair dados|URL inválida)/i)
+    // Accept any error that prevents adding the product (messages are now i18n translated)
+    expect(dialogText).toMatch(/(does not appear to be a book|Could not extract data|Invalid URL|não parece ser de um livro|Não foi possível extrair)/i)
   })
 
   test('rejects Funko Pop toy as non-book product', async ({ page }) => {
@@ -146,8 +146,8 @@ test.describe('Add Book from Amazon', () => {
     // Dialog should still be visible with an error message
     await expect(page.locator('[data-testid="add-book-amazon-dialog"]')).toBeVisible()
     const dialogText = await page.locator('[data-testid="add-book-amazon-dialog"]').textContent()
-    // Should be rejected as non-book
-    expect(dialogText).toMatch(/(não parece ser de um livro|Não foi possível extrair|extrair dados)/i)
+    // Should be rejected as non-book (messages are now i18n translated)
+    expect(dialogText).toMatch(/(does not appear to be a book|Could not extract data|não parece ser de um livro|Não foi possível extrair)/i)
   })
 
   test('successfully adds a real book from Amazon', async ({ page }) => {
@@ -209,9 +209,9 @@ test.describe('Add Book from Amazon', () => {
 
     if (dialogVisible) {
       const dialogText = await page.locator('[data-testid="add-book-amazon-dialog"]').textContent()
-      // Accept if book was added or already in library - should NOT show "não parece ser de um livro"
-      expect(dialogText).not.toMatch(/não parece ser de um livro/i)
-      expect(dialogText).toMatch(/(sucesso|já está|estante|Não foi possível extrair)/i)
+      // Should NOT show "not a book" error - should be success or extraction issue
+      expect(dialogText).not.toMatch(/does not appear to be a book|não parece ser de um livro/i)
+      expect(dialogText).toMatch(/(successfully|already|shelf|Could not extract|sucesso|já está|estante|Não foi possível extrair)/i)
     } else {
       // Dialog closed - success
       const currentUrl = page.url()
@@ -244,9 +244,9 @@ test.describe('Add Book from Amazon', () => {
 
     if (dialogVisible) {
       const dialogText = await page.locator('[data-testid="add-book-amazon-dialog"]').textContent()
-      // Accept if book was added or already in library - should NOT show "não parece ser de um livro"
-      expect(dialogText).not.toMatch(/não parece ser de um livro/i)
-      expect(dialogText).toMatch(/(sucesso|já está|estante|Não foi possível extrair)/i)
+      // Should NOT show "not a book" error - should be success or extraction issue
+      expect(dialogText).not.toMatch(/does not appear to be a book|não parece ser de um livro/i)
+      expect(dialogText).toMatch(/(successfully|already|shelf|Could not extract|sucesso|já está|estante|Não foi possível extrair)/i)
     } else {
       // Dialog closed - success
       const currentUrl = page.url()

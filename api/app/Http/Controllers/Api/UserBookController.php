@@ -992,7 +992,7 @@ class UserBookController extends Controller
         if (! $this->isValidAmazonUrl($amazonUrl)) {
             return response()->json([
                 'success' => false,
-                'message' => 'URL inválida. Por favor, forneça um link válido de produto da Amazon.',
+                'message_key' => 'amazon-invalid-url',
             ], 422);
         }
 
@@ -1002,7 +1002,7 @@ class UserBookController extends Controller
         if (! $amazonData) {
             return response()->json([
                 'success' => false,
-                'message' => 'Não foi possível extrair dados da URL fornecida. Verifique se o link está correto.',
+                'message_key' => 'amazon-extract-failed',
             ], 422);
         }
 
@@ -1010,7 +1010,7 @@ class UserBookController extends Controller
         if (! $this->isBookProduct($amazonData)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Este link não parece ser de um livro. Por favor, forneça um link de um livro da Amazon.',
+                'message_key' => 'amazon-not-a-book',
             ], 422);
         }
 
@@ -1018,7 +1018,7 @@ class UserBookController extends Controller
         if (empty($amazonData['extracted_title']) && empty($amazonData['amazon_asin'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Não foi possível extrair informações do livro da página da Amazon.',
+                'message_key' => 'amazon-extract-failed',
             ], 422);
         }
 
@@ -1038,7 +1038,7 @@ class UserBookController extends Controller
             if ($user->books()->where('books.id', $existingBook->id)->exists()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Este livro já está na sua estante.',
+                    'message_key' => 'amazon-already-in-library',
                     'book' => $existingBook,
                     'already_in_library' => true,
                 ], 200);
@@ -1061,7 +1061,7 @@ class UserBookController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Livro adicionado à sua estante com sucesso!',
+                'message_key' => 'amazon-book-added',
                 'book' => $bookWithPivot,
                 'already_in_library' => false,
             ], 201);
@@ -1108,7 +1108,7 @@ class UserBookController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Livro criado e adicionado à sua estante com sucesso!',
+            'message_key' => 'amazon-book-added',
             'book' => $bookWithPivot,
             'already_in_library' => false,
         ], 201);
