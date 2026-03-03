@@ -3,7 +3,7 @@
 # Comments in English only
 
 # Build stage - Install dependencies
-# Using PHP 8.4 explicitly to match production runtime and avoid PHP 8.5 compatibility issues
+# Using PHP 8.4 to match production runtime
 FROM composer:2.8 AS vendor
 WORKDIR /app
 # Copy composer files first for better Docker layer caching
@@ -14,7 +14,7 @@ COPY api/bootstrap ./bootstrap
 RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --optimize-autoloader --classmap-authoritative --no-scripts
 
 # Production stage - Optimized PHP-FPM runtime
-FROM php:8.3-fpm AS app
+FROM php:8.4-fpm AS app
 
 # Install system dependencies, Nginx and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
