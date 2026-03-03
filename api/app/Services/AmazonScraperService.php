@@ -203,8 +203,16 @@ class AmazonScraperService
     public function scrapeDescriptionByAsin(string $asin, string $region = 'US'): ?string
     {
         try {
-            $regionConfig = config("services.amazon.regions.{$region}")
-                ?? config('services.amazon.regions.BR');
+            $regionConfig = config("services.amazon.regions.{$region}");
+
+            if (empty($regionConfig)) {
+                Log::warning('AmazonScraperService: missing Amazon region config', [
+                    'region' => $region,
+                    'asin' => $asin,
+                ]);
+
+                return null;
+            }
 
             $domain = $regionConfig['domain'] ?? 'amazon.com';
             $url = "https://www.{$domain}/dp/{$asin}";
