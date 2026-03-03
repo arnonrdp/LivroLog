@@ -242,7 +242,14 @@ class UserBookController extends Controller
                 $additionalData['amazon_asin'] = $amazonAsin;
             }
 
-            return $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus, $additionalData);
+            $response = $this->createBookAndAddToLibrary($user, $unifiedEnrichmentService, $googleId, $isPrivate, $readingStatus, $additionalData);
+
+            // If Google Books enrichment failed but we have book data from request, create book without enrichment
+            if ($response->getStatusCode() === 422 && $request->has('title')) {
+                return $this->createBookFromBasicDataAndAddToLibrary($user, $request, $isPrivate, $readingStatus);
+            }
+
+            return $response;
         }
 
         // If no book found but we have ISBN only, try to create a basic book
@@ -925,18 +932,23 @@ class UserBookController extends Controller
      */
     private function createBookFromBasicDataAndAddToLibrary($user, Request $request, bool $isPrivate = false, string $readingStatus = 'read'): JsonResponse
     {
-        // Create book with basic data from Amazon
+        // Create book with basic data from request
         $bookData = [
             'title' => $request->input('title'),
             'authors' => $request->input('authors'),
             'isbn' => $request->input('isbn'),
+            'google_id' => $request->input('google_id'),
             'amazon_asin' => $request->input('amazon_asin'),
             'thumbnail' => $request->input('thumbnail'),
             'description' => $request->input('description'),
             'publisher' => $request->input('publisher'),
-            'info_quality' => 'basic', // Mark as basic since it's from Amazon without enrichment
-            'asin_status' => 'completed', // Already have ASIN from Amazon
+            'info_quality' => 'basic',
         ];
+
+        // Only mark ASIN as completed if we actually have one
+        if ($request->input('amazon_asin')) {
+            $bookData['asin_status'] = 'completed';
+        }
 
         // Remove null values
         $bookData = array_filter($bookData, fn ($value) => $value !== null);

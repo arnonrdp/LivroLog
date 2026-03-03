@@ -138,9 +138,10 @@ export const useUserBookStore = defineStore('userbook', {
         bookData.google_id = book.google_id
       }
 
-      // If we only have amazon_asin (no other identifiers), send full book data
-      if (book.amazon_asin && !bookData.book_id && !bookData.isbn && !bookData.google_id) {
-        bookData.title = book.title
+      // Always send book data when not using an internal book_id, so the backend
+      // can create the book even if external API enrichment fails
+      if (!bookData.book_id) {
+        if (book.title) bookData.title = book.title
         if (book.authors && book.authors !== '') bookData.authors = book.authors
         if (book.thumbnail && book.thumbnail !== '') bookData.thumbnail = book.thumbnail
         if (book.description && book.description !== '') bookData.description = book.description
