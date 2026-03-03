@@ -214,9 +214,7 @@ async function toggleFollow(userId: string, currentStatus?: boolean, hasPendingR
 
 async function loadInitialUsers() {
   isLoading.value = true
-  const params = {
-    pagination: { page: 1, rowsPerPage: pageSize }
-  }
+  const params = { page: 1, per_page: pageSize }
 
   await userStore.getUsers(params).then(() => {
     allUsers.value = userStore.users
@@ -232,9 +230,7 @@ async function loadMore(index: number, done: () => void) {
   }
 
   currentPage.value++
-  const params = {
-    pagination: { page: currentPage.value, rowsPerPage: pageSize }
-  }
+  const params = { page: currentPage.value, per_page: pageSize }
 
   await userStore.getUsers(params).then(() => {
     allUsers.value = [...allUsers.value, ...userStore.users]
@@ -248,9 +244,7 @@ async function loadAllUsers() {
 
   // Load all remaining pages
   for (let page = currentPage.value + 1; page <= totalPages.value; page++) {
-    const params = {
-      pagination: { page, rowsPerPage: pageSize }
-    }
+    const params = { page, per_page: pageSize }
     promises.push(userStore.getUsers(params).then(() => userStore.users))
   }
 
