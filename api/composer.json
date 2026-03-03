@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4",
         "darkaonline/l5-swagger": "*",
         "google/apiclient": "^2.18",
         "laravel/framework": "^12.0",
