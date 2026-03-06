@@ -27,7 +27,7 @@
     "@quasar/extras": "^1.17.0",
     "axios": "^1.13.6",
     "date-fns": "^4.1.0",
-    "dompurify": "^3.3.1",
+    "dompurify": "^3.3.2",
     "echarts": "^6.0.0",
     "google-auth-library": "^10.6.1",
     "html2canvas": "^1.4.1",
