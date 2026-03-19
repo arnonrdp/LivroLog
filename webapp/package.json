@@ -44,6 +44,10 @@
     "vue-i18n": "^11.2.8",
     "vue-router": "^4.6.4"
   },
+  "resolutions": {
+    "flatted": ">=3.4.2",
+    "serialize-javascript": ">=7.0.3"
+  },
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",
     "@pinia/testing": "^0.1.7",
