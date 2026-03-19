@@ -1021,7 +1021,7 @@ class UserBookController extends Controller
         $amazonData = null;
         $source = null;
 
-        // Strategy: PA-API → Creators API → Scraper
+        // Strategy: Creators API → Scraper, then merge both for complete data
         if ($asin) {
             $amazonData = $enrichment->getBookByAsin($asin, $region);
             if ($amazonData) {
@@ -1029,18 +1029,25 @@ class UserBookController extends Controller
             }
         }
 
-        // Fallback to scraper if APIs failed
-        if (! $amazonData) {
-            Log::info('createFromAmazonUrl: APIs failed, falling back to scraper', ['url' => $amazonUrl]);
-            $scraperData = $scraper->extractFromUrl($amazonUrl);
+        // Always try scraper to fill missing fields (description, thumbnail, etc.)
+        $scraperData = $scraper->extractFromUrl($amazonUrl);
 
-            if (! $scraperData) {
-                return response()->json([
-                    'success' => false,
-                    'message_key' => 'amazon-extract-failed',
-                ], 422);
+        if ($amazonData && $scraperData) {
+            // Merge: API data is primary, scraper fills gaps
+            $fieldsToFill = ['description', 'thumbnail', 'authors', 'isbn', 'page_count', 'publisher', 'height', 'width', 'thickness'];
+            foreach ($fieldsToFill as $field) {
+                $scraperField = $field === 'title' ? 'extracted_title' : $field;
+                if (empty($amazonData[$field]) && ! empty($scraperData[$scraperField])) {
+                    $amazonData[$field] = $scraperData[$scraperField];
+                }
             }
-
+            // Prefer scraper description over API features (scraper gets actual synopsis)
+            if (! empty($scraperData['description']) && strlen($scraperData['description']) > strlen($amazonData['description'] ?? '')) {
+                $amazonData['description'] = $scraperData['description'];
+            }
+            $source = 'api+scraper';
+        } elseif (! $amazonData && $scraperData) {
+            // API failed entirely, use scraper data
             if (! $this->isBookProduct($scraperData)) {
                 return response()->json([
                     'success' => false,
@@ -1070,6 +1077,11 @@ class UserBookController extends Controller
                 'thickness' => $scraperData['thickness'] ?? null,
             ];
             $source = 'scraper';
+        } elseif (! $amazonData && ! $scraperData) {
+            return response()->json([
+                'success' => false,
+                'message_key' => 'amazon-extract-failed',
+            ], 422);
         }
 
         $title = $amazonData['title'] ?? $amazonData['extracted_title'] ?? null;
@@ -1115,8 +1127,12 @@ class UserBookController extends Controller
             ], 201);
         }
 
-        // Create new book
-        $book = Book::create([
+        // Infer language from region when not available from API/scraper
+        $regionToLanguage = ['BR' => 'pt-BR', 'US' => 'en', 'UK' => 'en', 'CA' => 'en', 'DE' => 'de', 'FR' => 'fr', 'ES' => 'es', 'IT' => 'it', 'JP' => 'ja'];
+        $language = $amazonData['language'] ?? $regionToLanguage[$region] ?? 'pt-BR';
+
+        // Build create data, excluding null values so DB defaults apply
+        $createData = array_filter([
             'title' => $title ?? 'Untitled',
             'authors' => $amazonData['authors'] ?? null,
             'isbn' => $amazonData['isbn'] ?? null,
@@ -1126,17 +1142,21 @@ class UserBookController extends Controller
             'description' => $amazonData['description'] ?? null,
             'publisher' => $amazonData['publisher'] ?? null,
             'published_date' => $amazonData['published_date'] ?? null,
-            'language' => $amazonData['language'] ?? null,
+            'language' => $language,
             'categories' => $amazonData['categories'] ?? null,
             'amazon_rating' => $amazonData['amazon_rating'] ?? null,
             'amazon_rating_count' => $amazonData['amazon_rating_count'] ?? null,
             'height' => $amazonData['height'] ?? null,
             'width' => $amazonData['width'] ?? null,
             'thickness' => $amazonData['thickness'] ?? null,
-            'asin_status' => 'completed',
-            'asin_processed_at' => now(),
-            'info_quality' => 'enhanced',
-        ]);
+        ], fn ($value) => $value !== null);
+
+        $createData['asin_status'] = 'completed';
+        $createData['asin_processed_at'] = now();
+        $createData['info_quality'] = 'enhanced';
+
+        // Create new book
+        $book = Book::create($createData);
 
         Log::info('User created book from Amazon URL', [
             'user_id' => $user->id,
