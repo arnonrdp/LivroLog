@@ -1034,7 +1034,7 @@ class UserBookController extends Controller
 
         if ($amazonData && $scraperData) {
             // Merge: API data is primary, scraper fills gaps
-            $fieldsToFill = ['description', 'thumbnail', 'authors', 'isbn', 'page_count', 'publisher', 'height', 'width', 'thickness'];
+            $fieldsToFill = ['title', 'description', 'thumbnail', 'authors', 'isbn', 'page_count', 'publisher', 'height', 'width', 'thickness'];
             foreach ($fieldsToFill as $field) {
                 $scraperField = $field === 'title' ? 'extracted_title' : $field;
                 if (empty($amazonData[$field]) && ! empty($scraperData[$scraperField])) {
