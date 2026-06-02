@@ -28,8 +28,10 @@ export default defineConfig({
     globals: true,
     pool: 'forks',
     isolate: true,
-    deps: {
-      inline: [/pinia/]
+    server: {
+      deps: {
+        inline: [/pinia/]
+      }
     }
   }
 })
