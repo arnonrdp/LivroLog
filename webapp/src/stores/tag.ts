@@ -110,14 +110,16 @@ export const useTagStore = defineStore('tag', {
 
           // Also remove from all books in userStore.me.books
           const userStore = useUserStore()
-          const books = userStore.me.books || []
+          const books = Array.isArray(userStore.me?.books) ? userStore.me.books : []
           const updatedBooks = books.map((book: Book & { tags?: Tag[] }) => {
             if (book.tags && book.tags.length > 0) {
               return { ...book, tags: book.tags.filter((t) => t.id !== tagId) }
             }
             return book
           })
-          userStore.updateMe({ books: updatedBooks })
+          if (Array.isArray(userStore.me?.books)) {
+            userStore.updateMe({ books: updatedBooks })
+          }
 
           return true
         })

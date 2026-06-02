@@ -11,8 +11,8 @@
     <div v-else class="feed-container">
       <ActivityGroup
         v-for="group in activityStore.feed"
-        :ref="(el) => setActivityRef(group.first_activity_id, el)"
         :key="`${group.user.id}-${group.type}-${group.date}`"
+        :ref="(el) => setActivityRef(group.first_activity_id, el)"
         :group="group"
         :initial-show-comments="shouldExpandComments(group.first_activity_id)"
         :is-highlighted="highlightedActivityId === group.first_activity_id"
@@ -54,7 +54,7 @@ const notificationStore = useNotificationStore()
 
 const currentPage = ref(1)
 const isLoading = ref(false)
-const activityRefs = ref<Record<string, Element | null>>({})
+const activityRefs = ref<Record<string, globalThis.Element | null>>({})
 const highlightedActivityId = ref<string | null>(null)
 
 const hasMorePages = computed(() => activityStore.meta.current_page < activityStore.meta.last_page)
@@ -63,8 +63,10 @@ const hasMorePages = computed(() => activityStore.meta.current_page < activitySt
 const targetActivityId = computed(() => route.query.activity as string | undefined)
 const shouldExpandCommentsParam = computed(() => route.query.expand === 'comments')
 
-function setActivityRef(activityId: string, el: Element | ComponentPublicInstance | null) {
-  activityRefs.value[activityId] = el ? (el as unknown as { $el: Element }).$el || (el as Element) : null
+function setActivityRef(activityId: string, el: globalThis.Element | ComponentPublicInstance | null) {
+  activityRefs.value[activityId] = el
+    ? (el as unknown as { $el: globalThis.Element }).$el || (el as globalThis.Element)
+    : null
 }
 
 function shouldExpandComments(groupFirstActivityId: string): boolean {

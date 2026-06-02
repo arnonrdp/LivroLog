@@ -46,7 +46,8 @@
   },
   "resolutions": {
     "flatted": ">=3.4.2",
-    "serialize-javascript": ">=7.0.3"
+    "serialize-javascript": ">=7.0.3",
+    "vite": "7.3.2"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",
@@ -57,7 +58,7 @@
     "@types/dompurify": "^3.2.0",
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.4",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "4.1.0",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/test-utils": "^2.4.6",
