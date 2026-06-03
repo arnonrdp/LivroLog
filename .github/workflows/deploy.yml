@@ -84,7 +84,7 @@ jobs:
 
     steps:
       - name: Checkout code for compose file
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -123,6 +123,8 @@ jobs:
           echo "✅ Secret validation completed"
 
       - name: Setup SSH key and test connection
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
         run: |
           echo "🔐 Setting up SSH connection..."
 
@@ -153,7 +155,7 @@ jobs:
             echo "Debug information:"
             echo "  Host: ${{ secrets.SERVER_HOST }}"
             echo "  User: ${{ secrets.SERVER_USER }}"
-            echo "  Key length: ${#{{ secrets.SERVER_SSH_KEY }}}"
+            echo "  Key length: ${#SSH_KEY}"
             exit 1
           fi
 
