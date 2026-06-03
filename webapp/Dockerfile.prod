@@ -3,7 +3,7 @@
 # Comments in English only
 
 # Build stage - Compile Vue/Quasar application
-FROM node:20 AS build
+FROM node:24 AS build
 WORKDIR /app
 
 # Copy package files for better layer caching
