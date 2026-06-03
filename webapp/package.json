@@ -3,6 +3,9 @@
   "author": "Arnon Rodrigues <arnonrdp@gmail.com> (https://arnon.dev)",
   "description": "A place for you to organize everything you've read.",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
@@ -55,7 +58,7 @@
     "@pinia/testing": "^0.1.7",
     "@playwright/test": "^1.58.2",
     "@quasar/vite-plugin": "^1.10.0",
-    "@tsconfig/node22": "^22.0.5",
+    "@tsconfig/node24": "^24.0.0",
     "@types/dompurify": "^3.2.0",
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.4",
