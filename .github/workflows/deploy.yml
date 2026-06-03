@@ -30,7 +30,7 @@ concurrency:
 
 env:
   PHP_VERSION: '8.4'
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
   TARGET_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
 
 permissions:

@@ -9,7 +9,7 @@ on:
 
 env:
   PHP_VERSION: '8.4'
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
 
 permissions:
   contents: read
