@@ -46,7 +46,7 @@
   },
   "resolutions": {
     "flatted": ">=3.4.2",
-    "serialize-javascript": ">=7.0.3",
+    "serialize-javascript": ">=7.0.5",
     "uuid": ">=11.1.1",
     "vite": "7.3.5"
   },
@@ -59,7 +59,7 @@
     "@types/dompurify": "^3.2.0",
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.4",
-    "@vitest/coverage-v8": "4.1.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/test-utils": "^2.4.6",
@@ -76,7 +76,7 @@
     "sass-embedded": "^1.97.3",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^7.3.2",
+    "vite": "^7.3.5",
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-static-copy": "^3.2.0",
