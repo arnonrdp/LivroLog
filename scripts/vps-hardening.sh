@@ -11,6 +11,10 @@
 #
 # Etapas disponiveis: firewall fail2ban swap ssh apt docker all
 #
+# Variaveis de ambiente:
+#   STACK_DIRS  diretorios de stack (separados por espaco) usados no step "docker".
+#               Default: /var/www/livrolog /var/www/fischub.com/api
+#
 # Roda no servidor (nao na sua maquina). Copiar com:
 #   scp scripts/vps-hardening.sh root@<host>:/root/
 
@@ -20,12 +24,14 @@ DRY_RUN=0
 STEP="all"
 TS="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="/root/hardening-backups/${TS}"
+# Diretorios de stack atualizados no step "docker" (sobrescreva via env STACK_DIRS).
+STACK_DIRS="${STACK_DIRS:-/var/www/livrolog /var/www/fischub.com/api}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run) DRY_RUN=1; shift ;;
     --step) STEP="$2"; shift 2 ;;
-    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
     *) echo "Argumento desconhecido: $1"; exit 1 ;;
   esac
 done
@@ -35,7 +41,7 @@ run() {
     echo "[DRY-RUN] $*"
   else
     echo "[RUN] $*"
-    eval "$@"
+    bash -c "set -euo pipefail; $*"
   fi
 }
 
@@ -213,7 +219,8 @@ step_apt() {
 # ----------------------------------------------------------------------
 step_docker() {
   section "6. Atualizar imagens Docker dos stacks"
-  for dir in /var/www/livrolog /var/www/fischub.com/api; do
+  # shellcheck disable=SC2086 # word-splitting STACK_DIRS into multiple dirs is intended
+  for dir in $STACK_DIRS; do
     local compose
     if [[ -f "$dir/docker-compose.prod.yml" ]]; then
       compose="$dir/docker-compose.prod.yml"

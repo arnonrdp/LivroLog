@@ -423,19 +423,35 @@ jobs:
         run: |
           echo "🔍 Running post-deployment verification..."
 
-          # Final connectivity tests
-          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:18081/healthz || echo "FAIL")
-          WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:18080/ || echo "FAIL")
+          # Probe the PUBLIC HTTPS endpoints. The internal :18081/:18080 ports are not
+          # reachable from the GitHub runner (only 443 via the reverse proxy is public),
+          # so the previous direct-port check always reported 000. Retry to allow warmup.
+          API_URL="https://api.livrolog.com/healthz"
+          WEB_URL="${{ vars.APP_FRONTEND_URL || 'https://livrolog.com' }}"
+
+          probe() {
+            local code="000"
+            for _ in $(seq 1 10); do
+              # curl prints "000" via -w on connection failure; || true keeps the
+              # retry loop alive under the runner's `set -e` without doubling to "000000".
+              code=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$1" || true)
+              [ "$code" = "200" ] && break
+              sleep 10
+            done
+            echo "$code"
+          }
+
+          API_STATUS=$(probe "$API_URL")
+          WEB_STATUS=$(probe "$WEB_URL")
 
           echo "Final Status Check:"
-          echo "  API Health: $API_STATUS"
-          echo "  Web Status: $WEB_STATUS"
+          echo "  API ($API_URL): $API_STATUS"
+          echo "  Web ($WEB_URL): $WEB_STATUS"
 
           if [ "$API_STATUS" = "200" ] && [ "$WEB_STATUS" = "200" ]; then
             echo "✅ All services are healthy and accessible"
           else
-            echo "⚠️ Some services may not be fully ready yet"
-            echo "This is normal for large applications and they should be ready shortly"
+            echo "⚠️ Some services did not return 200 after retries"
           fi
 
           echo "🎯 Production deployment verification completed"
