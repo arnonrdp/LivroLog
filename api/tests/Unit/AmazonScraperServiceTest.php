@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\Book;
 use App\Services\AmazonScraperService;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionClass;
 use Tests\TestCase;
 
@@ -33,7 +34,7 @@ class AmazonScraperServiceTest extends TestCase
     // TITLE NORMALIZATION TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_normalizes_titles_by_removing_common_articles(): void
     {
         $normalized = $this->invokeMethod('normalizeTitle', ['The Lord of the Rings']);
@@ -42,7 +43,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertStringContainsString('rings', $normalized);
     }
 
-    /** @test */
+    #[Test]
     public function it_normalizes_portuguese_titles(): void
     {
         $normalized = $this->invokeMethod('normalizeTitle', ['O Senhor dos Anéis']);
@@ -53,7 +54,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertStringContainsString('anéis', $normalized);
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_parentheses_and_brackets(): void
     {
         $normalized = $this->invokeMethod('normalizeTitle', ['Harry Potter (Book 7) [Special Edition]']);
@@ -63,7 +64,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertStringContainsString('potter', $normalized);
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_punctuation(): void
     {
         $normalized = $this->invokeMethod('normalizeTitle', ["Harry Potter: The Philosopher's Stone!"]);
@@ -76,7 +77,7 @@ class AmazonScraperServiceTest extends TestCase
     // TITLE SIMILARITY TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_calculates_high_similarity_for_identical_titles(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', [
@@ -86,7 +87,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0.99, $similarity);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_high_similarity_for_similar_titles(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', [
@@ -96,7 +97,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0.80, $similarity);
     }
 
-    /** @test */
+    #[Test]
     public function it_calculates_low_similarity_for_different_titles(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', [
@@ -106,7 +107,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertLessThan(0.50, $similarity);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_titles_with_subtitles(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', [
@@ -116,7 +117,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0.60, $similarity);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_completely_different_books(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', [
@@ -130,7 +131,7 @@ class AmazonScraperServiceTest extends TestCase
     // AUTHOR VALIDATION TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_validates_matching_authors(): void
     {
         // Full author names match well
@@ -141,7 +142,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($match);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_author_with_different_format(): void
     {
         $match = $this->invokeMethod('checkAuthorWordsMatch', [
@@ -151,7 +152,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($match);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_completely_different_authors(): void
     {
         $match = $this->invokeMethod('checkAuthorWordsMatch', [
@@ -161,7 +162,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertFalse($match);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_brazilian_authors(): void
     {
         $match = $this->invokeMethod('checkAuthorWordsMatch', [
@@ -175,7 +176,7 @@ class AmazonScraperServiceTest extends TestCase
     // QUICK TITLE MATCH TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function quick_match_accepts_contained_titles(): void
     {
         $match = $this->invokeMethod('quickTitleMatch', [
@@ -185,7 +186,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($match);
     }
 
-    /** @test */
+    #[Test]
     public function quick_match_rejects_unrelated_titles(): void
     {
         $match = $this->invokeMethod('quickTitleMatch', [
@@ -199,7 +200,7 @@ class AmazonScraperServiceTest extends TestCase
     // PRODUCT VALIDATION TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_validates_product_with_matching_isbn(): void
     {
         $book = new Book([
@@ -222,7 +223,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_product_with_mismatched_isbn(): void
     {
         $book = new Book([
@@ -245,7 +246,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_product_with_low_title_similarity(): void
     {
         $book = new Book([
@@ -267,7 +268,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_product_with_high_title_similarity_no_isbn(): void
     {
         $book = new Book([
@@ -289,7 +290,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_product_with_different_author(): void
     {
         $book = new Book([
@@ -315,7 +316,7 @@ class AmazonScraperServiceTest extends TestCase
     // EDGE CASES
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_handles_books_with_no_author(): void
     {
         $book = new Book([
@@ -338,7 +339,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_books_with_series_in_title(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', [
@@ -348,7 +349,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0.60, $similarity);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_unicode_characters(): void
     {
         $normalized = $this->invokeMethod('normalizeTitle', ['José García: Una Historia']);
@@ -359,7 +360,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertStringNotContainsString(':', $normalized);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_empty_strings(): void
     {
         $similarity = $this->invokeMethod('calculateTitleSimilarity', ['', '']);
@@ -370,7 +371,7 @@ class AmazonScraperServiceTest extends TestCase
     // REGION DETECTION TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_detects_brazil_region_for_portuguese_books(): void
     {
         $book = new Book(['id' => 'test', 'title' => 'Test', 'language' => 'pt']);
@@ -378,7 +379,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertEquals('BR', $region);
     }
 
-    /** @test */
+    #[Test]
     public function it_detects_us_region_for_english_books(): void
     {
         $book = new Book(['id' => 'test', 'title' => 'Test', 'language' => 'en']);
@@ -386,7 +387,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertEquals('US', $region);
     }
 
-    /** @test */
+    #[Test]
     public function it_defaults_to_brazil_for_unknown_languages(): void
     {
         $book = new Book(['id' => 'test', 'title' => 'Test', 'language' => null]);
@@ -398,7 +399,7 @@ class AmazonScraperServiceTest extends TestCase
     // SEARCH RESULT TITLE VALIDATION TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_rejects_date_format_titles(): void
     {
         // English date formats
@@ -411,7 +412,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['2020/06/23']));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_price_format_titles(): void
     {
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['$19.99']));
@@ -420,7 +421,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['R$49,90']));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_format_labels(): void
     {
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['Paperback']));
@@ -429,14 +430,14 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['Audiobook']));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_numeric_values(): void
     {
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['123']));
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['4.5']));
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_valid_book_titles(): void
     {
         $this->assertTrue($this->invokeMethod('isValidSearchResultTitle', ['Harry Potter and the Deathly Hallows']));
@@ -445,7 +446,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertTrue($this->invokeMethod('isValidSearchResultTitle', ['O Senhor dos Anéis']));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_too_short_titles(): void
     {
         $this->assertFalse($this->invokeMethod('isValidSearchResultTitle', ['AB']));
@@ -456,7 +457,7 @@ class AmazonScraperServiceTest extends TestCase
     // ASIN EXTRACTION FROM URL TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_extracts_asin_from_dp_url(): void
     {
         $asin = $this->service->extractAsinFromUrl('https://www.amazon.com/dp/B0D5H67CK1/ref=sr_1_1');
@@ -466,21 +467,21 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertEquals('8550801488', $asin);
     }
 
-    /** @test */
+    #[Test]
     public function it_extracts_asin_from_gp_product_url(): void
     {
         $asin = $this->service->extractAsinFromUrl('https://www.amazon.com/gp/product/0451524934');
         $this->assertEquals('0451524934', $asin);
     }
 
-    /** @test */
+    #[Test]
     public function it_extracts_asin_from_query_string(): void
     {
         $asin = $this->service->extractAsinFromUrl('https://www.amazon.com/something?asin=B0D5H67CK1&ref=xyz');
         $this->assertEquals('B0D5H67CK1', $asin);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_short_urls_without_asin(): void
     {
         // Short URLs don't contain ASIN - it's only in the redirected URL
@@ -491,7 +492,7 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertNull($asin);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_search_urls(): void
     {
         $asin = $this->service->extractAsinFromUrl('https://www.amazon.com/s?k=harry+potter');
@@ -502,7 +503,7 @@ class AmazonScraperServiceTest extends TestCase
     // REGION CONFIG FROM URL TESTS
     // ============================================
 
-    /** @test */
+    #[Test]
     public function it_detects_us_region_from_short_urls(): void
     {
         // Short URLs should default to US region
@@ -516,14 +517,14 @@ class AmazonScraperServiceTest extends TestCase
         $this->assertEquals('amazon.com', $config['domain']);
     }
 
-    /** @test */
+    #[Test]
     public function it_detects_brazil_region_from_amazon_com_br(): void
     {
         $config = $this->invokeMethod('getRegionConfigFromUrl', ['https://www.amazon.com.br/dp/8550801488']);
         $this->assertEquals('amazon.com.br', $config['domain']);
     }
 
-    /** @test */
+    #[Test]
     public function it_detects_us_region_from_amazon_com(): void
     {
         $config = $this->invokeMethod('getRegionConfigFromUrl', ['https://www.amazon.com/dp/B0D5H67CK1']);
