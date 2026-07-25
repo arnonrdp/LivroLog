@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityInteractionController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuthorMergeController;
 use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\FeedController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\UserBookController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\ReviewController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
@@ -88,7 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/admin/books/create-from-amazon', [AdminController::class, 'createBookFromAmazonUrl']);
 
         // Merge authors
-        Route::post('/authors/merge', [\App\Http\Controllers\Api\AuthorMergeController::class, 'merge']);
+        Route::post('/authors/merge', [AuthorMergeController::class, 'merge']);
 
         // User management (restricted to admins)
         Route::post('/users', [UserController::class, 'store']);
@@ -189,7 +191,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Broadcasting authentication (for private WebSocket channels)
-Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+Route::post('/broadcasting/auth', function (Request $request) {
     $result = Broadcast::auth($request);
 
     return response()->json($result);

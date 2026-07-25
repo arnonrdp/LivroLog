@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\OptionalAuth;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SocialMediaCrawlerMiddleware;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,17 +23,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'auth.optional' => \App\Http\Middleware\OptionalAuth::class,
-            'social.crawler' => \App\Http\Middleware\SocialMediaCrawlerMiddleware::class,
+            'admin' => AdminMiddleware::class,
+            'auth.optional' => OptionalAuth::class,
+            'social.crawler' => SocialMediaCrawlerMiddleware::class,
         ]);
 
         // Add security headers to all requests
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
 
         // Add social media crawler middleware to web routes
         $middleware->web(append: [
-            \App\Http\Middleware\SocialMediaCrawlerMiddleware::class,
+            SocialMediaCrawlerMiddleware::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

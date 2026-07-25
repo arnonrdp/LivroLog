@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReviewCollection extends ResourceCollection
 {
@@ -14,7 +15,7 @@ class ReviewCollection extends ResourceCollection
      */
     public function toArray(Request $request): array
     {
-        if (! $this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+        if (! $this->resource instanceof LengthAwarePaginator) {
             return ['data' => ReviewResource::collection($this->collection)];
         }
 

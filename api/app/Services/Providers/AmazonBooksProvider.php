@@ -15,6 +15,7 @@ use Amazon\ProductAdvertisingAPI\v1\Configuration;
 use App\Contracts\BookSearchProvider;
 use App\Models\Book;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class AmazonBooksProvider implements BookSearchProvider
@@ -1049,7 +1050,7 @@ class AmazonBooksProvider implements BookSearchProvider
     private function respectRateLimit(): void
     {
         $cacheKey = 'amazon_paapi_last_request';
-        $lastRequestTime = \Illuminate\Support\Facades\Cache::get($cacheKey, 0);
+        $lastRequestTime = Cache::get($cacheKey, 0);
         $currentTime = time();
 
         $timeSinceLastRequest = $currentTime - $lastRequestTime;
@@ -1059,7 +1060,7 @@ class AmazonBooksProvider implements BookSearchProvider
             usleep($sleepTime * 1000000); // Use microseconds for more precision
         }
 
-        \Illuminate\Support\Facades\Cache::put($cacheKey, time(), 60); // Cache for 1 minute
+        Cache::put($cacheKey, time(), 60); // Cache for 1 minute
     }
 
     /**
@@ -1069,7 +1070,7 @@ class AmazonBooksProvider implements BookSearchProvider
     {
         $amazonCacheKey = 'amazon_rate_limited_'.md5($query);
 
-        return \Illuminate\Support\Facades\Cache::has($amazonCacheKey);
+        return Cache::has($amazonCacheKey);
     }
 
     /**

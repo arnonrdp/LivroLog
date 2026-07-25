@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -38,7 +39,7 @@ return new class extends Migration
         foreach ($usersWithNullPasswords as $userId) {
             DB::table('users')
                 ->where('id', $userId)
-                ->update(['password' => bcrypt(\Illuminate\Support\Str::random(32))]);
+                ->update(['password' => bcrypt(Str::random(32))]);
         }
 
         // Then, make the password column non-nullable again

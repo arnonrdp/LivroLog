@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Review;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -60,8 +61,8 @@ class RealisticReviewSeeder extends Seeder
 
                 // Data da review (após data de leitura, se existir)
                 $reviewDate = $userBook->read_at ?
-                    \Carbon\Carbon::parse($userBook->read_at)->addDays(random_int(1, 30)) :
-                    \Carbon\Carbon::parse($userBook->added_at)->addDays(random_int(1, 60));
+                    Carbon::parse($userBook->read_at)->addDays(random_int(1, 30)) :
+                    Carbon::parse($userBook->added_at)->addDays(random_int(1, 60));
 
                 Review::create([
                     'id' => 'R-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4)),

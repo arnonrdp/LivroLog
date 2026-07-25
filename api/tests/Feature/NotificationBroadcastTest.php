@@ -4,12 +4,15 @@ namespace Tests\Feature;
 
 use App\Events\NewNotification;
 use App\Models\Activity;
+use App\Models\Comment;
 use App\Models\Follow;
 use App\Models\Notification;
 use App\Models\User;
 use App\Services\ActivityInteractionService;
 use App\Services\FollowService;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
@@ -718,7 +721,7 @@ class NotificationBroadcastTest extends TestCase
         $activity = Activity::factory()->create(['user_id' => $activityOwner->id]);
 
         // Create comment first
-        $comment = \App\Models\Comment::create([
+        $comment = Comment::create([
             'user_id' => $commenter->id,
             'activity_id' => $activity->id,
             'content' => 'Test comment',
@@ -853,7 +856,7 @@ class NotificationBroadcastTest extends TestCase
         $event = new NewNotification($notification);
 
         // Verify event implements ShouldBroadcast
-        $this->assertInstanceOf(\Illuminate\Contracts\Broadcasting\ShouldBroadcast::class, $event);
+        $this->assertInstanceOf(ShouldBroadcast::class, $event);
     }
 
     public function test_broadcast_uses_to_others_method()
@@ -877,7 +880,7 @@ class NotificationBroadcastTest extends TestCase
 
         // Verify event uses InteractsWithSockets trait (enables toOthers())
         $traits = class_uses_recursive($event);
-        $this->assertContains(\Illuminate\Broadcasting\InteractsWithSockets::class, $traits);
+        $this->assertContains(InteractsWithSockets::class, $traits);
     }
 
     // ==================== FOLLOW NOTIFICATION TESTS ====================

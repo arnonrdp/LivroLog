@@ -154,7 +154,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create', \App\Models\User::class);
+        $this->authorize('create', User::class);
         $request->validate([
             'display_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',

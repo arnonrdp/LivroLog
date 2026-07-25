@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use App\Services\FollowService;
 use Illuminate\Console\Command;
 
@@ -47,7 +48,7 @@ class FixFollowCounts extends Command
 
         try {
             if ($userId) {
-                $user = \App\Models\User::find($userId);
+                $user = User::find($userId);
                 if (! $user) {
                     $this->error("User with ID '{$userId}' not found.");
 
@@ -88,7 +89,7 @@ class FixFollowCounts extends Command
     /**
      * Show count differences for a specific user without making changes.
      */
-    private function showUserCountDiff(\App\Models\User $user): void
+    private function showUserCountDiff(User $user): void
     {
         $actualFollowersCount = $user->followers()->count();
         $actualFollowingCount = $user->following()->count();
@@ -125,7 +126,7 @@ class FixFollowCounts extends Command
         $inconsistentUsers = [];
         $totalUsers = 0;
 
-        \App\Models\User::chunk(100, function ($users) use (&$inconsistentUsers, &$totalUsers) {
+        User::chunk(100, function ($users) use (&$inconsistentUsers, &$totalUsers) {
             foreach ($users as $user) {
                 $totalUsers++;
 
