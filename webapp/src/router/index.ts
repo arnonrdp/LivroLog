@@ -98,7 +98,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, _from) => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
 
@@ -138,12 +138,7 @@ router.beforeEach(async (to, _from, next) => {
       // Open auth modal instead of redirecting (handled by the component)
       authStore.openAuthModal('login')
       // Stay on current page or go to landing if no current page
-      if (_from.name) {
-        next(false)
-      } else {
-        next({ path: '/' })
-      }
-      return
+      return _from.name ? false : { path: '/' }
     }
 
     // For admin routes, verify role from server if not already admin
@@ -157,14 +152,9 @@ router.beforeEach(async (to, _from, next) => {
       }
       // Block access for non-admin users
       if (userStore.me.role !== 'admin') {
-        next({ path: '/home' })
-        return
+        return { path: '/home' }
       }
     }
-
-    next()
-  } else {
-    next()
   }
 })
 

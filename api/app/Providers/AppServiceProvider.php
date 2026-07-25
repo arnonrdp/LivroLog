@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\BookCreated;
+use App\Listeners\EnrichBookWithAmazon;
 use App\Models\Activity;
 use App\Models\Book;
 use App\Models\Comment;
@@ -18,6 +20,9 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use OpenApi\Analysers\AttributeAnnotationFactory;
+use OpenApi\Analysers\DocBlockAnnotationFactory;
+use OpenApi\Analysers\ReflectionAnalyser;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,6 +43,14 @@ class AppServiceProvider extends ServiceProvider
         // Disable data wrapping for all JSON resources
         JsonResource::withoutWrapping();
 
+        // L5-Swagger 10+ defaults to an attributes-only analyser, which silently drops this API's
+        // @OA\ docblocks. Registered here rather than in config/l5-swagger.php because the deploy
+        // runs `config:cache`, which cannot serialize objects.
+        config(['l5-swagger.documentations.default.scanOptions.analyser' => new ReflectionAnalyser([
+            new AttributeAnnotationFactory,
+            new DocBlockAnnotationFactory,
+        ])]);
+
         // Configure morph map for polymorphic relations (Activity->subject, Notification->notifiable)
         Relation::enforceMorphMap([
             'Activity' => Activity::class,
@@ -56,8 +69,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Register event listeners
         Event::listen(
-            \App\Events\BookCreated::class,
-            \App\Listeners\EnrichBookWithAmazon::class,
+            BookCreated::class,
+            EnrichBookWithAmazon::class,
         );
 
         // Register observers for activity feed

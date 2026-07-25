@@ -154,7 +154,7 @@ export const useNotificationStore = defineStore('notification', {
 
       // Show toast notification
       const actorName = notification.actor.display_name || notification.actor.username
-      let message = ''
+      let message: string
       switch (notification.type) {
         case 'activity_liked':
           message = i18n.global.t('notifications.liked-your-activity', { name: actorName })

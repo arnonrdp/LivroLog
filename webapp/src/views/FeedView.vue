@@ -64,9 +64,7 @@ const targetActivityId = computed(() => route.query.activity as string | undefin
 const shouldExpandCommentsParam = computed(() => route.query.expand === 'comments')
 
 function setActivityRef(activityId: string, el: globalThis.Element | ComponentPublicInstance | null) {
-  activityRefs.value[activityId] = el
-    ? (el as unknown as { $el: globalThis.Element }).$el || (el as globalThis.Element)
-    : null
+  activityRefs.value[activityId] = el ? (el as unknown as { $el: globalThis.Element }).$el || (el as globalThis.Element) : null
 }
 
 function shouldExpandComments(groupFirstActivityId: string): boolean {
