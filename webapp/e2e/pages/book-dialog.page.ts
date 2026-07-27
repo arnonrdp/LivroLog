@@ -3,6 +3,12 @@ import { Page, expect } from '@playwright/test'
 export class BookDialogPage {
   constructor(private page: Page) {}
 
+  // The dialog content is split into tabs (about / reading / reviews); open the
+  // right one before touching fields that live inside it.
+  async openTab(tab: 'about' | 'reading' | 'reviews') {
+    await this.page.locator(`[data-testid="tab-${tab}"]`).click()
+  }
+
   async addToLibrary() {
     // Scroll the button into view and wait for it to be visible
     const addBtn = this.page.locator('[data-testid="add-to-library-btn"]')
@@ -21,6 +27,7 @@ export class BookDialogPage {
   }
 
   async setReadingStatus(status: 'read' | 'reading' | 'want_to_read' | 'abandoned' | 'on_hold' | 're_reading') {
+    await this.openTab('reading')
     await this.page.locator('[data-testid="reading-status-select"]').click()
     // Map status to exact display text
     const statusMap: Record<string, string> = {
@@ -37,12 +44,14 @@ export class BookDialogPage {
   }
 
   async setReadDate(date: string) {
+    await this.openTab('reading')
     await this.page.locator('[data-testid="read-date-input"]').fill(date)
     // Trigger blur to save
     await this.page.locator('[data-testid="read-date-input"]').blur()
   }
 
   async setPrivate(isPrivate: boolean) {
+    await this.openTab('reading')
     const checkbox = this.page.locator('[data-testid="private-book-checkbox"]')
     const isChecked = await checkbox.isChecked()
     if (isPrivate !== isChecked) {
@@ -51,6 +60,7 @@ export class BookDialogPage {
   }
 
   async writeReview(title: string, content: string, rating: number) {
+    await this.openTab('reviews')
     // Set rating first - use getByRole for accessibility-based selection
     // The q-rating shows "star N" labels for each star
     await this.page.getByRole('radio', { name: `star ${rating}` }).click()
@@ -76,6 +86,7 @@ export class BookDialogPage {
 
   async editReview(title: string, content: string) {
     // Reviews are edited inline - just fill the form again
+    await this.openTab('reviews')
     await this.page.locator('[data-testid="review-title-input"]').fill(title)
     await this.page.locator('[data-testid="review-content-input"]').fill(content)
     await this.page.locator('[data-testid="submit-review-btn"]').click()
@@ -83,6 +94,7 @@ export class BookDialogPage {
   }
 
   async deleteReview() {
+    await this.openTab('reviews')
     await this.page.locator('[data-testid="delete-review-btn"]').click()
     await this.page.locator('[data-testid="confirm-delete-btn"]').click()
     await this.page.waitForTimeout(1000)
@@ -101,6 +113,7 @@ export class BookDialogPage {
   }
 
   async expectReviewVisible(textToFind: string) {
+    await this.openTab('reviews')
     // Wait longer for the review to appear and look for any review containing the text
     await expect(this.page.locator('[data-testid="user-review"], [data-testid="book-review"]').filter({ hasText: textToFind })).toBeVisible({
       timeout: 10000
@@ -108,18 +121,21 @@ export class BookDialogPage {
   }
 
   async expectUserReviewExists() {
+    await this.openTab('reviews')
     // Just check if the user has any review on this book
     await expect(this.page.locator('[data-testid="user-review"]')).toBeVisible({ timeout: 10000 })
   }
 
   async getReadDate(): Promise<string> {
+    await this.openTab('reading')
     const input = this.page.locator('[data-testid="read-date-input"]')
     await input.waitFor({ state: 'visible', timeout: 10000 })
     return await input.inputValue()
   }
 
   async expectReadDate(expectedDate: string) {
-    const actualDate = await this.getReadDate()
-    await expect(actualDate).toBe(expectedDate)
+    await this.openTab('reading')
+    // The panel fills the date asynchronously once the book data arrives — poll instead of reading instantly
+    await expect(this.page.locator('[data-testid="read-date-input"]')).toHaveValue(expectedDate, { timeout: 10000 })
   }
 }

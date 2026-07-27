@@ -23,6 +23,9 @@ test.describe('Reviews', () => {
     await homePage.searchBooks(testBooks.searchQuery)
     await homePage.clickOnBookResult(0)
     await bookDialog.addToLibrary()
+
+    // Review form and list live in the reviews tab of the details panel
+    await bookDialog.openTab('reviews')
   })
 
   test('user sees review form when book is in library', async ({ page }) => {

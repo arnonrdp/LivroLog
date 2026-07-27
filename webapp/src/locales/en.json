@@ -79,6 +79,7 @@
     "password-reset-sent": "Password reset email sent successfully",
     "error-sending-reset": "Error sending password reset email"
   },
+  "about": "About",
   "account-created": "Your account has been created successfully!",
   "add": "Add book",
   "add-book": "Add Book",
@@ -381,6 +382,7 @@
     "sep": "Sep"
   },
   "mutual-follow": "You follow each other",
+  "my-reading": "My Reading",
   "name": "Name",
   "new-password": "New Password",
   "notifications": {
@@ -483,6 +485,7 @@
   "reset": "Reset",
   "reset-password": "Reset Password",
   "reviews": "Reviews",
+  "reviews-count": "{count} review | {count} reviews",
   "save": "Save",
   "saved-successfully": "Review saved successfully!",
   "search": {

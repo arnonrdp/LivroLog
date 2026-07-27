@@ -110,7 +110,8 @@ test.describe('Production - Book Operations', () => {
       await page.waitForSelector('[data-testid="remove-from-library-btn"]', { timeout: 15000 })
     }
 
-    // Change reading status to "Reading"
+    // Change reading status to "Reading" (lives in the reading tab)
+    await page.locator('[data-testid="tab-reading"]').click()
     await page.locator('[data-testid="reading-status-select"]').click()
     await page.getByRole('option', { name: 'Reading', exact: true }).click()
 
@@ -147,7 +148,8 @@ test.describe('Production - Book Operations', () => {
       await page.waitForSelector('[data-testid="remove-from-library-btn"]', { timeout: 15000 })
     }
 
-    // Set read date
+    // Set read date (lives in the reading tab)
+    await page.locator('[data-testid="tab-reading"]').click()
     const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
     await page.locator('[data-testid="read-date-input"]').fill(today)
     await page.locator('[data-testid="read-date-input"]').blur()
@@ -181,7 +183,8 @@ test.describe('Production - Book Operations', () => {
       await page.waitForSelector('[data-testid="remove-from-library-btn"]', { timeout: 15000 })
     }
 
-    // Toggle private checkbox
+    // Toggle private checkbox (lives in the reading tab)
+    await page.locator('[data-testid="tab-reading"]').click()
     const privateCheckbox = page.locator('[data-testid="private-book-checkbox"]')
     await privateCheckbox.scrollIntoViewIfNeeded()
 
@@ -221,7 +224,8 @@ test.describe('Production - Book Operations', () => {
       await page.waitForSelector('[data-testid="remove-from-library-btn"]', { timeout: 15000 })
     }
 
-    // Verify review form is visible
+    // Verify review form is visible (lives in the reviews tab)
+    await page.locator('[data-testid="tab-reviews"]').click()
     await expect(page.locator('[data-testid="review-rating"]')).toBeVisible()
     await expect(page.locator('[data-testid="review-content-input"]')).toBeVisible()
     await expect(page.locator('[data-testid="submit-review-btn"]')).toBeVisible()

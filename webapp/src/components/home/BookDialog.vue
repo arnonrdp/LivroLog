@@ -1,185 +1,23 @@
 <template>
-  <q-dialog v-model="showDialog" persistent>
-    <q-card class="q-dialog-plugin" style="max-width: 100%; max-height: 90vh; width: 800px">
-      <q-card-section class="row items-center q-pb-sm">
-        <div>
-          <div class="text-h6">{{ book?.title }}</div>
-          <div v-if="book?.subtitle" class="text-subtitle2 text-grey-7">{{ book.subtitle }}</div>
-        </div>
-        <q-space />
-        <q-btn
-          v-if="shouldShowAmazonButton && preferredAmazonLink"
-          class="q-mr-sm"
-          :color="amazonButtonColor"
-          data-testid="amazon-btn"
-          dense
-          :disable="book?.asin_status === 'failed'"
-          flat
-          :href="preferredAmazonLink.url"
-          icon="shopping_cart"
-          :loading="isAmazonLoading"
-          round
-          target="_blank"
-          type="a"
-        >
-          <q-tooltip anchor="center left" self="center right">{{ amazonTooltipText }}</q-tooltip>
-        </q-btn>
-        <q-btn v-close-popup data-testid="close-dialog-btn" dense flat icon="close" round />
-      </q-card-section>
-
-      <q-separator />
-
-      <q-card-section class="row q-col-gutter-md q-py-md">
-        <div class="col-3 relative-position">
-          <div v-if="book?.thumbnail" class="cursor-pointer relative-position" @click="openReplaceDialog">
-            <img
-              :alt="`Cover of ${book?.title}`"
-              class="full-width"
-              :src="book.thumbnail"
-              style="max-height: 150px; object-fit: contain; border-radius: 4px"
-            />
-
-            <!-- Overlay hover with Liquid Glass effect -->
-            <div
-              v-if="!props.userIdentifier && isBookInLibrary"
-              class="absolute-full flex flex-center column overlay-hover"
-              style="border-radius: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none"
-            >
-              <!-- Glass background layer -->
-              <div class="glass-background" style="pointer-events: none"></div>
-
-              <!-- Content on top -->
-              <q-icon color="white" name="swap_horiz" size="md" style="pointer-events: none; z-index: 1; position: relative" />
-              <div
-                class="text-white text-caption q-mt-xs"
-                style="pointer-events: none; z-index: 1; position: relative; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)"
-              >
-                {{ $t('change-cover') }}
-              </div>
-            </div>
-          </div>
-          <div v-else class="bg-grey-3 full-width text-center q-pa-md" style="height: 150px; border-radius: 4px">
-            <q-icon color="grey-5" name="book" size="3em" />
-          </div>
-        </div>
-        <div class="col-9">
-          <div class="text-subtitle1 text-grey-8 q-mb-xs">{{ book?.authors }}</div>
-          <div v-if="book?.formatted_description || book?.description" class="text-body2 text-grey-7">
-            <FormattedDescription
-              v-if="book.formatted_description"
-              :formatted-description="book.formatted_description"
-              :show-full-description="showFullDescription"
-            />
-            <span v-else>
-              <span v-if="!showFullDescription && book.description && book.description.length > 350">
-                {{ book.description.substring(0, 350) }}...
-              </span>
-              <span v-else>{{ book.description }}</span>
-            </span>
-            <q-btn
-              v-if="hasLongDescription"
-              class="q-ml-xs"
-              color="primary"
-              dense
-              flat
-              :label="showFullDescription ? $t('see-less') : $t('see-more')"
-              size="sm"
-              @click="showFullDescription = !showFullDescription"
-            />
-          </div>
-        </div>
-      </q-card-section>
-
-      <q-separator />
-
-      <q-card-section v-if="book?.isbn || book?.page_count || displayLanguage || book?.categories || book?.publisher">
-        <div class="text-subtitle1 q-mb-md row items-center">
-          <q-icon class="q-mr-sm" name="info" />
-          {{ $t('information') }}
-        </div>
-        <div class="row q-col-gutter-sm">
-          <div v-if="book?.isbn" class="col-6">
-            <div class="text-h6 text-grey-6">{{ $t('isbn') }}</div>
-            <div class="text-body1">{{ book.isbn }}</div>
-          </div>
-          <div v-if="book?.page_count" class="col-6">
-            <div class="text-h6 text-grey-6">{{ $t('pages') }}</div>
-            <div class="text-body1">{{ book.page_count }}</div>
-          </div>
-          <div v-if="displayLanguage" class="col-6">
-            <div class="text-h6 text-grey-6">{{ $t('language') }}</div>
-            <div class="text-body1">{{ displayLanguage }}</div>
-          </div>
-          <div v-if="book?.publisher" class="col-6">
-            <div class="text-h6 text-grey-6">{{ $t('publisher') }}</div>
-            <div class="text-body1">{{ book.publisher }}</div>
-          </div>
-        </div>
-      </q-card-section>
-
-      <q-separator v-if="book?.isbn || book?.page_count || displayLanguage || book?.categories || book?.publisher" />
-
-      <!-- Reading Details Section -->
-      <q-card-section v-if="(!props.userIdentifier && isBookInLibrary) || (props.userIdentifier && book?.pivot)">
-        <div class="text-subtitle1 q-mb-md row items-center">
-          <q-icon class="q-mr-sm" name="auto_stories" />
-          {{ $t('reading-details') }}
-        </div>
-
-        <!-- My shelf: Editable inputs -->
-        <div v-if="!props.userIdentifier" class="row q-col-gutter-md">
-          <div class="col-6">
-            <q-select
-              v-model="form.reading_status"
-              data-testid="reading-status-select"
-              dense
-              emit-value
-              :label="$t('reading-status')"
-              map-options
-              :options="readingStatusOptions"
-              outlined
-              @update:model-value="() => onUpdateBookData({ reading_status: form.reading_status })"
-            />
-          </div>
-          <div class="col-6">
-            <q-input
-              v-model="form.read_at"
-              data-testid="read-date-input"
-              dense
-              :label="$t('read-date')"
-              :loading="isSaving"
-              outlined
-              type="date"
-              @blur="() => onUpdateBookData({ read_at: form.read_at })"
-            />
-          </div>
-        </div>
-
-        <!-- Other user's shelf: Read-only display -->
-        <div v-else class="row q-col-gutter-md">
-          <div :class="book?.pivot?.read_at ? 'col-6' : 'col-12'">
-            <div class="text-h6 text-grey-6">{{ $t('reading-status') }}</div>
-            <div class="text-body1">
-              {{ book?.pivot?.reading_status ? getReadingStatusLabel(book.pivot.reading_status) : '-' }}
-            </div>
-          </div>
-          <div v-if="book?.pivot?.read_at" class="col-6">
-            <div class="text-h6 text-grey-6">{{ $t('read-date') }}</div>
-            <div class="text-body1">
-              {{ new Date(book.pivot.read_at).toLocaleDateString() }}
-            </div>
-          </div>
-        </div>
-      </q-card-section>
-
-      <q-separator v-if="(!props.userIdentifier && isBookInLibrary) || (props.userIdentifier && book?.pivot)" />
-
-      <!-- Tags Section -->
+  <BookDetailsPanel
+    v-model="showDialog"
+    :amazon-link="preferredAmazonLink?.url"
+    :book="book || undefined"
+    :is-book-in-library="isBookInLibrary"
+    :is-own-shelf="!props.userIdentifier"
+    :library-loading="libraryLoading"
+    :reviews="bookReviews"
+    @add="addToLibrary"
+    @remove="removeFromLibrary"
+    @replace-cover="openReplaceDialog"
+    @update-pivot="onUpdateBookData"
+  >
+    <template #tags>
       <BookTagsSection v-if="book?.id" :book-id="book.id" :is-book-in-library="isBookInLibrary" :user-identifier="props.userIdentifier" />
+    </template>
 
-      <q-separator v-if="!props.userIdentifier && isBookInLibrary && book?.id" />
-
-      <q-card-section>
+    <template #reviews>
+      <div>
         <div class="text-subtitle1 q-mb-md row items-center">
           <q-icon class="q-mr-sm" name="rate_review" />
           {{ $t('existing-reviews') }}
@@ -255,18 +93,14 @@
             </q-card-section>
           </q-card>
         </div>
-      </q-card-section>
+      </div>
 
-      <q-separator />
+      <div v-if="!isBookInLibrary && !userReview" class="text-center q-py-md text-grey-6">
+        <q-icon class="q-mb-sm" name="info" size="2em" />
+        <div class="text-body2">{{ $t('add-to-library-to-review', 'Adicione este livro à sua estante para poder avaliá-lo') }}</div>
+      </div>
 
-      <q-card-section v-if="!isBookInLibrary && !userReview">
-        <div class="text-center q-py-md text-grey-6">
-          <q-icon class="q-mb-sm" name="info" size="2em" />
-          <div class="text-body2">{{ $t('add-to-library-to-review', 'Adicione este livro à sua estante para poder avaliá-lo') }}</div>
-        </div>
-      </q-card-section>
-
-      <q-card-section v-if="canAddReview">
+      <div v-if="canAddReview" class="q-mt-md">
         <div class="text-subtitle1 q-mb-md row items-center">
           <q-icon class="q-mr-sm" name="add_comment" />
           {{ $t('add-review') }}
@@ -326,52 +160,9 @@
           type="textarea"
         />
         <q-btn v-if="canAddReview" color="primary" data-testid="submit-review-btn" :label="$t('save')" :loading="loading" @click="handleSave" />
-      </q-card-section>
-
-      <q-separator />
-      <q-card-actions class="q-pa-md">
-        <div v-if="!props.userIdentifier" class="row items-center">
-          <q-checkbox
-            v-model="form.is_private"
-            data-testid="private-book-checkbox"
-            :label="$t('private-book')"
-            @update:model-value="
-              (newValue) => {
-                if (!isInitializing && showDialog && isBookInLibrary && !props.userIdentifier) {
-                  onUpdateBookData({ is_private: newValue })
-                }
-              }
-            "
-          />
-          <q-icon class="q-ml-xs cursor-pointer" name="help_outline" size="sm">
-            <q-tooltip>{{ $t('private-book-tooltip') }}</q-tooltip>
-          </q-icon>
-        </div>
-        <q-space />
-        <q-btn v-close-popup flat :label="$t('close')" />
-
-        <q-btn
-          v-if="!isBookInLibrary"
-          color="primary"
-          data-testid="add-to-library-btn"
-          :disable="libraryLoading"
-          :label="$t('add-to-library')"
-          :loading="libraryLoading"
-          @click="addToLibrary"
-        />
-        <q-btn
-          v-else
-          color="negative"
-          data-testid="remove-from-library-btn"
-          :disable="libraryLoading"
-          :label="$t('remove-from-library')"
-          :loading="libraryLoading"
-          outline
-          @click="removeFromLibrary"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+    </template>
+  </BookDetailsPanel>
 
   <q-dialog v-model="showDeleteDialog" persistent>
     <q-card style="min-width: 350px">
@@ -394,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-import FormattedDescription from '@/components/common/FormattedDescription.vue'
+import BookDetailsPanel from '@/components/home/BookDetailsPanel.vue'
 import BookTagsSection from '@/components/home/BookTagsSection.vue'
 import ChangeCoverDialog from '@/components/home/ChangeCoverDialog.vue'
 import type { Book, CreateReviewRequest, ReadingStatus, Review, UpdateReviewRequest } from '@/models'
@@ -438,7 +229,6 @@ const pollingStartTime = ref<Date | null>(null)
 const reviewToDelete = ref<string | null>(null)
 const showDeleteDialog = ref(false)
 const showReplaceDialog = ref(false)
-const showFullDescription = ref(false)
 const showSpoiler = ref<Record<string, boolean>>({})
 
 const book = computed(() => {
@@ -521,62 +311,6 @@ const userReview = computed(() => {
   return reviews.find((review) => review.user_id === userStore.me?.id)
 })
 
-const shouldShowAmazonButton = computed(() => {
-  if (!book.value) return false
-
-  // Show button if book has Amazon data or is being processed
-  return !!(book.value.amazon_asin || book.value.amazon_buy_link || book.value.asin_status)
-})
-
-const amazonButtonColor = computed(() => {
-  if (!book.value) return 'grey-6'
-
-  // Orange if we have Amazon data available
-  if (book.value.amazon_asin || book.value.amazon_buy_link) return 'orange'
-
-  // Grey variations for processing states
-  if (book.value.asin_status === 'processing') return 'grey-6'
-  if (book.value.asin_status === 'pending') return 'grey-5'
-  if (book.value.asin_status === 'failed') return 'grey-4'
-
-  return 'grey-6'
-})
-
-const amazonTooltipText = computed(() => {
-  if (!book.value) return t('buy-on-amazon')
-
-  // Priority: If we have data, show appropriate message regardless of status
-  if (book.value.amazon_links?.length || book.value.amazon_buy_link) {
-    // Check if we have actual ASIN (direct product link) or just search link
-    if (book.value.amazon_asin) {
-      return t('buy-on-amazon')
-    }
-    return t('search-on-amazon')
-  }
-
-  // If no data yet, check status
-  if (book.value.asin_status === 'processing' || book.value.asin_status === 'pending') {
-    return t('searching-amazon-link')
-  }
-  if (book.value.asin_status === 'failed') {
-    return t('amazon-link-not-found')
-  }
-
-  return t('buy-on-amazon')
-})
-
-const isAmazonLoading = computed(() => {
-  if (!book.value) return false
-
-  // Don't show loading if we already have data
-  if (book.value.amazon_links?.length || book.value.amazon_buy_link || book.value.amazon_asin) {
-    return false
-  }
-
-  // Only show loading if processing and no data yet
-  return book.value.asin_status === 'processing' || book.value.asin_status === 'pending'
-})
-
 const canAddReview = computed(() => !userReview.value && isBookInLibrary.value && getBookId() !== null && !props.userIdentifier)
 
 const visibilityOptions = computed(() => [
@@ -584,44 +318,6 @@ const visibilityOptions = computed(() => [
   { label: t('friends'), value: 'friends' },
   { label: t('public'), value: 'public' }
 ])
-
-const readingStatusOptions = computed(() => [
-  { label: t('want-to-read'), value: 'want_to_read' },
-  { label: t('on-hold'), value: 'on_hold' },
-  { label: t('reading'), value: 'reading' },
-  { label: t('read'), value: 'read' },
-  { label: t('re-reading'), value: 're_reading' },
-  { label: t('abandoned'), value: 'abandoned' }
-])
-
-const displayLanguage = computed(() => {
-  const language = book.value?.language
-  if (!language) return null
-
-  const languageKey = `language-${language.toLowerCase().replace('-', '_')}`
-  const translated = t(languageKey)
-
-  return translated !== languageKey ? translated : language
-})
-
-const hasLongDescription = computed(() => {
-  if (!book.value) return false
-
-  if (book.value.formatted_description) {
-    // Calculate total length of formatted description
-    let totalLength = 0
-    for (const block of book.value.formatted_description) {
-      if (block.type === 'paragraph' && block.text) {
-        totalLength += block.text.length
-      } else if (block.type === 'list' && block.items) {
-        totalLength += block.items.join(' ').length
-      }
-    }
-    return totalLength > 350
-  }
-
-  return book.value.description && book.value.description.length > 350
-})
 
 onMounted(() => {})
 
@@ -685,7 +381,6 @@ watch(
       resetReviewForm()
       showDeleteDialog.value = false
       reviewToDelete.value = null
-      showFullDescription.value = false
       initialPrivacy.value = null
     }
   },
@@ -770,8 +465,11 @@ function startPolling() {
     await bookStore
       .getBook(book.value!.id, { with: ['details'] })
       .then((updatedBook) => {
-        bookStore.$patch({ _book: updatedBook })
-        userBookStore.$patch({ _book: updatedBook })
+        // The poll fetches without pivot/reviews; merge over the current book so
+        // the Amazon fields refresh without wiping the user's reading data
+        const merged = { ...book.value, ...updatedBook }
+        bookStore.$patch({ _book: merged })
+        userBookStore.$patch({ _book: merged })
 
         if (updatedBook.asin_status === 'completed' || updatedBook.asin_status === 'failed') {
           stopPolling()
@@ -824,18 +522,6 @@ function updateLibraryStatus() {
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString()
-}
-
-function getReadingStatusLabel(status: string) {
-  const statusMap: Record<string, string> = {
-    want_to_read: t('want-to-read'),
-    reading: t('reading'),
-    read: t('read'),
-    abandoned: t('abandoned'),
-    on_hold: t('on-hold'),
-    re_reading: t('re-reading')
-  }
-  return statusMap[status] || status
 }
 
 function resetReviewForm() {
@@ -1127,23 +813,3 @@ function onBookReplaced(newBook: Book) {
   // No need to reload - the new book already comes with reviews and pivot data from the API
 }
 </script>
-
-<style scoped lang="sass">
-.cursor-pointer:hover .overlay-hover
-  opacity: 1 !important
-
-.glass-background
-  position: absolute
-  inset: 0
-  border-radius: inherit
-  pointer-events: none
-  z-index: 0
-  backdrop-filter: blur(8px) saturate(150%) brightness(1.1)
-  -webkit-backdrop-filter: blur(8px) saturate(150%) brightness(1.1)
-  background: rgba(255, 255, 255, 0.3)
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.1)
-
-@supports not (backdrop-filter: blur(8px))
-  .glass-background
-    background: rgba(255, 255, 255, 0.9)
-</style>
