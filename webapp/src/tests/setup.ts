@@ -34,7 +34,11 @@ vi.mock('@vue/devtools-kit', () => ({
       emit: vi.fn()
     }
   },
-  setupDevtoolsPlugin: vi.fn()
+  setupDevtoolsPlugin: vi.fn(),
+  // Re-exported by @vue/devtools-api v8, which pinia 4 imports unconditionally
+  setupDevToolsPlugin: vi.fn(),
+  onDevToolsClientConnected: vi.fn(),
+  onDevToolsConnected: vi.fn()
 }))
 
 // Mock Quasar

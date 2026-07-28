@@ -64,10 +64,11 @@ export default defineConfig(({ mode }) => {
       // Copy OG wood textures to stable paths (avoid hashed filenames)
       // Use the new smaller shelf textures under src/assets/textures
       viteStaticCopy({
+        // vite-plugin-static-copy v4 always preserves the source dir structure; stripBase flattens it back
         targets: [
-          { src: 'src/assets/textures/shelfleft.jpg', dest: 'og/textures' },
-          { src: 'src/assets/textures/shelfright.jpg', dest: 'og/textures' },
-          { src: 'src/assets/textures/shelfcenter.jpg', dest: 'og/textures' }
+          { src: 'src/assets/textures/shelfleft.jpg', dest: 'og/textures', rename: { stripBase: true } },
+          { src: 'src/assets/textures/shelfright.jpg', dest: 'og/textures', rename: { stripBase: true } },
+          { src: 'src/assets/textures/shelfcenter.jpg', dest: 'og/textures', rename: { stripBase: true } }
         ]
       }),
 

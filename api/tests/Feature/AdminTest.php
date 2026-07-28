@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Activity;
 use App\Models\Book;
+use App\Models\Review;
 use App\Models\User;
+use App\Services\AmazonScraperService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -304,7 +307,7 @@ class AdminTest extends TestCase
 
         // Create activities for users with distinct timestamps
         // Using new instance + save to preserve custom created_at
-        $activity1 = new \App\Models\Activity;
+        $activity1 = new Activity;
         $activity1->user_id = $this->adminUser->id;
         $activity1->type = 'book_added';
         $activity1->subject_type = 'App\\Models\\Book';
@@ -312,7 +315,7 @@ class AdminTest extends TestCase
         $activity1->created_at = now()->subDays(5);
         $activity1->save();
 
-        $activity2 = new \App\Models\Activity;
+        $activity2 = new Activity;
         $activity2->user_id = $this->regularUser->id;
         $activity2->type = 'book_read';
         $activity2->subject_type = 'App\\Models\\Book';
@@ -342,7 +345,7 @@ class AdminTest extends TestCase
 
         $book = Book::factory()->create();
 
-        $activity = new \App\Models\Activity;
+        $activity = new Activity;
         $activity->user_id = $this->regularUser->id;
         $activity->type = 'book_added';
         $activity->subject_type = 'App\\Models\\Book';
@@ -1016,7 +1019,7 @@ class AdminTest extends TestCase
 
         $followedUser = User::factory()->create();
 
-        $activity = new \App\Models\Activity;
+        $activity = new Activity;
         $activity->user_id = $this->regularUser->id;
         $activity->type = 'user_followed';
         $activity->subject_type = 'App\\Models\\User';
@@ -1048,7 +1051,7 @@ class AdminTest extends TestCase
         ]);
 
         // Create a review
-        $review = \App\Models\Review::create([
+        $review = Review::create([
             'user_id' => $this->regularUser->id,
             'book_id' => $book->id,
             'rating' => 5,
@@ -1056,7 +1059,7 @@ class AdminTest extends TestCase
         ]);
 
         // Ensure review_written activity is the most recent
-        $activity = new \App\Models\Activity;
+        $activity = new Activity;
         $activity->user_id = $this->regularUser->id;
         $activity->type = 'review_written';
         $activity->subject_type = 'App\\Models\\Review';
@@ -1089,7 +1092,7 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
@@ -1099,7 +1102,7 @@ class AdminTest extends TestCase
                 'page_count' => 300,
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
             'amazon_url' => 'https://www.amazon.com/dp/B0TESTASIN1',
@@ -1144,7 +1147,7 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
@@ -1152,7 +1155,7 @@ class AdminTest extends TestCase
                 'thumbnail' => 'https://example.com/image.jpg',
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
             'amazon_url' => 'https://a.co/d/abc1234',
@@ -1181,7 +1184,7 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return the same ISBN
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
@@ -1189,7 +1192,7 @@ class AdminTest extends TestCase
                 'isbn' => '9781234567890', // Same ISBN as existing book
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$newBook->id}/enrich-amazon", [
             'amazon_url' => 'https://www.amazon.com/dp/B0NEWASIN01',
@@ -1221,14 +1224,14 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return the same ASIN
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
                 'amazon_asin' => 'B0EXISTASIN', // Same ASIN as existing book
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$newBook->id}/enrich-amazon", [
             'amazon_url' => 'https://www.amazon.com/dp/B0EXISTASIN',
@@ -1255,7 +1258,7 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return the same ISBN
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
@@ -1263,7 +1266,7 @@ class AdminTest extends TestCase
                 'isbn' => '9781234567890', // Same ISBN as the book itself
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
             'amazon_url' => 'https://www.amazon.com/dp/B0NEWASINNW',
@@ -1301,7 +1304,7 @@ class AdminTest extends TestCase
 
         // Mock the AmazonScraperService to return a much longer description
         $longDescription = str_repeat('This is a much longer description. ', 20); // ~700 chars
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
@@ -1309,7 +1312,7 @@ class AdminTest extends TestCase
                 'description' => $longDescription,
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
             'amazon_url' => 'https://www.amazon.com/dp/B0TESTDESC1',
@@ -1340,7 +1343,7 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return a shorter description
-        $mockScraper = \Mockery::mock(\App\Services\AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class);
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
@@ -1348,7 +1351,7 @@ class AdminTest extends TestCase
                 'description' => 'Short Amazon description.', // Much shorter
             ]);
 
-        $this->app->instance(\App\Services\AmazonScraperService::class, $mockScraper);
+        $this->app->instance(AmazonScraperService::class, $mockScraper);
 
         $response = $this->postJson("/admin/books/{$book->id}/enrich-amazon", [
             'amazon_url' => 'https://www.amazon.com/dp/B0TESTDESC2',

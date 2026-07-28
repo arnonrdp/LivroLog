@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Book;
+use App\Models\User;
 use App\Services\AmazonLinkEnrichmentService;
 use App\Services\HybridBookSearchService;
+use App\Services\Providers\AmazonBooksProvider;
 use App\Services\UnifiedBookEnrichmentService;
 use App\Transformers\BookTransformer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -263,7 +266,7 @@ class BookController extends Controller
 
                 // Accept full date formats
                 try {
-                    \Carbon\Carbon::parse($value);
+                    Carbon::parse($value);
 
                     return;
                 } catch (\Exception $e) {
@@ -839,7 +842,7 @@ class BookController extends Controller
 
         if ($targetUserId) {
             // Getting pivot for specific user
-            $targetUser = \App\Models\User::find($targetUserId);
+            $targetUser = User::find($targetUserId);
             if (! $targetUser) {
                 return null;
             }
@@ -897,20 +900,20 @@ class BookController extends Controller
     /**
      * Parse published date from various formats
      */
-    private function parsePublishedDate(string $dateString): ?\Carbon\Carbon
+    private function parsePublishedDate(string $dateString): ?Carbon
     {
         try {
             $result = null;
 
             if (preg_match('/^\d{4}$/', $dateString)) {
                 // Year only (4 digits)
-                $result = \Carbon\Carbon::createFromFormat('Y', $dateString)->startOfYear();
+                $result = Carbon::createFromFormat('Y', $dateString)->startOfYear();
             } elseif (preg_match('/^\d{4}-\d{2}$/', $dateString)) {
                 // Year and month (YYYY-MM)
-                $result = \Carbon\Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
+                $result = Carbon::createFromFormat('Y-m', $dateString)->startOfMonth();
             } else {
                 // Full date
-                $result = \Carbon\Carbon::parse($dateString);
+                $result = Carbon::parse($dateString);
             }
 
             return $result;
@@ -1098,7 +1101,7 @@ class BookController extends Controller
      *
      *     @OA\Response(
      *         response=200,
-     *         description="Book editions found",
+     *         description="Book editions found (empty list when the book has a single edition)",
      *
      *         @OA\JsonContent(
      *
@@ -1110,8 +1113,7 @@ class BookController extends Controller
      *         )
      *     ),
      *
-     *     @OA\Response(response=404, description="Book not found"),
-     *     @OA\Response(response=200, description="No editions found (single edition only)")
+     *     @OA\Response(response=404, description="Book not found")
      * )
      */
     public function getEditions(Book $book): JsonResponse
@@ -1121,7 +1123,7 @@ class BookController extends Controller
 
         // Try Amazon PA-API GetVariations first (if book has ASIN)
         if ($book->amazon_asin) {
-            $amazonProvider = app(\App\Services\Providers\AmazonBooksProvider::class);
+            $amazonProvider = app(AmazonBooksProvider::class);
 
             if ($amazonProvider->isEnabled()) {
                 $result = $amazonProvider->getVariations($book->amazon_asin);

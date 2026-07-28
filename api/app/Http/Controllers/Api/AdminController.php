@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Traits\HandlesPagination;
+use App\Models\Activity;
 use App\Models\Book;
+use App\Models\Review;
 use App\Models\User;
 use App\Services\AmazonEnrichmentService;
 use App\Services\AmazonScraperService;
@@ -26,11 +28,11 @@ class AdminController extends Controller
             ->withCount(['books', 'followers', 'following'])
             ->with(['lastActivity.subject' => function ($morphTo) {
                 $morphTo->morphWith([
-                    \App\Models\Review::class => ['book'],
+                    Review::class => ['book'],
                 ]);
             }])
             ->addSelect([
-                'last_activity_at' => \App\Models\Activity::select('created_at')
+                'last_activity_at' => Activity::select('created_at')
                     ->whereColumn('user_id', 'users.id')
                     ->orderByDesc('created_at')
                     ->limit(1),

@@ -1,5 +1,6 @@
 {
   "abandoned": "Terk edilmiş",
+  "about": "Hakkında",
   "account": "Hesap",
   "account-created": "Hesabiniz Başariyla Oluşturuldu!",
   "add": "Kitap ekle",
@@ -382,6 +383,7 @@
     "sep": "Eylül"
   },
   "mutual-follow": "Birbirinizi takip ediyorsunuz",
+  "my-reading": "Okuma Bilgilerim",
   "name": "İsim",
   "new-password": "Yeni Şifre",
   "no-followers": "Henüz takipçi yok",
@@ -460,6 +462,7 @@
   "reset": "Sifirla",
   "reset-password": "Parolayı sıfırla",
   "reviews": "İncelemeler",
+  "reviews-count": "{count} inceleme",
   "save": "Kaydetmek",
   "saved-successfully": "İnceleme başarıyla kaydedildi!",
   "search": {

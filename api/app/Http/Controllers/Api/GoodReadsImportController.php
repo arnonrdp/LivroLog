@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Services\Providers\AmazonBooksProvider;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -92,7 +93,7 @@ class GoodReadsImportController extends Controller
                 $dateRead = $row['Date Read'] ?? null;
                 $request->user()->books()->attach($book->id, [
                     'added_at' => now(),
-                    'read_at' => $dateRead ? \Carbon\Carbon::parse($dateRead) : null,
+                    'read_at' => $dateRead ? Carbon::parse($dateRead) : null,
                     'reading_status' => $dateRead ? 'read' : 'want_to_read',
                 ]);
 

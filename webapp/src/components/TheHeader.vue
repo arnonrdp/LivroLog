@@ -4,11 +4,18 @@
       <router-link to="/"><img alt="Logotipo" src="/logo.svg" /></router-link>
     </q-toolbar-title>
 
+    <!-- Mobile: notifications live in the header (top right), not in the bottom navbar.
+         v-if (not CSS) so only one NotificationBell instance subscribes to Echo at a time.
+         Wrapper div because NotificationBell is multi-root and drops scoped classes. -->
+    <div v-if="authStore.isAuthenticated && $q.screen.lt.sm" class="notification-bell-mobile">
+      <NotificationBell />
+    </div>
+
     <q-space />
 
     <!-- Authenticated User Navigation -->
     <q-tabs v-if="authStore.isAuthenticated" active-color="primary" class="nav-tabs" indicator-color="primary">
-      <LiquidGlassNav />
+      <LiquidGlassNav :count="navNames.length" :index="activeNavIndex" :style="{ '--nav-count': navNames.length, '--nav-index': activeNavIndex }" />
       <q-route-tab
         v-for="t in tabsBeforeSettings"
         :key="t.name"
@@ -17,13 +24,22 @@
         :exact="t.name === 'home'"
         :icon="t.icon"
         :name="t.name"
+        :ripple="!$q.screen.lt.sm"
         :to="t.name === 'people' ? peopleTo : t.name === 'admin' ? adminTo : t.to"
         @click="createRipple"
       />
-      <!-- Notification Bell -->
-      <NotificationBell class="notification-bell" />
+      <!-- Notification Bell (desktop only; on mobile it sits in the header) -->
+      <NotificationBell v-if="!$q.screen.lt.sm" class="notification-bell" />
       <!-- Settings Tab -->
-      <q-route-tab active-class="tab--active text-primary" class="tab-item" icon="settings" name="settings" :to="settingsTo" @click="createRipple" />
+      <q-route-tab
+        active-class="tab--active text-primary"
+        class="tab-item"
+        icon="settings"
+        name="settings"
+        :ripple="!$q.screen.lt.sm"
+        :to="settingsTo"
+        @click="createRipple"
+      />
       <!-- Admin Tab (last) -->
       <q-route-tab
         v-if="isAdmin"
@@ -31,6 +47,7 @@
         class="tab-item"
         icon="admin_panel_settings"
         name="admin"
+        :ripple="!$q.screen.lt.sm"
         :to="adminTo"
         @click="createRipple"
       />
@@ -58,9 +75,11 @@
 import LiquidGlassNav from '@/components/navigation/LiquidGlassNav.vue'
 import NotificationBell from '@/components/NotificationBell.vue'
 import { useAuthStore, useUserStore } from '@/stores'
+import { useQuasar } from 'quasar'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
+const $q = useQuasar()
 const route = useRoute()
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -84,6 +103,15 @@ const tabs = computed(() => {
 
 const tabsBeforeSettings = computed(() => tabs.value.filter((t) => t.name !== 'settings' && t.name !== 'admin'))
 
+// Mirrors the render order of the mobile tab strip so the glass pill can slide to the active slot
+const navNames = computed(() => [...tabsBeforeSettings.value.map((t) => t.name), 'settings', ...(isAdmin.value ? ['admin'] : [])])
+
+const activeNavIndex = computed(() => {
+  const current = route.name === 'person' ? 'people' : String(route.name || '')
+  const found = navNames.value.indexOf(current)
+  return found === -1 ? 0 : found
+})
+
 const peopleTo = computed(() => {
   const path = route.path || '/'
   if (path.startsWith('/people')) return '/people'
@@ -105,6 +133,9 @@ function openRegister() {
 }
 
 const createRipple = (event: globalThis.Event) => {
+  // Mobile mimics iOS Liquid Glass: no ripple, just the round press blob (CSS) and the sliding pill
+  if ($q.screen.lt.sm) return
+
   const mouseEvent = event as globalThis.MouseEvent
   const button = event.currentTarget as globalThis.HTMLElement
   const existingRipple = button.querySelector('.ripple')
@@ -138,33 +169,42 @@ const createRipple = (event: globalThis.Event) => {
   @media screen and (max-width: $breakpoint-xs-max)
     justify-content: center
     padding: 0.75rem 0
-    position: relative
+    // No `position: relative` here: it would override Quasar's .fixed-top and put the
+    // header back in the page flow, doubling the top offset (QLayout already pads for it).
 
 .logo-container
   align-items: center
   display: flex
   flex-shrink: 0
 
+// Border and box-shadow now live on the glass sheet inside LiquidGlassNav,
+// so the tab strip itself stays transparent.
 .nav-tabs
   @media screen and (max-width: $breakpoint-xs-max)
     background: transparent
-    border: 1px solid rgba(255, 255, 255, 0.3)
-    border-radius: 28px
+    border: none
+    border-radius: 30px
     bottom: 0
-    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)
+    box-shadow: none
     gap: 0
-    height: 56px
+    height: 60px
     justify-content: space-evenly
     left: 12px
     margin-bottom: max(env(safe-area-inset-bottom, 12px), 16px)
+    overflow: visible
     padding: 0
     position: fixed
     right: 12px
     width: calc(100% - 24px)
     z-index: 1000
-    overflow: hidden
-    @supports not (backdrop-filter: blur(4px))
-      background: rgba(255, 255, 255, 0.95)
+    // Equal-width slots so the glass pill's `100% / count` math matches the real
+    // item centers, and nothing overflows into Quasar's scroll arrows.
+    :deep(.q-tab)
+      flex: 1 1 0
+      min-width: 0
+      padding: 0
+    :deep(.q-tabs__arrow)
+      display: none !important
 
 .tab-item
   position: relative
@@ -172,13 +212,34 @@ const createRipple = (event: globalThis.Event) => {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out
   will-change: transform
   @media screen and (max-width: $breakpoint-xs-max)
+    // Icons sit on a light glass sheet: dark ink with a soft light halo keeps them
+    // legible over both pale and dark book covers.
+    color: rgba(0, 0, 0, 0.72)
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55)
+    // iOS Liquid Glass press feedback: a soft round blob blooms under the finger
+    // (no rectangular Material ripple — QTab's ripple is disabled on xs).
+    &::before
+      background: rgba(255, 255, 255, 0.45)
+      border-radius: 50%
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 6px rgba(0, 0, 0, 0.08)
+      content: ''
+      height: 44px
+      left: 50%
+      opacity: 0
+      pointer-events: none
+      position: absolute
+      top: 50%
+      transform: translate(-50%, -50%) scale(0.4)
+      transition: opacity 0.15s ease-out, transform 0.22s cubic-bezier(0.34, 1.4, 0.5, 1)
+      width: 44px
+    &:active::before
+      opacity: 1
+      transform: translate(-50%, -50%) scale(1)
     &:active
-      transform: scale(1.08)
-      opacity: 0.9
-    :deep(.q-icon)
-      transition: filter 0.2s ease-out
-    &:active :deep(.q-icon)
-      filter: brightness(1.15) drop-shadow(0 0 4px rgba(255, 255, 255, 0.6))
+      transform: scale(1.06)
+    :deep(.q-tab__content)
+      position: relative
+      z-index: 1
     :deep(.q-tab__indicator)
       display: none !important
     :deep(.q-focus-helper)
@@ -193,21 +254,8 @@ img[alt='Logotipo']
   @media screen and (max-width: 320px)
     width: 15rem !important
 
-.tab--active
-  @media screen and (max-width: $breakpoint-xs-max)
-    &::before
-      content: ''
-      position: absolute
-      top: 50%
-      left: 50%
-      transform: translate(-50%, -50%)
-      width: 56px
-      height: 56px
-      background: rgba(0, 0, 0, 0.25)
-      border-radius: 50%
-      z-index: 0
-      pointer-events: none
-
+// The sliding pill in LiquidGlassNav is the only active affordance on mobile,
+// so nothing reflows on tap (the old ::before black circle is gone).
 .tab--active .q-tab__indicator
   display: none !important
   opacity: 0 !important
@@ -216,6 +264,8 @@ img[alt='Logotipo']
   color: var(--q-primary) !important
   position: relative
   z-index: 1
+  @media screen and (max-width: $breakpoint-xs-max)
+    color: #12564f !important
 
 // Apply CSS filter to colorize SVG image icons when tab is active
 .tab--active :deep(.q-icon img)
@@ -281,4 +331,11 @@ img[alt='Logotipo']
   align-items: center
   display: flex
   margin: 0 4px
+
+// Mobile-only instance: pinned to the header's right edge, logo stays centered
+.notification-bell-mobile
+  position: absolute
+  right: 8px
+  top: 50%
+  transform: translateY(-50%)
 </style>

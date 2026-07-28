@@ -10,10 +10,13 @@ use App\Models\User;
 use App\Services\AmazonEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
 use App\Services\AmazonScraperService;
+use App\Services\HybridBookSearchService;
 use App\Services\UnifiedBookEnrichmentService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class UserBookController extends Controller
@@ -333,7 +336,7 @@ class UserBookController extends Controller
 
         if ($request->has('read_at')) {
             $readAt = $request->input('read_at');
-            $updateData['read_at'] = $readAt ? \Carbon\Carbon::parse($readAt)->format('Y-m-d') : null;
+            $updateData['read_at'] = $readAt ? Carbon::parse($readAt)->format('Y-m-d') : null;
             $responseData['read_at'] = $updateData['read_at'];
         }
 
@@ -798,7 +801,7 @@ class UserBookController extends Controller
     {
         try {
             // Use the HybridBookSearchService to search for the book
-            $searchService = app(\App\Services\HybridBookSearchService::class);
+            $searchService = app(HybridBookSearchService::class);
             $results = $searchService->search('isbn:'.$isbn, ['per_page' => 1]);
 
             if (! empty($results['data'])) {
@@ -1192,7 +1195,7 @@ class UserBookController extends Controller
     private function resolveAsinFromShortUrl(string $url, AmazonScraperService $scraper): ?string
     {
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(10)
+            $response = Http::timeout(10)
                 ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
                 ->get($url);
 

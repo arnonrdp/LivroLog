@@ -79,6 +79,7 @@
     "password-reset-sent": "Email de redefinição de senha enviado com sucesso",
     "error-sending-reset": "Erro ao enviar email de redefinição"
   },
+  "about": "Sobre",
   "account-created": "Sua conta foi criada com sucesso!",
   "add": "Adicionar livro",
   "add-book": "Adicionar Livro",
@@ -381,6 +382,7 @@
     "sep": "Set"
   },
   "mutual-follow": "Vocês se seguem",
+  "my-reading": "Minha Leitura",
   "name": "Nome",
   "new-password": "Nova Senha",
   "notifications": {
@@ -483,6 +485,7 @@
   "reset": "Limpar",
   "reset-password": "Redefinir senha",
   "reviews": "Reviews",
+  "reviews-count": "{count} avaliação | {count} avaliações",
   "save": "Salvar",
   "saved-successfully": "Review salvo com sucesso!",
   "search": {

@@ -35,6 +35,364 @@
         }
     ],
     "paths": {
+        "/activities/{activity}/like": {
+            "post": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Like an activity",
+                "description": "Like an activity.",
+                "operationId": "1629dfacdb32dc2b6c4c72db542d97dd",
+                "parameters": [
+                    {
+                        "name": "activity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Activity liked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Activity liked"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "liked": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Cannot interact with this activity"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Unlike an activity",
+                "description": "Unlike an activity.",
+                "operationId": "92d0d886d073526d8ec240d702a7d727",
+                "parameters": [
+                    {
+                        "name": "activity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Activity unliked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Activity unliked"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "liked": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "likes_count": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/activities/{activity}/likes": {
+            "get": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Get users who liked an activity",
+                "description": "Get users who liked an activity.",
+                "operationId": "8b73fbb9122fee623ee38a933b3fcca1",
+                "parameters": [
+                    {
+                        "name": "activity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of users who liked the activity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "users": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "username": {
+                                                        "type": "string"
+                                                    },
+                                                    "avatar": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 10
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/activities/{activity}/comments": {
+            "get": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Get comments for an activity",
+                "description": "Get comments for an activity.",
+                "operationId": "14bef900145f755cf86d65c58471d6a8",
+                "parameters": [
+                    {
+                        "name": "activity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A-3D6Y-9IO8"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of comments"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Add a comment to an activity",
+                "description": "Add a comment to an activity.",
+                "operationId": "83c4d7fc089089500a3898cbfbe64774",
+                "parameters": [
+                    {
+                        "name": "activity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Great book choice!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Comment added successfully"
+                    },
+                    "403": {
+                        "description": "Cannot interact with this activity"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/comments/{comment}": {
+            "put": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Update a comment",
+                "description": "Update a comment.",
+                "operationId": "80ec077ad5419006184e3f807c70206c",
+                "parameters": [
+                    {
+                        "name": "comment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "C-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Updated comment!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comment updated successfully"
+                    },
+                    "403": {
+                        "description": "Cannot edit this comment"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Delete a comment",
+                "description": "Delete a comment.",
+                "operationId": "5c8cda6114aabdc07f4edf95860dc18f",
+                "parameters": [
+                    {
+                        "name": "comment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "C-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comment deleted successfully"
+                    },
+                    "403": {
+                        "description": "Cannot delete this comment"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/auth/register": {
             "post": {
                 "tags": [
@@ -1116,7 +1474,7 @@
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Search term for external APIs (Google Books, Open Library)",
+                        "description": "Search term for Amazon Books",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1130,12 +1488,12 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "recent",
                             "enum": [
                                 "recent",
                                 "rating",
                                 "popular"
-                            ],
-                            "example": "recent"
+                            ]
                         }
                     },
                     {
@@ -1710,6 +2068,228 @@
                     },
                     "422": {
                         "description": "Enrichment failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/books/{book}/stats": {
+            "get": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Get public statistics for a book",
+                "description": "Returns aggregated statistics for a book including reader count, average rating, and rating distribution. This is a public endpoint.",
+                "operationId": "getBookStats",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_readers": {
+                                            "description": "Number of users who have this book in their library",
+                                            "type": "integer",
+                                            "example": 42
+                                        },
+                                        "average_rating": {
+                                            "description": "Average rating from public reviews",
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 4.2
+                                        },
+                                        "review_count": {
+                                            "description": "Number of public reviews",
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "rating_distribution": {
+                                            "properties": {
+                                                "1": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "2": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "3": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "4": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "5": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found"
+                    }
+                }
+            }
+        },
+        "/books/{book}/amazon-links": {
+            "get": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Get Amazon purchase links for all regions",
+                "description": "Returns Amazon purchase links for the book across different regions (BR, US, UK, CA) with proper affiliate tags",
+                "operationId": "getBookAmazonLinks",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Amazon links for all regions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "region": {
+                                                        "type": "string",
+                                                        "example": "BR"
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "Amazon Brazil"
+                                                    },
+                                                    "url": {
+                                                        "type": "string",
+                                                        "example": "https://www.amazon.com.br/dp/123456789?tag=livrolog01-20"
+                                                    },
+                                                    "domain": {
+                                                        "type": "string",
+                                                        "example": "amazon.com.br"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found"
+                    },
+                    "503": {
+                        "description": "Amazon integration disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/books/{book}/editions": {
+            "get": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Get different editions of a book",
+                "description": "Returns different editions/formats of the same book (Kindle, Hardcover, Paperback, etc.) using Amazon PA-API GetVariations or local database fallback",
+                "operationId": "getBookEditions",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book editions found (empty list when the book has a single edition)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "source": {
+                                            "description": "Source of editions: amazon_variations or local_database",
+                                            "type": "string",
+                                            "example": "amazon_variations"
+                                        },
+                                        "total_found": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "current_book_id": {
+                                            "type": "string",
+                                            "example": "B-1ABC-2DEF"
+                                        },
+                                        "editions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Book"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found"
                     }
                 },
                 "security": [
@@ -2533,6 +3113,738 @@
                 }
             }
         },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get notifications for authenticated user",
+                "description": "Get notifications for authenticated user.",
+                "operationId": "b1274a2aaae8a4295a7e1925e8d8090f",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of notifications",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Notification"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "unread_count": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications/unread-count": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get unread notification count",
+                "description": "Get unread notification count.",
+                "operationId": "85697ee523a5dace428185c95efb9f2f",
+                "responses": {
+                    "200": {
+                        "description": "Unread count",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{notification}/read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark a notification as read",
+                "description": "Mark a notification as read.",
+                "operationId": "8e8384291f55ae8df179329343c0d813",
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "N-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification marked as read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification marked as read"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Cannot mark this notification"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark all notifications as read",
+                "description": "Mark all notifications as read.",
+                "operationId": "b02aa1274609da54afa52f856f42b015",
+                "responses": {
+                    "200": {
+                        "description": "All notifications marked as read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "marked_count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-by-activity/{activityId}": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark notifications as read for a specific activity",
+                "description": "Mark notifications as read for a specific activity.",
+                "operationId": "937fb24feaba62c95240df4bc271bd8f",
+                "parameters": [
+                    {
+                        "name": "activityId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A-3D6Y-9IO8"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notifications marked as read",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "marked_count": {
+                                            "type": "integer",
+                                            "example": 2
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/tags": {
+            "get": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Get all tags for the authenticated user",
+                "description": "Get all tags for the authenticated user.",
+                "operationId": "566a70c4a8ca7c7dd9a6d666f64728a6",
+                "responses": {
+                    "200": {
+                        "description": "List of tags",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Tag"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "colors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "#EF4444"
+                                                    }
+                                                },
+                                                "suggestions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Doação"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Create a new tag",
+                "description": "Create a new tag.",
+                "operationId": "c2812b6e11418dc90bfd41147c2c78c9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Doação"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#EF4444"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tag created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Tag"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/tags/{tag}": {
+            "get": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Get a specific tag",
+                "description": "Get a specific tag.",
+                "operationId": "0f74de5097a212c61225df91b2896dd8",
+                "parameters": [
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "T-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Tag"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Update a tag",
+                "description": "Update a tag.",
+                "operationId": "bffe1df35cd28d7b8dd0965c7719352d",
+                "parameters": [
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "T-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Favoritos"
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "example": "#22C55E"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tag updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Tag"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Delete a tag",
+                "description": "Delete a tag.",
+                "operationId": "aac8999cac0fe983f0bfe49491a251b9",
+                "parameters": [
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "T-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tag deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/user/books/{book}/tags": {
+            "get": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Get tags for a book in user's library",
+                "description": "Get all tags for a specific book in user's library.",
+                "operationId": "b66539763f76888d241ef28acc5e9155",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of tags for the book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Tag"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found in library"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Sync tags for a book (replace all)",
+                "description": "Sync tags for a book (replace all existing tags).",
+                "operationId": "85fc3d571a599de65ac9b52d601cf9b6",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tag_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "T-1ABC-2DEF",
+                                            "T-3XYZ-4UVW"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tags synced successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Tag"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found in library"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/user/books/{book}/tags/{tag}": {
+            "post": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Add a tag to a book",
+                "description": "Add a tag to a book.",
+                "operationId": "b639428ea86becd20106758229a39555",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    },
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "T-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag added to book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book or tag not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "Remove a tag from a book",
+                "description": "Remove a tag from a book.",
+                "operationId": "d399e0945b18d7cee91b179ea86c7077",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    },
+                    {
+                        "name": "tag",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "T-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag removed from book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tag not associated with this book"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/user/books": {
             "get": {
                 "tags": [
@@ -2570,10 +3882,10 @@
                     "User Library"
                 ],
                 "summary": "Add book to user's personal library",
-                "description": "Adds a book to the authenticated user's personal library using book identifiers. Priority: book_id > isbn > google_id. If book doesn't exist and google_id provided, creates and enriches automatically.",
+                "description": "Adds a book to the authenticated user's personal library using book identifiers or full book data. Priority: book_id > isbn > google_id > amazon_asin. If book doesn't exist: with google_id creates and enriches from Google Books; with title+isbn/amazon_asin creates from Amazon data.",
                 "operationId": "addBookToLibrary",
                 "requestBody": {
-                    "description": "Book identifiers - provide at least one",
+                    "description": "Book identifiers or full book data - provide at least one identifier or title+isbn/amazon_asin",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -2585,7 +3897,7 @@
                                         "example": "B-1ABC-2DEF"
                                     },
                                     "isbn": {
-                                        "description": "ISBN to search for existing book",
+                                        "description": "ISBN to search for existing book or create new",
                                         "type": "string",
                                         "example": "9781505108293"
                                     },
@@ -2593,6 +3905,37 @@
                                         "description": "Google Books ID for search/creation and enrichment",
                                         "type": "string",
                                         "example": "HuKNDAAAQBAJ"
+                                    },
+                                    "amazon_asin": {
+                                        "description": "Amazon ASIN to search for existing book or create new",
+                                        "type": "string",
+                                        "example": "B00EXAMPLE"
+                                    },
+                                    "title": {
+                                        "description": "Book title (required when creating from Amazon data)",
+                                        "type": "string",
+                                        "example": "Book Title"
+                                    },
+                                    "authors": {
+                                        "description": "Book authors (optional, for Amazon data)",
+                                        "type": "string",
+                                        "example": "Author Name"
+                                    },
+                                    "thumbnail": {
+                                        "description": "Book cover URL (optional, for Amazon data)",
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com/cover.jpg"
+                                    },
+                                    "description": {
+                                        "description": "Book description (optional, for Amazon data)",
+                                        "type": "string",
+                                        "example": "Book description"
+                                    },
+                                    "publisher": {
+                                        "description": "Publisher name (optional, for Amazon data)",
+                                        "type": "string",
+                                        "example": "Publisher Name"
                                     },
                                     "is_private": {
                                         "description": "Whether to mark this book as private in user's library",
@@ -2602,6 +3945,7 @@
                                     "reading_status": {
                                         "description": "Reading status for this book",
                                         "type": "string",
+                                        "example": "read",
                                         "enum": [
                                             "want_to_read",
                                             "reading",
@@ -2609,8 +3953,7 @@
                                             "abandoned",
                                             "on_hold",
                                             "re_reading"
-                                        ],
-                                        "example": "read"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -2820,6 +4163,7 @@
                                     "reading_status": {
                                         "description": "Reading status for this book",
                                         "type": "string",
+                                        "example": "reading",
                                         "enum": [
                                             "want_to_read",
                                             "reading",
@@ -2827,8 +4171,7 @@
                                             "abandoned",
                                             "on_hold",
                                             "re_reading"
-                                        ],
-                                        "example": "reading"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -2868,6 +4211,85 @@
                     },
                     "404": {
                         "description": "Book not found in user's library"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/books/{book}/replace": {
+            "put": {
+                "tags": [
+                    "User Library"
+                ],
+                "summary": "Replace book in user's library",
+                "description": "Replaces a book in the authenticated user's library with another book, preserving reading data and migrating reviews",
+                "operationId": "replaceUserBook",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Current Book ID to be replaced",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-1ABC-2DEF"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "New book to replace with",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "new_book_id": {
+                                        "description": "ID of the book to replace with",
+                                        "type": "string",
+                                        "example": "B-3XYZ-4WVU"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Book replaced successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livro substituído com sucesso"
+                                        },
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found in user's library or new book doesn't exist"
+                    },
+                    "409": {
+                        "description": "New book already in user's library"
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -2964,9 +4386,9 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "example": 15,
                             "maximum": 100,
-                            "minimum": 1,
-                            "example": 15
+                            "minimum": 1
                         }
                     },
                     {
@@ -3318,6 +4740,102 @@
                 ]
             }
         },
+        "/users/{username}/stats": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user reading statistics",
+                "description": "Returns reading statistics for a user (by status, by month, by category)",
+                "operationId": "getUserStats",
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "description": "Username",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "john_doe"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reading statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "by_status": {
+                                            "properties": {
+                                                "want_to_read": {
+                                                    "type": "integer"
+                                                },
+                                                "reading": {
+                                                    "type": "integer"
+                                                },
+                                                "read": {
+                                                    "type": "integer"
+                                                },
+                                                "abandoned": {
+                                                    "type": "integer"
+                                                },
+                                                "on_hold": {
+                                                    "type": "integer"
+                                                },
+                                                "re_reading": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "by_month": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "year": {
+                                                        "type": "integer"
+                                                    },
+                                                    "month": {
+                                                        "type": "integer"
+                                                    },
+                                                    "count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "by_category": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "category": {
+                                                        "type": "string"
+                                                    },
+                                                    "count": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Profile is private and user is not following"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            }
+        },
         "/users/{id}/shelf-image": {
             "get": {
                 "tags": [
@@ -3496,31 +5014,31 @@
                                     "title": {
                                         "description": "Optional title for the review",
                                         "type": "string",
-                                        "maxLength": 200,
-                                        "example": "Amazing book!"
+                                        "example": "Amazing book!",
+                                        "maxLength": 200
                                     },
                                     "content": {
                                         "description": "Review content",
                                         "type": "string",
-                                        "maxLength": 2000,
-                                        "example": "This book was incredible..."
+                                        "example": "This book was incredible...",
+                                        "maxLength": 2000
                                     },
                                     "rating": {
                                         "description": "Rating from 1 to 5 stars",
                                         "type": "integer",
+                                        "example": 5,
                                         "maximum": 5,
-                                        "minimum": 1,
-                                        "example": 5
+                                        "minimum": 1
                                     },
                                     "visibility_level": {
                                         "description": "Review visibility level",
                                         "type": "string",
+                                        "example": "public",
                                         "enum": [
                                             "private",
                                             "friends",
                                             "public"
-                                        ],
-                                        "example": "public"
+                                        ]
                                     },
                                     "is_spoiler": {
                                         "description": "Whether the review contains spoilers",
@@ -3687,31 +5205,31 @@
                                     "title": {
                                         "description": "Optional review title",
                                         "type": "string",
-                                        "maxLength": 200,
-                                        "example": "Updated title"
+                                        "example": "Updated title",
+                                        "maxLength": 200
                                     },
                                     "content": {
                                         "description": "Review content",
                                         "type": "string",
-                                        "maxLength": 2000,
-                                        "example": "Updated content..."
+                                        "example": "Updated content...",
+                                        "maxLength": 2000
                                     },
                                     "rating": {
                                         "description": "Rating from 1 to 5 stars",
                                         "type": "integer",
+                                        "example": 4,
                                         "maximum": 5,
-                                        "minimum": 1,
-                                        "example": 4
+                                        "minimum": 1
                                     },
                                     "visibility_level": {
                                         "description": "Review visibility level",
                                         "type": "string",
+                                        "example": "public",
                                         "enum": [
                                             "private",
                                             "friends",
                                             "public"
-                                        ],
-                                        "example": "public"
+                                        ]
                                     },
                                     "is_spoiler": {
                                         "description": "Whether the review contains spoilers",
@@ -3909,6 +5427,85 @@
                     }
                 ]
             }
+        },
+        "/books/{book}/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews",
+                    "Books"
+                ],
+                "summary": "Get public reviews for a specific book",
+                "description": "Returns paginated public reviews for a book. This is a public endpoint that does not require authentication.",
+                "operationId": "31a49cf1fbdf321166e222ea2952c514",
+                "parameters": [
+                    {
+                        "name": "book",
+                        "in": "path",
+                        "description": "Book ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "B-3D6Y-9IO8"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReviewResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Book not found"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3946,19 +5543,19 @@
                     "rating": {
                         "description": "Rating from 1 to 5",
                         "type": "integer",
+                        "example": 5,
                         "maximum": 5,
-                        "minimum": 1,
-                        "example": 5
+                        "minimum": 1
                     },
                     "visibility_level": {
                         "description": "Review visibility level",
                         "type": "string",
+                        "example": "public",
                         "enum": [
                             "private",
                             "friends",
                             "public"
-                        ],
-                        "example": "public"
+                        ]
                     },
                     "is_spoiler": {
                         "description": "Whether the review contains spoilers",
@@ -4043,6 +5640,75 @@
                 },
                 "type": "object"
             },
+            "Activity": {
+                "title": "Activity",
+                "description": "User activity for feed",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "A-3D6Y-9IO8"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "book_added",
+                        "enum": [
+                            "book_added",
+                            "book_started",
+                            "book_read",
+                            "review_written",
+                            "user_followed"
+                        ]
+                    },
+                    "subject_type": {
+                        "type": "string",
+                        "example": "Book"
+                    },
+                    "subject_id": {
+                        "type": "string",
+                        "example": "B-XYZ3-UVW4"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ActivityLike": {
+                "title": "ActivityLike",
+                "description": "Like on an activity",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "L-3D6Y-9IO8"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "activity_id": {
+                        "type": "string",
+                        "example": "A-XYZ3-UVW4"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Author": {
                 "title": "Author",
                 "description": "Author model",
@@ -4084,15 +5750,28 @@
                         "example": "B08LPMFDQC",
                         "nullable": true
                     },
+                    "amazon_rating": {
+                        "description": "Amazon average star rating (1.0 to 5.0)",
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.5,
+                        "nullable": true
+                    },
+                    "amazon_rating_count": {
+                        "description": "Number of Amazon customer reviews",
+                        "type": "integer",
+                        "example": 1234,
+                        "nullable": true
+                    },
                     "asin_status": {
                         "type": "string",
+                        "example": "completed",
                         "enum": [
                             "pending",
                             "processing",
                             "completed",
                             "failed"
-                        ],
-                        "example": "completed"
+                        ]
                     },
                     "asin_processed_at": {
                         "type": "string",
@@ -4148,13 +5827,13 @@
                     },
                     "format": {
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "hardcover",
                             "paperback",
                             "ebook",
                             "audiobook"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "print_type": {
                         "type": "string",
@@ -4184,11 +5863,11 @@
                     },
                     "maturity_rating": {
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "NOT_MATURE",
                             "MATURE"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "categories": {
                         "type": "array",
@@ -4206,12 +5885,12 @@
                     },
                     "info_quality": {
                         "type": "string",
+                        "example": "enhanced",
                         "enum": [
                             "basic",
                             "enhanced",
                             "complete"
-                        ],
-                        "example": "enhanced"
+                        ]
                     },
                     "enriched_at": {
                         "type": "string",
@@ -4267,6 +5946,37 @@
                 },
                 "type": "object"
             },
+            "Comment": {
+                "title": "Comment",
+                "description": "Comment on an activity",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "C-3D6Y-9IO8"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "activity_id": {
+                        "type": "string",
+                        "example": "A-XYZ3-UVW4"
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "Great book choice!"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Follow": {
                 "title": "Follow",
                 "description": "User follow relationship model",
@@ -4288,11 +5998,11 @@
                     "status": {
                         "description": "Status of the follow relationship",
                         "type": "string",
+                        "example": "accepted",
                         "enum": [
                             "pending",
                             "accepted"
-                        ],
-                        "example": "accepted"
+                        ]
                     },
                     "created_at": {
                         "type": "string",
@@ -4339,6 +6049,61 @@
                     },
                     "created_at": {
                         "description": "When the follow request was created",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Notification": {
+                "title": "Notification",
+                "description": "User notification",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "N-3D6Y-9IO8"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-ABC1-DEF2"
+                    },
+                    "actor_id": {
+                        "type": "string",
+                        "example": "U-XYZ3-UVW4"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "activity_liked",
+                        "enum": [
+                            "activity_liked",
+                            "activity_commented",
+                            "new_follower",
+                            "follow_request",
+                            "follow_accepted"
+                        ]
+                    },
+                    "notifiable_type": {
+                        "type": "string",
+                        "example": "Activity"
+                    },
+                    "notifiable_id": {
+                        "type": "string",
+                        "example": "A-DEF5-GHI6"
+                    },
+                    "data": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
                         "type": "string",
                         "format": "date-time"
                     }
@@ -4404,18 +6169,18 @@
                     },
                     "rating": {
                         "type": "integer",
+                        "example": 5,
                         "maximum": 5,
-                        "minimum": 1,
-                        "example": 5
+                        "minimum": 1
                     },
                     "visibility_level": {
                         "type": "string",
+                        "example": "public",
                         "enum": [
                             "private",
                             "friends",
                             "public"
-                        ],
-                        "example": "public"
+                        ]
                     },
                     "is_spoiler": {
                         "type": "boolean",
@@ -4424,6 +6189,42 @@
                     "helpful_count": {
                         "type": "integer",
                         "example": 12
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Tag": {
+                "title": "Tag",
+                "description": "User-defined tag for organizing books",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "T-1ABC-2DEF"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "U-1ABC-2DEF"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Doação"
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "#EF4444"
+                    },
+                    "books_count": {
+                        "description": "Number of books with this tag",
+                        "type": "integer",
+                        "example": 5
                     },
                     "created_at": {
                         "type": "string",
@@ -4473,11 +6274,11 @@
                     },
                     "role": {
                         "type": "string",
+                        "example": "user",
                         "enum": [
                             "admin",
                             "user"
-                        ],
-                        "example": "user"
+                        ]
                     },
                     "followers_count": {
                         "type": "integer",
@@ -4558,6 +6359,7 @@
                     "reading_status": {
                         "description": "User's reading status for this book",
                         "type": "string",
+                        "example": "read",
                         "enum": [
                             "want_to_read",
                             "reading",
@@ -4565,8 +6367,7 @@
                             "abandoned",
                             "on_hold",
                             "re_reading"
-                        ],
-                        "example": "read"
+                        ]
                     },
                     "created_at": {
                         "type": "string",
@@ -4619,8 +6420,20 @@
             "description": "User management and profiles"
         },
         {
+            "name": "Feed",
+            "description": "Feed"
+        },
+        {
             "name": "Authors",
             "description": "Authors"
+        },
+        {
+            "name": "Notifications",
+            "description": "Notifications"
+        },
+        {
+            "name": "Tags",
+            "description": "Tags"
         }
     ]
 }

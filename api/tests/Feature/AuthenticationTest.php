@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -443,7 +444,7 @@ class AuthenticationTest extends TestCase
 
         // Verify password was changed by checking database hash
         $user->refresh();
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpass456', $user->password));
+        $this->assertTrue(Hash::check('newpass456', $user->password));
     }
 
     /**

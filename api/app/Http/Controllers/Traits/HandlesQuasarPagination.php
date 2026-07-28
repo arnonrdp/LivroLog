@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Traits;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 trait HandlesQuasarPagination
 {
     /**
      * Applies pagination parameters to a query from request.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Pagination\LengthAwarePaginator
+     * @param  Builder  $query
+     * @return LengthAwarePaginator
      */
     public function applyPagination($query, Request $request)
     {

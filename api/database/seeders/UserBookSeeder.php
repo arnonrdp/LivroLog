@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Book;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -39,7 +40,7 @@ class UserBookSeeder extends Seeder
 
                 // Data de adição à biblioteca (sempre anterior à data de leitura)
                 $addedAtDate = $readAt
-                    ? \Carbon\Carbon::parse($readAt)->subDays(random_int(1, 30))
+                    ? Carbon::parse($readAt)->subDays(random_int(1, 30))
                     : now()->subDays(random_int(1, 365));
 
                 DB::table('users_books')->insert([
@@ -48,7 +49,7 @@ class UserBookSeeder extends Seeder
                     'added_at' => $addedAtDate,
                     'read_at' => $readAt, // Já está no formato Y-m-d ou null
                     'created_at' => $addedAtDate,
-                    'updated_at' => $readAt ? \Carbon\Carbon::parse($readAt) : $addedAtDate,
+                    'updated_at' => $readAt ? Carbon::parse($readAt) : $addedAtDate,
                 ]);
             }
         }

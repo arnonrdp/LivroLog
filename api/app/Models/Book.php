@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\BookCreated;
+use App\Services\AmazonLinkEnrichmentService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -130,7 +131,7 @@ class Book extends Model
      *
      * @param  mixed  $value
      * @param  string|null  $field
-     * @return \Illuminate\Database\Eloquent\Model|null
+     * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)
     {
@@ -389,7 +390,7 @@ class Book extends Model
      */
     public function getAmazonLinksAttribute(): array
     {
-        $service = app(\App\Services\AmazonLinkEnrichmentService::class);
+        $service = app(AmazonLinkEnrichmentService::class);
 
         // Use getAttributes() instead of toArray() to avoid infinite recursion
         return $service->generateAllRegionLinks($this->getAttributes());

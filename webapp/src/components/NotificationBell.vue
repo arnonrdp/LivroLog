@@ -1,5 +1,5 @@
 <template>
-  <q-btn flat round @click="showNotifications = true">
+  <q-btn v-bind="$attrs" flat round @click="showNotifications = true">
     <q-icon name="notifications" />
     <q-badge v-if="unreadCount > 0" color="red" floating>
       {{ unreadCount > 99 ? '99+' : unreadCount }}
@@ -42,6 +42,9 @@ import { disconnectEcho, getEcho, initEcho } from '@/utils/echo'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import NotificationItem from './NotificationItem.vue'
+
+// Multi-root template (button + dialog): route the caller's attrs to the button
+defineOptions({ inheritAttrs: false })
 
 const notificationStore = useNotificationStore()
 const userStore = useUserStore()

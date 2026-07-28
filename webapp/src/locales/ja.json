@@ -1,5 +1,6 @@
 {
   "abandoned": "放棄された",
+  "about": "概要",
   "account": "アカウント",
   "account-created": "アカウントが正常に作成されました。",
   "add": "本を追加",
@@ -382,6 +383,7 @@
     "sep": "9月"
   },
   "mutual-follow": "お互いにフォローしています",
+  "my-reading": "読書記録",
   "name": "名前",
   "new-password": "新しいパスワード",
   "no-followers": "まだフォロワーはいません",
@@ -460,6 +462,7 @@
   "reset": "リセット",
   "reset-password": "パスワードをリセットします",
   "reviews": "レビュー",
+  "reviews-count": "{count} 件のレビュー",
   "save": "保存",
   "saved-successfully": "レビューは正常に保存されました！",
   "search": {

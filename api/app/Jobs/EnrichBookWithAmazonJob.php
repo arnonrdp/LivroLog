@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Book;
+use App\Services\AmazonEnrichmentService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -42,7 +43,7 @@ class EnrichBookWithAmazonJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $service = app(\App\Services\AmazonEnrichmentService::class);
+        $service = app(AmazonEnrichmentService::class);
         $service->enrichBookWithAmazon($this->book);
     }
 

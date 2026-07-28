@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Models\User;
 use Closure;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class SocialMediaCrawlerMiddleware
@@ -12,8 +14,8 @@ class SocialMediaCrawlerMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  Closure(Request): (Response|RedirectResponse)  $next
+     * @return Response|RedirectResponse
      */
     public function handle(Request $request, Closure $next)
     {
@@ -90,7 +92,7 @@ class SocialMediaCrawlerMiddleware
     /**
      * Render homepage with dynamic meta tags
      */
-    private function renderHomePage(Request $request, bool $forceOg): \Illuminate\Http\Response
+    private function renderHomePage(Request $request, bool $forceOg): Response
     {
         $frontend = config('app.frontend_url');
         $currentUrl = $frontend; // canonical to frontend
@@ -132,7 +134,7 @@ class SocialMediaCrawlerMiddleware
     /**
      * Render user profile page with dynamic meta tags
      */
-    private function renderUserProfilePage(User $user, Request $request, bool $forceOg): \Illuminate\Http\Response
+    private function renderUserProfilePage(User $user, Request $request, bool $forceOg): Response
     {
         // Load user's books for count and shelf image
         $user->load(['books' => function ($query) {

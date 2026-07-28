@@ -24,7 +24,7 @@ Route::get('/docs/api-docs.json', function () {
     if (! file_exists($jsonPath)) {
         try {
             Artisan::call('l5-swagger:generate');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore and fall through
         }
     }
@@ -44,7 +44,7 @@ Route::get('/docs', function () {
     if (! file_exists($jsonPath)) {
         try {
             Artisan::call('l5-swagger:generate');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore
         }
     }

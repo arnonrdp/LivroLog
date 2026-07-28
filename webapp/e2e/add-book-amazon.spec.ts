@@ -121,7 +121,9 @@ test.describe('Add Book from Amazon', () => {
     await expect(page.locator('[data-testid="add-book-amazon-dialog"]')).toBeVisible()
     const dialogText = await page.locator('[data-testid="add-book-amazon-dialog"]').textContent()
     // Accept any error that prevents adding the product (messages are now i18n translated)
-    expect(dialogText).toMatch(/(does not appear to be a book|Could not extract data|Invalid URL|não parece ser de um livro|Não foi possível extrair)/i)
+    expect(dialogText).toMatch(
+      /(does not appear to be a book|Could not extract data|Invalid URL|não parece ser de um livro|Não foi possível extrair)/i
+    )
   })
 
   test('rejects Funko Pop toy as non-book product', async ({ page }) => {
