@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use L5Swagger\GeneratorFactory;
 use OpenApi\Analysers\AttributeAnnotationFactory;
 use OpenApi\Analysers\DocBlockAnnotationFactory;
 use OpenApi\Analysers\ReflectionAnalyser;
@@ -44,12 +45,14 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         // L5-Swagger 10+ defaults to an attributes-only analyser, which silently drops this API's
-        // @OA\ docblocks. Registered here rather than in config/l5-swagger.php because the deploy
-        // runs `config:cache`, which cannot serialize objects.
-        config(['l5-swagger.documentations.default.scanOptions.analyser' => new ReflectionAnalyser([
-            new AttributeAnnotationFactory,
-            new DocBlockAnnotationFactory,
-        ])]);
+        // @OA\ docblocks. Injected only when the generator is resolved: setting it eagerly (here or
+        // in config/l5-swagger.php) leaves an object in the config repository and breaks `config:cache`.
+        $this->app->beforeResolving(GeneratorFactory::class, function () {
+            config(['l5-swagger.documentations.default.scanOptions.analyser' => new ReflectionAnalyser([
+                new AttributeAnnotationFactory,
+                new DocBlockAnnotationFactory,
+            ])]);
+        });
 
         // Configure morph map for polymorphic relations (Activity->subject, Notification->notifiable)
         Relation::enforceMorphMap([
