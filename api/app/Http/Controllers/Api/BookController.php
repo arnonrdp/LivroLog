@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\GeneratesOgImages;
 use App\Models\Book;
 use App\Models\User;
 use App\Services\AmazonLinkEnrichmentService;
@@ -14,9 +15,12 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
+    use GeneratesOgImages;
+
     // Validation constants to avoid duplication
     private const VALIDATION_NULLABLE_STRING = 'nullable|string';
 
@@ -242,7 +246,7 @@ class BookController extends Controller
             'isbn' => self::VALIDATION_NULLABLE_STRING.'|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
             'thumbnail' => ['nullable', 'url', 'max:512', function ($attribute, $value, $fail) {
-                if (! $this->isAllowedThumbnailDomain($value)) {
+                if (! $this->isAllowedDomain($value)) {
                     $fail('The thumbnail URL domain is not allowed.');
                 }
             }],
@@ -553,7 +557,7 @@ class BookController extends Controller
             'amazon_asin' => 'nullable|string|max:20',
             'authors' => self::VALIDATION_NULLABLE_STRING,
             'thumbnail' => ['nullable', 'url', 'max:512', function ($attribute, $value, $fail) {
-                if (! $this->isAllowedThumbnailDomain($value)) {
+                if (! $this->isAllowedDomain($value)) {
                     $fail('The thumbnail URL domain is not allowed.');
                 }
             }],
@@ -565,42 +569,6 @@ class BookController extends Controller
         $book->update($request->all());
 
         return response()->json($book);
-    }
-
-    /**
-     * Validate thumbnail URL is on allowed domains to reduce SSRF risk
-     */
-    private function isAllowedThumbnailDomain(string $url): bool
-    {
-        $allowed = [
-            'books.google.com',
-            'books.googleapis.com',
-            'lh3.googleusercontent.com',
-            'ssl.gstatic.com',
-            'covers.openlibrary.org',
-            'm.media-amazon.com',
-            'images-na.ssl-images-amazon.com',
-            'images-eu.ssl-images-amazon.com',
-        ];
-
-        $parsed = parse_url($url);
-        if (! isset($parsed['host']) || ! isset($parsed['scheme'])) {
-            return false;
-        }
-
-        $host = strtolower($parsed['host']);
-        $scheme = strtolower($parsed['scheme']);
-        if (! in_array($scheme, ['http', 'https'], true)) {
-            return false;
-        }
-
-        foreach ($allowed as $domain) {
-            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -1214,5 +1182,145 @@ class BookController extends Controller
             'current_book_id' => $book->id,
             'editions' => $editions,
         ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/books/{book}/og-image",
+     *     operationId="getBookOgImage",
+     *     tags={"Books"},
+     *     summary="Open Graph card for a book",
+     *     description="Renders a 1200x630 JPEG with the book cover, title and author, used as og:image when the book URL is shared on social networks. Cached on disk and busted by the book's updated_at.",
+     *
+     *     @OA\Parameter(name="book", in="path", required=true, @OA\Schema(type="string", example="B-JJYV-YBQM")),
+     *     @OA\Parameter(name="v", in="query", required=false, description="Cache-busting token", @OA\Schema(type="string")),
+     *
+     *     @OA\Response(response=200, description="JPEG image"),
+     *     @OA\Response(response=302, description="Redirect to the static fallback image"),
+     *     @OA\Response(response=404, description="Book not found")
+     * )
+     */
+    public function ogImage(Request $request, Book $book)
+    {
+        $relative = "og/book-v{$this->getRendererVersion()}-{$book->id}-".($book->updated_at?->timestamp ?: 0).'.jpg';
+
+        if (Storage::disk('public')->exists($relative)) {
+            $path = Storage::disk('public')->path($relative);
+
+            return response()->file($path, [
+                'Content-Type' => 'image/jpeg',
+                'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
+                'Last-Modified' => gmdate('D, d M Y H:i:s', @filemtime($path) ?: time()).' GMT',
+            ]);
+        }
+
+        if (! function_exists('imagecreatetruecolor')) {
+            return $this->ogImageFallback();
+        }
+
+        try {
+            $image = $this->generateBookCard($book);
+            Storage::disk('public')->makeDirectory('og');
+            Storage::disk('public')->put($relative, $image);
+
+            return response($image, 200, [
+                'Content-Type' => 'image/jpeg',
+                'Cache-Control' => 'public, max-age=86400, stale-while-revalidate=604800',
+                'Last-Modified' => now()->toRfc7231String(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('book og-image generation failed', [
+                'book_id' => $book->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->ogImageFallback();
+        }
+    }
+
+    /**
+     * Static image to fall back on, so a crawler never gets a blank preview
+     */
+    private function ogImageFallback()
+    {
+        return redirect()->away(rtrim(config('app.frontend_url'), '/').'/screenshot-web.jpg', 302, [
+            'Cache-Control' => 'public, max-age=1800',
+        ]);
+    }
+
+    /**
+     * Render the 1200x630 Open Graph card: cover on the left, title and author
+     * on the right, shelf texture strip at the bottom for brand consistency.
+     */
+    private function generateBookCard(Book $book): string
+    {
+        $this->ensureOgFont();
+
+        $width = 1200;
+        $height = 630;
+        $image = imagecreatetruecolor($width, $height);
+        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
+
+        $texture = public_path('og/textures/shelfcenter.jpg');
+        if (is_file($texture) && ($wood = @imagecreatefromjpeg($texture))) {
+            $woodW = imagesx($wood);
+            for ($x = 0; $x < $width; $x += $woodW) {
+                imagecopyresampled($image, $wood, $x, 585, 0, 0, $woodW, 45, $woodW, imagesy($wood));
+            }
+            imagedestroy($wood);
+        }
+
+        // Cover box on the left, aspect ratio preserved, bottom-aligned
+        [$boxX, $boxY, $boxW, $boxH] = [80, 70, 320, 480];
+        $cover = $book->thumbnail ? $this->loadImageFromUrl($book->thumbnail) : null;
+        if ($cover) {
+            $cw = imagesx($cover);
+            $ch = imagesy($cover);
+            $scale = min($boxW / $cw, $boxH / $ch);
+            $dw = (int) round($cw * $scale);
+            $dh = (int) round($ch * $scale);
+            imagecopyresampled($image, $cover, $boxX + (int) (($boxW - $dw) / 2), $boxY + ($boxH - $dh), 0, 0, $dw, $dh, $cw, $ch);
+            imagedestroy($cover);
+        } else {
+            imagefilledrectangle($image, $boxX, $boxY, $boxX + $boxW, $boxY + $boxH, imagecolorallocate($image, 224, 224, 224));
+            imagerectangle($image, $boxX, $boxY, $boxX + $boxW, $boxY + $boxH, imagecolorallocate($image, 190, 190, 190));
+        }
+
+        $textX = 480;
+        $maxTextWidth = $width - $textX - 80;
+        $bold = $this->getFontPath('Bold');
+        $regular = $this->getFontPath('Regular') ?: $bold;
+        $dark = imagecolorallocate($image, 33, 37, 41);
+        $gray = imagecolorallocate($image, 90, 96, 102);
+        $brand = imagecolorallocate($image, 25, 118, 210);
+
+        $title = trim($book->title.($book->subtitle ? ': '.$book->subtitle : ''));
+
+        if ($bold) {
+            $y = 170;
+            foreach ($this->wrapTextToWidth($bold, 42, $title, $maxTextWidth, 3) as $line) {
+                imagettftext($image, 42, 0, $textX, $y, $dark, $bold, $line);
+                $y += 58;
+            }
+            $y += 18;
+            foreach ($this->wrapTextToWidth($regular, 28, (string) $book->authors, $maxTextWidth, 2) as $line) {
+                imagettftext($image, 28, 0, $textX, $y, $gray, $regular, $line);
+                $y += 40;
+            }
+            imagettftext($image, 26, 0, $textX, 555, $brand, $bold, 'LivroLog');
+        } else {
+            // No TTF available: GD's built-in bitmap font still yields a readable card
+            imagestring($image, 5, $textX, 150, $title, $dark);
+            imagestring($image, 4, $textX, 190, (string) $book->authors, $gray);
+            imagestring($image, 5, $textX, 540, 'LivroLog', $brand);
+        }
+
+        ob_start();
+        imagejpeg($image, null, 85);
+        $data = ob_get_contents();
+        ob_end_clean();
+        imagedestroy($image);
+
+        return $data;
     }
 }

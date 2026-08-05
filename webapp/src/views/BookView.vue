@@ -294,7 +294,8 @@ const pageDescription = computed(() => {
 })
 
 const pageImage = computed(() => {
-  return book.value?.thumbnail || `${baseUrl}/no_cover.jpg`
+  // Same card the crawler gets, so preview and page stay in sync
+  return book.value?.thumbnail || `${import.meta.env.VITE_API_URL}/books/${props.bookId}/og-image`
 })
 
 useMeta(() => ({

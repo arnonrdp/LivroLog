@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\GeneratesOgImages;
 use App\Http\Controllers\Traits\HandlesPagination;
 use App\Http\Resources\PaginatedUserResource;
 use App\Http\Resources\UserResource;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    use HandlesPagination;
+    use GeneratesOgImages, HandlesPagination;
 
     /**
      * @OA\Get(
@@ -851,98 +852,6 @@ class UserController extends Controller
     }
 
     /**
-     * Ensure Roboto fonts are available locally for high-quality text rendering
-     */
-    private function ensureOgFont(): void
-    {
-        $publicDir = public_path('og/fonts');
-        $storageDir = storage_path('app/fonts');
-        if (! is_dir($publicDir)) {
-            @mkdir($publicDir, 0775, true);
-        }
-        if (! is_dir($storageDir)) {
-            @mkdir($storageDir, 0775, true);
-        }
-
-        $fonts = [
-            [
-                'name' => 'Roboto-Bold.ttf',
-                'urls' => [
-                    'https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Bold.ttf',
-                    'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Bold.ttf',
-                ],
-            ],
-            [
-                'name' => 'Roboto-Regular.ttf',
-                'urls' => [
-                    'https://raw.githubusercontent.com/googlefonts/roboto/main/src/hinted/Roboto-Regular.ttf',
-                    'https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf',
-                ],
-            ],
-        ];
-
-        foreach ($fonts as $font) {
-            $pubPath = $publicDir.DIRECTORY_SEPARATOR.$font['name'];
-            $storPath = $storageDir.DIRECTORY_SEPARATOR.$font['name'];
-            if (file_exists($pubPath) || file_exists($storPath)) {
-                // Ensure both locations have a copy
-                if (file_exists($pubPath) && ! file_exists($storPath)) {
-                    @copy($pubPath, $storPath);
-                } elseif (file_exists($storPath) && ! file_exists($pubPath)) {
-                    @copy($storPath, $pubPath);
-                }
-
-                continue;
-            }
-
-            // Try downloading from known URLs
-            foreach ($font['urls'] as $url) {
-                try {
-                    $data = @file_get_contents($url);
-                    if ($data !== false && strlen($data) > 1000) { // crude sanity check
-                        @file_put_contents($pubPath, $data);
-                        @file_put_contents($storPath, $data);
-                        break;
-                    }
-                } catch (\Throwable $e) {
-                    // ignore and try next url
-                }
-            }
-        }
-    }
-
-    /**
-     * Compute a renderer version based on last modified times of code and assets.
-     * This automatically busts the cache when we change layout code, textures, or fonts.
-     */
-    private function getRendererVersion(): string
-    {
-        $files = [
-            __FILE__,
-            public_path('og/textures/shelfleft.jpg'),
-            public_path('og/textures/shelfright.jpg'),
-            public_path('og/textures/shelfcenter.jpg'),
-            public_path('og/fonts/Roboto-Bold.ttf'),
-            public_path('og/fonts/Roboto-Regular.ttf'),
-            storage_path('app/fonts/Roboto-Bold.ttf'),
-            storage_path('app/fonts/Roboto-Regular.ttf'),
-            storage_path('app/fonts/arial.ttf'),
-        ];
-        $latest = 0;
-        foreach ($files as $f) {
-            $t = @filemtime($f);
-            if ($t && $t > $latest) {
-                $latest = $t;
-            }
-        }
-        if (! $latest) {
-            $latest = time();
-        }
-
-        return (string) $latest;
-    }
-
-    /**
      * Add book covers to the image in a grid layout
      */
     private function addBookCoversToImage($image, $books, $width, $height, $paddingTop = 70, $paddingBottom = 40, $rows = 1)
@@ -1007,77 +916,6 @@ class UserController extends Controller
     }
 
     /**
-     * Load image from URL with error handling
-     */
-    private function loadImageFromUrl($url)
-    {
-        try {
-            if (! $this->isAllowedDomain($url)) {
-                return null;
-            }
-
-            // Local cache for remote covers (TTL 7 days)
-            $cacheDir = storage_path('app/cache/covers');
-            if (! is_dir($cacheDir)) {
-                @mkdir($cacheDir, 0775, true);
-            }
-            $hash = sha1($url);
-            $cacheFile = $cacheDir.'/'.$hash.'.jpg';
-            $ttl = 60 * 60 * 24 * 7; // 7 days
-
-            if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $ttl) {
-                $imageData = @file_get_contents($cacheFile);
-            } else {
-                $imageData = @file_get_contents($url);
-                if ($imageData !== false) {
-                    @file_put_contents($cacheFile, $imageData);
-                }
-            }
-            if ($imageData === false) {
-                return null;
-            }
-
-            $image = @imagecreatefromstring($imageData);
-
-            return $image ?: null;
-        } catch (\Exception $e) {
-            return null;
-        }
-    }
-
-    /**
-     * Basic allowlist validation to prevent SSRF when fetching external images
-     */
-    private function isAllowedDomain(string $url): bool
-    {
-        $allowed = [
-            'books.google.com',
-            'books.googleapis.com',
-            'lh3.googleusercontent.com',
-            'ssl.gstatic.com',
-        ];
-
-        $parsed = parse_url($url);
-        if (! isset($parsed['host']) || ! isset($parsed['scheme'])) {
-            return false;
-        }
-
-        $host = strtolower($parsed['host']);
-        $scheme = strtolower($parsed['scheme']);
-        if (! in_array($scheme, ['http', 'https'], true)) {
-            return false;
-        }
-
-        foreach ($allowed as $domain) {
-            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Check if current user has access to a profile.
      *
      * @return array{isOwner: bool, isFollowing: bool, hasAccess: bool}
@@ -1101,25 +939,5 @@ class UserController extends Controller
             'isFollowing' => $isFollowing,
             'hasAccess' => $hasAccess,
         ];
-    }
-
-    private function getFontPath()
-    {
-        // Prefer Roboto (to match frontend), then Arial fallback
-        $candidates = [
-            public_path('og/fonts/Roboto-Bold.ttf'),
-            public_path('og/fonts/Roboto-Regular.ttf'),
-            storage_path('app/fonts/Roboto-Bold.ttf'),
-            storage_path('app/fonts/Roboto-Regular.ttf'),
-            storage_path('app/fonts/arial.ttf'),
-        ];
-        foreach ($candidates as $p) {
-            if ($p && file_exists($p)) {
-                return $p;
-            }
-        }
-
-        // If no custom font, use built-in font (return null for imagestring functions)
-        return null;
     }
 }

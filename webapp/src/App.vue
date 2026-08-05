@@ -24,28 +24,16 @@ const userStore = useUserStore()
 const authStore = useAuthStore()
 const { locale, t } = useI18n({ useScope: 'global' })
 
+// Only the locale-reactive tags live here. The Open Graph/Twitter defaults come
+// from index.html, which already emits them with property= (useMeta emitted them
+// with name=, which Facebook and WhatsApp ignore). Routes that need their own
+// preview override them individually.
 useMeta(() => ({
   title: 'LivroLog',
   meta: {
-    // Primary Meta Tags
     description: { name: 'description', content: t('description') },
     keywords: { name: 'keywords', content: t('keywords') },
-    author: { name: 'author', content: 'Arnon Rodrigues' },
-
-    // Open Graph / Facebook
-    ogType: { name: 'og:type', content: 'website' },
-    ogTitle: { name: 'og:title', content: 'LivroLog' },
-    ogDescription: { name: 'og:description', content: t('description') },
-    ogImage: { name: 'og:image', content: `${import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'}/screenshot-web.jpg` as string },
-    ogUrl: { name: 'og:url', content: import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com/' },
-    ogProperty: { name: 'og:image:alt', content: t('image-alt') },
-
-    // Twitter
-    twitterCard: { name: 'twitter:card', content: 'summary_large_image' },
-    twitterTitle: { name: 'twitter:title', content: 'LivroLog' },
-    twitterDescription: { name: 'twitter:description', content: t('description') },
-    twitterImage: { name: 'twitter:image', content: `${import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com'}/screenshot-web.jpg` },
-    twitterUrl: { name: 'twitter:url', content: import.meta.env.VITE_FRONTEND_URL || 'https://livrolog.com/' }
+    author: { name: 'author', content: 'Arnon Rodrigues' }
   }
 }))
 
