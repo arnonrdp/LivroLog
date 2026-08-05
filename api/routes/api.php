@@ -60,7 +60,10 @@ Route::get('/health', [HealthController::class, 'index']);
 // Public book routes
 Route::get('/books', [BookController::class, 'index']);
 Route::post('/books', [BookController::class, 'store']);
-Route::get('/books/{book}', [BookController::class, 'show']);
+// social.crawler is applied here only: link-preview bots hitting this URL get
+// server-rendered Open Graph HTML instead of JSON (see SocialMediaCrawlerMiddleware)
+Route::get('/books/{book}', [BookController::class, 'show'])->middleware('social.crawler');
+Route::get('/books/{book}/og-image', [BookController::class, 'ogImage']);
 Route::get('/books/{book}/stats', [BookController::class, 'stats']);
 Route::get('/books/{book}/reviews', [ReviewController::class, 'bookReviews']);
 

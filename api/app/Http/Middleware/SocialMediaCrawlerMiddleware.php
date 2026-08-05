@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Book;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +29,23 @@ class SocialMediaCrawlerMiddleware
             // Handle homepage
             if ($path === '/') {
                 return $this->renderHomePage($request, $forceOg);
+            }
+
+            // Book detail pages: /books/{id}
+            // Checked before the profile regex so "books" is never read as a username
+            if (preg_match('#^books/([A-Za-z0-9_-]+)/?$#', $path, $matches)) {
+                // Never hijack real API clients: the webapp sends Accept: application/json
+                if ($request->expectsJson() && ! $forceOg) {
+                    return $next($request);
+                }
+
+                $book = (new Book)->resolveRouteBinding($matches[1]);
+
+                // Unknown book falls through to the API's 404, which nginx turns
+                // into the SPA shell for the crawler
+                return $book
+                    ? $this->renderBookPage($book, $request, $forceOg)
+                    : $next($request);
             }
 
             // Check if this is a user profile route
@@ -94,9 +112,9 @@ class SocialMediaCrawlerMiddleware
      */
     private function renderHomePage(Request $request, bool $forceOg): Response
     {
-        $frontend = config('app.frontend_url');
+        $frontend = rtrim(config('app.frontend_url'), '/');
         $currentUrl = $frontend; // canonical to frontend
-        $imageUrl = rtrim($frontend, '/').'/screenshot-web.jpg';
+        $imageUrl = $frontend.'/screenshot-web.jpg';
 
         // Basic i18n based on Accept-Language
         $lang = strtolower($request->header('Accept-Language', ''));
@@ -156,10 +174,9 @@ class SocialMediaCrawlerMiddleware
             ->where('user_id', $user->id)
             ->max('updated_at');
         $version = $versionTs ? (is_string($versionTs) ? (string) strtotime($versionTs) : (string) strtotime((string) $versionTs)) : (string) time();
-        // Image served by API without /api prefix, with version.
-        // Prefer current request host so that proxies/CDNs (dev.livrolog.com) generate same-host URLs.
-        $hostBase = rtrim(($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
-        $imageUrl = $hostBase."/users/{$user->id}/shelf-image?v={$version}";
+        // Always build image URLs from the API host: this request may have been
+        // proxied from the frontend host, so the request host is not usable here.
+        $imageUrl = rtrim(config('app.url'), '/')."/users/{$user->id}/shelf-image?v={$version}";
 
         // i18n based on Accept-Language
         $lang = strtolower($request->header('Accept-Language', ''));
@@ -199,6 +216,74 @@ class SocialMediaCrawlerMiddleware
     }
 
     /**
+     * Render book detail page with dynamic meta tags
+     */
+    private function renderBookPage(Book $book, Request $request, bool $forceOg): Response
+    {
+        $frontend = rtrim(config('app.frontend_url'), '/');
+        $currentUrl = $frontend.'/books/'.rawurlencode($book->id);
+
+        // Image comes from the API host and is busted whenever the book changes
+        $version = $book->updated_at ? $book->updated_at->timestamp : time();
+        $imageUrl = rtrim(config('app.url'), '/').'/books/'.rawurlencode($book->id)."/og-image?v={$version}";
+
+        // i18n based on Accept-Language
+        $lang = strtolower($request->header('Accept-Language', ''));
+        $isPt = str_contains($lang, 'pt');
+
+        // Sanitize catalog fields to prevent XSS in reflected HTML
+        $bookTitle = trim(strip_tags((string) $book->title));
+        $subtitle = trim(strip_tags((string) $book->subtitle));
+        $author = trim(strip_tags((string) $book->authors));
+        $fullTitle = $subtitle !== '' ? "{$bookTitle}: {$subtitle}" : $bookTitle;
+        $title = $author !== '' ? "{$fullTitle} - {$author} | LivroLog" : "{$fullTitle} | LivroLog";
+
+        // sanitized_description still carries markdown emphasis markers; meta tags want plain text
+        $description = trim(preg_replace('/\s+/', ' ', str_replace(['**', '__', '~~'], '', (string) $book->sanitized_description)));
+        if ($description === '') {
+            $description = $isPt
+                ? ($author !== '' ? "{$fullTitle}, de {$author}. Veja no LivroLog." : "{$fullTitle} no LivroLog.")
+                : ($author !== '' ? "{$fullTitle} by {$author}. See it on LivroLog." : "{$fullTitle} on LivroLog.");
+        } elseif (mb_strlen($description) > 200) {
+            $description = mb_substr($description, 0, 197).'...';
+        }
+
+        $metaData = [
+            'title' => $title,
+            'description' => $description,
+            'og:type' => 'book',
+            'og:url' => $currentUrl,
+            'og:title' => $title,
+            'og:description' => $description,
+            'og:image' => $imageUrl,
+            'og:image:alt' => $isPt ? "Capa de {$fullTitle}" : "Cover of {$fullTitle}",
+            'og:site_name' => 'LivroLog',
+            'og:locale' => $isPt ? 'pt_BR' : 'en_US',
+            'og:image:width' => '1200',
+            'og:image:height' => '630',
+            'twitter:card' => 'summary_large_image',
+            'twitter:title' => $title,
+            'twitter:description' => $description,
+            'twitter:image' => $imageUrl,
+        ];
+
+        if ($author !== '') {
+            $metaData['book:author'] = $author;
+        }
+        if ($book->isbn) {
+            $metaData['book:isbn'] = $book->isbn;
+        }
+        if ($book->published_date) {
+            $metaData['book:release_date'] = $book->published_date->format('Y-m-d');
+        }
+
+        return response($this->generateHtmlWithMetaTags($metaData, $forceOg), 200, [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'public, max-age=3600',
+        ]);
+    }
+
+    /**
      * Generate HTML with dynamic meta tags
      */
     private function generateHtmlWithMetaTags(array $metaData, bool $forceOg = false): string
@@ -218,25 +303,21 @@ class SocialMediaCrawlerMiddleware
                 continue;
             }
 
-            if (strpos($property, 'og:') === 0 || strpos($property, 'profile:') === 0) {
+            if (str_starts_with($property, 'og:') || str_starts_with($property, 'profile:') || str_starts_with($property, 'book:')) {
                 $metaTags .= '<meta property="'.$property.'" content="'.htmlspecialchars($content).'">'."\n    ";
             } else {
                 $metaTags .= '<meta name="'.$property.'" content="'.htmlspecialchars($content).'">'."\n    ";
             }
         }
 
-        // Add canonical URL pointing to frontend (let frontend be the canonical source)
-        $frontendUrl = config('app.frontend_url');
-        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-        $canonicalUrl = rtrim($frontendUrl, '/').$requestUri;
-        $metaTags .= '<link rel="canonical" href="'.htmlspecialchars($canonicalUrl, ENT_QUOTES).'">'."\n    ";
+        // Canonical and redirect target: the frontend URL each render method already
+        // built for og:url, so query strings such as ?og=1 never leak into it
+        $canonicalUrl = $metaData['og:url'] ?? rtrim(config('app.frontend_url'), '/');
+        $safeCanonical = htmlspecialchars($canonicalUrl, ENT_QUOTES);
+        $metaTags .= '<link rel="canonical" href="'.$safeCanonical.'">'."\n    ";
 
         // Tell search engines not to index this API-served version
         $metaTags .= '<meta name="robots" content="noindex, follow">'."\n    ";
-        $frontendUrl = config('app.frontend_url');
-        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-        $safeFrontendUrl = htmlspecialchars($frontendUrl, ENT_QUOTES);
-        $safeRequestUri = htmlspecialchars($requestUri, ENT_QUOTES);
 
         $includeClientRedirect = ! $forceOg; // do not include client-side redirect when forcing OG
 
@@ -246,7 +327,7 @@ class SocialMediaCrawlerMiddleware
     <script>
         // Redirect to frontend for regular users
         if (!navigator.userAgent.match(/facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|discordbot|skypeuripreview|applebot|googlebot|bingbot|yahoo|pinterest|redditbot/i)) {
-            window.location.href = '{$safeFrontendUrl}' + window.location.pathname + window.location.search;
+            window.location.href = '{$safeCanonical}';
         }
     </script>
 JS;
@@ -267,14 +348,14 @@ JS;
 
     <!-- Fallback redirect -->
     <noscript>
-        <meta http-equiv="refresh" content="0;url={$safeFrontendUrl}{$safeRequestUri}">
+        <meta http-equiv="refresh" content="0;url={$safeCanonical}">
     </noscript>
 </head>
 <body>
     <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
         <h1>LivroLog</h1>
         <p>Redirecionando...</p>
-        <p><a href="{$safeFrontendUrl}{$safeRequestUri}">Clique aqui se não for redirecionado automaticamente</a></p>
+        <p><a href="{$safeCanonical}">Clique aqui se não for redirecionado automaticamente</a></p>
     </div>
 </body>
 </html>
