@@ -277,7 +277,11 @@ class SocialMediaCrawlerMiddleware
             $metaData['book:release_date'] = $book->published_date->format('Y-m-d');
         }
 
-        $body = $this->renderBookBody($book, $fullTitle, $author, $currentUrl, $imageUrl, $isPt);
+        // Labels follow the book, not the crawler. Googlebot sends no Accept-Language, so a
+        // Portuguese book would otherwise be labelled in English on a page declaring lang="pt-BR".
+        $bodyIsPt = $book->language ? str_starts_with(strtolower((string) $book->language), 'pt') : $isPt;
+
+        $body = $this->renderBookBody($book, $fullTitle, $author, $currentUrl, $imageUrl, $bodyIsPt);
 
         return response($this->generateHtmlWithMetaTags($metaData, $forceOg, $body), 200, [
             'Content-Type' => 'text/html; charset=utf-8',
