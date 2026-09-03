@@ -185,6 +185,7 @@
 </template>
 
 <script setup lang="ts">
+import { resolvePreferredRegion } from '@/config/amazon'
 import BookDetailsPanel from '@/components/home/BookDetailsPanel.vue'
 import BookTagsSection from '@/components/home/BookTagsSection.vue'
 import ChangeCoverDialog from '@/components/home/ChangeCoverDialog.vue'
@@ -271,7 +272,7 @@ interface AmazonLink {
 const amazonLinks = computed((): AmazonLink[] => {
   if (!book.value) return []
 
-  const preferredRegion = userStore.me?.preferred_amazon_region || 'US'
+  const preferredRegion = resolvePreferredRegion(userStore.me?.preferred_amazon_region)
   let links: AmazonLink[] = []
 
   // Priority 1: Use amazon_links from API if available (books in database)

@@ -92,9 +92,9 @@
             <!-- CTA for guests -->
             <q-btn v-else color="primary" :label="$t('book.add-to-shelf')" no-caps rounded unelevated @click="promptLogin" />
 
-            <!-- Amazon Button - Direct link if only one region, dropdown if multiple -->
+            <!-- Amazon button: always opens the viewer's store; changed in Settings, not here -->
             <q-btn
-              v-if="amazonLinks.length > 0"
+              v-if="primaryAmazonLink"
               class="amazon-btn bg-amazon-orange"
               :href="primaryAmazonLink"
               icon="shopping_cart"
@@ -104,23 +104,6 @@
               :target="primaryAmazonLink ? '_blank' : undefined"
               unelevated
             >
-              <!-- Dropdown menu only if multiple regions -->
-              <q-menu v-if="amazonLinks.length > 1" anchor="bottom right" self="top right">
-                <q-list style="min-width: 220px">
-                  <q-item v-for="link in amazonLinks" :key="link.region" v-close-popup class="q-py-sm" clickable :href="link.url" target="_blank">
-                    <q-item-section avatar>
-                      <q-icon name="shopping_cart" size="sm" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{ link.label }}</q-item-label>
-                      <q-item-label caption>{{ link.domain }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-icon name="open_in_new" size="xs" />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
             </q-btn>
           </div>
         </div>
@@ -229,6 +212,7 @@
 </template>
 
 <script setup lang="ts">
+import { resolvePreferredRegion } from '@/config/amazon'
 import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
@@ -421,12 +405,14 @@ const amazonLinks = computed(() => {
   return []
 })
 
-// Direct link for single region, undefined for multiple (uses dropdown)
+// The store saved in Settings wins; the browser language only decides when none is set.
 const primaryAmazonLink = computed(() => {
-  if (amazonLinks.value.length === 1) {
-    return amazonLinks.value[0]?.url
-  }
-  return undefined
+  const links = amazonLinks.value
+  if (!links.length) return undefined
+
+  const region = resolvePreferredRegion(userStore.me?.preferred_amazon_region)
+
+  return (links.find((link) => link.region === region) ?? links[0])?.url
 })
 
 onMounted(() => {
