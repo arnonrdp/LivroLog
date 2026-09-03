@@ -69,6 +69,10 @@ Route::get('/', function () {
 // Sitemap for search engines. Generated from the catalogue, so adding a book adds a URL and
 // nothing here is ever maintained by hand. Registered before the /{username} catch-all, whose
 // pattern allows dots and would otherwise swallow "sitemap.xml".
+//
+// ponytail: single file, built in memory. The protocol caps a sitemap at 50,000 URLs and 50MB
+// (https://www.sitemaps.org/protocol.html); past that this must become a sitemap index pointing
+// at paginated files. The catalogue is in the hundreds, so that is a long way off.
 Route::get('/sitemap.xml', function () {
     $xml = Cache::remember('sitemap.xml', 3600, function () {
         $frontend = rtrim(config('app.frontend_url'), '/');
