@@ -277,16 +277,72 @@ class SocialMediaCrawlerMiddleware
             $metaData['book:release_date'] = $book->published_date->format('Y-m-d');
         }
 
-        return response($this->generateHtmlWithMetaTags($metaData, $forceOg), 200, [
+        $body = $this->renderBookBody($book, $fullTitle, $author, $currentUrl, $imageUrl, $isPt);
+
+        return response($this->generateHtmlWithMetaTags($metaData, $forceOg, $body), 200, [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 
     /**
+     * Build the visible page for a book.
+     *
+     * A crawler must be served the same thing a reader sees. Everything here is already on
+     * screen in the SPA; the difference is only that this copy survives without JavaScript.
+     */
+    private function renderBookBody(Book $book, string $fullTitle, string $author, string $canonical, string $fallbackImage, bool $isPt): string
+    {
+        $e = static fn (?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+
+        $cover = $book->thumbnail ? $e($book->thumbnail) : $e($fallbackImage);
+        $coverAlt = $e(($isPt ? 'Capa de ' : 'Cover of ').$fullTitle);
+
+        $heading = $e($fullTitle);
+        $byline = $author !== '' ? '<p class="author">'.$e(($isPt ? 'por ' : 'by ').$author).'</p>' : '';
+
+        $facts = '';
+        foreach ([
+            ($isPt ? 'Editora' : 'Publisher') => $book->publisher,
+            'ISBN' => $book->isbn,
+            ($isPt ? 'Publicado em' : 'Published') => $book->published_date?->format('Y'),
+            ($isPt ? 'Páginas' : 'Pages') => $book->page_count,
+        ] as $label => $value) {
+            if ($value !== null && $value !== '') {
+                $facts .= '<dt>'.$e($label).'</dt><dd>'.$e((string) $value).'</dd>';
+            }
+        }
+        $facts = $facts !== '' ? '<dl class="facts">'.$facts.'</dl>' : '';
+
+        // sanitized_description carries markdown emphasis markers the SPA renders away
+        $plain = trim(str_replace(['**', '__', '~~'], '', (string) $book->sanitized_description));
+        $description = '';
+        foreach (preg_split('/\n\s*\n/', $plain) ?: [] as $paragraph) {
+            $paragraph = trim((string) $paragraph);
+            if ($paragraph !== '') {
+                $description .= '<p>'.$e($paragraph).'</p>';
+            }
+        }
+
+        $cta = $e($isPt ? 'Ver no LivroLog' : 'See it on LivroLog');
+        $safeCanonical = $e($canonical);
+
+        return <<<BODY
+    <article>
+        <img src="{$cover}" alt="{$coverAlt}" width="240" />
+        <h1>{$heading}</h1>
+        {$byline}
+        {$facts}
+        {$description}
+        <p><a href="{$safeCanonical}">{$cta}</a></p>
+    </article>
+BODY;
+    }
+
+    /**
      * Generate HTML with dynamic meta tags
      */
-    private function generateHtmlWithMetaTags(array $metaData, bool $forceOg = false): string
+    private function generateHtmlWithMetaTags(array $metaData, bool $forceOg = false, ?string $bodyHtml = null): string
     {
         $metaTags = '';
 
@@ -316,8 +372,12 @@ class SocialMediaCrawlerMiddleware
         $safeCanonical = htmlspecialchars($canonicalUrl, ENT_QUOTES);
         $metaTags .= '<link rel="canonical" href="'.$safeCanonical.'">'."\n    ";
 
-        // Tell search engines not to index this API-served version
-        $metaTags .= '<meta name="robots" content="noindex, follow">'."\n    ";
+        // A page is indexable exactly when it carries real content. The redirect stub below
+        // must never reach the index, so the two decisions are deliberately tied together:
+        // give a render method a body and it becomes indexable, forget one and it cannot.
+        if ($bodyHtml === null) {
+            $metaTags .= '<meta name="robots" content="noindex, follow">'."\n    ";
+        }
 
         $includeClientRedirect = ! $forceOg; // do not include client-side redirect when forcing OG
 
@@ -332,6 +392,14 @@ class SocialMediaCrawlerMiddleware
     </script>
 JS;
         }
+
+        $pageBody = $bodyHtml ?? <<<STUB
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>LivroLog</h1>
+        <p>Redirecionando...</p>
+        <p><a href="{$safeCanonical}">Clique aqui se não for redirecionado automaticamente</a></p>
+    </div>
+STUB;
 
         return <<<HTML
 <!DOCTYPE html>
@@ -352,11 +420,7 @@ JS;
     </noscript>
 </head>
 <body>
-    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-        <h1>LivroLog</h1>
-        <p>Redirecionando...</p>
-        <p><a href="{$safeCanonical}">Clique aqui se não for redirecionado automaticamente</a></p>
-    </div>
+{$pageBody}
 </body>
 </html>
 HTML;

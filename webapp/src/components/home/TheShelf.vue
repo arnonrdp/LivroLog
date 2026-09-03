@@ -8,7 +8,13 @@
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable only for authenticated users on other shelves -->
-      <div :class="['book-cover', { clickable: canOpenBookDialog }]" @click="openBookDialog(book)">
+      <!-- A real href so crawlers (and cmd+click) can reach the book page; a plain click still
+           opens the dialog, which is what a reader browsing a shelf expects. -->
+      <a
+        :class="['book-cover', { clickable: canOpenBookDialog }]"
+        :href="`/books/${book.id}`"
+        @click.exact.prevent="openBookDialog(book)"
+      >
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <BookCoverPlaceholder v-else :title="book.title" />
 
@@ -18,7 +24,7 @@
             <q-tooltip>{{ tag.name }}</q-tooltip>
           </div>
         </div>
-      </div>
+      </a>
 
       <q-tooltip anchor="bottom middle" class="bg-black" self="center middle">
         {{ book.title }}
@@ -140,6 +146,8 @@ section figure
     z-index: 1
 
 .book-cover
+  color: inherit
+  text-decoration: none
   position: relative
   transition: transform 0.2s ease
 

@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Book;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +66,37 @@ Route::get('/', function () {
 
 // Catch-all route for user profiles - must be last
 // This will handle routes like /arnon, /wanderson, etc.
+// Sitemap for search engines. Generated from the catalogue, so adding a book adds a URL and
+// nothing here is ever maintained by hand. Registered before the /{username} catch-all, whose
+// pattern allows dots and would otherwise swallow "sitemap.xml".
+Route::get('/sitemap.xml', function () {
+    $xml = Cache::remember('sitemap.xml', 3600, function () {
+        $frontend = rtrim(config('app.frontend_url'), '/');
+
+        // Only pages a crawler can actually read are listed. The authenticated routes that
+        // used to sit in the static file were dead weight, and so was the literal "/:username".
+        $urls = ['<url><loc>'.htmlspecialchars($frontend).'</loc><changefreq>daily</changefreq><priority>1.0</priority></url>'];
+
+        Book::query()
+            ->select('id', 'updated_at')
+            ->orderBy('id')
+            ->chunk(500, function ($books) use (&$urls, $frontend) {
+                foreach ($books as $book) {
+                    $loc = htmlspecialchars($frontend.'/books/'.rawurlencode($book->id));
+                    $lastmod = $book->updated_at?->toAtomString();
+                    $urls[] = '<url><loc>'.$loc.'</loc>'.($lastmod ? '<lastmod>'.$lastmod.'</lastmod>' : '').'<changefreq>weekly</changefreq></url>';
+                }
+            });
+
+        return '<?xml version="1.0" encoding="UTF-8"?>'."\n"
+            .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n"
+            .implode("\n", $urls)."\n"
+            .'</urlset>';
+    });
+
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+});
+
 Route::get('/{username}', function (string $username) {
     // This route is handled by SocialMediaCrawlerMiddleware
     // For regular users, it should redirect to frontend
