@@ -252,3 +252,20 @@ export function getAmazonSearchUrl(domain: string): string {
 export function getAmazonStore(code: string): AmazonStore | undefined {
   return AMAZON_STORES.find((store) => store.code === code)
 }
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void
+  }
+}
+
+/**
+ * Report an outbound affiliate click to GA4.
+ *
+ * Without this the Associates dashboard is the only signal we have, and it only counts clicks
+ * that reached Amazon carrying a tag we own — so a click on an untagged store is
+ * indistinguishable from no click at all.
+ */
+export function trackAffiliateClick(bookId: string | undefined, region: string): void {
+  window.gtag?.('event', 'affiliate_click', { book_id: bookId ?? 'unknown', region })
+}

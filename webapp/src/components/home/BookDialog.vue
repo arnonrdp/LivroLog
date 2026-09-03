@@ -2,6 +2,7 @@
   <BookDetailsPanel
     v-model="showDialog"
     :amazon-link="preferredAmazonLink?.url"
+    :amazon-region="preferredAmazonLink?.region"
     :book="book || undefined"
     :is-book-in-library="isBookInLibrary"
     :is-own-shelf="!props.userIdentifier"

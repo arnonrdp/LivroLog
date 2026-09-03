@@ -94,18 +94,19 @@
 
             <!-- Amazon button: always opens the viewer's store; changed in Settings, not here -->
             <q-btn
-              v-if="primaryAmazonLink"
+              v-if="primaryAmazonStore"
               class="amazon-btn bg-amazon-orange"
-              :href="primaryAmazonLink"
+              :href="primaryAmazonStore.url"
               icon="shopping_cart"
               :label="$t(book?.amazon_asin ? 'book.buy-amazon' : 'search-on-amazon')"
               no-caps
               rounded
-              :target="primaryAmazonLink ? '_blank' : undefined"
+              target="_blank"
               unelevated
-            >
-            </q-btn>
+              @click="trackAffiliateClick(book?.id, primaryAmazonStore.region)"
+            />
           </div>
+          <p v-if="primaryAmazonStore" class="affiliate-disclosure">{{ $t('affiliate-disclosure') }}</p>
         </div>
       </div>
 
@@ -212,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { resolvePreferredRegion } from '@/config/amazon'
+import { resolvePreferredRegion, trackAffiliateClick } from '@/config/amazon'
 import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, ReadingStatus, Review } from '@/models'
 import { useAuthStore, useUserBookStore, useUserStore } from '@/stores'
@@ -406,13 +407,13 @@ const amazonLinks = computed(() => {
 })
 
 // The store saved in Settings wins; the browser language only decides when none is set.
-const primaryAmazonLink = computed(() => {
+const primaryAmazonStore = computed(() => {
   const links = amazonLinks.value
   if (!links.length) return undefined
 
   const region = resolvePreferredRegion(userStore.me?.preferred_amazon_region)
 
-  return (links.find((link) => link.region === region) ?? links[0])?.url
+  return links.find((link) => link.region === region) ?? links[0]
 })
 
 onMounted(() => {
@@ -838,4 +839,9 @@ function handleImageError() {
   flex-wrap: wrap
   gap: 0.75rem
   justify-content: center
+
+.affiliate-disclosure
+  font-size: 0.7rem
+  margin: 0.5rem 0 0
+  opacity: 0.6
 </style>
