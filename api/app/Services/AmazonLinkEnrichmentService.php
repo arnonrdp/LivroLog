@@ -9,17 +9,17 @@ class AmazonLinkEnrichmentService
         'US' => [
             'domain' => 'amazon.com',
             'search_url' => 'https://www.amazon.com/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'CA' => [
             'domain' => 'amazon.ca',
             'search_url' => 'https://www.amazon.ca/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'MX' => [
             'domain' => 'amazon.com.mx',
             'search_url' => 'https://www.amazon.com.mx/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'BR' => [
             'domain' => 'amazon.com.br',
@@ -30,99 +30,99 @@ class AmazonLinkEnrichmentService
         'UK' => [
             'domain' => 'amazon.co.uk',
             'search_url' => 'https://www.amazon.co.uk/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'DE' => [
             'domain' => 'amazon.de',
             'search_url' => 'https://www.amazon.de/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'FR' => [
             'domain' => 'amazon.fr',
             'search_url' => 'https://www.amazon.fr/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'IT' => [
             'domain' => 'amazon.it',
             'search_url' => 'https://www.amazon.it/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'ES' => [
             'domain' => 'amazon.es',
             'search_url' => 'https://www.amazon.es/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'NL' => [
             'domain' => 'amazon.nl',
             'search_url' => 'https://www.amazon.nl/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'SE' => [
             'domain' => 'amazon.se',
             'search_url' => 'https://www.amazon.se/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'PL' => [
             'domain' => 'amazon.pl',
             'search_url' => 'https://www.amazon.pl/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'BE' => [
             'domain' => 'amazon.com.be',
             'search_url' => 'https://www.amazon.com.be/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'TR' => [
             'domain' => 'amazon.com.tr',
             'search_url' => 'https://www.amazon.com.tr/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'IE' => [
             'domain' => 'amazon.ie',
             'search_url' => 'https://www.amazon.ie/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         // Asia-Pacific
         'JP' => [
             'domain' => 'amazon.co.jp',
             'search_url' => 'https://www.amazon.co.jp/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'IN' => [
             'domain' => 'amazon.in',
             'search_url' => 'https://www.amazon.in/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'AU' => [
             'domain' => 'amazon.com.au',
             'search_url' => 'https://www.amazon.com.au/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'SG' => [
             'domain' => 'amazon.sg',
             'search_url' => 'https://www.amazon.sg/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         // Middle East & Africa
         'AE' => [
             'domain' => 'amazon.ae',
             'search_url' => 'https://www.amazon.ae/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'SA' => [
             'domain' => 'amazon.sa',
             'search_url' => 'https://www.amazon.sa/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'EG' => [
             'domain' => 'amazon.eg',
             'search_url' => 'https://www.amazon.eg/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
         'ZA' => [
             'domain' => 'amazon.co.za',
             'search_url' => 'https://www.amazon.co.za/s',
-            'associate_tag' => 'livrolog-20',
+            'associate_tag' => null,
         ],
     ];
 
@@ -133,11 +133,6 @@ class AmazonLinkEnrichmentService
         }
 
         $region = $this->detectOptimalRegion($options);
-        $associateTag = $this->regionConfig[$region]['associate_tag'];
-
-        if (! $associateTag) {
-            return $books;
-        }
 
         foreach ($books as &$book) {
             // Detect region based on book language, fallback to user preference
@@ -151,13 +146,15 @@ class AmazonLinkEnrichmentService
         return $books;
     }
 
-    private function generateAmazonLink(array $book, string $region, string $associateTag): string
+    private function generateAmazonLink(array $book, string $region, ?string $associateTag): string
     {
         $domain = $this->regionConfig[$region]['domain'];
 
         // Se tiver ASIN, gera link direto para o produto
         if (! empty($book['amazon_asin'])) {
-            return "https://www.{$domain}/dp/{$book['amazon_asin']}?tag={$associateTag}";
+            $productUrl = "https://www.{$domain}/dp/{$book['amazon_asin']}";
+
+            return $associateTag ? $productUrl."?tag={$associateTag}" : $productUrl;
         }
 
         // Fallback: gera link de busca
@@ -176,12 +173,17 @@ class AmazonLinkEnrichmentService
             $searchTerm = 'book';
         }
 
-        return $searchUrl.'?'.http_build_query([
+        $query = [
             'k' => $searchTerm,
             'i' => 'stripbooks',
-            'tag' => $associateTag,
             'ref' => 'nb_sb_noss',
-        ]);
+        ];
+
+        if ($associateTag) {
+            $query['tag'] = $associateTag;
+        }
+
+        return $searchUrl.'?'.http_build_query($query);
     }
 
     private function detectOptimalRegion(array $options): string

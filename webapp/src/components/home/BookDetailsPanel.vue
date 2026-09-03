@@ -62,7 +62,7 @@
                   target="_blank"
                   type="a"
                 >
-                  <q-tooltip>{{ $t('buy-on-amazon') }}</q-tooltip>
+                  <q-tooltip>{{ $t(book?.amazon_asin ? 'buy-on-amazon' : 'search-on-amazon') }}</q-tooltip>
                 </q-btn>
               </template>
               <template v-else>
@@ -73,7 +73,7 @@
                   data-testid="amazon-btn"
                   :href="amazonLink"
                   icon="shopping_cart"
-                  :label="$t('buy-on-amazon')"
+                  :label="$t(book?.amazon_asin ? 'buy-on-amazon' : 'search-on-amazon')"
                   no-caps
                   rounded
                   target="_blank"

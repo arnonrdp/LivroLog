@@ -98,7 +98,7 @@
               class="amazon-btn bg-amazon-orange"
               :href="primaryAmazonLink"
               icon="shopping_cart"
-              :label="$t('book.buy-amazon')"
+              :label="$t(book?.amazon_asin ? 'book.buy-amazon' : 'search-on-amazon')"
               no-caps
               rounded
               :target="primaryAmazonLink ? '_blank' : undefined"
