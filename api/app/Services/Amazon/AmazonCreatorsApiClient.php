@@ -149,7 +149,6 @@ class AmazonCreatorsApiClient
     private function makeRequest(string $url, array $payload, string $marketplace, int $retryCount = 0): array
     {
         $accessToken = $this->tokenManager->getAccessToken();
-        $version = config('services.amazon.creators_api.api_version', '2.1');
 
         Log::info('Amazon Creators API Request', [
             'url' => $url,
@@ -162,7 +161,7 @@ class AmazonCreatorsApiClient
             'x-marketplace' => $marketplace,
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'Authorization' => "Bearer {$accessToken}, Version {$version}",
+            'Authorization' => "Bearer {$accessToken}",
         ])
             ->timeout(30)
             ->post($url, $payload);

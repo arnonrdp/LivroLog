@@ -61,8 +61,9 @@
                   round
                   target="_blank"
                   type="a"
+                  @click="trackAffiliateClick(book?.id, amazonRegion ?? '')"
                 >
-                  <q-tooltip>{{ $t('buy-on-amazon') }}</q-tooltip>
+                  <q-tooltip>{{ $t(book?.amazon_asin ? 'buy-on-amazon' : 'search-on-amazon') }}</q-tooltip>
                 </q-btn>
               </template>
               <template v-else>
@@ -73,13 +74,14 @@
                   data-testid="amazon-btn"
                   :href="amazonLink"
                   icon="shopping_cart"
-                  :label="$t('buy-on-amazon')"
+                  :label="$t(book?.amazon_asin ? 'buy-on-amazon' : 'search-on-amazon')"
                   no-caps
                   rounded
                   target="_blank"
                   text-color="dark"
                   type="a"
                   unelevated
+                  @click="trackAffiliateClick(book?.id, amazonRegion ?? '')"
                 />
                 <q-btn
                   v-if="amazonLink"
@@ -109,6 +111,7 @@
                 />
               </template>
             </div>
+            <p v-if="amazonLink" class="affiliate-disclosure">{{ $t('affiliate-disclosure') }}</p>
           </div>
         </div>
 
@@ -243,10 +246,12 @@ import FormattedDescription from '@/components/common/FormattedDescription.vue'
 import type { Book, ReadingStatus, Review } from '@/models'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { trackAffiliateClick } from '@/config/amazon'
 
 const props = withDefaults(
   defineProps<{
     amazonLink?: string
+    amazonRegion?: string
     book?: Book
     isBookInLibrary?: boolean
     isOwnShelf?: boolean
@@ -422,6 +427,11 @@ function onCoverClick() {
   font-weight: 500
   letter-spacing: 0.6px
   text-transform: uppercase
+
+.affiliate-disclosure
+  font-size: 0.7rem
+  margin: 0.5rem 0 0
+  opacity: 0.6
 </style>
 
 <style lang="sass">

@@ -65,7 +65,7 @@ return [
             'credential_id' => env('AMAZON_CREATORS_CREDENTIAL_ID'),
             'credential_secret' => env('AMAZON_CREATORS_CREDENTIAL_SECRET'),
             'application_id' => env('AMAZON_CREATORS_APPLICATION_ID'),
-            'api_version' => '2.1',
+            'api_version' => '3.1',
         ],
 
         // Provider selection: 'creators' (OAuth 2.0) or 'pa-api' (AWS Signature)

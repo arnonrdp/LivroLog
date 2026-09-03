@@ -277,16 +277,119 @@ class SocialMediaCrawlerMiddleware
             $metaData['book:release_date'] = $book->published_date->format('Y-m-d');
         }
 
-        return response($this->generateHtmlWithMetaTags($metaData, $forceOg), 200, [
+        // Labels follow the book, not the crawler. Googlebot sends no Accept-Language, so a
+        // Portuguese book would otherwise be labelled in English on a page declaring lang="pt-BR".
+        $bodyIsPt = $book->language ? str_starts_with(strtolower((string) $book->language), 'pt') : $isPt;
+
+        $body = $this->renderBookBody($book, $fullTitle, $author, $currentUrl, $imageUrl, $bodyIsPt);
+
+        return response($this->generateHtmlWithMetaTags($metaData, $forceOg, $body), 200, [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 
     /**
+     * schema.org/Book as JSON-LD, which is what search engines read for rich results.
+     *
+     * Deliberately carries no aggregateRating. The ratings on hand are amazon_rating and
+     * amazon_rating_count, scraped from another site, and Google is explicit: "Don't aggregate
+     * reviews or ratings from other websites."
+     * https://developers.google.com/search/docs/appearance/structured-data/review-snippet
+     * LivroLog's own Review data could be marked up, but only once the reviews are rendered on
+     * the page itself, which they are not yet.
+     */
+    private function bookJsonLd(Book $book, string $fullTitle, string $author, string $canonical, string $cover): string
+    {
+        $data = array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'Book',
+            'name' => $fullTitle,
+            'url' => $canonical,
+            'image' => $cover !== '' ? html_entity_decode($cover, ENT_QUOTES, 'UTF-8') : null,
+            'isbn' => $book->isbn ?: null,
+            'numberOfPages' => $book->page_count ? (int) $book->page_count : null,
+            'inLanguage' => $book->language ?: null,
+            'datePublished' => $book->published_date?->format('Y-m-d'),
+            'description' => trim(str_replace(['**', '__', '~~'], '', (string) $book->sanitized_description)) ?: null,
+        ], static fn ($value) => $value !== null && $value !== '');
+
+        if ($author !== '') {
+            $names = array_values(array_filter(array_map('trim', explode(',', $author))));
+            $people = array_map(static fn (string $name) => ['@type' => 'Person', 'name' => $name], $names);
+            $data['author'] = count($people) === 1 ? $people[0] : $people;
+        }
+
+        if ($book->publisher) {
+            $data['publisher'] = ['@type' => 'Organization', 'name' => $book->publisher];
+        }
+
+        // JSON_HEX_TAG keeps a "</script>" inside any field from closing the block early
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG);
+
+        return '<script type="application/ld+json">'.$json.'</script>';
+    }
+
+    /**
+     * Build the visible page for a book.
+     *
+     * A crawler must be served the same thing a reader sees. Everything here is already on
+     * screen in the SPA; the difference is only that this copy survives without JavaScript.
+     */
+    private function renderBookBody(Book $book, string $fullTitle, string $author, string $canonical, string $fallbackImage, bool $isPt): string
+    {
+        $e = static fn (?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+
+        $cover = $book->thumbnail ? $e($book->thumbnail) : $e($fallbackImage);
+        $coverAlt = $e(($isPt ? 'Capa de ' : 'Cover of ').$fullTitle);
+
+        $heading = $e($fullTitle);
+        $byline = $author !== '' ? '<p class="author">'.$e(($isPt ? 'por ' : 'by ').$author).'</p>' : '';
+
+        $facts = '';
+        foreach ([
+            ($isPt ? 'Editora' : 'Publisher') => $book->publisher,
+            'ISBN' => $book->isbn,
+            ($isPt ? 'Publicado em' : 'Published') => $book->published_date?->format('Y'),
+            ($isPt ? 'Páginas' : 'Pages') => $book->page_count,
+        ] as $label => $value) {
+            if ($value !== null && $value !== '') {
+                $facts .= '<dt>'.$e($label).'</dt><dd>'.$e((string) $value).'</dd>';
+            }
+        }
+        $facts = $facts !== '' ? '<dl class="facts">'.$facts.'</dl>' : '';
+
+        // sanitized_description carries markdown emphasis markers the SPA renders away
+        $plain = trim(str_replace(['**', '__', '~~'], '', (string) $book->sanitized_description));
+        $description = '';
+        foreach (preg_split('/\n\s*\n/', $plain) ?: [] as $paragraph) {
+            $paragraph = trim((string) $paragraph);
+            if ($paragraph !== '') {
+                $description .= '<p>'.$e($paragraph).'</p>';
+            }
+        }
+
+        $cta = $e($isPt ? 'Ver no LivroLog' : 'See it on LivroLog');
+        $safeCanonical = $e($canonical);
+        $jsonLd = $this->bookJsonLd($book, $fullTitle, $author, $canonical, $cover);
+
+        return <<<BODY
+    {$jsonLd}
+    <article>
+        <img src="{$cover}" alt="{$coverAlt}" width="240" />
+        <h1>{$heading}</h1>
+        {$byline}
+        {$facts}
+        {$description}
+        <p><a href="{$safeCanonical}">{$cta}</a></p>
+    </article>
+BODY;
+    }
+
+    /**
      * Generate HTML with dynamic meta tags
      */
-    private function generateHtmlWithMetaTags(array $metaData, bool $forceOg = false): string
+    private function generateHtmlWithMetaTags(array $metaData, bool $forceOg = false, ?string $bodyHtml = null): string
     {
         $metaTags = '';
 
@@ -316,8 +419,12 @@ class SocialMediaCrawlerMiddleware
         $safeCanonical = htmlspecialchars($canonicalUrl, ENT_QUOTES);
         $metaTags .= '<link rel="canonical" href="'.$safeCanonical.'">'."\n    ";
 
-        // Tell search engines not to index this API-served version
-        $metaTags .= '<meta name="robots" content="noindex, follow">'."\n    ";
+        // A page is indexable exactly when it carries real content. The redirect stub below
+        // must never reach the index, so the two decisions are deliberately tied together:
+        // give a render method a body and it becomes indexable, forget one and it cannot.
+        if ($bodyHtml === null) {
+            $metaTags .= '<meta name="robots" content="noindex, follow">'."\n    ";
+        }
 
         $includeClientRedirect = ! $forceOg; // do not include client-side redirect when forcing OG
 
@@ -332,6 +439,14 @@ class SocialMediaCrawlerMiddleware
     </script>
 JS;
         }
+
+        $pageBody = $bodyHtml ?? <<<STUB
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>LivroLog</h1>
+        <p>Redirecionando...</p>
+        <p><a href="{$safeCanonical}">Clique aqui se não for redirecionado automaticamente</a></p>
+    </div>
+STUB;
 
         return <<<HTML
 <!DOCTYPE html>
@@ -352,11 +467,7 @@ JS;
     </noscript>
 </head>
 <body>
-    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-        <h1>LivroLog</h1>
-        <p>Redirecionando...</p>
-        <p><a href="{$safeCanonical}">Clique aqui se não for redirecionado automaticamente</a></p>
-    </div>
+{$pageBody}
 </body>
 </html>
 HTML;

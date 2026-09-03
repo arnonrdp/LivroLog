@@ -1,6 +1,5 @@
 export interface AmazonRegionConfig {
   domain: string
-  tag: string
   language: string
 }
 
@@ -15,120 +14,97 @@ export const AMAZON_REGIONS: Record<string, AmazonRegionConfig> = {
   // Americas
   US: {
     domain: 'amazon.com',
-    tag: 'livrolog-20',
     language: 'en-US'
   },
   CA: {
     domain: 'amazon.ca',
-    tag: 'livrolog-20',
     language: 'en-CA'
   },
   MX: {
     domain: 'amazon.com.mx',
-    tag: 'livrolog-20',
     language: 'es-MX'
   },
   BR: {
     domain: 'amazon.com.br',
-    tag: 'livrolog01-20',
     language: 'pt-BR'
   },
   // Europe
   UK: {
     domain: 'amazon.co.uk',
-    tag: 'livrolog-20',
     language: 'en-GB'
   },
   DE: {
     domain: 'amazon.de',
-    tag: 'livrolog-20',
     language: 'de-DE'
   },
   FR: {
     domain: 'amazon.fr',
-    tag: 'livrolog-20',
     language: 'fr-FR'
   },
   IT: {
     domain: 'amazon.it',
-    tag: 'livrolog-20',
     language: 'it-IT'
   },
   ES: {
     domain: 'amazon.es',
-    tag: 'livrolog-20',
     language: 'es-ES'
   },
   NL: {
     domain: 'amazon.nl',
-    tag: 'livrolog-20',
     language: 'nl-NL'
   },
   SE: {
     domain: 'amazon.se',
-    tag: 'livrolog-20',
     language: 'sv-SE'
   },
   PL: {
     domain: 'amazon.pl',
-    tag: 'livrolog-20',
     language: 'pl-PL'
   },
   BE: {
     domain: 'amazon.com.be',
-    tag: 'livrolog-20',
     language: 'nl-BE'
   },
   TR: {
     domain: 'amazon.com.tr',
-    tag: 'livrolog-20',
     language: 'tr-TR'
   },
   IE: {
     domain: 'amazon.ie',
-    tag: 'livrolog-20',
     language: 'en-IE'
   },
   // Asia-Pacific
   JP: {
     domain: 'amazon.co.jp',
-    tag: 'livrolog-20',
     language: 'ja-JP'
   },
   IN: {
     domain: 'amazon.in',
-    tag: 'livrolog-20',
     language: 'en-IN'
   },
   AU: {
     domain: 'amazon.com.au',
-    tag: 'livrolog-20',
     language: 'en-AU'
   },
   SG: {
     domain: 'amazon.sg',
-    tag: 'livrolog-20',
     language: 'en-SG'
   },
   // Middle East & Africa
   AE: {
     domain: 'amazon.ae',
-    tag: 'livrolog-20',
     language: 'en-AE'
   },
   SA: {
     domain: 'amazon.sa',
-    tag: 'livrolog-20',
     language: 'ar-SA'
   },
   EG: {
     domain: 'amazon.eg',
-    tag: 'livrolog-20',
     language: 'ar-EG'
   },
   ZA: {
     domain: 'amazon.co.za',
-    tag: 'livrolog-20',
     language: 'en-ZA'
   }
 }
@@ -170,79 +146,97 @@ export const AMAZON_STORE_GROUPS = {
   'middle-east-africa': 'amazon-group-middle-east-africa'
 } as const
 
-export const DEFAULT_REGION = 'US'
+export const DEFAULT_REGION = 'BR'
+
+const LOCALE_TO_REGION: Record<string, string> = {
+  // Americas
+  'pt-br': 'BR',
+  pt_br: 'BR',
+  pt: 'BR',
+  'en-us': 'US',
+  en_us: 'US',
+  'en-ca': 'CA',
+  en_ca: 'CA',
+  'es-mx': 'MX',
+  es_mx: 'MX',
+  // Europe
+  'en-gb': 'UK',
+  en_gb: 'UK',
+  'de-de': 'DE',
+  de_de: 'DE',
+  'fr-fr': 'FR',
+  fr_fr: 'FR',
+  'it-it': 'IT',
+  it_it: 'IT',
+  'es-es': 'ES',
+  es_es: 'ES',
+  'nl-nl': 'NL',
+  nl_nl: 'NL',
+  'sv-se': 'SE',
+  sv_se: 'SE',
+  'pl-pl': 'PL',
+  pl_pl: 'PL',
+  'nl-be': 'BE',
+  nl_be: 'BE',
+  'tr-tr': 'TR',
+  tr_tr: 'TR',
+  'en-ie': 'IE',
+  en_ie: 'IE',
+  // Asia-Pacific
+  'ja-jp': 'JP',
+  ja_jp: 'JP',
+  ja: 'JP',
+  'en-in': 'IN',
+  en_in: 'IN',
+  'hi-in': 'IN',
+  hi_in: 'IN',
+  'en-au': 'AU',
+  en_au: 'AU',
+  'en-sg': 'SG',
+  en_sg: 'SG',
+  // Middle East & Africa
+  'ar-ae': 'AE',
+  ar_ae: 'AE',
+  'en-ae': 'AE',
+  en_ae: 'AE',
+  'ar-sa': 'SA',
+  ar_sa: 'SA',
+  'ar-eg': 'EG',
+  ar_eg: 'EG',
+  'en-za': 'ZA',
+  en_za: 'ZA'
+}
+
+/**
+ * Map a locale string to an Amazon region code.
+ */
+export function getAmazonRegionCode(locale: string): string {
+  const lower = locale.toLowerCase()
+  const match = Object.keys(LOCALE_TO_REGION).find((key) => lower.startsWith(key))
+
+  return match ? LOCALE_TO_REGION[match]! : DEFAULT_REGION
+}
+
+/**
+ * Decide which Amazon store to open for the current viewer.
+ *
+ * The store saved in Settings always wins. Only when none is set do we guess from the
+ * browser language, and BR is the last resort because it is the one marketplace whose
+ * affiliate tag belongs to us.
+ */
+export function resolvePreferredRegion(userRegion?: string | null): string {
+  if (userRegion && userRegion in AMAZON_REGIONS) return userRegion
+
+  const browserLocale = typeof navigator === 'undefined' ? '' : navigator.language
+
+  return browserLocale ? getAmazonRegionCode(browserLocale) : DEFAULT_REGION
+}
 
 /**
  * Get Amazon region configuration based on locale
  */
 export function getAmazonRegionConfig(locale: string): AmazonRegionConfig {
-  const lowerLocale = locale.toLowerCase()
-
-  // Map locales to regions
-  const localeToRegion: Record<string, string> = {
-    // Americas
-    'pt-br': 'BR',
-    pt_br: 'BR',
-    pt: 'BR',
-    'en-us': 'US',
-    en_us: 'US',
-    'en-ca': 'CA',
-    en_ca: 'CA',
-    'es-mx': 'MX',
-    es_mx: 'MX',
-    // Europe
-    'en-gb': 'UK',
-    en_gb: 'UK',
-    'de-de': 'DE',
-    de_de: 'DE',
-    'fr-fr': 'FR',
-    fr_fr: 'FR',
-    'it-it': 'IT',
-    it_it: 'IT',
-    'es-es': 'ES',
-    es_es: 'ES',
-    'nl-nl': 'NL',
-    nl_nl: 'NL',
-    'sv-se': 'SE',
-    sv_se: 'SE',
-    'pl-pl': 'PL',
-    pl_pl: 'PL',
-    'nl-be': 'BE',
-    nl_be: 'BE',
-    'tr-tr': 'TR',
-    tr_tr: 'TR',
-    'en-ie': 'IE',
-    en_ie: 'IE',
-    // Asia-Pacific
-    'ja-jp': 'JP',
-    ja_jp: 'JP',
-    ja: 'JP',
-    'en-in': 'IN',
-    en_in: 'IN',
-    'hi-in': 'IN',
-    hi_in: 'IN',
-    'en-au': 'AU',
-    en_au: 'AU',
-    'en-sg': 'SG',
-    en_sg: 'SG',
-    // Middle East & Africa
-    'ar-ae': 'AE',
-    ar_ae: 'AE',
-    'en-ae': 'AE',
-    en_ae: 'AE',
-    'ar-sa': 'SA',
-    ar_sa: 'SA',
-    'ar-eg': 'EG',
-    ar_eg: 'EG',
-    'en-za': 'ZA',
-    en_za: 'ZA'
-  }
-
-  // Find matching region
-  const region = Object.keys(localeToRegion).find((key) => lowerLocale.startsWith(key))
-
-  const regionCode = region ? localeToRegion[region] : DEFAULT_REGION
-  return AMAZON_REGIONS[regionCode as keyof typeof AMAZON_REGIONS] || AMAZON_REGIONS[DEFAULT_REGION]!
+  return AMAZON_REGIONS[getAmazonRegionCode(locale)] ?? AMAZON_REGIONS[DEFAULT_REGION]!
 }
 
 /**
@@ -257,4 +251,21 @@ export function getAmazonSearchUrl(domain: string): string {
  */
 export function getAmazonStore(code: string): AmazonStore | undefined {
   return AMAZON_STORES.find((store) => store.code === code)
+}
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void
+  }
+}
+
+/**
+ * Report an outbound affiliate click to GA4.
+ *
+ * Without this the Associates dashboard is the only signal we have, and it only counts clicks
+ * that reached Amazon carrying a tag we own — so a click on an untagged store is
+ * indistinguishable from no click at all.
+ */
+export function trackAffiliateClick(bookId: string | undefined, region: string): void {
+  window.gtag?.('event', 'affiliate_click', { book_id: bookId ?? 'unknown', region })
 }
