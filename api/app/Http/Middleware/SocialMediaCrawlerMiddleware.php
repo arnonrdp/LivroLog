@@ -290,6 +290,47 @@ class SocialMediaCrawlerMiddleware
     }
 
     /**
+     * schema.org/Book as JSON-LD, which is what search engines read for rich results.
+     *
+     * Deliberately carries no aggregateRating. The ratings on hand are amazon_rating and
+     * amazon_rating_count, scraped from another site, and Google is explicit: "Don't aggregate
+     * reviews or ratings from other websites."
+     * https://developers.google.com/search/docs/appearance/structured-data/review-snippet
+     * LivroLog's own Review data could be marked up, but only once the reviews are rendered on
+     * the page itself, which they are not yet.
+     */
+    private function bookJsonLd(Book $book, string $fullTitle, string $author, string $canonical, string $cover): string
+    {
+        $data = array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'Book',
+            'name' => $fullTitle,
+            'url' => $canonical,
+            'image' => $cover !== '' ? html_entity_decode($cover, ENT_QUOTES, 'UTF-8') : null,
+            'isbn' => $book->isbn ?: null,
+            'numberOfPages' => $book->page_count ? (int) $book->page_count : null,
+            'inLanguage' => $book->language ?: null,
+            'datePublished' => $book->published_date?->format('Y-m-d'),
+            'description' => trim(str_replace(['**', '__', '~~'], '', (string) $book->sanitized_description)) ?: null,
+        ], static fn ($value) => $value !== null && $value !== '');
+
+        if ($author !== '') {
+            $names = array_values(array_filter(array_map('trim', explode(',', $author))));
+            $people = array_map(static fn (string $name) => ['@type' => 'Person', 'name' => $name], $names);
+            $data['author'] = count($people) === 1 ? $people[0] : $people;
+        }
+
+        if ($book->publisher) {
+            $data['publisher'] = ['@type' => 'Organization', 'name' => $book->publisher];
+        }
+
+        // JSON_HEX_TAG keeps a "</script>" inside any field from closing the block early
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG);
+
+        return '<script type="application/ld+json">'.$json.'</script>';
+    }
+
+    /**
      * Build the visible page for a book.
      *
      * A crawler must be served the same thing a reader sees. Everything here is already on
@@ -330,8 +371,10 @@ class SocialMediaCrawlerMiddleware
 
         $cta = $e($isPt ? 'Ver no LivroLog' : 'See it on LivroLog');
         $safeCanonical = $e($canonical);
+        $jsonLd = $this->bookJsonLd($book, $fullTitle, $author, $canonical, $cover);
 
         return <<<BODY
+    {$jsonLd}
     <article>
         <img src="{$cover}" alt="{$coverAlt}" width="240" />
         <h1>{$heading}</h1>
