@@ -12,13 +12,14 @@ class AmazonOAuthTokenManager
 
     private const TOKEN_TTL_SECONDS = 3300; // 55 minutes (5 min buffer before 1 hour expiry)
 
-    private const SCOPE = 'creatorsapi/default';
+    private const SCOPE = 'creatorsapi::default';
 
-    // Token endpoints by credential version (region)
+    // Login with Amazon token endpoints by credential version (region).
+    // The v2.x Cognito endpoints were retired on 2026-09-11.
     private const TOKEN_ENDPOINTS = [
-        '2.1' => 'https://creatorsapi.auth.us-east-1.amazoncognito.com/oauth2/token', // NA
-        '2.2' => 'https://creatorsapi.auth.eu-south-2.amazoncognito.com/oauth2/token', // EU
-        '2.3' => 'https://creatorsapi.auth.us-west-2.amazoncognito.com/oauth2/token', // FE
+        '3.1' => 'https://api.amazon.com/auth/o2/token', // NA: US, CA, MX, BR
+        '3.2' => 'https://api.amazon.co.uk/auth/o2/token', // EU
+        '3.3' => 'https://api.amazon.co.jp/auth/o2/token', // FE
     ];
 
     private string $credentialId;
@@ -33,7 +34,7 @@ class AmazonOAuthTokenManager
     {
         $this->credentialId = config('services.amazon.creators_api.credential_id', '');
         $this->credentialSecret = config('services.amazon.creators_api.credential_secret', '');
-        $this->version = config('services.amazon.creators_api.api_version', '2.1');
+        $this->version = config('services.amazon.creators_api.api_version', '3.1');
 
         // Allow explicit configuration of token endpoint, falling back to version-based defaults
         $configuredEndpoint = config('services.amazon.creators_api.token_endpoint');
@@ -41,7 +42,7 @@ class AmazonOAuthTokenManager
         if (! empty($configuredEndpoint)) {
             $this->tokenEndpoint = $configuredEndpoint;
         } else {
-            $this->tokenEndpoint = self::TOKEN_ENDPOINTS[$this->version] ?? self::TOKEN_ENDPOINTS['2.1'];
+            $this->tokenEndpoint = self::TOKEN_ENDPOINTS[$this->version] ?? self::TOKEN_ENDPOINTS['3.1'];
         }
     }
 
@@ -88,8 +89,7 @@ class AmazonOAuthTokenManager
             'version' => $this->version,
         ]);
 
-        $response = Http::asForm()
-            ->timeout(30)
+        $response = Http::timeout(30)
             ->retry(3, 1000)
             ->post($tokenEndpoint, [
                 'grant_type' => 'client_credentials',
