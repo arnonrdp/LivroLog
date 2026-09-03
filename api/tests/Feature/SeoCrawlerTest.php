@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Book;
+use App\Models\Review;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -142,9 +144,79 @@ class SeoCrawlerTest extends TestCase
         $this->assertSame('Arqueiro', $data['publisher']['name']);
 
         // Google: "Don't aggregate reviews or ratings from other websites." The Amazon rating is
-        // on this record and must never reach the markup.
+        // on this record, the book has no reviews of our own, so no rating may appear at all.
         $this->assertArrayNotHasKey('aggregateRating', $data);
         $this->assertStringNotContainsString('4.8', $matches[1]);
+        $this->assertStringNotContainsString('12000', $matches[1]);
+    }
+
+    public function test_own_reviews_are_rendered_and_are_the_only_rating_marked_up(): void
+    {
+        $book = Book::factory()->create([
+            'authors' => 'Clarice Lispector',
+            'amazon_rating' => 4.8,
+            'amazon_rating_count' => 12000,
+        ]);
+
+        $reviewers = User::factory()->count(2)->create();
+        Review::factory()->create([
+            'book_id' => $book->id, 'user_id' => $reviewers[0]->id,
+            'rating' => 5, 'content' => 'Prosa que reorganiza o pensamento.',
+            'visibility_level' => 'public',
+        ]);
+        Review::factory()->create([
+            'book_id' => $book->id, 'user_id' => $reviewers[1]->id,
+            'rating' => 4, 'content' => 'Difícil no começo, recompensador depois.',
+            'visibility_level' => 'public',
+        ]);
+
+        $html = $this->withHeader('User-Agent', self::GOOGLEBOT)
+            ->get('/books/'.$book->id)
+            ->getContent();
+
+        // visible on the page — Google's precondition for marking a rating up at all
+        $this->assertStringContainsString('Prosa que reorganiza o pensamento.', $html);
+        $this->assertStringContainsString('4.5', $html);
+
+        preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $html, $matches);
+        $data = json_decode($matches[1], true);
+
+        $this->assertSame(4.5, $data['aggregateRating']['ratingValue']);
+        $this->assertSame(2, $data['aggregateRating']['reviewCount']);
+
+        // still never Amazon's numbers
+        $this->assertStringNotContainsString('12000', $matches[1]);
+    }
+
+    public function test_private_reviews_are_not_rendered_or_counted(): void
+    {
+        $book = Book::factory()->create();
+        Review::factory()->create([
+            'book_id' => $book->id, 'user_id' => User::factory()->create()->id,
+            'rating' => 1, 'content' => 'Anotação particular que não deve vazar.',
+            'visibility_level' => 'private',
+        ]);
+
+        $html = $this->withHeader('User-Agent', self::GOOGLEBOT)
+            ->get('/books/'.$book->id)
+            ->getContent();
+
+        $this->assertStringNotContainsString('Anotação particular', $html);
+        $this->assertStringNotContainsString('aggregateRating', $html);
+    }
+
+    public function test_book_links_to_other_books_by_the_same_author(): void
+    {
+        $book = Book::factory()->create(['title' => 'A Hora da Estrela', 'authors' => 'Clarice Lispector']);
+        $sibling = Book::factory()->create(['title' => 'Água Viva', 'authors' => 'Clarice Lispector']);
+        $unrelated = Book::factory()->create(['title' => 'Dom Casmurro', 'authors' => 'Machado de Assis']);
+
+        $html = $this->withHeader('User-Agent', self::GOOGLEBOT)
+            ->get('/books/'.$book->id)
+            ->getContent();
+
+        $this->assertStringContainsString('/books/'.$sibling->id, $html);
+        $this->assertStringNotContainsString('/books/'.$unrelated->id, $html);
     }
 
     public function test_book_title_is_escaped_in_the_rendered_body(): void
