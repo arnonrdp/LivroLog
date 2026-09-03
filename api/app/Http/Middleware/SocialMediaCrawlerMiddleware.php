@@ -290,6 +290,96 @@ class SocialMediaCrawlerMiddleware
     }
 
     /**
+     * Readers' own reviews, rendered on the page.
+     *
+     * This is not decoration. Google requires that a rating marked up with AggregateRating be
+     * visible to the user on that page, so this is what makes the JSON-LD rating legitimate.
+     * It is also what separates the page from a thin affiliate page: without it the content is
+     * a publisher blurb plus a buy button, which the spam policy names explicitly.
+     */
+    private function renderBookReviews(Book $book, bool $isPt, callable $e): string
+    {
+        $count = $book->reviews_count;
+
+        if ($count < 1) {
+            return '';
+        }
+
+        $average = round((float) $book->average_rating, 1);
+        $heading = $isPt ? 'Avaliações dos leitores' : 'Reader reviews';
+        $summary = $isPt
+            ? "Nota média {$average} de 5, com {$count} ".($count === 1 ? 'avaliação' : 'avaliações')
+            : "Rated {$average} out of 5 by {$count} ".($count === 1 ? 'reader' : 'readers');
+
+        $items = '';
+        foreach ($book->publicReviews()->with('user')->latest()->limit(5)->get() as $review) {
+            $body = trim(strip_tags((string) $review->content));
+            if ($body === '') {
+                continue;
+            }
+            if (mb_strlen($body) > 400) {
+                $body = mb_substr($body, 0, 397).'...';
+            }
+
+            $author = trim(strip_tags((string) ($review->user->display_name ?? $review->user->username ?? '')));
+            $title = trim(strip_tags((string) $review->title));
+
+            $items .= '<li>'
+                .($title !== '' ? '<strong>'.$e($title).'</strong> ' : '')
+                .'<span>'.$e(($isPt ? 'Nota ' : 'Rated ').$review->rating.'/5').'</span> '
+                .($author !== '' ? '<cite>'.$e($author).'</cite> ' : '')
+                .'<p>'.$e($body).'</p>'
+                .'</li>';
+        }
+
+        return '<h2>'.$e($heading).'</h2><p class="rating-summary">'.$e($summary).'</p>'
+            .($items !== '' ? '<ul class="reviews">'.$items.'</ul>' : '');
+    }
+
+    /**
+     * Links to other books by the same author.
+     *
+     * Every book page was a dead end in the link graph: the only anchor in the body pointed at
+     * the page itself. books.authors is a plain string column, so this is a LIKE away — the
+     * Author model exists but nothing in the codebase ever writes to it.
+     */
+    private function renderSameAuthorLinks(Book $book, string $author, bool $isPt, callable $e): string
+    {
+        if ($author === '') {
+            return '';
+        }
+
+        $primary = trim(explode(',', $author)[0]);
+        if ($primary === '') {
+            return '';
+        }
+
+        $frontend = rtrim(config('app.frontend_url'), '/');
+
+        $others = Book::query()
+            ->select('id', 'title')
+            ->where('id', '!=', $book->id)
+            ->where('authors', 'like', '%'.$primary.'%')
+            ->orderBy('title')
+            ->limit(10)
+            ->get();
+
+        if ($others->isEmpty()) {
+            return '';
+        }
+
+        $items = '';
+        foreach ($others as $other) {
+            $href = $e($frontend.'/books/'.rawurlencode($other->id));
+            $items .= '<li><a href="'.$href.'">'.$e(trim(strip_tags((string) $other->title))).'</a></li>';
+        }
+
+        $heading = $isPt ? "Outros livros de {$primary}" : "More by {$primary}";
+
+        return '<h2>'.$e($heading).'</h2><ul class="also-by">'.$items.'</ul>';
+    }
+
+    /**
      * schema.org/Book as JSON-LD, which is what search engines read for rich results.
      *
      * Deliberately carries no aggregateRating. The ratings on hand are amazon_rating and
@@ -322,6 +412,21 @@ class SocialMediaCrawlerMiddleware
 
         if ($book->publisher) {
             $data['publisher'] = ['@type' => 'Organization', 'name' => $book->publisher];
+        }
+
+        // LivroLog's own readers' ratings, and only these. They are rendered on the page by
+        // renderBookReviews(), which is Google's condition for marking them up. Emitted only
+        // when reviews exist, so a book nobody rated never carries a zero-star node.
+        $reviewsCount = $book->reviews_count;
+
+        if ($reviewsCount > 0) {
+            $data['aggregateRating'] = [
+                '@type' => 'AggregateRating',
+                'ratingValue' => round((float) $book->average_rating, 1),
+                'reviewCount' => $reviewsCount,
+                'bestRating' => 5,
+                'worstRating' => 1,
+            ];
         }
 
         // JSON_HEX_TAG keeps a "</script>" inside any field from closing the block early
@@ -371,6 +476,20 @@ class SocialMediaCrawlerMiddleware
 
         $cta = $e($isPt ? 'Ver no LivroLog' : 'See it on LivroLog');
         $safeCanonical = $e($canonical);
+
+        $categories = '';
+        foreach ((array) $book->categories as $category) {
+            $category = trim(strip_tags((string) $category));
+            if ($category !== '') {
+                $categories .= '<li>'.$e($category).'</li>';
+            }
+        }
+        $categories = $categories !== ''
+            ? '<h2>'.$e($isPt ? 'Assuntos' : 'Subjects').'</h2><ul class="categories">'.$categories.'</ul>'
+            : '';
+
+        $reviews = $this->renderBookReviews($book, $isPt, $e);
+        $alsoBy = $this->renderSameAuthorLinks($book, $author, $isPt, $e);
         $jsonLd = $this->bookJsonLd($book, $fullTitle, $author, $canonical, $cover);
 
         return <<<BODY
@@ -381,6 +500,9 @@ class SocialMediaCrawlerMiddleware
         {$byline}
         {$facts}
         {$description}
+        {$categories}
+        {$reviews}
+        {$alsoBy}
         <p><a href="{$safeCanonical}">{$cta}</a></p>
     </article>
 BODY;
