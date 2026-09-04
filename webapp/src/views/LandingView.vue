@@ -178,63 +178,6 @@
       </div>
     </section>
 
-    <!-- Testimonials Section -->
-    <section class="testimonials-section">
-      <div class="section-header light">
-        <h2>{{ $t('landing.testimonials-title') }}</h2>
-        <p>{{ $t('landing.testimonials-subtitle') }}</p>
-      </div>
-      <div class="testimonials-container">
-        <div class="testimonial-card">
-          <div class="testimonial-quote">
-            <q-icon name="format_quote" size="2rem" />
-          </div>
-          <p class="testimonial-text">{{ $t('landing.testimonial1-text') }}</p>
-          <div class="testimonial-author">
-            <div class="author-avatar">
-              <q-icon name="person" size="1.5rem" />
-            </div>
-            <div class="author-info">
-              <span class="author-name">{{ $t('landing.testimonial1-author') }}</span>
-              <span class="author-books">{{ $t('landing.testimonial1-books') }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card">
-          <div class="testimonial-quote">
-            <q-icon name="format_quote" size="2rem" />
-          </div>
-          <p class="testimonial-text">{{ $t('landing.testimonial2-text') }}</p>
-          <div class="testimonial-author">
-            <div class="author-avatar">
-              <q-icon name="person" size="1.5rem" />
-            </div>
-            <div class="author-info">
-              <span class="author-name">{{ $t('landing.testimonial2-author') }}</span>
-              <span class="author-books">{{ $t('landing.testimonial2-books') }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card">
-          <div class="testimonial-quote">
-            <q-icon name="format_quote" size="2rem" />
-          </div>
-          <p class="testimonial-text">{{ $t('landing.testimonial3-text') }}</p>
-          <div class="testimonial-author">
-            <div class="author-avatar">
-              <q-icon name="person" size="1.5rem" />
-            </div>
-            <div class="author-info">
-              <span class="author-name">{{ $t('landing.testimonial3-author') }}</span>
-              <span class="author-books">{{ $t('landing.testimonial3-books') }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- CTA Section -->
     <section class="cta-section">
       <div class="cta-content">
@@ -643,63 +586,6 @@ $gold: #C9A962
   margin: 0
 
 // Testimonials Section
-.testimonials-section
-  background: linear-gradient(135deg, $burgundy 0%, $burgundy-light 100%)
-  padding: 5rem 2rem
-
-.testimonials-container
-  display: grid
-  gap: 1.5rem
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
-  margin: 0 auto
-  max-width: 1100px
-
-.testimonial-card
-  background: rgba(255, 255, 255, 0.1)
-  backdrop-filter: blur(10px)
-  border: 1px solid rgba(255, 255, 255, 0.15)
-  border-radius: 16px
-  padding: 2rem
-
-.testimonial-quote
-  color: rgba(255, 255, 255, 0.3)
-  margin-bottom: 0.5rem
-
-.testimonial-text
-  color: white
-  font-size: 1rem
-  font-style: italic
-  line-height: 1.7
-  margin-bottom: 1.5rem
-
-.testimonial-author
-  align-items: center
-  display: flex
-  gap: 1rem
-
-.author-avatar
-  align-items: center
-  background: rgba(255, 255, 255, 0.2)
-  border-radius: 50%
-  color: white
-  display: flex
-  height: 48px
-  justify-content: center
-  width: 48px
-
-.author-info
-  display: flex
-  flex-direction: column
-
-.author-name
-  color: white
-  font-weight: 600
-
-.author-books
-  color: rgba(255, 255, 255, 0.7)
-  font-size: 0.85rem
-
-// CTA Section
 .cta-section
   background: $charcoal
   padding: 5rem 2rem
