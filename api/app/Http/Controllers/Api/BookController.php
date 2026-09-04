@@ -1202,7 +1202,12 @@ class BookController extends Controller
      */
     public function ogImage(Request $request, Book $book)
     {
-        $relative = "og/book-v{$this->getRendererVersion()}-{$book->id}-".($book->updated_at?->timestamp ?: 0).'.jpg';
+        // ?format=post yields the 1080x1350 portrait Instagram favours; the default stays the
+        // 1200x630 landscape that link previews expect
+        $isPost = $request->query('format') === 'post';
+        $variant = $isPost ? 'post' : 'card';
+
+        $relative = "og/book-{$variant}-v{$this->getRendererVersion()}-{$book->id}-".($book->updated_at?->timestamp ?: 0).'.jpg';
 
         if (Storage::disk('public')->exists($relative)) {
             $path = Storage::disk('public')->path($relative);
@@ -1219,7 +1224,7 @@ class BookController extends Controller
         }
 
         try {
-            $image = $this->generateBookCard($book);
+            $image = $isPost ? $this->generateBookPost($book) : $this->generateBookCard($book);
             Storage::disk('public')->makeDirectory('og');
             Storage::disk('public')->put($relative, $image);
 
@@ -1252,6 +1257,86 @@ class BookController extends Controller
      * Render the 1200x630 Open Graph card: cover on the left, title and author
      * on the right, shelf texture strip at the bottom for brand consistency.
      */
+    /**
+     * A book as a 1080x1350 portrait image, ready to post.
+     *
+     * Same shelf and typography as the link-preview card, laid out vertically because that is
+     * the ratio Instagram gives the most screen to. It exists so posting requires no design
+     * tool and no designer: pick a book, save the image, write a caption.
+     */
+    private function generateBookPost(Book $book): string
+    {
+        $this->ensureOgFont();
+
+        $width = 1080;
+        $height = 1350;
+        $image = imagecreatetruecolor($width, $height);
+        imagefill($image, 0, 0, imagecolorallocate($image, 250, 249, 246));
+
+        $shelfY = 900;
+
+        $texture = public_path('og/textures/shelfcenter.jpg');
+        if (is_file($texture) && ($wood = @imagecreatefromjpeg($texture))) {
+            $woodW = imagesx($wood);
+            for ($x = 0; $x < $width; $x += $woodW) {
+                imagecopyresampled($image, $wood, $x, $shelfY, 0, 0, $woodW, 58, $woodW, imagesy($wood));
+            }
+            imagedestroy($wood);
+        }
+
+        // Cover standing on the shelf, centred, aspect ratio preserved
+        [$boxW, $boxH] = [530, 790];
+        $cover = $book->thumbnail ? $this->loadImageFromUrl($book->thumbnail) : null;
+        if ($cover) {
+            $cw = imagesx($cover);
+            $ch = imagesy($cover);
+            $scale = min($boxW / $cw, $boxH / $ch);
+            $dw = (int) round($cw * $scale);
+            $dh = (int) round($ch * $scale);
+            imagecopyresampled($image, $cover, (int) (($width - $dw) / 2), $shelfY - $dh, 0, 0, $dw, $dh, $cw, $ch);
+            imagedestroy($cover);
+        } else {
+            $x = (int) (($width - $boxW) / 2);
+            imagefilledrectangle($image, $x, $shelfY - $boxH, $x + $boxW, $shelfY, imagecolorallocate($image, 224, 224, 224));
+        }
+
+        $bold = $this->getFontPath('Bold');
+        $regular = $this->getFontPath('Regular') ?: $bold;
+        $dark = imagecolorallocate($image, 33, 37, 41);
+        $gray = imagecolorallocate($image, 90, 96, 102);
+        $brand = imagecolorallocate($image, 25, 118, 210);
+
+        $title = trim($book->title.($book->subtitle ? ': '.$book->subtitle : ''));
+        $margin = 80;
+        $maxTextWidth = $width - (2 * $margin);
+
+        if ($bold) {
+            $y = $shelfY + 140;
+            foreach ($this->wrapTextToWidth($bold, 46, $title, $maxTextWidth, 3) as $line) {
+                imagettftext($image, 46, 0, $margin, $y, $dark, $bold, $line);
+                $y += 64;
+            }
+            $y += 14;
+            foreach ($this->wrapTextToWidth($regular, 30, (string) $book->authors, $maxTextWidth, 2) as $line) {
+                imagettftext($image, 30, 0, $margin, $y, $gray, $regular, $line);
+                $y += 44;
+            }
+            imagettftext($image, 28, 0, $margin, $height - 60, $brand, $bold, 'livrolog.com');
+        } else {
+            imagestring($image, 5, $margin, $shelfY + 110, $title, $dark);
+            imagestring($image, 4, $margin, $shelfY + 150, (string) $book->authors, $gray);
+            imagestring($image, 5, $margin, $height - 70, 'livrolog.com', $brand);
+        }
+
+        ob_start();
+        imagejpeg($image, null, 88);
+        $data = ob_get_contents();
+        ob_end_clean();
+        imagedestroy($image);
+
+        return $data;
+    }
+
     private function generateBookCard(Book $book): string
     {
         $this->ensureOgFont();
