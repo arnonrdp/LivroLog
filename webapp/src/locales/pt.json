@@ -558,5 +558,9 @@
   "verify-email": "Verifique o email",
   "visibility": "Visibilidade",
   "want-to-read": "Quero ler",
-  "year": "Ano"
+  "year": "Ano",
+  "person": {
+    "cta-subtitle": "Guarde os livros que você já leu, veja o que seus amigos estão lendo, e compartilhe a sua estante num link. É grátis.",
+    "cta-title": "A estante de {name} está aqui. Monte a sua."
+  }
 }

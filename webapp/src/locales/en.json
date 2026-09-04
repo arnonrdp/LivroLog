@@ -558,5 +558,9 @@
   "verify-email": "Verify Email",
   "visibility": "Visibility",
   "want-to-read": "Want to Read",
-  "year": "Year"
+  "year": "Year",
+  "person": {
+    "cta-subtitle": "Keep the books you have read, see what your friends are reading, and share your shelf as a link. It's free.",
+    "cta-title": "This is {name}'s shelf. Build your own."
+  }
 }

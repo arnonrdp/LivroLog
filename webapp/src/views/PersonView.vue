@@ -84,6 +84,17 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+      <!-- Sharing a shelf is the one loop this product has that grows on its own. Whoever
+           receives the link arrives logged out, so the invitation has to be here. -->
+      <section v-if="!authStore.isAuthenticated && person" class="guest-cta">
+        <q-icon color="primary" name="auto_stories" size="2.5rem" />
+        <h3>{{ $t('person.cta-title', { name: person.display_name }) }}</h3>
+        <p>{{ $t('person.cta-subtitle') }}</p>
+        <div class="guest-cta__actions">
+          <q-btn color="primary" :label="$t('signup')" no-caps rounded unelevated @click="openRegister" />
+          <q-btn color="primary" flat :label="$t('book.already-have-account')" no-caps @click="promptLogin" />
+        </div>
+      </section>
   </q-page>
 </template>
 
@@ -103,6 +114,20 @@ defineProps<{
 }>()
 
 const route = useRoute()
+
+function currentPath() {
+  return route.fullPath
+}
+
+function openRegister() {
+  authStore.setRedirectPath(currentPath())
+  authStore.openAuthModal('register')
+}
+
+function promptLogin() {
+  authStore.setRedirectPath(currentPath())
+  authStore.openAuthModal('login')
+}
 const { t } = useI18n()
 
 const activityStore = useActivityStore()
@@ -360,3 +385,34 @@ async function confirmUnfollow() {
   }
 }
 </script>
+
+<style lang="sass" scoped>
+.guest-cta
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 0.5rem
+  text-align: center
+  margin: 2.5rem auto 0
+  padding: 2rem 1.5rem
+  max-width: 34rem
+  border-top: 1px solid rgba(128, 128, 128, 0.2)
+
+  h3
+    margin: 0.25rem 0 0
+    font-size: 1.25rem
+    font-weight: 600
+    line-height: 1.3
+
+  p
+    margin: 0
+    max-width: 30rem
+    opacity: 0.75
+
+  &__actions
+    display: flex
+    flex-wrap: wrap
+    justify-content: center
+    gap: 0.5rem
+    margin-top: 0.75rem
+</style>
