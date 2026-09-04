@@ -333,17 +333,6 @@
     "step2-title": "Add to shelf",
     "step3-desc": "Follow friends and discover what they're reading",
     "step3-title": "Connect",
-    "testimonial1-author": "Ana Silva",
-    "testimonial1-books": "127 books",
-    "testimonial1-text": "Finally a simple way to organize all the books I've read. I love seeing my library grow!",
-    "testimonial2-author": "Carlos Santos",
-    "testimonial2-books": "89 books",
-    "testimonial2-text": "The best part is being able to follow my friends and discover new recommendations based on what they're reading.",
-    "testimonial3-author": "Maria Costa",
-    "testimonial3-books": "234 books",
-    "testimonial3-text": "I imported my entire Goodreads collection in minutes. Clean interface and super easy to use.",
-    "testimonials-subtitle": "Join our community of passionate readers",
-    "testimonials-title": "What readers say",
     "trust-fast": "Quick and easy",
     "trust-free": "100% Free",
     "trust-private": "Your data is safe"
@@ -558,5 +547,9 @@
   "verify-email": "Verify Email",
   "visibility": "Visibility",
   "want-to-read": "Want to Read",
-  "year": "Year"
+  "year": "Year",
+  "person": {
+    "cta-subtitle": "Keep the books you have read, see what your friends are reading, and share your shelf as a link. It's free.",
+    "cta-title": "This is {name}'s shelf. Build your own."
+  }
 }

@@ -152,13 +152,18 @@ class AuthController extends Controller
      *     )
      * )
      */
+    private const USERNAME_MAX_LENGTH = 20;
+
     public function register(Request $request)
     {
         $request->validate([
             'display_name' => self::VALIDATION_REQUIRED_STRING.'|max:255',
             'email' => self::VALIDATION_REQUIRED_EMAIL.'|max:255|unique:users',
+            // Optional: a user who does not pick one gets a generated handle. The frontend used
+            // to derive it from the display name and post it, which rejected every name carrying
+            // a character outside a-z — "Joao Silva" passed, "Joao" with a tilde did not.
             'username' => [
-                'required',
+                'sometimes',
                 'string',
                 'min:3',
                 'max:20',
@@ -173,7 +178,8 @@ class AuthController extends Controller
         $user = User::create([
             'display_name' => $request->display_name,
             'email' => $request->email,
-            'username' => $request->username,
+            'username' => $request->input('username')
+                ?: $this->generateUniqueUsername($request->display_name, $request->email),
             'password' => Hash::make($request->password),
             'shelf_name' => $request->shelf_name ?? $request->display_name.self::LIBRARY_SUFFIX,
             'locale' => $request->has('locale') ? $this->normalizeLocale($request->input('locale')) : 'en',
@@ -859,24 +865,26 @@ class AuthController extends Controller
      */
     private function generateUniqueUsername($displayName, $email)
     {
-        // Try display name first (remove spaces and special characters)
-        $baseUsername = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $displayName));
+        // Transliterate rather than discard: Str::slug turns "Joao" with a tilde into "joao",
+        // where stripping non-ASCII would have produced "joo". Scripts with no Latin equivalent
+        // (Japanese, Arabic, Cyrillic) transliterate to nothing and fall through to the email.
+        $baseUsername = Str::slug($displayName, '');
 
-        // If empty or too short, use email prefix
         if (strlen($baseUsername) < 3) {
-            $baseUsername = explode('@', $email)[0];
-            $baseUsername = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $baseUsername));
+            $baseUsername = Str::slug(explode('@', $email)[0], '');
         }
 
-        // Ensure minimum length
         if (strlen($baseUsername) < 3) {
-            $baseUsername = 'user';
+            $baseUsername = 'leitor';
         }
+
+        // The column caps at 20; reserve room for the disambiguating counter so a long name
+        // never collides with itself forever
+        $baseUsername = substr($baseUsername, 0, self::USERNAME_MAX_LENGTH - 4);
 
         $username = $baseUsername;
         $counter = 1;
 
-        // Check for uniqueness - if exists, try with numbers
         while (User::where('username', $username)->exists()) {
             $username = $baseUsername.$counter;
             $counter++;

@@ -334,17 +334,6 @@
     "step2-title": "棚に追加",
     "step3-desc": "友達をフォローして、彼らが読んでいる本を見つけよう",
     "step3-title": "接続する",
-    "testimonial1-author": "アナ・シルバ",
-    "testimonial1-books": "127冊",
-    "testimonial1-text": "最後に、読んだ本をすべて整理する簡単な方法を紹介します。\n自分のライブラリが成長するのを見るのが大好きです!",
-    "testimonial2-author": "カルロス・サントス",
-    "testimonial2-books": "89冊",
-    "testimonial2-text": "一番いいのは、友達をフォローして、彼らが読んでいる本に基づいて新しいおすすめを見つけられることです。",
-    "testimonial3-author": "マリア・コスタ",
-    "testimonial3-books": "234冊",
-    "testimonial3-text": "Goodreads コレクション全体を数分でインポートできました。\nすっきりとしたインターフェースでとても使いやすい。",
-    "testimonials-subtitle": "熱心な読者のコミュニティに参加してください",
-    "testimonials-title": "読者の声",
     "trust-fast": "素早く簡単に",
     "trust-free": "完全無料",
     "trust-private": "あなたのデータは安全です"
@@ -558,5 +547,9 @@
   "verify-email": "メールを確認します",
   "visibility": "可視性",
   "want-to-read": "読みたい",
-  "year": "年"
+  "year": "年",
+  "person": {
+    "cta-subtitle": "読んだ本を記録し、友だちが読んでいる本を見て、自分の本棚をリンクで共有できます。無料です。",
+    "cta-title": "{name}さんの本棚です。あなたの本棚も作りませんか。"
+  }
 }

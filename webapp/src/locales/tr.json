@@ -334,17 +334,6 @@
     "step2-title": "Rafa ekle",
     "step3-desc": "Arkadaşlarınızı takip edin ve ne okuduklarını keşfedin",
     "step3-title": "Bağlamak",
-    "testimonial1-author": "Ana Silva",
-    "testimonial1-books": "127 kitap",
-    "testimonial1-text": "Sonunda okuduğum tüm kitapları düzenlemenin basit bir yolu. \nKütüphanemin büyüdüğünü görmeyi seviyorum!",
-    "testimonial2-author": "Carlos Santos",
-    "testimonial2-books": "89 kitap",
-    "testimonial2-text": "En iyi yanı arkadaşlarımı takip edebilmek ve okuduklarına göre yeni öneriler keşfedebilmek.",
-    "testimonial3-author": "Maria Kosta",
-    "testimonial3-books": "234 kitap",
-    "testimonial3-text": "Goodreads koleksiyonumun tamamını dakikalar içinde içe aktardım. \nTemiz arayüz ve kullanımı süper kolay.",
-    "testimonials-subtitle": "Tutkulu okuyuculardan oluşan topluluğumuza katılın",
-    "testimonials-title": "Okuyucular ne diyor",
     "trust-fast": "Hızlı ve kolay",
     "trust-free": "%100 Ücretsiz",
     "trust-private": "Verileriniz güvende"
@@ -558,5 +547,9 @@
   "verify-email": "E -postayı doğrulayın",
   "visibility": "Görünürlük",
   "want-to-read": "Okumak istiyorum",
-  "year": "Yıl"
+  "year": "Yıl",
+  "person": {
+    "cta-subtitle": "Okuduğun kitapları sakla, arkadaşlarının ne okuduğunu gör ve rafını bir bağlantıyla paylaş. Ücretsiz.",
+    "cta-title": "Bu {name} adlı kullanıcının rafı. Kendi rafını oluştur."
+  }
 }

@@ -141,6 +141,10 @@ services:
     working_dir: /app
     volumes:
       - ./webapp:/app
+      # Anonymous volume so the container's Linux native bindings do not overwrite the host's
+      # macOS ones through the bind mount above. Without it, whichever ran yarn install last
+      # wins, and the other side loses oxlint, vitest and vite.
+      - /app/node_modules
     ports:
       - '8001:8001'
     command: |
