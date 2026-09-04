@@ -21,7 +21,7 @@ use Laravel\Socialite\Facades\Socialite;
  *     description="Personal library management system with Google Books API integration, social features, privacy controls, and comprehensive follow system with request management",
  *
  *     @OA\Contact(
- *         email="support@livrolog.com"
+ *         email="contato@livrolog.com"
  *     ),
  *
  *     @OA\License(

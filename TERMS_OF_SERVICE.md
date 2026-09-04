@@ -171,12 +171,12 @@ We collect:
 
 For questions about these terms or to exercise your privacy rights:
 
-- **Email**: legal@livrolog.com
+- **Email**: contato@livrolog.com
 - **Subject**: Terms of Service - [your request]
 
 For technical questions or support:
 
-- **Email**: suporte@livrolog.com
+- **Email**: contato@livrolog.com
 
 ---
 

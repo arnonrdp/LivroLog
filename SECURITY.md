@@ -8,7 +8,7 @@ We take the security of LivroLog seriously. If you discover a security vulnerabi
 
 Please **do not** report security vulnerabilities through public GitHub issues, discussions, or pull requests.
 
-Instead, please send an email to the project maintainers with the following information:
+Instead, please send an email to contato@livrolog.com with the following information:
 
 - **Description**: A clear description of the vulnerability
 - **Steps to Reproduce**: Detailed steps to reproduce the issue
