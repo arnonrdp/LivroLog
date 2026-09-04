@@ -126,7 +126,7 @@ export const useAuthStore = defineStore('auth', {
         .finally(() => (this._isLoading = false))
     },
 
-    async postAuthRegister(data: { display_name: string; email: string; username: string; password: string; password_confirmation: string }) {
+    async postAuthRegister(data: { display_name: string; email: string; password: string; password_confirmation: string }) {
       this._isLoading = true
       const userStore = useUserStore()
       const navigatorLanguage = navigator.language || undefined

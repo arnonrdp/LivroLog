@@ -221,7 +221,6 @@ function signup() {
     .postAuthRegister({
       display_name: displayName.value,
       email: email.value,
-      username: displayName.value.toLowerCase().replace(/\s+/g, ''),
       password: password.value,
       password_confirmation: passwordConfirm.value
     })
