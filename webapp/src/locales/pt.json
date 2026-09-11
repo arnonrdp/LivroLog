@@ -551,5 +551,26 @@
   "person": {
     "cta-subtitle": "Guarde os livros que você já leu, veja o que seus amigos estão lendo, e compartilhe a sua estante num link. É grátis.",
     "cta-title": "A estante de {name} está aqui. Monte a sua."
+  },
+  "appearance": {
+    "tab": "Aparência",
+    "title": "Material da estante",
+    "description": "Escolha o acabamento da sua estante. A prévia muda assim que você seleciona um material.",
+    "read": "Leituras",
+    "stories": "Histórias",
+    "saved": "Material: {material}. Sua escolha é salva automaticamente neste navegador.",
+    "materials": {
+      "wood": "Madeira clássica",
+      "marble": "Mármore branco",
+      "black-marble": "Mármore preto",
+      "granite": "Granito",
+      "slate": "Ardósia",
+      "travertine": "Travertino",
+      "concrete": "Concreto",
+      "glass": "Vidro fosco",
+      "smoked-glass": "Vidro fumê",
+      "steel": "Aço escovado",
+      "terrazzo": "Granilite"
+    }
   }
 }

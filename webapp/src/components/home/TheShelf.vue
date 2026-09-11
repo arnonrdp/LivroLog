@@ -3,18 +3,14 @@
   <EmptyShelfState v-if="!userIdentifier && (!books || books.length === 0)" @import="handleImport" />
 
   <!-- Regular shelf display -->
-  <section v-else class="flex justify-around">
+  <section v-else class="flex justify-around" :style="appearance.shelfStyle">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id" data-testid="library-book">
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable only for authenticated users on other shelves -->
       <!-- A real href so crawlers (and cmd+click) can reach the book page; a plain click still
            opens the dialog, which is what a reader browsing a shelf expects. -->
-      <a
-        :class="['book-cover', { clickable: canOpenBookDialog }]"
-        :href="`/books/${book.id}`"
-        @click.exact.prevent="openBookDialog(book)"
-      >
+      <a :class="['book-cover', { clickable: canOpenBookDialog }]" :href="`/books/${book.id}`" @click.exact.prevent="openBookDialog(book)">
         <img v-if="book.thumbnail" :alt="`Cover of ${book.title}`" :src="book.thumbnail" />
         <BookCoverPlaceholder v-else :title="book.title" />
 
@@ -40,6 +36,9 @@
 </template>
 
 <script setup lang="ts">
+import { useAppearanceStore } from '@/stores/appearance'
+
+const appearance = useAppearanceStore()
 import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
 import type { Book, Tag, User } from '@/models'
 import { useAuthStore, useTagStore } from '@/stores'
@@ -118,9 +117,6 @@ function getBookTags(bookId: string): Tag[] {
 
 <style scoped lang="sass">
 section
-  background-image: url('@/assets/textures/shelfleft.jpg'), url('@/assets/textures/shelfright.jpg'), url('@/assets/textures/shelfcenter.jpg')
-  background-repeat: repeat-y, repeat-y, repeat
-  background-position: top left, top right, 240px 0
   border-radius: 6px
   min-height: 302px
   padding: 0 3rem 2.2rem
@@ -129,6 +125,7 @@ section figure
   align-items: flex-end
   display: flex
   height: 146px
+  padding-bottom: var(--shelf-book-bottom, 7px)
   margin: 0 1.5rem
   position: relative
 
@@ -146,6 +143,9 @@ section figure
     z-index: 1
 
 .book-cover
+  display: block
+  line-height: 0
+  transform-origin: center bottom
   color: inherit
   text-decoration: none
   position: relative
@@ -160,7 +160,8 @@ section figure
     cursor: default
 
 img, :deep(.book-placeholder)
-  height: 115px
+  display: block
+  height: var(--shelf-book-height, 115px)
   width: auto
 
 .tag-dots

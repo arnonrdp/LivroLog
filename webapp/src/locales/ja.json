@@ -551,5 +551,26 @@
   "person": {
     "cta-subtitle": "読んだ本を記録し、友だちが読んでいる本を見て、自分の本棚をリンクで共有できます。無料です。",
     "cta-title": "{name}さんの本棚です。あなたの本棚も作りませんか。"
+  },
+  "appearance": {
+    "tab": "外観",
+    "title": "本棚の素材",
+    "description": "本棚の仕上げを選択してください。素材を選ぶとプレビューがすぐに更新されます。",
+    "read": "読書",
+    "stories": "物語",
+    "saved": "{material}を選択しました。このブラウザーに自動保存されます。",
+    "materials": {
+      "wood": "クラシックウッド",
+      "marble": "白大理石",
+      "black-marble": "黒大理石",
+      "granite": "御影石",
+      "slate": "粘板岩",
+      "travertine": "トラバーチン",
+      "concrete": "コンクリート",
+      "glass": "すりガラス",
+      "smoked-glass": "スモークガラス",
+      "steel": "ヘアラインステンレス",
+      "terrazzo": "テラゾー"
+    }
   }
 }

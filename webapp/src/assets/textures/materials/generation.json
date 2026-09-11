@@ -1,0 +1,55 @@
+{
+  "tool": "Built-in image_gen",
+  "materials": [
+    {
+      "id": "marble",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-647d0936-c2b7-4dea-a101-82ac7de221cd.png",
+      "prompt": "Photorealistic white Carrara marble bookshelf compartment, frontal orthographic view, 3:1 aspect ratio, thin top lip, recessed rear panel, darker side walls, lit bottom surface, ambient occlusion in corners, fine gray veins, no books, objects or text."
+    },
+    {
+      "id": "black-marble",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-ddeea66a-6f1c-4155-97c6-5159e0392cdd.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of polished black Nero Marquina marble with delicate white veins. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "granite",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-e18e8484-ff8a-41a3-8cb0-e575963db8db.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of natural light gray speckled granite, fine black and white mineral crystals. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "slate",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-72dcada8-7450-42db-8270-398b656d06d7.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of dark charcoal slate stone with subtle fine layered mineral texture. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "travertine",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-4e863a9f-54b4-4d80-8edd-6c42a00005f4.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of warm ivory beige travertine stone, fine horizontal pores and sedimentary bands. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "concrete",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-05f983e5-0233-41d2-b724-015999ad1d4e.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of pale gray architectural polished concrete, fine realistic pores and cloudy mottling. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "glass",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-e30352e0-9fb1-49b6-8df5-6fd6d00edcd5.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of realistic pale aqua frosted glass, satin translucent rear panel and thick glass side and shelf edges with green tint and subtle specular reflections. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "smoked-glass",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-63481949-1daf-4ddd-9bdc-466b82a8b559.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of realistic smoky bronze glass, satin reflective rear panel and thick dark glass side and shelf edges with bronze tint and restrained specular reflections. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "steel",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-c6df64f1-f4ee-48ab-93cc-5b090ca76074.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of brushed stainless steel, cool silver with fine horizontal brushed grain and soft reflections. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    },
+    {
+      "id": "terrazzo",
+      "source": "/Users/arnon/.codex/generated_images/01a091cf-6ee7-7831-b669-60c46ceade88/exec-14c39d18-aaf8-4c10-b4c0-3358ce4ca9ce.png",
+      "prompt": "Use case: product-mockup. Generate a photorealistic raster texture for a bookshelf website. One single empty wide shelf compartment made entirely of cream terrazzo stone with small scattered warm gray, terracotta and beige stone chips. Frontal orthographic view, NO perspective camera angle. Image aspect ratio 3:1, full bleed. Geometry: thin horizontal front shelf lip across top 8% height, recessed flat rear panel occupies central 84%, bottom horizontal shelf surface occupies last 8%. Left and right interior side walls each 3% image width, darker shaded than rear panel, ambient occlusion beneath top lip and along inside corners, bottom surface catches light. No outer background, no objects, no books, no text. Real photographed material grain, fine small scale detail. Must tile vertically as repeated bookshelf rows. Output a single image and return its saved file path."
+    }
+  ]
+}

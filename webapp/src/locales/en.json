@@ -551,5 +551,26 @@
   "person": {
     "cta-subtitle": "Keep the books you have read, see what your friends are reading, and share your shelf as a link. It's free.",
     "cta-title": "This is {name}'s shelf. Build your own."
+  },
+  "appearance": {
+    "tab": "Appearance",
+    "title": "Shelf material",
+    "description": "Choose a finish for your bookshelf. The preview updates as soon as you select a material.",
+    "read": "Reading",
+    "stories": "Stories",
+    "saved": "{material} selected. Your choice is saved automatically in this browser.",
+    "materials": {
+      "wood": "Classic wood",
+      "marble": "White marble",
+      "black-marble": "Black marble",
+      "granite": "Granite",
+      "slate": "Slate",
+      "travertine": "Travertine",
+      "concrete": "Concrete",
+      "glass": "Frosted glass",
+      "smoked-glass": "Smoked glass",
+      "steel": "Brushed steel",
+      "terrazzo": "Terrazzo"
+    }
   }
 }

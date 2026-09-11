@@ -551,5 +551,26 @@
   "person": {
     "cta-subtitle": "Okuduğun kitapları sakla, arkadaşlarının ne okuduğunu gör ve rafını bir bağlantıyla paylaş. Ücretsiz.",
     "cta-title": "Bu {name} adlı kullanıcının rafı. Kendi rafını oluştur."
+  },
+  "appearance": {
+    "tab": "Görünüm",
+    "title": "Kitaplık malzemesi",
+    "description": "Kitaplığınız için bir malzeme seçin. Seçtiğiniz anda önizleme güncellenir.",
+    "read": "Okuma",
+    "stories": "Hikâyeler",
+    "saved": "{material} seçildi. Seçiminiz bu tarayıcıda otomatik olarak kaydedilir.",
+    "materials": {
+      "wood": "Klasik ahşap",
+      "marble": "Beyaz mermer",
+      "black-marble": "Siyah mermer",
+      "granite": "Granit",
+      "slate": "Arduvaz",
+      "travertine": "Traverten",
+      "concrete": "Beton",
+      "glass": "Buzlu cam",
+      "smoked-glass": "Füme cam",
+      "steel": "Fırçalanmış çelik",
+      "terrazzo": "Terrazzo"
+    }
   }
 }
