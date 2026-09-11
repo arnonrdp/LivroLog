@@ -132,17 +132,10 @@ Google sign-in only works on origins registered in the Google Cloud client — u
 
 - **[📁 Backend API Documentation](./api/README.md)** - Laravel backend, database, and API details
 - **[🎨 Frontend Documentation](./webapp/README.md)** - Vue.js frontend and UI components
+- **[🤝 Contributing](./CONTRIBUTING.md)** - Code standards, workflow, and how to open a pull request
 
 ## 🏆 Tech Stack
 
 **Backend**: Laravel 12, PHP 8.4, MySQL 8.0, Redis 7.0, Laravel Sanctum  
 **Frontend**: Vue.js 3, Quasar Framework, TypeScript, Pinia  
 **Infrastructure**: Docker, Docker Compose, Nginx
-
-## 🤝 Contributing
-
-1. Fork the project
-2. Create feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
-5. Open Pull Request
