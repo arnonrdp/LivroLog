@@ -3,7 +3,7 @@
     <h2 id="appearance-title" class="text-h6 q-mt-none q-mb-xs">{{ $t('appearance.title') }}</h2>
     <p class="text-grey-7 q-mb-lg">{{ $t('appearance.description') }}</p>
 
-    <div aria-hidden="true" class="shelf-preview q-mb-lg" :style="appearance.shelfStyle">
+    <div aria-hidden="true" class="shelf-preview q-mb-lg" :style="shelfStyle">
       <div class="preview-books">
         <span class="preview-book book-one">LivroLog</span>
         <span class="preview-book book-two">{{ $t('appearance.read') }}</span>
@@ -15,31 +15,44 @@
       <button
         v-for="texture in shelfTextureIds"
         :key="texture"
-        :aria-pressed="appearance.selectedTexture === texture"
+        :aria-pressed="selectedTexture === texture"
         class="texture-option"
-        :class="{ selected: appearance.selectedTexture === texture }"
+        :class="{ selected: selectedTexture === texture }"
         :data-testid="`shelf-texture-${texture}`"
         type="button"
-        @click="appearance.selectTexture(texture)"
+        @click="selectTexture(texture)"
       >
         <span aria-hidden="true" class="texture-swatch" :style="shelfTexturePreviewStyle(texture)" />
         <span class="texture-label">
           {{ $t(`appearance.materials.${texture}`) }}
-          <q-icon v-if="appearance.selectedTexture === texture" color="teal" name="check_circle" size="20px" />
+          <q-icon v-if="selectedTexture === texture" color="teal" name="check_circle" size="20px" />
         </span>
       </button>
     </div>
     <p class="text-caption text-grey-7 q-mt-md" role="status">
-      {{ $t('appearance.saved', { material: $t(`appearance.materials.${appearance.selectedTexture}`) }) }}
+      {{ $t('appearance.saved', { material: $t(`appearance.materials.${selectedTexture}`) }) }}
     </p>
   </section>
 </template>
 
 <script setup lang="ts">
-import { shelfTextureIds, shelfTexturePreviewStyle } from '@/config/shelfTextures'
-import { useAppearanceStore } from '@/stores/appearance'
+import { resolveShelfTexture, shelfTextureIds, shelfTexturePreviewStyle, shelfTextureStyle, type ShelfTextureId } from '@/config/shelfTextures'
+import { useAuthStore, useUserStore } from '@/stores'
+import { computed } from 'vue'
 
-const appearance = useAppearanceStore()
+const authStore = useAuthStore()
+const userStore = useUserStore()
+
+const selectedTexture = computed(() => resolveShelfTexture(userStore.me.shelf_texture || 'wood'))
+const shelfStyle = computed(() => shelfTextureStyle(selectedTexture.value))
+
+// Update the preview right away, then persist; a failed save rolls the choice back.
+function selectTexture(texture: ShelfTextureId) {
+  const previous = selectedTexture.value
+  if (texture === previous) return
+  userStore.updateMe({ shelf_texture: texture })
+  authStore.putMe({ shelf_texture: texture }).catch(() => userStore.updateMe({ shelf_texture: previous }))
+}
 </script>
 
 <style scoped>

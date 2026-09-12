@@ -265,6 +265,21 @@ describe('Auth Store', () => {
       expect(userStore.me).toEqual(updatedUser)
       expect(store._isLoading).toBe(false)
     })
+
+    it('should keep account fields the response omits', async () => {
+      // PUT /auth/me answers with UserWithBooksResource, which has no email/has_password_set.
+      mockAxios.put.mockResolvedValueOnce({ data: { user: { id: mockUser.id, username: 'testuser', shelf_texture: 'slate' } } })
+
+      const store = useAuthStore()
+      const userStore = useUserStore()
+      userStore.setMe(mockUser)
+
+      await store.putMe({ shelf_texture: 'slate' })
+
+      expect(userStore.me.shelf_texture).toBe('slate')
+      expect(userStore.me.email).toBe('test@example.com')
+      expect(userStore.me.has_password_set).toBe(true)
+    })
   })
 
   describe('putAuthPassword', () => {

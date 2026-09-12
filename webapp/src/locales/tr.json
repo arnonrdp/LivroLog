@@ -558,7 +558,7 @@
     "description": "Kitaplığınız için bir malzeme seçin. Seçtiğiniz anda önizleme güncellenir.",
     "read": "Okuma",
     "stories": "Hikâyeler",
-    "saved": "{material} seçildi. Seçiminiz bu tarayıcıda otomatik olarak kaydedilir.",
+    "saved": "Malzeme: {material}. Profilinize kaydedildi ve kitaplığınızı ziyaret edenlere gösterilir.",
     "materials": {
       "wood": "Klasik ahşap",
       "marble": "Beyaz mermer",

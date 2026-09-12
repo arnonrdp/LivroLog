@@ -1,5 +1,5 @@
 <template>
-  <div class="empty-shelf-state" :style="appearance.shelfStyle">
+  <div class="empty-shelf-state" :style="shelfStyle">
     <div class="empty-shelf-content">
       <q-icon color="grey-4" name="auto_stories" size="80px" />
       <h5 class="q-mt-md q-mb-sm text-white">{{ $t('empty-shelf-title') }}</h5>
@@ -14,14 +14,17 @@
 </template>
 
 <script setup lang="ts">
-import { useAppearanceStore } from '@/stores/appearance'
-
-const appearance = useAppearanceStore()
+import { shelfTextureStyle, type ShelfTextureId } from '@/config/shelfTextures'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+
+const props = defineProps<{ shelfTexture?: ShelfTextureId }>()
 
 defineEmits<{
   import: []
 }>()
+
+const shelfStyle = computed(() => shelfTextureStyle(props.shelfTexture || 'wood'))
 
 const router = useRouter()
 

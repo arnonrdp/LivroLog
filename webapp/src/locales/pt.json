@@ -558,7 +558,7 @@
     "description": "Escolha o acabamento da sua estante. A prévia muda assim que você seleciona um material.",
     "read": "Leituras",
     "stories": "Histórias",
-    "saved": "Material: {material}. Sua escolha é salva automaticamente neste navegador.",
+    "saved": "Material: {material}. Salvo no seu perfil e visível para quem visita sua estante.",
     "materials": {
       "wood": "Madeira clássica",
       "marble": "Mármore branco",

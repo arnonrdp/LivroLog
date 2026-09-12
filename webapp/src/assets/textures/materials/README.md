@@ -22,5 +22,11 @@ books and the settings preview, with a 24px top clearance. Covers use block layo
 so inline-text baseline spacing cannot move their contact point. Hover scaling is
 anchored at the bottom so books remain on the support surface.
 
-The selected material is a local appearance preference persisted by the existing
-Pinia persistence plugin; it does not change another reader's public shelf or OG image.
+The selected material is stored in `users.shelf_texture` through `PUT /auth/me`.
+Profile responses include it, and shelf components receive the owner's material
+explicitly. A visitor's own selection never overrides another owner's shelf.
+
+The generated Open Graph sharing image follows the owner's material too. The
+production API image only contains `api/`, so the three shelf JPEGs of each
+material are also committed under `api/public/og/textures/<id>/`; copy a new
+material there as well, otherwise its sharing image falls back to wood.

@@ -1019,6 +1019,7 @@ class AuthController extends Controller
      *             @OA\Property(property="username", type="string", example="john_doe", description="Unique username"),
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="User email"),
      *             @OA\Property(property="shelf_name", type="string", example="John's Library", description="Custom shelf name"),
+     *             @OA\Property(property="shelf_texture", type="string", example="marble", description="Shelf material shown to every visitor"),
      *             @OA\Property(property="locale", type="string", example="en", description="User preferred language"),
      *             @OA\Property(property="is_private", type="boolean", example=false, description="Whether profile is private")
      *         )
@@ -1058,6 +1059,7 @@ class AuthController extends Controller
             'username' => 'sometimes|string|max:100|unique:users,username,'.$user->id,
             'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
             'shelf_name' => 'sometimes|string|max:255',
+            'shelf_texture' => 'sometimes|string|in:wood,marble,black-marble,granite,slate,travertine,concrete,glass,smoked-glass,steel,terrazzo',
             'locale' => 'sometimes|string|max:10',
             'preferred_amazon_region' => 'sometimes|nullable|string|max:5',
             'is_private' => 'sometimes|boolean',
@@ -1136,6 +1138,7 @@ class AuthController extends Controller
             'username',
             'email',
             'shelf_name',
+            'shelf_texture',
             'locale',
             'preferred_amazon_region',
             'is_private',

@@ -91,6 +91,7 @@ export const useAuthStore = defineStore('auth', {
       username?: string
       email?: string
       shelf_name?: string
+      shelf_texture?: User['shelf_texture']
       locale?: string
       preferred_amazon_region?: string | null
       is_private?: boolean
@@ -99,8 +100,8 @@ export const useAuthStore = defineStore('auth', {
       return await api
         .put('/auth/me', data)
         .then((response) => {
-          this.setUser(response.data.user)
-          LocalStorage.set('user', response.data.user)
+          // Merge: the response resource omits account fields such as email and has_password_set.
+          useUserStore().updateMe(response.data.user)
           if (data.locale) {
             i18n.global.locale.value = data.locale as SupportedLocale
           }

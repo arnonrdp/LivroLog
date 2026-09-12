@@ -1,9 +1,9 @@
 <template>
   <!-- Empty state when user has no books and is viewing their own shelf -->
-  <EmptyShelfState v-if="!userIdentifier && (!books || books.length === 0)" @import="handleImport" />
+  <EmptyShelfState v-if="!userIdentifier && (!books || books.length === 0)" :shelf-texture="shelfTexture" @import="handleImport" />
 
   <!-- Regular shelf display -->
-  <section v-else class="flex justify-around" :style="appearance.shelfStyle">
+  <section v-else class="flex justify-around" :style="shelfStyle">
     <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id" data-testid="library-book">
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
@@ -36,10 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAppearanceStore } from '@/stores/appearance'
-
-const appearance = useAppearanceStore()
 import BookCoverPlaceholder from '@/components/common/BookCoverPlaceholder.vue'
+import { shelfTextureStyle, type ShelfTextureId } from '@/config/shelfTextures'
 import type { Book, Tag, User } from '@/models'
 import { useAuthStore, useTagStore } from '@/stores'
 import { computed, ref } from 'vue'
@@ -49,6 +47,7 @@ import EmptyShelfState from './EmptyShelfState.vue'
 import GoodReadsImportDialog from './GoodReadsImportDialog.vue'
 
 const props = defineProps<{
+  shelfTexture?: ShelfTextureId
   books?: User['books']
   userIdentifier?: string // if provided, means viewing another user's shelf
   showTagDots?: boolean // Show tag color dots on book covers
@@ -57,6 +56,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'import-completed': []
 }>()
+
+const shelfStyle = computed(() => shelfTextureStyle(props.shelfTexture || 'wood'))
 
 const authStore = useAuthStore()
 const tagStore = useTagStore()

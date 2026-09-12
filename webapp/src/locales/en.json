@@ -558,7 +558,7 @@
     "description": "Choose a finish for your bookshelf. The preview updates as soon as you select a material.",
     "read": "Reading",
     "stories": "Stories",
-    "saved": "{material} selected. Your choice is saved automatically in this browser.",
+    "saved": "Material: {material}. Saved to your profile and visible to visitors to your bookshelf.",
     "materials": {
       "wood": "Classic wood",
       "marble": "White marble",

@@ -661,14 +661,17 @@ class UserController extends Controller
             Storage::disk('public')->put($relative, $image);
 
             if ($request->boolean('debug')) {
+                $texDir = $this->ensureOgTextures($user->shelf_texture);
+
                 return response()->json([
                     'gd' => extension_loaded('gd'),
                     'books_public' => count($books),
                     'bytes' => strlen($image),
                     'textures' => [
-                        'left' => file_exists(public_path('og/textures/shelfleft.jpg')),
-                        'center' => file_exists(public_path('og/textures/shelfcenter.jpg')),
-                        'right' => file_exists(public_path('og/textures/shelfright.jpg')),
+                        'dir' => $texDir,
+                        'left' => file_exists($texDir.DIRECTORY_SEPARATOR.'shelfleft.jpg'),
+                        'center' => file_exists($texDir.DIRECTORY_SEPARATOR.'shelfcenter.jpg'),
+                        'right' => file_exists($texDir.DIRECTORY_SEPARATOR.'shelfright.jpg'),
                     ],
                     'storage_writable' => is_writable(storage_path('app/public')),
                     'stored' => Storage::disk('public')->exists($relative),
@@ -706,11 +709,12 @@ class UserController extends Controller
         $ts = DB::table('users_books')
             ->where('user_id', $user->id)
             ->max('updated_at');
-        if (! $ts) {
-            $ts = $user->updated_at ?: now();
-        }
 
-        return is_string($ts) ? (string) strtotime($ts) : (string) strtotime((string) $ts);
+        // The profile row carries the shelf name and material, so it counts as well.
+        return (string) max(
+            $ts ? strtotime((string) $ts) : 0,
+            strtotime((string) ($user->updated_at ?: now()))
+        );
     }
 
     /**
@@ -718,8 +722,8 @@ class UserController extends Controller
      */
     private function generateShelfImage(User $user, $books)
     {
-        // Ensure OG textures are available locally
-        $this->ensureOgTextures();
+        // Ensure the owner's shelf material is available locally
+        $texDir = $this->ensureOgTextures($user->shelf_texture);
         // Ensure we have a decent TTF font available (prefer Roboto)
         $this->ensureOgFont();
         // Image dimensions optimized for Open Graph (1.91:1 ratio)
@@ -733,10 +737,10 @@ class UserController extends Controller
         $bgColor = imagecolorallocate($image, 255, 255, 255);
         imagefill($image, 0, 0, $bgColor);
 
-        // Load shelf wood textures directly from local filesystem to avoid HTTP self-fetch issues
-        $leftPath = public_path('og/textures/shelfleft.jpg');
-        $rightPath = public_path('og/textures/shelfright.jpg');
-        $centerPath = public_path('og/textures/shelfcenter.jpg');
+        // Load the shelf material directly from local filesystem to avoid HTTP self-fetch issues
+        $leftPath = $texDir.DIRECTORY_SEPARATOR.'shelfleft.jpg';
+        $rightPath = $texDir.DIRECTORY_SEPARATOR.'shelfright.jpg';
+        $centerPath = $texDir.DIRECTORY_SEPARATOR.'shelfcenter.jpg';
 
         $leftImg = (is_file($leftPath) ? @imagecreatefromjpeg($leftPath) : null);
         $rightImg = (is_file($rightPath) ? @imagecreatefromjpeg($rightPath) : null);
@@ -826,9 +830,18 @@ class UserController extends Controller
         return $imageData;
     }
 
-    private function ensureOgTextures(): void
+    /**
+     * Make the given shelf material available under public/og and return its directory.
+     * Falls back to the original wood set when a material ships no assets.
+     */
+    private function ensureOgTextures(?string $texture = null): string
     {
-        $destDir = public_path('og/textures');
+        $woodDir = public_path('og/textures');
+        // basename() keeps a stored value from escaping the textures directory.
+        $material = ($texture && $texture !== 'wood') ? basename($texture) : null;
+        $destDir = $material ? $woodDir.DIRECTORY_SEPARATOR.$material : $woodDir;
+        $srcDir = base_path('../webapp/src/assets/textures'.($material ? '/materials/'.$material : ''));
+
         if (! is_dir($destDir)) {
             @mkdir($destDir, 0775, true);
         }
@@ -843,12 +856,14 @@ class UserController extends Controller
         foreach ($files as $f) {
             $dest = $destDir.DIRECTORY_SEPARATOR.$f;
             if (! file_exists($dest)) {
-                $src = base_path('../webapp/src/assets/textures/'.$f);
+                $src = $srcDir.DIRECTORY_SEPARATOR.$f;
                 if (file_exists($src)) {
                     @copy($src, $dest);
                 }
             }
         }
+
+        return file_exists($destDir.DIRECTORY_SEPARATOR.'shelfleft.jpg') ? $destDir : $woodDir;
     }
 
     /**
