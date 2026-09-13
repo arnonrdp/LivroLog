@@ -1358,10 +1358,10 @@
   resolved "https://registry.yarnpkg.com/@quasar/extras/-/extras-2.0.4.tgz#d5dfe52f404b2343241231c22a730e877c931bf9"
   integrity sha512-JWls5J+xkgEn6u86NSBLRUXf92RSTlImmYNcF77JtbOwuZgQfQTg7RpLskqRTmzpU3Kkpd3TLDcVT0xwWwiphA==
 
-"@quasar/vite-plugin@^1.12.0":
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/@quasar/vite-plugin/-/vite-plugin-1.12.0.tgz#e6c128500e6d1f38ba14ebd9f7f69fa19e24f356"
-  integrity sha512-EME6h0bhsHJgpRGeJA2BvC7R5rtZGg/FWCeWAH34c0wcV77n5iIRC3jsp9Ju6gW557sOiczJXxChmhYikTrWEw==
+"@quasar/vite-plugin@^2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@quasar/vite-plugin/-/vite-plugin-2.0.2.tgz#4dc43164ffbcb01d986a7c44fa026f23362bda14"
+  integrity sha512-0lLHUu8eMEuWBBecRYZIpBwnyTIH/h4pDoT4bPGD/ba4sydJBa/7nlSvpEopQB5a4nnppeUqW7fpY1tHnwkEJQ==
 
 "@rolldown/binding-android-arm-eabi@1.2.8":
   version "1.2.8"
@@ -4453,7 +4453,7 @@ quansync@^0.2.11:
   resolved "https://registry.yarnpkg.com/quansync/-/quansync-0.2.11.tgz#f9c3adda2e1272e4f8cf3f1457b04cbdb4ee692a"
   integrity sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==
 
-quasar@^2.23.1:
+quasar@^2.32.2:
   version "2.32.2"
   resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.32.2.tgz#4db7a74bca5143c83c493a93b0bd184867fbc12d"
   integrity sha512-IqQHHYoYL8bfFDAwy5E5X1xv7VpMAdhFHjSaLycueRdLOkXMbntUUphAIof8Q/wgvKQcskYflGV9/OyIPvbkLA==

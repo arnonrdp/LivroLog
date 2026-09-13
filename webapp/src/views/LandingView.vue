@@ -287,6 +287,8 @@ function openRegister() {
 </script>
 
 <style scoped lang="sass">
+@use 'sass:color'
+
 // Warm Literary Color Palette
 $cream: #FDF8F3
 $warm-white: #FFFAF5
@@ -629,7 +631,7 @@ $gold: #C9A962
 
 // Footer
 .landing-footer
-  background: darken($charcoal, 5%)
+  background: color.adjust($charcoal, $lightness: -5%)
   padding: 3rem 2rem 1.5rem
 
 .footer-content
