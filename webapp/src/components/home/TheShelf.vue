@@ -119,8 +119,10 @@ function getBookTags(bookId: string): Tag[] {
 <style scoped lang="sass">
 section
   border-radius: 6px
-  min-height: 302px
-  padding: 0 3rem 2.2rem
+  // Finish on a complete texture row, without starting a partial next row.
+  min-height: 292px
+  padding: 0 3rem
+  align-content: flex-start
 
 section figure
   align-items: flex-end

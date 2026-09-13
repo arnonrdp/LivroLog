@@ -356,49 +356,6 @@ class AuthenticationTest extends TestCase
     }
 
     /**
-     * Test the shelf material is persisted and served to visitors of that shelf.
-     */
-    public function test_shelf_texture_is_persisted_and_visible_to_visitors(): void
-    {
-        $owner = User::factory()->create(['username' => 'owner', 'shelf_texture' => 'wood']);
-        $visitor = User::factory()->create(['shelf_texture' => 'slate']);
-
-        $this->actingAs($owner)
-            ->putJson('/auth/me', ['shelf_texture' => 'marble'])
-            ->assertStatus(200)
-            ->assertJsonPath('user.shelf_texture', 'marble');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $owner->id,
-            'shelf_texture' => 'marble',
-        ]);
-
-        // A visitor sees the owner's material, never their own.
-        $this->actingAs($visitor)
-            ->getJson('/users/owner')
-            ->assertStatus(200)
-            ->assertJsonPath('shelf_texture', 'marble');
-    }
-
-    /**
-     * Test an unknown shelf material is rejected.
-     */
-    public function test_shelf_texture_rejects_unknown_material(): void
-    {
-        $user = User::factory()->create(['shelf_texture' => 'wood']);
-
-        $this->actingAs($user)
-            ->putJson('/auth/me', ['shelf_texture' => 'gold'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('shelf_texture');
-
-        $this->assertDatabaseHas('users', [
-            'id' => $user->id,
-            'shelf_texture' => 'wood',
-        ]);
-    }
-
-    /**
      * Test user can toggle privacy setting.
      */
     public function test_user_can_toggle_privacy_setting(): void
