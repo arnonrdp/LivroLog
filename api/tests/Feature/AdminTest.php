@@ -1422,4 +1422,24 @@ class AdminTest extends TestCase
             'language' => 'en',
         ]);
     }
+
+    public function test_admin_create_from_amazon_reads_portuguese_publication_date(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        Http::fake(['*amazon.com.br/*' => Http::response(
+            '<span id="productTitle">Diário de um Banana 2: Rodrick é o cara</span>'
+            .'<div data-rpi-attribute-name="book_details-publication_date"><div><span>Data da publicação</span></div>'
+            .'<div class="rpi-attribute-value"> <span>1 junho 2009</span> </div></div>'
+        )]);
+
+        $this->postJson('/admin/books/create-from-amazon', ['amazon_url' => 'https://www.amazon.com.br/dp/8576831953'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('books', [
+            'amazon_asin' => '8576831953',
+            'published_date' => '2009-06-01 00:00:00',
+            'language' => 'pt-BR',
+        ]);
+    }
 }

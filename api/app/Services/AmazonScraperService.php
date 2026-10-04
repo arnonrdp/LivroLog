@@ -964,8 +964,13 @@ class AmazonScraperService
         if (! $data['publisher'] && preg_match('/(?:Publisher|Editora)[:\s]*<[^>]*>([^<]+)/i', $html, $matches)) {
             $data['publisher'] = trim(html_entity_decode($matches[1])) ?: null;
         }
-        // ponytail: strtotime only reads English dates; localized ones (pt-BR) stay null
-        $publicationDate = strtotime($this->extractBookDetail($html, 'publication_date') ?? '');
+        // amazon.com.br writes "1 junho 2009"; strtotime only reads English month names
+        // ponytail: pt-BR months only, add other stores' languages when they show up
+        $publicationDate = strtotime(str_ireplace(
+            [' de ', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+            [' ', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            $this->extractBookDetail($html, 'publication_date') ?? ''
+        ));
         $data['published_date'] = $publicationDate ? date('Y-m-d', $publicationDate) : null;
 
         // Extract authors from byline
