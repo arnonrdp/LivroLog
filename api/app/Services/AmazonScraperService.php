@@ -87,11 +87,18 @@ class AmazonScraperService
             $productData = $this->extractProductData($html);
             $productData['amazon_asin'] = $asin;
 
-            // Extract title for logging
+            // Every product page has a title; without one this is Amazon's bot wall
+            // (served with HTTP 200), so there is nothing real to extract
             $title = $this->extractProductTitle($html);
-            if ($title) {
-                $productData['extracted_title'] = $title;
+            if (! $title) {
+                Log::warning('Amazon scraper: No product title in page, likely blocked by Amazon', [
+                    'url' => $amazonUrl,
+                    'asin' => $asin,
+                ]);
+
+                return null;
             }
+            $productData['extracted_title'] = $title;
 
             Log::info('Amazon scraper: Successfully extracted data from URL', [
                 'asin' => $asin,
@@ -195,6 +202,25 @@ class AmazonScraperService
         }
 
         return null;
+    }
+
+    /**
+     * Resolve ASIN from short URL (a.co, amzn.to) by following the redirect
+     */
+    public function resolveAsinFromShortUrl(string $url): ?string
+    {
+        try {
+            $effectiveUrl = Http::timeout(10)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->get($url)
+                ->effectiveUri()?->__toString();
+
+            return $effectiveUrl ? $this->extractAsinFromUrl($effectiveUrl) : null;
+        } catch (\Exception $e) {
+            Log::warning('Failed to resolve short URL', ['url' => $url, 'error' => $e->getMessage()]);
+
+            return null;
+        }
     }
 
     /**
@@ -614,7 +640,8 @@ class AmazonScraperService
             // Remove Amazon suffix
             $title = preg_replace('/\s*[:\-|]\s*Amazon\..*$/i', '', $title);
 
-            return $title;
+            // Captcha and error pages are titled just "Amazon.com" and the like
+            return preg_match('/^(amazon(\.[a-z.]+)?)?$/i', $title) ? null : $title;
         }
 
         return null;
@@ -893,6 +920,7 @@ class AmazonScraperService
             'page_count' => null,
             'description' => null,
             'publisher' => null,
+            'published_date' => null,
             'authors' => null,
             'height' => null,
             'width' => null,
@@ -901,7 +929,7 @@ class AmazonScraperService
 
         // Extract thumbnail - high resolution image
         if (preg_match('/data-a-dynamic-image="\{&quot;([^&]+)/', $html, $matches)) {
-            $data['thumbnail'] = html_entity_decode($matches[1]);
+            $data['thumbnail'] = $this->convertToHighResolution(html_entity_decode($matches[1]));
         } elseif (preg_match('/<img[^>]*id="landingImage"[^>]*src="([^"]+)"/', $html, $matches)) {
             $data['thumbnail'] = $this->convertToHighResolution($matches[1]);
         } elseif (preg_match('/<img[^>]*id="imgBlkFront"[^>]*src="([^"]+)"/', $html, $matches)) {
@@ -931,10 +959,14 @@ class AmazonScraperService
             $data['page_count'] = (int) $matches[1];
         }
 
-        // Extract publisher
-        if (preg_match('/(?:Publisher|Editora)[:\s]*<[^>]*>([^<]+)/i', $html, $matches)) {
-            $data['publisher'] = trim(html_entity_decode($matches[1]));
+        // Extract publisher and publication date from the book details carousel
+        $data['publisher'] = $this->extractBookDetail($html, 'publisher');
+        if (! $data['publisher'] && preg_match('/(?:Publisher|Editora)[:\s]*<[^>]*>([^<]+)/i', $html, $matches)) {
+            $data['publisher'] = trim(html_entity_decode($matches[1])) ?: null;
         }
+        // ponytail: strtotime only reads English dates; localized ones (pt-BR) stay null
+        $publicationDate = strtotime($this->extractBookDetail($html, 'publication_date') ?? '');
+        $data['published_date'] = $publicationDate ? date('Y-m-d', $publicationDate) : null;
 
         // Extract authors from byline
         if (preg_match('/<span[^>]*class="author[^"]*"[^>]*>.*?<a[^>]*>([^<]+)/is', $html, $matches)) {
@@ -984,6 +1016,8 @@ class AmazonScraperService
             $description = preg_replace('/<br\s*\/?>/i', "\n", $description);
             // Replace </p> with double newlines
             $description = preg_replace('/<\/p>/i', "\n\n", $description);
+            // Drop Amazon's "Read more" expander icon, an <i> that strip_tags would keep
+            $description = preg_replace('/<i[^>]*class="[^"]*a-icon[^"]*"[^>]*>.*?<\/i>/is', '', $description);
             // Strip HTML tags but keep formatting tags (bold, italic)
             $description = strip_tags($description, '<b><strong><i><em>');
             // Decode HTML entities
@@ -1001,6 +1035,18 @@ class AmazonScraperService
         }
 
         return $data;
+    }
+
+    /**
+     * Read a value from the product page's "book details" carousel (publisher, publication_date, ...)
+     */
+    private function extractBookDetail(string $html, string $attribute): ?string
+    {
+        if (preg_match('/data-rpi-attribute-name="book_details-'.$attribute.'".*?rpi-attribute-value[^>]*>\s*<span>([^<]+)</s', $html, $matches)) {
+            return trim(html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8')) ?: null;
+        }
+
+        return null;
     }
 
     /**

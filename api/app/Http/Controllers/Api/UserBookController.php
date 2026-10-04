@@ -9,14 +9,12 @@ use App\Models\Review;
 use App\Models\User;
 use App\Services\AmazonEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
-use App\Services\AmazonScraperService;
 use App\Services\HybridBookSearchService;
 use App\Services\UnifiedBookEnrichmentService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class UserBookController extends Controller
@@ -991,7 +989,7 @@ class UserBookController extends Controller
      * This allows regular users to add books that don't exist in the database
      * by providing an Amazon product URL. The URL must be for a book product.
      */
-    public function createFromAmazonUrl(Request $request, AmazonScraperService $scraper, AmazonEnrichmentService $enrichment): JsonResponse
+    public function createFromAmazonUrl(Request $request, AmazonEnrichmentService $enrichment): JsonResponse
     {
         $request->validate([
             'amazon_url' => 'required|string|url',
@@ -1012,83 +1010,26 @@ class UserBookController extends Controller
             ], 422);
         }
 
-        // Extract ASIN and region from URL
-        $asin = $scraper->extractAsinFromUrl($amazonUrl);
-        $region = AmazonScraperService::getRegionFromUrl($amazonUrl);
+        $amazonData = $enrichment->getBookDataFromUrl($amazonUrl);
 
-        // For short URLs (a.co, amzn.to), resolve redirect to get real ASIN
-        if (! $asin) {
-            $asin = $this->resolveAsinFromShortUrl($amazonUrl, $scraper);
-        }
-
-        $amazonData = null;
-        $source = null;
-
-        // Strategy: Creators API → Scraper, then merge both for complete data
-        if ($asin) {
-            $amazonData = $enrichment->getBookByAsin($asin, $region);
-            if ($amazonData) {
-                $source = 'api';
-            }
-        }
-
-        // Always try scraper to fill missing fields (description, thumbnail, etc.)
-        $scraperData = $scraper->extractFromUrl($amazonUrl);
-
-        if ($amazonData && $scraperData) {
-            // Merge: API data is primary, scraper fills gaps
-            $fieldsToFill = ['title', 'description', 'thumbnail', 'authors', 'isbn', 'page_count', 'publisher', 'height', 'width', 'thickness'];
-            foreach ($fieldsToFill as $field) {
-                $scraperField = $field === 'title' ? 'extracted_title' : $field;
-                if (empty($amazonData[$field]) && ! empty($scraperData[$scraperField])) {
-                    $amazonData[$field] = $scraperData[$scraperField];
-                }
-            }
-            // Prefer scraper description over API features (scraper gets actual synopsis)
-            if (! empty($scraperData['description']) && strlen($scraperData['description']) > strlen($amazonData['description'] ?? '')) {
-                $amazonData['description'] = $scraperData['description'];
-            }
-            $source = 'api+scraper';
-        } elseif (! $amazonData && $scraperData) {
-            // API failed entirely, use scraper data
-            if (! $this->isBookProduct($scraperData)) {
-                return response()->json([
-                    'success' => false,
-                    'message_key' => 'amazon-not-a-book',
-                ], 422);
-            }
-
-            if (empty($scraperData['extracted_title']) && empty($scraperData['amazon_asin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message_key' => 'amazon-extract-failed',
-                ], 422);
-            }
-
-            // Normalize scraper data to match API format
-            $amazonData = [
-                'title' => $scraperData['extracted_title'] ?? null,
-                'authors' => $scraperData['authors'] ?? null,
-                'isbn' => $scraperData['isbn'] ?? null,
-                'amazon_asin' => $scraperData['amazon_asin'] ?? null,
-                'thumbnail' => $scraperData['thumbnail'] ?? null,
-                'page_count' => $scraperData['page_count'] ?? null,
-                'description' => $scraperData['description'] ?? null,
-                'publisher' => $scraperData['publisher'] ?? null,
-                'height' => $scraperData['height'] ?? null,
-                'width' => $scraperData['width'] ?? null,
-                'thickness' => $scraperData['thickness'] ?? null,
-            ];
-            $source = 'scraper';
-        } elseif (! $amazonData && ! $scraperData) {
+        if (! $amazonData) {
             return response()->json([
                 'success' => false,
                 'message_key' => 'amazon-extract-failed',
             ], 422);
         }
 
-        $title = $amazonData['title'] ?? $amazonData['extracted_title'] ?? null;
+        // API results come from the Books catalog; scraped pages can be any product
+        if ($amazonData['source'] === 'scraper' && ! $this->isBookProduct(['extracted_title' => $amazonData['title'], ...$amazonData])) {
+            return response()->json([
+                'success' => false,
+                'message_key' => 'amazon-not-a-book',
+            ], 422);
+        }
+
+        $title = $amazonData['title'];
         $asinValue = $amazonData['amazon_asin'] ?? null;
+        $source = $amazonData['source'];
 
         // Check if book already exists by ISBN or ASIN
         $existingBook = null;
@@ -1130,10 +1071,6 @@ class UserBookController extends Controller
             ], 201);
         }
 
-        // Infer language from region when not available from API/scraper
-        $regionToLanguage = ['BR' => 'pt-BR', 'US' => 'en', 'UK' => 'en', 'CA' => 'en', 'DE' => 'de', 'FR' => 'fr', 'ES' => 'es', 'IT' => 'it', 'JP' => 'ja'];
-        $language = $amazonData['language'] ?? $regionToLanguage[$region] ?? 'pt-BR';
-
         // Build create data, excluding null values so DB defaults apply
         $createData = array_filter([
             'title' => $title ?? 'Untitled',
@@ -1145,7 +1082,7 @@ class UserBookController extends Controller
             'description' => $amazonData['description'] ?? null,
             'publisher' => $amazonData['publisher'] ?? null,
             'published_date' => $amazonData['published_date'] ?? null,
-            'language' => $language,
+            'language' => $amazonData['language'],
             'categories' => $amazonData['categories'] ?? null,
             'amazon_rating' => $amazonData['amazon_rating'] ?? null,
             'amazon_rating_count' => $amazonData['amazon_rating_count'] ?? null,
@@ -1187,27 +1124,6 @@ class UserBookController extends Controller
             'book' => $bookWithPivot,
             'already_in_library' => false,
         ], 201);
-    }
-
-    /**
-     * Resolve ASIN from short URL (a.co, amzn.to) by following the redirect
-     */
-    private function resolveAsinFromShortUrl(string $url, AmazonScraperService $scraper): ?string
-    {
-        try {
-            $response = Http::timeout(10)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
-                ->get($url);
-
-            $effectiveUrl = $response->effectiveUri()?->__toString();
-            if ($effectiveUrl) {
-                return $scraper->extractAsinFromUrl($effectiveUrl);
-            }
-        } catch (\Exception $e) {
-            Log::warning('Failed to resolve short URL', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-
-        return null;
     }
 
     /**

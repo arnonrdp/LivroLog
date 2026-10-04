@@ -8,6 +8,7 @@ use App\Models\Review;
 use App\Models\User;
 use App\Services\AmazonScraperService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -22,6 +23,9 @@ class AdminTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Local .env may hold real Amazon API credentials; never call out from tests
+        Http::preventStrayRequests();
 
         $this->adminUser = User::factory()->create([
             'role' => 'admin',
@@ -1092,10 +1096,11 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0TESTASIN1',
                 'thumbnail' => 'https://example.com/image.jpg',
                 'isbn' => '9781234567890',
@@ -1147,10 +1152,11 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0SHORTURL1',
                 'thumbnail' => 'https://example.com/image.jpg',
             ]);
@@ -1184,10 +1190,11 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return the same ISBN
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0NEWASIN01',
                 'isbn' => '9781234567890', // Same ISBN as existing book
             ]);
@@ -1224,10 +1231,11 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return the same ASIN
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0EXISTASIN', // Same ASIN as existing book
             ]);
 
@@ -1258,10 +1266,11 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return the same ISBN
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0NEWASINNW',
                 'isbn' => '9781234567890', // Same ISBN as the book itself
             ]);
@@ -1304,10 +1313,11 @@ class AdminTest extends TestCase
 
         // Mock the AmazonScraperService to return a much longer description
         $longDescription = str_repeat('This is a much longer description. ', 20); // ~700 chars
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0TESTDESC1',
                 'description' => $longDescription,
             ]);
@@ -1343,10 +1353,11 @@ class AdminTest extends TestCase
         ]);
 
         // Mock the AmazonScraperService to return a shorter description
-        $mockScraper = \Mockery::mock(AmazonScraperService::class);
+        $mockScraper = \Mockery::mock(AmazonScraperService::class)->makePartial();
         $mockScraper->shouldReceive('extractFromUrl')
             ->once()
             ->andReturn([
+                'extracted_title' => 'Test Book',
                 'amazon_asin' => 'B0TESTDESC2',
                 'description' => 'Short Amazon description.', // Much shorter
             ]);
@@ -1363,6 +1374,52 @@ class AdminTest extends TestCase
         $this->assertDatabaseHas('books', [
             'id' => $book->id,
             'description' => $originalDescription,
+        ]);
+    }
+
+    // ==================== Create From Amazon URL Tests ====================
+
+    public function test_admin_create_from_amazon_rejects_bot_wall_instead_of_creating_untitled_book(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        // Amazon answers the server's IP with a captcha page at HTTP 200
+        Http::fake(['*amazon.com/*' => Http::response('<html><head><title>Amazon.com</title></head><body>Enter the characters you see below</body></html>')]);
+
+        $this->postJson('/admin/books/create-from-amazon', ['amazon_url' => 'https://www.amazon.com/dp/B00KNC2MHO'])
+            ->assertStatus(422)
+            ->assertJson(['success' => false]);
+
+        $this->assertDatabaseMissing('books', ['amazon_asin' => 'B00KNC2MHO']);
+    }
+
+    public function test_admin_create_from_amazon_extracts_product_page(): void
+    {
+        Sanctum::actingAs($this->adminUser);
+
+        Http::fake(['*amazon.com/*' => Http::response(
+            '<span id="productTitle">Cibola Burn (The Expanse Book 4)</span>'
+            .'<span class="author"><a href="#">James S. A. Corey</a></span>'
+            .'<img id="landingImage" src="https://m.media-amazon.com/images/I/916Dvtvq9TL._SY342_.jpg">'
+            .'<span>591 pages</span>'
+            .'<div data-rpi-attribute-name="book_details-publisher"><div><span>Publisher</span></div>'
+            .'<div class="rpi-attribute-value"> <span>Orbit</span> </div></div>'
+            .'<div data-rpi-attribute-name="book_details-publication_date"><div><span>Publication date</span></div>'
+            .'<div class="rpi-attribute-value"> <span>June 17, 2014</span> </div></div>'
+        )]);
+
+        $this->postJson('/admin/books/create-from-amazon', ['amazon_url' => 'https://www.amazon.com/dp/B00KNC2MHO'])
+            ->assertOk()
+            ->assertJsonPath('book.title', 'Cibola Burn (The Expanse Book 4)');
+
+        $this->assertDatabaseHas('books', [
+            'amazon_asin' => 'B00KNC2MHO',
+            'authors' => 'James S. A. Corey',
+            'thumbnail' => 'https://m.media-amazon.com/images/I/916Dvtvq9TL._SL1500_.jpg',
+            'page_count' => 591,
+            'publisher' => 'Orbit',
+            'published_date' => '2014-06-17 00:00:00',
+            'language' => 'en',
         ]);
     }
 }

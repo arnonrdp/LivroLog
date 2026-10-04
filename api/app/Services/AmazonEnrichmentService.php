@@ -359,6 +359,50 @@ class AmazonEnrichmentService
     }
 
     /**
+     * Get book data for an Amazon product URL: official API by ASIN first, scraper fills the gaps.
+     *
+     * Scraping alone is unreliable from the server: Amazon often answers its IP with a
+     * bot wall at HTTP 200, which used to produce "Untitled" books with no data.
+     *
+     * @return array|null Book data (title, authors, isbn, ...) plus 'source' and 'region', or null when no title was found
+     */
+    public function getBookDataFromUrl(string $url): ?array
+    {
+        $scraper = app(AmazonScraperService::class);
+        $region = AmazonScraperService::getRegionFromUrl($url);
+        $asin = $scraper->extractAsinFromUrl($url) ?? $scraper->resolveAsinFromShortUrl($url);
+
+        $data = $asin ? $this->getBookByAsin($asin, $region) : null;
+        $source = $data ? 'api' : null;
+
+        $scraped = $scraper->extractFromUrl($url);
+        if ($scraped) {
+            $scraped['title'] = $scraped['extracted_title'] ?? null;
+            $data ??= [];
+            foreach (['title', 'amazon_asin', 'description', 'thumbnail', 'authors', 'isbn', 'page_count', 'publisher', 'published_date', 'height', 'width', 'thickness'] as $field) {
+                if (empty($data[$field]) && ! empty($scraped[$field])) {
+                    $data[$field] = $scraped[$field];
+                }
+            }
+            // The scraper gets the real synopsis; the API often returns only feature bullets
+            if (strlen($scraped['description'] ?? '') > strlen($data['description'] ?? '')) {
+                $data['description'] = $scraped['description'];
+            }
+            $source = $source ? 'api+scraper' : 'scraper';
+        }
+
+        if (empty($data['title'])) {
+            return null;
+        }
+
+        $regionToLanguage = ['BR' => 'pt-BR', 'US' => 'en', 'UK' => 'en', 'CA' => 'en', 'DE' => 'de', 'FR' => 'fr', 'ES' => 'es', 'IT' => 'it', 'JP' => 'ja'];
+        $data['language'] ??= $regionToLanguage[$region] ?? 'pt-BR';
+        $data['amazon_asin'] ??= $asin;
+
+        return [...$data, 'source' => $source, 'region' => $region];
+    }
+
+    /**
      * Search for book data on Amazon using the configured provider (Creators API or PA-API)
      */
     private function searchAmazonBook(Book $book): ?array
