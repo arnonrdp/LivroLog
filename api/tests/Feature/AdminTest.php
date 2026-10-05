@@ -24,9 +24,6 @@ class AdminTest extends TestCase
     {
         parent::setUp();
 
-        // Local .env may hold real Amazon API credentials; never call out from tests
-        Http::preventStrayRequests();
-
         $this->adminUser = User::factory()->create([
             'role' => 'admin',
         ]);

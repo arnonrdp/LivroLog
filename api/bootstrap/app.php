@@ -37,8 +37,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Daily database backup at 3:00 AM
-        $schedule->command('backup:database')->dailyAt('03:00');
+        // Database backups run from the host's cron (scripts/setup_backup_cron.sh), not here
+
+        // Catch books that still lack an ASIN (no ISBN at creation, CDN hiccup, ISBN added later)
+        $schedule->command('books:backfill-asins')->dailyAt('04:00')->withoutOverlapping();
 
         // Run queue worker every minute to process jobs
         $schedule->command('queue:work --tries=3 --timeout=60 --sleep=3 --max-jobs=10 --stop-when-empty')

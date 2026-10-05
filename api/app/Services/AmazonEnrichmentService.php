@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Book;
 use App\Services\Amazon\AmazonProviderFactory;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AmazonEnrichmentService
@@ -714,6 +715,57 @@ class AmazonEnrichmentService
         $check = (10 - ($sum % 10)) % 10;
 
         return $base.$check;
+    }
+
+    /**
+     * Resolve a print book's ASIN from its ISBN: for printed books Amazon's ASIN is the ISBN-10.
+     *
+     * Needs no API, credentials or scraping (all unavailable to the server). The image CDN, which
+     * doesn't block servers, confirms the ASIN exists: a real one returns its cover as JPEG, an
+     * unknown one a 43-byte GIF.
+     */
+    public function resolveAsinFromIsbn(?string $isbn): ?string
+    {
+        // Only real ISBNs; the column also holds Google/OCLC ids like "UOM:39015..." whose digits could pass a checksum
+        if (! $isbn || ! preg_match('/^[0-9][0-9\- ]{8,15}[0-9Xx]$/', trim($isbn))) {
+            return null;
+        }
+
+        $digits = $this->normalizeIsbn(trim($isbn));
+        $isbn10 = match (true) {
+            strlen($digits) === 10 => strtoupper($digits),
+            // A 978 ISBN-13 with a valid checksum maps to the ISBN-10 sharing its nine core digits
+            strlen($digits) === 13 && str_starts_with($digits, '978') && $this->toIsbn13(substr($digits, 3, 9).'0') === $digits => $this->isbn10CheckDigit(substr($digits, 3, 9)),
+            default => null, // 979 ISBNs have no ISBN-10
+        };
+
+        if (! $isbn10 || $this->isbn10CheckDigit(substr($isbn10, 0, 9)) !== $isbn10) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(5)->get("https://m.media-amazon.com/images/P/{$isbn10}.01._SCLZZZZZZZ_.jpg");
+
+            return $response->successful() && str_contains($response->header('Content-Type'), 'jpeg') ? $isbn10 : null;
+        } catch (\Throwable $e) {
+            Log::warning("resolveAsinFromIsbn: CDN check failed for {$isbn10}: {$e->getMessage()}");
+
+            return null;
+        }
+    }
+
+    /**
+     * Append the ISBN-10 check digit to its first nine digits
+     */
+    private function isbn10CheckDigit(string $nineDigits): string
+    {
+        $sum = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $sum += (10 - $i) * (int) $nineDigits[$i];
+        }
+        $check = (11 - ($sum % 11)) % 11;
+
+        return $nineDigits.($check === 10 ? 'X' : $check);
     }
 
     /**
