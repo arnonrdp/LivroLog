@@ -46,7 +46,7 @@
 
         <q-tab-panels v-model="activeTab" animated class="bg-transparent">
           <q-tab-panel class="q-pa-none" name="shelf">
-            <TheShelf :books="filteredBooks" data-testid="profile-books" :user-identifier="person.username" />
+            <TheShelf :books="filteredBooks" data-testid="profile-books" :shelf-texture="person.shelf_texture" :user-identifier="person.username" />
           </q-tab-panel>
 
           <q-tab-panel class="q-pa-none" name="stats">
@@ -84,17 +84,17 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-      <!-- Sharing a shelf is the one loop this product has that grows on its own. Whoever
+    <!-- Sharing a shelf is the one loop this product has that grows on its own. Whoever
            receives the link arrives logged out, so the invitation has to be here. -->
-      <section v-if="!authStore.isAuthenticated && person" class="guest-cta">
-        <q-icon color="primary" name="auto_stories" size="2.5rem" />
-        <h3>{{ $t('person.cta-title', { name: person.display_name }) }}</h3>
-        <p>{{ $t('person.cta-subtitle') }}</p>
-        <div class="guest-cta__actions">
-          <q-btn color="primary" :label="$t('signup')" no-caps rounded unelevated @click="openRegister" />
-          <q-btn color="primary" flat :label="$t('book.already-have-account')" no-caps @click="promptLogin" />
-        </div>
-      </section>
+    <section v-if="!authStore.isAuthenticated && person" class="guest-cta">
+      <q-icon color="primary" name="auto_stories" size="2.5rem" />
+      <h3>{{ $t('person.cta-title', { name: person.display_name }) }}</h3>
+      <p>{{ $t('person.cta-subtitle') }}</p>
+      <div class="guest-cta__actions">
+        <q-btn color="primary" :label="$t('signup')" no-caps rounded unelevated @click="openRegister" />
+        <q-btn color="primary" flat :label="$t('book.already-have-account')" no-caps @click="promptLogin" />
+      </div>
+    </section>
   </q-page>
 </template>
 

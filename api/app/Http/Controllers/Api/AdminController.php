@@ -9,7 +9,6 @@ use App\Models\Book;
 use App\Models\Review;
 use App\Models\User;
 use App\Services\AmazonEnrichmentService;
-use App\Services\AmazonScraperService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -225,8 +224,7 @@ class AdminController extends Controller
             ], 422);
         }
 
-        $scraper = app(AmazonScraperService::class);
-        $amazonData = $scraper->extractFromUrl($amazonUrl);
+        $amazonData = app(AmazonEnrichmentService::class)->getBookDataFromUrl($amazonUrl);
 
         if (! $amazonData) {
             return response()->json([
@@ -449,21 +447,12 @@ class AdminController extends Controller
             ], 422);
         }
 
-        $scraper = app(AmazonScraperService::class);
-        $amazonData = $scraper->extractFromUrl($amazonUrl);
+        $amazonData = app(AmazonEnrichmentService::class)->getBookDataFromUrl($amazonUrl);
 
         if (! $amazonData) {
             return response()->json([
                 'success' => false,
                 'message' => 'Could not extract data from the provided Amazon URL. Please check the URL and try again.',
-            ], 422);
-        }
-
-        // Check for required data (at least title or ASIN)
-        if (empty($amazonData['extracted_title']) && empty($amazonData['amazon_asin'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Could not extract book information from the Amazon page.',
             ], 422);
         }
 
@@ -493,7 +482,7 @@ class AdminController extends Controller
 
         // Create the book
         $book = Book::create([
-            'title' => $amazonData['extracted_title'] ?? 'Untitled',
+            'title' => $amazonData['title'],
             'authors' => $amazonData['authors'] ?? null,
             'isbn' => $amazonData['isbn'] ?? null,
             'amazon_asin' => $amazonData['amazon_asin'] ?? null,
@@ -501,6 +490,8 @@ class AdminController extends Controller
             'page_count' => $amazonData['page_count'] ?? null,
             'description' => $amazonData['description'] ?? null,
             'publisher' => $amazonData['publisher'] ?? null,
+            'published_date' => $amazonData['published_date'] ?? null,
+            'language' => $amazonData['language'],
             'height' => $amazonData['height'] ?? null,
             'width' => $amazonData['width'] ?? null,
             'thickness' => $amazonData['thickness'] ?? null,

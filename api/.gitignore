@@ -3,6 +3,7 @@
 .env
 /bootstrap/cache/*.php
 .env.backup
+.env.docker
 .env.production
 .phpactor.json
 .phpunit.result.cache

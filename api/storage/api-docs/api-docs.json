@@ -4,7 +4,7 @@
         "title": "LivroLog API",
         "description": "Personal library management system with Google Books API integration, social features, privacy controls, and comprehensive follow system with request management",
         "contact": {
-            "email": "support@livrolog.com"
+            "email": "contato@livrolog.com"
         },
         "license": {
             "name": "MIT",

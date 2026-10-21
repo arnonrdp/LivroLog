@@ -22,6 +22,7 @@ class UserResource extends JsonResource
             'username' => $this->username,
             'avatar' => $this->avatar,
             'shelf_name' => $this->shelf_name,
+            'shelf_texture' => $this->shelf_texture ?? 'wood',
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'books_count' => $this->when(isset($this->books_count), $this->books_count),

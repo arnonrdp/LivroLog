@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Events\BookCreated;
+use App\Services\AmazonEnrichmentService;
 use App\Services\AmazonLinkEnrichmentService;
+use App\Services\AmazonScraperService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -114,6 +116,23 @@ class Book extends Model
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = 'B-'.strtoupper(Str::random(4)).'-'.strtoupper(Str::random(4));
+            }
+        });
+
+        // Every source writes covers (importers, providers, manual edits); trim Amazon's white canvas once, here
+        static::saving(function ($model) {
+            if ($model->thumbnail && $model->isDirty('thumbnail')) {
+                $model->thumbnail = app(AmazonScraperService::class)->removeWhitePadding($model->thumbnail);
+            }
+
+            // The ASIN drives the affiliate link; derive it here so no creation path depends on the queue or Amazon's APIs
+            if (! $model->amazon_asin && $model->isbn && $model->isDirty('isbn')) {
+                $asin = app(AmazonEnrichmentService::class)->resolveAsinFromIsbn($model->isbn);
+                if ($asin) {
+                    $model->amazon_asin = $asin;
+                    $model->asin_status = 'completed';
+                    $model->asin_processed_at = now();
+                }
             }
         });
 

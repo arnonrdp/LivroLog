@@ -173,6 +173,13 @@ jobs:
           yarn type-check
           echo "✅ TypeScript validation passed"
 
+      - name: Unit tests
+        working-directory: ./webapp
+        run: |
+          echo "🔍 Running unit tests..."
+          yarn test:run
+          echo "✅ Unit tests passed"
+
       - name: Build test
         working-directory: ./webapp
         run: |

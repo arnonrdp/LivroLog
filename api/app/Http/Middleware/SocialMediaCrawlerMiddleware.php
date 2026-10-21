@@ -170,10 +170,15 @@ class SocialMediaCrawlerMiddleware
         $frontend = rtrim(config('app.frontend_url'), '/');
         $currentUrl = $frontend.'/'.rawurlencode($user->username);
         // Version for cache-busting
+        // Mirrors UserController::getShelfVersion: the profile row carries the
+        // shelf name and material, so a change there has to move the URL too.
         $versionTs = DB::table('users_books')
             ->where('user_id', $user->id)
             ->max('updated_at');
-        $version = $versionTs ? (is_string($versionTs) ? (string) strtotime($versionTs) : (string) strtotime((string) $versionTs)) : (string) time();
+        $version = (string) max(
+            $versionTs ? strtotime((string) $versionTs) : 0,
+            strtotime((string) ($user->updated_at ?: now()))
+        );
         // Always build image URLs from the API host: this request may have been
         // proxied from the frontend host, so the request host is not usable here.
         $imageUrl = rtrim(config('app.url'), '/')."/users/{$user->id}/shelf-image?v={$version}";

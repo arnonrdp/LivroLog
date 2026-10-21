@@ -1,7 +1,7 @@
 import { createPinia } from 'pinia'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { LocalStorage, Meta, Notify, Quasar } from 'quasar'
-import SecureLS from 'secure-ls'
+import SecureLSModule from 'secure-ls'
 import { registerSW } from 'virtual:pwa-register'
 import { createApp } from 'vue'
 import { i18n } from './locales'
@@ -23,6 +23,10 @@ Notify.registerType('negative', { color: 'negative', icon: 'error', textColor: '
 
 const app = createApp(App)
 const pinia = createPinia()
+
+// secure-ls ships a webpack CJS bundle that sets __esModule at runtime, so the
+// bundler cannot see it statically and hands us the namespace instead of the class.
+const SecureLS = (SecureLSModule as unknown as { default?: typeof SecureLSModule }).default ?? SecureLSModule
 
 const secureLS = new SecureLS({ encryptionSecret: import.meta.env.VITE_SECURE_LS })
 

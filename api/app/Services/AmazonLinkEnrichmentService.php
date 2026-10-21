@@ -9,7 +9,7 @@ class AmazonLinkEnrichmentService
         'US' => [
             'domain' => 'amazon.com',
             'search_url' => 'https://www.amazon.com/s',
-            'associate_tag' => null,
+            'associate_tag' => 'livrolog-20',
         ],
         'CA' => [
             'domain' => 'amazon.ca',

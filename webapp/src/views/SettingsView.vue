@@ -2,6 +2,7 @@
   <q-page padding>
     <q-tabs align="justify" class="text-teal">
       <q-route-tab exact icon="event" :label="$t('books', 0)" to="/settings/books" />
+      <q-route-tab icon="palette" :label="$t('appearance.tab')" to="/settings/appearance" />
       <q-route-tab icon="label" :label="$t('tags.title')" to="/settings/tags" />
       <q-route-tab icon="person" :label="$t('profile')" to="/settings/profile" />
       <q-route-tab icon="translate" :label="$t('language-and-store')" to="/settings/language" />
@@ -11,6 +12,10 @@
     <q-tab-panels v-model="activePanel" animated swipeable transition-next="jump-up" transition-prev="jump-up">
       <q-tab-panel name="books">
         <SettingsBooks />
+      </q-tab-panel>
+
+      <q-tab-panel name="appearance">
+        <SettingsAppearance />
       </q-tab-panel>
 
       <q-tab-panel name="tags">
@@ -33,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import SettingsAppearance from '@/components/settings/SettingsAppearance.vue'
 import SettingsAccount from '@/components/settings/SettingsAccount.vue'
 import SettingsBooks from '@/components/settings/SettingsBooks.vue'
 import SettingsLanguage from '@/components/settings/SettingsLanguage.vue'
@@ -44,7 +50,7 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 
-const validTabs = ['books', 'tags', 'profile', 'language', 'account']
+const validTabs = ['books', 'tags', 'profile', 'language', 'account', 'appearance']
 
 const activePanel = computed(() => {
   const routeTab = route.params.tab as string

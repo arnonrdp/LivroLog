@@ -1,3 +1,4 @@
+import type { ShelfTextureId } from '@/config/shelfTextures'
 import type { Book } from '@/models'
 
 export interface User {
@@ -27,6 +28,7 @@ export interface User {
   preferred_amazon_region?: string | null
   role?: 'admin' | 'user'
   shelf_name?: string
+  shelf_texture?: ShelfTextureId
   updated_at?: string
   username: string
 }

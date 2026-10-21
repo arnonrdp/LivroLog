@@ -26,7 +26,12 @@
 
     <q-tab-panels v-model="activeTab" animated class="bg-transparent">
       <q-tab-panel class="q-pa-none" name="shelf">
-        <TheShelf :books="filteredBooks" :show-tag-dots="sortKey === 'tags'" @import-completed="onImportCompleted" />
+        <TheShelf
+          :books="filteredBooks"
+          :shelf-texture="userStore.me.shelf_texture"
+          :show-tag-dots="sortKey === 'tags'"
+          @import-completed="onImportCompleted"
+        />
       </q-tab-panel>
 
       <q-tab-panel class="q-pa-none" name="stats">

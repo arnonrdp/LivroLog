@@ -22,6 +22,7 @@ class UserWithBooksResource extends JsonResource
             'username' => $this->username,
             'avatar' => $this->avatar,
             'shelf_name' => $this->shelf_name,
+            'shelf_texture' => $this->shelf_texture ?? 'wood',
             'locale' => $this->locale,
             'preferred_amazon_region' => $this->preferred_amazon_region,
             'is_private' => $this->is_private,

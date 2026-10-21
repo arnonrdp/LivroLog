@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Book;
 use App\Services\Amazon\AmazonProviderFactory;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AmazonEnrichmentService
@@ -359,6 +360,50 @@ class AmazonEnrichmentService
     }
 
     /**
+     * Get book data for an Amazon product URL: official API by ASIN first, scraper fills the gaps.
+     *
+     * Scraping alone is unreliable from the server: Amazon often answers its IP with a
+     * bot wall at HTTP 200, which used to produce "Untitled" books with no data.
+     *
+     * @return array|null Book data (title, authors, isbn, ...) plus 'source' and 'region', or null when no title was found
+     */
+    public function getBookDataFromUrl(string $url): ?array
+    {
+        $scraper = app(AmazonScraperService::class);
+        $region = AmazonScraperService::getRegionFromUrl($url);
+        $asin = $scraper->extractAsinFromUrl($url) ?? $scraper->resolveAsinFromShortUrl($url);
+
+        $data = $asin ? $this->getBookByAsin($asin, $region) : null;
+        $source = $data ? 'api' : null;
+
+        $scraped = $scraper->extractFromUrl($url);
+        if ($scraped) {
+            $scraped['title'] = $scraped['extracted_title'] ?? null;
+            $data ??= [];
+            foreach (['title', 'amazon_asin', 'description', 'thumbnail', 'authors', 'isbn', 'page_count', 'publisher', 'published_date', 'height', 'width', 'thickness'] as $field) {
+                if (empty($data[$field]) && ! empty($scraped[$field])) {
+                    $data[$field] = $scraped[$field];
+                }
+            }
+            // The scraper gets the real synopsis; the API often returns only feature bullets
+            if (strlen($scraped['description'] ?? '') > strlen($data['description'] ?? '')) {
+                $data['description'] = $scraped['description'];
+            }
+            $source = $source ? 'api+scraper' : 'scraper';
+        }
+
+        if (empty($data['title'])) {
+            return null;
+        }
+
+        $regionToLanguage = ['BR' => 'pt-BR', 'US' => 'en', 'UK' => 'en', 'CA' => 'en', 'DE' => 'de', 'FR' => 'fr', 'ES' => 'es', 'IT' => 'it', 'JP' => 'ja'];
+        $data['language'] ??= $regionToLanguage[$region] ?? 'pt-BR';
+        $data['amazon_asin'] ??= $asin;
+
+        return [...$data, 'source' => $source, 'region' => $region];
+    }
+
+    /**
      * Search for book data on Amazon using the configured provider (Creators API or PA-API)
      */
     private function searchAmazonBook(Book $book): ?array
@@ -670,6 +715,57 @@ class AmazonEnrichmentService
         $check = (10 - ($sum % 10)) % 10;
 
         return $base.$check;
+    }
+
+    /**
+     * Resolve a print book's ASIN from its ISBN: for printed books Amazon's ASIN is the ISBN-10.
+     *
+     * Needs no API, credentials or scraping (all unavailable to the server). The image CDN, which
+     * doesn't block servers, confirms the ASIN exists: a real one returns its cover as JPEG, an
+     * unknown one a 43-byte GIF.
+     */
+    public function resolveAsinFromIsbn(?string $isbn): ?string
+    {
+        // Only real ISBNs; the column also holds Google/OCLC ids like "UOM:39015..." whose digits could pass a checksum
+        if (! $isbn || ! preg_match('/^[0-9][0-9\- ]{8,15}[0-9Xx]$/', trim($isbn))) {
+            return null;
+        }
+
+        $digits = $this->normalizeIsbn(trim($isbn));
+        $isbn10 = match (true) {
+            strlen($digits) === 10 => strtoupper($digits),
+            // A 978 ISBN-13 with a valid checksum maps to the ISBN-10 sharing its nine core digits
+            strlen($digits) === 13 && str_starts_with($digits, '978') && $this->toIsbn13(substr($digits, 3, 9).'0') === $digits => $this->isbn10CheckDigit(substr($digits, 3, 9)),
+            default => null, // 979 ISBNs have no ISBN-10
+        };
+
+        if (! $isbn10 || $this->isbn10CheckDigit(substr($isbn10, 0, 9)) !== $isbn10) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(5)->get("https://m.media-amazon.com/images/P/{$isbn10}.01._SCLZZZZZZZ_.jpg");
+
+            return $response->successful() && str_contains($response->header('Content-Type'), 'jpeg') ? $isbn10 : null;
+        } catch (\Throwable $e) {
+            Log::warning("resolveAsinFromIsbn: CDN check failed for {$isbn10}: {$e->getMessage()}");
+
+            return null;
+        }
+    }
+
+    /**
+     * Append the ISBN-10 check digit to its first nine digits
+     */
+    private function isbn10CheckDigit(string $nineDigits): string
+    {
+        $sum = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $sum += (10 - $i) * (int) $nineDigits[$i];
+        }
+        $check = (11 - ($sum % 11)) % 11;
+
+        return $nineDigits.($check === 10 ? 'X' : $check);
     }
 
     /**

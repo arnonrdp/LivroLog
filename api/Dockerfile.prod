@@ -14,7 +14,8 @@ COPY api/bootstrap ./bootstrap
 RUN composer install --no-dev --prefer-dist --no-progress --no-interaction --optimize-autoloader --classmap-authoritative --no-scripts
 
 # Production stage - Optimized PHP-FPM runtime
-FROM php:8.4-fpm AS app
+# Pinned to >= 8.4.27 for PHP2Shell (CVE-2026-109618, CVE-2026-109619)
+FROM php:8.4.27-fpm AS app
 
 # Install system dependencies, Nginx and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \

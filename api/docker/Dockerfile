@@ -1,4 +1,5 @@
-FROM php:8.4-fpm
+# Pinned to >= 8.4.27 for PHP2Shell (CVE-2026-109618, CVE-2026-109619)
+FROM php:8.4.27-fpm
 
 # Install system dependencies, Nginx, Supervisor, PHP extensions, Redis, and Xdebug
 RUN apt-get update && apt-get install -y --no-install-recommends \
