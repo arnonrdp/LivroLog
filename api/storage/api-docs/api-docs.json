@@ -25,7 +25,7 @@
                     "default": "https"
                 },
                 "host": {
-                    "default": "api.dev.livrolog.com"
+                    "default": "api.livrolog.com"
                 }
             }
         },

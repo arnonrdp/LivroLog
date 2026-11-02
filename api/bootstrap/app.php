@@ -37,7 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Database backups run from the host's cron (scripts/setup_backup_cron.sh), not here
+        // Database backups: Hostinger's daily backups of the Business plan
 
         // Catch books that still lack an ASIN (no ISBN at creation, CDN hiccup, ISBN added later)
         $schedule->command('books:backfill-asins')->dailyAt('04:00')->withoutOverlapping();

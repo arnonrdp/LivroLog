@@ -76,11 +76,9 @@ temp/
 *.tmp
 *.temp
 
-# Docker files (except production ones)
+# Docker files
 docker-compose.yml
 docker-compose.*.yml
-!docker-compose.prod.yml
-!docker-compose.dev.yml
 
 # Cache directories
 .cache/
