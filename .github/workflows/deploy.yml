@@ -88,7 +88,7 @@ jobs:
           DB_PORT=3306
           DB_DATABASE=u388701681_livrolog
           DB_USERNAME=u388701681_livrolog
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
           QUEUE_CONNECTION=database
           CACHE_STORE=database
           SESSION_DRIVER=file
