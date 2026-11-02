@@ -936,6 +936,7 @@ class AmazonBooksProvider implements BookSearchProvider
             '/comece a sua leitura/i',
             '/em oferta/i',
             '/kindle unlimited/i',
+            '/kindle ?\+/i', // Kindle Unlimited was renamed Kindle+ in Oct 2026
             '/catalogo kindle/i',
             '/cashback/i',
             '/pr(é|e)-venda/i',
