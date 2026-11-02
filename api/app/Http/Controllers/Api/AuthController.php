@@ -41,7 +41,7 @@ use Laravel\Socialite\Facades\Socialite;
  *     ),
  *     @OA\ServerVariable(
  *         serverVariable="host",
- *         default="api.dev.livrolog.com"
+ *         default="api.livrolog.com"
  *     )
  * )
  *

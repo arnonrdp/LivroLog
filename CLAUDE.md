@@ -374,46 +374,16 @@ Always prefer the pattern that uses "method name" + "summarized endpoint" as the
 - `VITE_API_URL` - Backend API URL
 - `VITE_GOOGLE_CLIENT_ID` - Google OAuth client
 
-## Production Deployment Notes
+## Production Deployment
 
-### Critical Server Configurations
+`main` is the only branch. Every push to `main` touching `api/`, `webapp/` or the workflow runs `.github/workflows/deploy.yml`: required checks, then build in CI and rsync over SSH to Hostinger shared hosting (Business plan). There is no staging/dev environment.
 
-These configurations are set directly on the server and must be maintained across deployments:
-
-#### 1. MySQL/MariaDB Authentication (Development)
-The development MySQL container requires `mysql_native_password` authentication:
-```sql
-ALTER USER "livrolog"@"%" IDENTIFIED WITH mysql_native_password BY "supersecret";
-FLUSH PRIVILEGES;
-```
-
-#### 2. Apache CORS Headers (Production)
-CORS is handled at the Apache level in `/opt/bitnami/apache/conf/bitnami/bitnami-ssl.conf`:
-```apache
-# Inside the api.livrolog.com VirtualHost block
-Header always set Access-Control-Allow-Origin "https://livrolog.com https://www.livrolog.com"
-Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-Header always set Access-Control-Allow-Headers "*"
-```
-
-#### 3. Environment Files
-- **Development**: `/var/www/livrolog-dev/shared/.env.dev`
-- **Production**: `/var/www/livrolog/shared/.env.prod`
-
-**IMPORTANT**: `.env` files must contain ONLY environment variables, never shell commands or scripts.
-
-Example of CORRECT format:
-```bash
-APP_NAME=LivroLog
-APP_ENV=production
-DB_CONNECTION=mysql
-DB_HOST=mariadb
-```
-
-Example of INCORRECT format (will break Laravel):
-```bash
-echo "Setting up environment"  # ❌ NO shell commands
-export DB_PASSWORD="..."       # ❌ NO export statements
-if [ -z "$VAR" ]; then        # ❌ NO conditional logic
-```
-
+- **SSH**: `ssh -p 65002 u388701681@212.85.6.5` (key in the `HOSTINGER_SSH_KEY` secret of the Production environment)
+- **PHP CLI**: `/opt/alt/php84/usr/bin/php` (plain `php` on the server is 8.2)
+- **Layout** (under `~/domains/livrolog.com/`):
+  - `api/`: Laravel app, outside any docroot. `api/.env` is written by the workflow from GitHub secrets on every deploy, so edit the workflow and secrets, never the server copy
+  - `public_html/`: Vue build, docroot of livrolog.com. `webapp/public/.htaccess` does the SPA fallback and hands crawlers/sitemaps to Laravel
+  - `public_html/api -> ../api/public`: symlink, docroot of api.livrolog.com (kept by rsync `--exclude`)
+- **No Redis**: queue, cache and sessions use the database/filesystem
+- **Scheduler**: hPanel cron job every minute running `/opt/alt/php84/usr/bin/php ~/domains/livrolog.com/api/artisan schedule:run`. The scheduler also drains the queue (`bootstrap/app.php`), so there is no long-running worker
+- **Backups**: Hostinger's daily backups

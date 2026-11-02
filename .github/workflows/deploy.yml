@@ -1,457 +1,145 @@
-# yaml-language-server: $schema=
-# yamllint disable-file
 name: Deploy
+
+# Production runs on Hostinger shared hosting (Business plan), deployed over SSH + rsync.
+# Server layout (paths relative to the SSH user's home):
+#   domains/livrolog.com/api/          Laravel app, outside any docroot
+#   domains/livrolog.com/public_html/  Vue build, docroot of livrolog.com
+#   domains/livrolog.com/public_html/api -> ../api/public  (symlink, docroot of api.livrolog.com)
+# The scheduler (which also drains the queue) runs from an hPanel cron job, see CLAUDE.md.
 
 on:
   push:
     branches:
       - main
-      - dev
     paths:
       - '.github/workflows/deploy.yml'
       - 'api/**'
       - 'webapp/**'
-      - 'docker/**'
-      - '**/Dockerfile'
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Target branch to deploy'
-        required: false
-        default: 'dev'
-        type: choice
-        options:
-          - 'main'
-          - 'dev'
 
+# Never cancel a deploy halfway through an upload
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
-env:
-  PHP_VERSION: '8.4'
-  NODE_VERSION: '24'
-  TARGET_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+  group: deploy
+  cancel-in-progress: false
 
 permissions:
   contents: read
-  packages: write
-  attestations: write
-  id-token: write
 
 jobs:
   required-checks:
     uses: ./.github/workflows/required-checks.yml
 
-  build:
+  deploy:
     needs: required-checks
-    uses: ./.github/workflows/build.yml
-    with:
-      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
-    secrets: inherit
-
-  # Legacy deploy job (disabled - Docker containers handle deployment now)
-  # deploy:
-  #   name: deploy
-  #   runs-on: ubuntu-latest
-  #   needs: [required-checks, build]
-  #   if: false  # Disabled in favor of Docker containers
-
-  # post-deploy:
-  #   name: post-deploy
-  #   needs: [deploy]
-  #   uses: ./.github/workflows/post-deploy.yml
-  #   with:
-  #     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }}
-  #   secrets: inherit
-
-  # Legacy rollback (disabled - Docker containers handle rollback now)
-
-  # Production deployment via Docker containers
-  docker-canary-prod:
-    name: docker-canary-prod
     runs-on: ubuntu-latest
-    needs: [required-checks, build]
-    if: always() && needs.build.result == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.branch == 'main'))
-
+    environment: Production
     env:
-      ENVIRONMENT: Production
-      TARGET_BRANCH: main
-      DEPLOY_PATH: /var/www/livrolog
-      GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-      GITHUB_SHA: ${{ github.sha }}
-      GITHUB_REF_NAME: ${{ github.ref_name }}
+      SSH_TARGET: u388701681@212.85.6.5
+      SSH_PORT: '65002'
+      APP_DIR: domains/livrolog.com/api
+      WEB_DIR: domains/livrolog.com/public_html
+      # The CLI default `php` on Hostinger is 8.2
+      PHP: /opt/alt/php84/usr/bin/php
 
     steps:
-      - name: Checkout code for compose file
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          php-version: '8.4'
+          tools: composer:v2
 
-      - name: Validate required secrets
-        run: |
-          echo "🔍 Validating required secrets and environment variables..."
+      - name: Install API dependencies
+        working-directory: api
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-          # Check required secrets
-          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
-            echo "❌ SERVER_HOST secret is not configured"
-            exit 1
-          fi
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: yarn
+          cache-dependency-path: webapp/yarn.lock
 
-          if [ -z "${{ secrets.SERVER_USER }}" ]; then
-            echo "❌ SERVER_USER secret is not configured" 
-            exit 1
-          fi
-
-          if [ -z "${{ secrets.SERVER_SSH_KEY }}" ]; then
-            echo "❌ SERVER_SSH_KEY secret is not configured"
-            exit 1
-          fi
-
-          # APP_KEY is required for production
-          if [ -z "${{ secrets.APP_KEY }}" ]; then
-            echo "❌ APP_KEY secret is not configured for production"
-            exit 1
-          fi
-
-          # DB_PASSWORD is required for production
-          if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
-            echo "❌ DB_PASSWORD secret is not configured for production"
-            exit 1
-          fi
-
-          echo "✅ Secret validation completed"
-
-      - name: Setup SSH key and test connection
+      # Type checking already ran in required-checks
+      - name: Build webapp
+        working-directory: webapp
         env:
-          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          VITE_API_URL: https://api.livrolog.com
+          VITE_FRONTEND_URL: https://livrolog.com
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          VITE_APP_NAME: LivroLog
         run: |
-          echo "🔐 Setting up SSH connection..."
+          yarn install --frozen-lockfile
+          yarn build-only
 
-          # Create SSH directory and set permissions
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          # Create SSH private key file
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/livrolog_key
-          chmod 600 ~/.ssh/livrolog_key
-
-          # Disable host key checking for this deployment (AWS instances change IPs)
-          echo "Host ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
-          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
-          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/livrolog_key" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
-          echo "  LogLevel QUIET" >> ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-          # Test SSH connection
-          echo "🔍 Testing SSH connection to ${{ secrets.SERVER_HOST }}..."
-          if ssh ${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"; then
-            echo "✅ SSH connection test passed"
-          else
-            echo "❌ SSH connection test failed"
-            echo "Debug information:"
-            echo "  Host: ${{ secrets.SERVER_HOST }}"
-            echo "  User: ${{ secrets.SERVER_USER }}"
-            echo "  Key length: ${#SSH_KEY}"
-            exit 1
-          fi
-
-      - name: Create production .env file
+      # Shared hosting has no Redis: queue, cache and sessions use the database/filesystem
+      - name: Write production .env
         run: |
-          echo "📝 Creating production .env file locally..."
-          {
-            echo "APP_NAME=LivroLog"
-            echo "APP_ENV=production"
-            echo "APP_KEY=${{ secrets.APP_KEY }}"
-            echo "APP_DEBUG=false"
-            echo "APP_TIMEZONE=UTC"
-            echo "APP_URL=https://api.livrolog.com"
-            echo "APP_FRONTEND_URL=${{ vars.APP_FRONTEND_URL || 'https://livrolog.com' }}"
-            echo "DB_CONNECTION=mysql"
-            echo "DB_HOST=mariadb"
-            echo "DB_PORT=3306"
-            echo "DB_DATABASE=livrolog"
-            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}"
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-            echo "REDIS_CLIENT=predis"
-            echo "REDIS_HOST=redis"
-            echo "REDIS_PASSWORD=null"
-            echo "REDIS_PORT=6379"
-            echo "QUEUE_CONNECTION=redis"
-            echo "SESSION_DRIVER=redis"
-            echo "SESSION_LIFETIME=120"
-            echo "CACHE_DRIVER=redis"
-            echo "MAIL_MAILER=resend"
-            echo "MAIL_FROM_ADDRESS=noreply@livrolog.com"
-            echo "MAIL_FROM_NAME=LivroLog"
-            echo "LOG_CHANNEL=stack"
-            echo "LOG_LEVEL=error"
-            echo "RESEND_KEY=${{ secrets.RESEND_KEY }}"
-            echo "GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}"
-            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
-            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
-            echo "AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}"
-            echo "AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}"
-            echo "AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}"
-            echo "AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}"
-            echo "AMAZON_CREATORS_API_ENABLED=true"
-            echo "AMAZON_CREATORS_CREDENTIAL_ID=${{ secrets.AMAZON_CREATORS_CREDENTIAL_ID }}"
-            echo "AMAZON_CREATORS_CREDENTIAL_SECRET=${{ secrets.AMAZON_CREATORS_CREDENTIAL_SECRET }}"
-            echo "AMAZON_CREATORS_APPLICATION_ID=livrolog01-20.livrolog"
-            echo "AMAZON_API_PROVIDER=creators"
-          } > .env.prod
-          echo "✅ Production .env file created locally"
+          cat > api/.env <<'EOF'
+          APP_NAME=LivroLog
+          APP_ENV=production
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_DEBUG=false
+          APP_URL=https://api.livrolog.com
+          APP_FRONTEND_URL=https://livrolog.com
+          LOG_CHANNEL=stack
+          LOG_LEVEL=error
+          DB_CONNECTION=mysql
+          DB_HOST=localhost
+          DB_PORT=3306
+          DB_DATABASE=u388701681_livrolog
+          DB_USERNAME=u388701681_livrolog
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          QUEUE_CONNECTION=database
+          CACHE_STORE=database
+          SESSION_DRIVER=file
+          MAIL_MAILER=resend
+          MAIL_FROM_ADDRESS=noreply@livrolog.com
+          MAIL_FROM_NAME=LivroLog
+          RESEND_KEY=${{ secrets.RESEND_KEY }}
+          GOOGLE_BOOKS_API_KEY=${{ secrets.GOOGLE_BOOKS_API_KEY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          AMAZON_PA_API_KEY=${{ secrets.AMAZON_PA_API_KEY }}
+          AMAZON_PA_SECRET_KEY=${{ secrets.AMAZON_PA_SECRET_KEY }}
+          AMAZON_ASSOCIATE_TAG=${{ secrets.AMAZON_ASSOCIATE_TAG }}
+          AMAZON_SITESTRIPE_ENABLED=${{ secrets.AMAZON_SITESTRIPE_ENABLED }}
+          AMAZON_CREATORS_API_ENABLED=true
+          AMAZON_CREATORS_CREDENTIAL_ID=${{ secrets.AMAZON_CREATORS_CREDENTIAL_ID }}
+          AMAZON_CREATORS_CREDENTIAL_SECRET=${{ secrets.AMAZON_CREATORS_CREDENTIAL_SECRET }}
+          AMAZON_CREATORS_APPLICATION_ID=livrolog01-20.livrolog
+          AMAZON_API_PROVIDER=creators
+          EOF
 
-      - name: Copy compose file and env to server
+      - name: Configure SSH
         run: |
-          echo "📁 Copying files to server..."
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Pinned host key, fingerprint SHA256:pKgn9kKtAG90dfTmlX5zVwR73qO8qlwOp9gbCkT2FTQ (hPanel > Acesso SSH)
+          echo "[212.85.6.5]:65002 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGVsuvi5KWWZY42cz0L5MMa0ny5njVNeDCSkYTcJyxuM" > ~/.ssh/known_hosts
 
-          # Create target directory on server
-          ssh ${{ secrets.SERVER_HOST }} "sudo mkdir -p ${DEPLOY_PATH}/docker ${DEPLOY_PATH}/shared && sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${DEPLOY_PATH}"
-
-          # Copy compose file
-          scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/docker/
-
-          # Copy .env file
-          scp -o StrictHostKeyChecking=no .env.prod ${{ secrets.SERVER_HOST }}:${DEPLOY_PATH}/shared/
-
-          # Copy backup scripts to user's home directory
-          ssh ${{ secrets.SERVER_HOST }} "mkdir -p ~/scripts"
-          scp -o StrictHostKeyChecking=no scripts/backup_database.sh ${{ secrets.SERVER_HOST }}:~/scripts/
-          scp -o StrictHostKeyChecking=no scripts/setup_backup_cron.sh ${{ secrets.SERVER_HOST }}:~/scripts/
-          ssh ${{ secrets.SERVER_HOST }} "chmod +x ~/scripts/*.sh"
-
-          echo "✅ Files copied successfully"
-
-      - name: Deploy production containers
+      # storage/ lives only on the server (logs, OG image cache); excluding it also protects it from --delete
+      - name: Upload
         run: |
-          ssh ${{ secrets.SERVER_HOST }} "bash -s" << 'DEPLOY_SCRIPT'
-            set -euo pipefail
-            # Configuration
-            DOCKER_DIR="${{ env.DEPLOY_PATH }}/docker"
-            SHARED_DIR="${{ env.DEPLOY_PATH }}/shared"
-            OWNER="${{ env.GITHUB_REPOSITORY_OWNER }}"
-            TAG="prod"
-            IMAGE_API="ghcr.io/${OWNER}/livrolog-api"
-            IMAGE_WEB="ghcr.io/${OWNER}/livrolog-web"
+          rsync -az --delete -e "ssh -p $SSH_PORT" \
+            --exclude='/storage/' --exclude='/tests/' --exclude='/docker/' \
+            api/ "$SSH_TARGET:$APP_DIR/"
+          rsync -az --delete -e "ssh -p $SSH_PORT" \
+            --exclude='/api' --exclude='/.well-known/' \
+            webapp/dist/ "$SSH_TARGET:$WEB_DIR/"
 
-            echo "=================================================="
-            echo "🚀 LivroLog Production Deployment"
-            echo "Branch: ${{ env.TARGET_BRANCH }}"
-            echo "SHA: ${{ env.GITHUB_SHA }}"
-            echo "Images: ${IMAGE_API}:${TAG}, ${IMAGE_WEB}:${TAG}"
-            echo "Deploy Path: ${{ env.DEPLOY_PATH }}"
-            echo "=================================================="
-
-            # Create required directories with proper permissions
-            echo "📁 Setting up directories and permissions..."
-            sudo mkdir -p "${SHARED_DIR}"/{storage,db}
-            sudo mkdir -p "${DOCKER_DIR}"
-
-            # Set MariaDB data directory permissions (UID 999)
-            sudo chown -R 999:999 "${SHARED_DIR}/db"
-
-            # Set Laravel storage permissions (www-data)
-            sudo chown -R www-data:www-data "${SHARED_DIR}/storage" 2>/dev/null || sudo chown -R 82:82 "${SHARED_DIR}/storage"
-
-            # Set deployment directory permissions
-            sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} "${{ env.DEPLOY_PATH }}"
-
-            # Navigate to docker directory
-            cd "${DOCKER_DIR}"
-
-            # Skip GHCR authentication - images are public
-            echo "📦 Using public GHCR images (no authentication required)"
-
-            # Pull latest images with error handling
-            echo "📦 Pulling latest Docker images..."
-
-            # Force pull latest images using compose first
-            docker compose -f docker-compose.prod.yml pull || echo "⚠️ Compose pull failed, trying individual pulls"
-
-            if ! docker pull "${IMAGE_API}:${TAG}"; then
-              echo "⚠️ Failed to pull API image ${IMAGE_API}:${TAG}"
-              echo "Available API tags:"
-              docker images | grep livrolog-api || echo "No local API images found"
-            fi
-
-            if ! docker pull "${IMAGE_WEB}:${TAG}"; then
-              echo "⚠️ Failed to pull Web image ${IMAGE_WEB}:${TAG}"
-              echo "Available Web tags:"
-              docker images | grep livrolog-web || echo "No local Web images found"
-            fi
-
-            # Clean up old images to force using new ones
-            echo "🧹 Cleaning up old images..."
-            docker image prune -f --filter "label=org.opencontainers.image.source=https://github.com/arnonrdp/LivroLog" || true
-
-            # Stop existing containers gracefully
-            echo "🛑 Stopping existing production containers..."
-            if docker compose -f docker-compose.prod.yml ps --services --filter "status=running" | grep -q .; then
-              docker compose -f docker-compose.prod.yml down --timeout 30
-              echo "✅ Existing containers stopped"
-            else
-              echo "ℹ️ No running containers to stop"
-            fi
-            
-            # Clean up orphaned containers and networks
-            echo "🧹 Cleaning up orphaned resources..."
-            docker container prune -f --filter "label=com.docker.compose.project=livrolog" || true
-            docker network prune -f || true
-            
-            # Export environment variables for docker-compose
-            export GITHUB_REPOSITORY_OWNER="${OWNER}"
-            export TAG="${TAG}"
-
-            # Start containers with health checks using env file
-            echo "🚀 Starting production containers..."
-            if ! docker compose --env-file "${SHARED_DIR}/.env.prod" -f docker-compose.prod.yml up -d --remove-orphans; then
-              echo "❌ Failed to start containers"
-              echo "=== Docker Compose Logs ==="
-              docker compose -f docker-compose.prod.yml logs --tail=50
-              exit 1
-            fi
-            
-            echo "✅ Containers started successfully"
-            
-            # Wait for containers to initialize
-            echo "⏳ Waiting for containers to initialize (90 seconds)..."
-            sleep 90
-            
-            # Health checks with detailed status
-            echo "🔍 Performing health checks..."
-            
-            # Check container status
-            echo "📊 Container Status:"
-            docker compose -f docker-compose.prod.yml ps
-            
-            # Check MariaDB connectivity
-            echo "🔍 Testing MariaDB connectivity..."
-            for i in {1..18}; do
-              if docker exec livrolog-mariadb-1 mysqladmin ping -u root -p${{ secrets.DB_PASSWORD }} --silent 2>/dev/null; then
-                echo "✅ MariaDB is responding (attempt $i)"
-                break
-              elif [ $i -eq 18 ]; then
-                echo "❌ MariaDB health check failed after 18 attempts"
-                docker logs livrolog-mariadb-1 --tail=30
-                exit 1
-              else
-                echo "⏳ MariaDB not ready yet (attempt $i/18), waiting 10 seconds..."
-                sleep 10
-              fi
-            done
-            
-            # Check Redis connectivity  
-            echo "🔍 Testing Redis connectivity..."
-            if docker exec livrolog-redis-1 redis-cli ping >/dev/null 2>&1; then
-              echo "✅ Redis is responding"
-            else
-              echo "❌ Redis health check failed"
-              docker logs livrolog-redis-1 --tail=20
-              exit 1
-            fi
-            
-            # Check API health endpoint
-            echo "🔍 Testing API health endpoint..."
-            for i in {1..30}; do  
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18081/healthz 2>/dev/null || echo "000")
-              if [ "$HTTP_CODE" = "200" ]; then
-                echo "✅ API health endpoint responding (HTTP $HTTP_CODE)"
-                break
-              elif [ $i -eq 30 ]; then
-                echo "❌ API health endpoint failed after 30 attempts (HTTP $HTTP_CODE)"
-                echo "=== API Container Logs ==="
-                docker logs livrolog-api-1 --tail=50
-                exit 1
-              else
-                echo "⏳ API not ready yet (HTTP $HTTP_CODE, attempt $i/30), waiting 10 seconds..."
-                sleep 10
-              fi
-            done
-            
-            # Check Web frontend
-            echo "🔍 Testing Web frontend..."  
-            for i in {1..18}; do
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/ 2>/dev/null || echo "000")
-              if [ "$HTTP_CODE" = "200" ]; then
-                echo "✅ Web frontend responding (HTTP $HTTP_CODE)"
-                break
-              elif [ $i -eq 18 ]; then
-                echo "❌ Web frontend failed after 18 attempts (HTTP $HTTP_CODE)"
-                echo "=== Web Container Logs ==="
-                docker logs livrolog-web-1 --tail=30
-                exit 1
-              else
-                echo "⏳ Web not ready yet (HTTP $HTTP_CODE, attempt $i/18), waiting 5 seconds..."
-                sleep 5
-              fi
-            done
-            
-            # Run Laravel migrations and optimizations
-            echo "🔄 Running Laravel migrations and optimizations..."
-            API_CONTAINER=$(docker compose -f docker-compose.prod.yml ps -q api)
-            if [ -n "$API_CONTAINER" ]; then
-              docker exec "$API_CONTAINER" php artisan migrate --force
-              docker exec "$API_CONTAINER" php artisan config:cache
-              docker exec "$API_CONTAINER" php artisan route:cache
-              # Skip view:cache - API doesn't have views
-              echo "✅ Laravel optimizations completed"
-            else
-              echo "⚠️ API container not found for Laravel commands"
-            fi
-            
-            echo "=================================================="
-            echo "🎉 Production deployment completed successfully!"
-            echo "📍 Services:"
-            echo "  • Web Frontend: https://livrolog.com"
-            echo "  • API Backend: https://api.livrolog.com"
-            echo "  • Internal Web: http://127.0.0.1:18080"
-            echo "  • Internal API: http://127.0.0.1:18081"
-            echo "=================================================="
-            
-          DEPLOY_SCRIPT
-
-      - name: Setup backup automation
+      - name: Migrate and cache
         run: |
-          echo "⚙️ Setting up backup automation for production..."
-          ssh ${{ secrets.SERVER_HOST }} "~/scripts/setup_backup_cron.sh"
+          ssh -p "$SSH_PORT" "$SSH_TARGET" "set -e
+            cd $APP_DIR
+            mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
+            $PHP artisan migrate --force
+            $PHP artisan config:cache
+            $PHP artisan route:cache"
 
-      - name: Post-deployment verification
+      - name: Smoke test
         run: |
-          echo "🔍 Running post-deployment verification..."
-
-          # Probe the PUBLIC HTTPS endpoints. The internal :18081/:18080 ports are not
-          # reachable from the GitHub runner (only 443 via the reverse proxy is public),
-          # so the previous direct-port check always reported 000. Retry to allow warmup.
-          API_URL="https://api.livrolog.com/healthz"
-          WEB_URL="${{ vars.APP_FRONTEND_URL || 'https://livrolog.com' }}"
-
-          probe() {
-            local code="000"
-            for _ in $(seq 1 10); do
-              # curl prints "000" via -w on connection failure; || true keeps the
-              # retry loop alive under the runner's `set -e` without doubling to "000000".
-              code=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$1" || true)
-              [ "$code" = "200" ] && break
-              sleep 10
-            done
-            echo "$code"
-          }
-
-          API_STATUS=$(probe "$API_URL")
-          WEB_STATUS=$(probe "$WEB_URL")
-
-          echo "Final Status Check:"
-          echo "  API ($API_URL): $API_STATUS"
-          echo "  Web ($WEB_URL): $WEB_STATUS"
-
-          if [ "$API_STATUS" = "200" ] && [ "$WEB_STATUS" = "200" ]; then
-            echo "✅ All services are healthy and accessible"
-          else
-            echo "⚠️ Some services did not return 200 after retries"
-          fi
-
-          echo "🎯 Production deployment verification completed"
+          curl -fsS -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors https://api.livrolog.com/healthz
+          curl -fsS -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors https://livrolog.com/
+          # Crawler routing (.htaccess -> Laravel): only the server render carries noindex, the SPA shell says index
+          curl -fsS -A 'facebookexternalhit/1.1' https://livrolog.com/ | grep -q 'noindex, follow'

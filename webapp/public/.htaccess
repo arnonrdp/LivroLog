@@ -1,0 +1,41 @@
+# Docroot of livrolog.com on Hostinger. public_html/api is a symlink to the Laravel public/ dir,
+# so the crawler rules below are internal rewrites into Laravel: same URL, no proxy, and
+# Laravel still sees the original REQUEST_URI.
+
+Options -Indexes
+RewriteEngine On
+
+# Sitemaps are generated from the catalogue by the API
+RewriteRule ^sitemap(-\d+)?\.xml$ api/index.php [L]
+
+# Link-preview bots do not run JS, so they get the server-rendered page (SocialMediaCrawlerMiddleware).
+# Search engines are deliberately not listed: those renders carry noindex. ?og=1 forces it for debugging.
+# Only /, /books/{id} and /{username} are rendered; reserved words are not usernames.
+RewriteCond %{HTTP_USER_AGENT} facebookexternalhit|facebookcatalog|facebot|twitterbot|linkedinbot|whatsapp|telegrambot|slackbot|slack-imgproxy|discordbot|skypeuripreview|redditbot|pinterest|embedly|iframely|opengraph|vkshare|bitlybot|bufferbot|nuzzel|viber|mastodon [NC,OR]
+RewriteCond %{QUERY_STRING} (^|&)og=(1|true)(&|$)
+RewriteCond %{REQUEST_URI} !^/(books|health|healthz|docs|documentation|up|image-proxy|assets|storage)/?$
+RewriteRule ^(books/[A-Za-z0-9_-]+/?|[A-Za-z0-9_-]+/?)?$ api/index.php [L]
+
+# Search engines only on /books/{id}, the one render with real content (the others are noindex stubs)
+RewriteCond %{HTTP_USER_AGENT} googlebot|google-inspectiontool|bingbot|duckduckbot|applebot|yandexbot|baiduspider [NC]
+RewriteRule ^books/[A-Za-z0-9_-]+/?$ api/index.php [L]
+
+# SPA fallback
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Same policy the nginx container had for static files
+    <FilesMatch "\.(js|css|svg|png|jpe?g|gif|ico|webp|woff2?|ttf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    # Deploys delete old hashed assets, so a stale index.html would load a broken page
+    <FilesMatch "\.html$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>

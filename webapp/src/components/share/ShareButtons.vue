@@ -58,17 +58,9 @@ const shareText = computed(() => {
   return t('share-text', { count: bookCount })
 })
 
-function resolveShareBase(): string {
-  const host = window.location.hostname
-  // In dev environment, share from API so crawlers get server-rendered OG without server tweaks
-  if (host === 'dev.livrolog.com') return 'https://api.dev.livrolog.com'
-  // Default: use current origin; no env override
-  return window.location.origin
-}
-
 const shareUrl = computed(() => {
-  if (!userStore.me?.username) return resolveShareBase()
-  return `${resolveShareBase()}/${userStore.me.username}`
+  if (!userStore.me?.username) return window.location.origin
+  return `${window.location.origin}/${userStore.me.username}`
 })
 
 const isAndroid = computed(() => $q.platform.is.android)
