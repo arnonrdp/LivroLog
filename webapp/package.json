@@ -30,7 +30,7 @@
     "@quasar/extras": "^2.0.2",
     "axios": "^1.18.1",
     "date-fns": "^4.1.0",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "echarts": "^6.0.0",
     "jwt-decode": "^4.0.0",
     "laravel-echo": "^2.4.0",
@@ -41,7 +41,7 @@
     "secure-ls": "^2.0.0",
     "vue": "^3.5.40",
     "vue-echarts": "^8.0.1",
-    "vue-i18n": "^11.4.7",
+    "vue-i18n": "^11.4.14",
     "vue-router": "^5.2.0"
   },
   "resolutions": {
