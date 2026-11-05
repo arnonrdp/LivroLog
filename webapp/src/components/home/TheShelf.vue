@@ -91,7 +91,7 @@ const draggedId = ref<string | null>(null)
 const dropTargetId = ref<string | null>(null)
 const touchDragging = ref(false)
 // Touch browsers don't start HTML5 drag from a finger, so phones get a long-press drag instead
-const coarsePointer = window.matchMedia('(pointer: coarse)').matches
+const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false
 let touchTimer: ReturnType<typeof setTimeout> | null = null
 let touchStart = { x: 0, y: 0 }
 
