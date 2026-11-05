@@ -22,6 +22,7 @@ export default tseslint.config(
         window: 'readonly',
         navigator: 'readonly',
         DragEvent: 'readonly',
+        TouchEvent: 'readonly',
         File: 'readonly',
         FormData: 'readonly',
         setTimeout: 'readonly',
