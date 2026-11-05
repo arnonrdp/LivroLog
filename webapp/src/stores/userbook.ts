@@ -214,6 +214,21 @@ export const useUserBookStore = defineStore('userbook', {
         .finally(() => (this._isLoading = false))
     },
 
+    // Optimistic: the shelf reorders on drop; on failure we reload the saved order
+    putUserBooksOrder(bookIds: Book['id'][]) {
+      const userStore = useUserStore()
+      const positions = new Map(bookIds.map((id, index) => [id, index]))
+      const updatedBooks = (userStore.me.books || []).map((book) =>
+        book.pivot ? { ...book, pivot: { ...book.pivot, position: positions.get(book.id) ?? null } } : book
+      )
+      userStore.updateMe({ books: updatedBooks })
+
+      return api.put('/user/books/order', { book_ids: bookIds }).catch((error) => {
+        Notify.create({ message: error.response?.data?.message || i18n.global.t('error-occurred'), type: 'negative' })
+        return this.getUserBooks()
+      })
+    },
+
     async deleteUserBook(bookId: Book['id']) {
       this._isLoading = true
       const userStore = useUserStore()

@@ -420,6 +420,7 @@
   "only-one-edition-available": "Only one edition available for this book",
   "optional": "optional",
   "order-by-author": "Author",
+  "order-by-custom": "Custom",
   "order-by-date": "Added Date",
   "order-by-read": "Read date",
   "order-by-tags": "Tags",

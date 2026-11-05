@@ -397,6 +397,7 @@
   "only-one-edition-available": "この本には 1 つの版のみが利用可能です",
   "optional": "オプション",
   "order-by-author": "著者",
+  "order-by-custom": "カスタム",
   "order-by-date": "追加日",
   "order-by-read": "日付を読む",
   "order-by-tags": "タグ",

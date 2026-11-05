@@ -65,7 +65,8 @@
           <q-item v-for="(label, value) in bookLabels" :key="label" clickable @click="$emit('sort', value)">
             <q-item-section>{{ label }}</q-item-section>
             <q-item-section avatar>
-              <q-icon v-if="value === sortKeyComputed" :name="ascDescComputed === 'asc' ? 'arrow_downward' : 'arrow_upward'" size="xs" />
+              <q-icon v-if="value === sortKeyComputed && value === 'custom'" name="check" size="xs" />
+              <q-icon v-else-if="value === sortKeyComputed" :name="ascDescComputed === 'asc' ? 'arrow_downward' : 'arrow_upward'" size="xs" />
             </q-item-section>
           </q-item>
         </q-list>
@@ -145,6 +146,7 @@ const props = defineProps<{
   ascDesc?: string
   visibleTags?: string[] | null // IDs of visible tags (null/undefined = show all, [] = show none)
   showNoTag?: boolean // Whether to show books without tags
+  customSort?: boolean // Offer the drag-defined order (own shelf only)
 }>()
 
 const { t } = useI18n()
@@ -155,13 +157,14 @@ const followStore = useFollowStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
 
-const bookLabels = {
+const bookLabels = computed(() => ({
+  ...(props.customSort ? { custom: t('order-by-custom') } : {}),
   authors: t('order-by-author'),
   addedIn: t('order-by-date'),
   readIn: t('order-by-read'),
   tags: t('order-by-tags'),
   title: t('order-by-title')
-}
+}))
 const shelfMenu = ref(false)
 const showFollowersDialog = ref(false)
 const showUnfollowDialog = ref(false)

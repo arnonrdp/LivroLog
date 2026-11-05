@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { AMAZON_STORES, AMAZON_STORE_GROUPS } from '@/config/amazon'
+import { AMAZON_STORES, AMAZON_STORE_GROUPS, resolvePreferredRegion } from '@/config/amazon'
 import { localeOptions } from '@/locales'
 import { useAuthStore, useUserStore } from '@/stores'
 import { computed, ref, watch } from 'vue'
@@ -49,7 +49,8 @@ const { locale, t } = useI18n({ useScope: 'global' })
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
-const preferredAmazonRegion = ref(userStore.me?.preferred_amazon_region || 'US')
+// Same guess the book links use, so saving the language never silently pins the US store
+const preferredAmazonRegion = ref(resolvePreferredRegion(userStore.me?.preferred_amazon_region))
 
 watch(
   () => userStore.me?.preferred_amazon_region,

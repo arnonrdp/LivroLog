@@ -34,6 +34,7 @@ class UserBook extends Pivot
         'read_at',
         'is_private',
         'reading_status',
+        'position',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class UserBook extends Pivot
         'read_at' => 'date',
         'is_private' => 'boolean',
         'reading_status' => 'string',
+        'position' => 'integer',
     ];
 
     /**

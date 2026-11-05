@@ -220,11 +220,15 @@ export function getAmazonRegionCode(locale: string): string {
 /**
  * Decide which Amazon store to open for the current viewer.
  *
- * The store saved in Settings always wins. Only when none is set do we guess from the
- * browser language, and BR is the last resort because it is the one marketplace whose
- * affiliate tag belongs to us.
+ * A Brazilian book (Portuguese, or an ISBN in Brazil's 85/65 ranges) only exists on
+ * amazon.com.br, so it goes there whatever the viewer's store is. Otherwise the store saved
+ * in Settings wins, then the browser language, and BR is the last resort because it is the
+ * one marketplace whose affiliate tag belongs to us.
  */
-export function resolvePreferredRegion(userRegion?: string | null): string {
+export function resolvePreferredRegion(userRegion?: string | null, book?: { language?: string | null; isbn?: string | null } | null): string {
+  const isbn = book?.isbn?.replace(/[^0-9X]/gi, '') ?? ''
+  if (book?.language?.toLowerCase().startsWith('pt') || /^97(885|865)/.test(isbn)) return 'BR'
+
   if (userRegion && userRegion in AMAZON_REGIONS) return userRegion
 
   const browserLocale = typeof navigator === 'undefined' ? '' : navigator.language

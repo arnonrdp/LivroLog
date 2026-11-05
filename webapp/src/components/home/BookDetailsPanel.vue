@@ -204,7 +204,8 @@
               :label="$t('read-date')"
               outlined
               type="date"
-              @blur="emitPivot({ read_at: form.read_at })"
+              @blur="flushReadAt"
+              @update:model-value="queueReadAt"
             />
             <div class="row items-center">
               <q-checkbox
@@ -339,6 +340,7 @@ watch(
 
 watch(showPanel, (value) => {
   if (!value) {
+    flushReadAt()
     showFullDescription.value = false
     tab.value = 'about'
   }
@@ -346,6 +348,23 @@ watch(showPanel, (value) => {
 
 function emitPivot(updates: { is_private?: boolean; read_at?: string; reading_status?: ReadingStatus }) {
   emit('update-pivot', updates)
+}
+
+// Saving only on blur lost the date when the panel was closed with Esc (no blur fires).
+// Debounced because the native date input emits a valid date per typed year digit
+// (0002, 0020, 0202, 2027) and those PATCHes could land out of order.
+let readAtTimer: ReturnType<typeof setTimeout> | null = null
+
+function queueReadAt() {
+  if (readAtTimer) clearTimeout(readAtTimer)
+  readAtTimer = setTimeout(flushReadAt, 800)
+}
+
+function flushReadAt() {
+  if (!readAtTimer) return
+  clearTimeout(readAtTimer)
+  readAtTimer = null
+  emitPivot({ read_at: form.read_at })
 }
 
 function onCoverClick() {

@@ -52,6 +52,7 @@ export interface Book {
     book_id: string
     created_at?: string
     is_private?: boolean
+    position?: number | null // custom shelf order, set by dragging
     rating?: number
     read_at?: string
     read_in?: string

@@ -273,7 +273,7 @@ interface AmazonLink {
 const amazonLinks = computed((): AmazonLink[] => {
   if (!book.value) return []
 
-  const preferredRegion = resolvePreferredRegion(userStore.me?.preferred_amazon_region)
+  const preferredRegion = resolvePreferredRegion(userStore.me?.preferred_amazon_region, book.value)
   let links: AmazonLink[] = []
 
   // Priority 1: Use amazon_links from API if available (books in database)

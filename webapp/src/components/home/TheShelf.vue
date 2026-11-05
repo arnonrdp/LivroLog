@@ -4,7 +4,19 @@
 
   <!-- Regular shelf display -->
   <section v-else class="flex justify-around" :style="shelfStyle">
-    <figure v-for="book in books" v-show="onFilter(book.title)" :key="book.id" data-testid="library-book">
+    <figure
+      v-for="book in books"
+      v-show="onFilter(book.title)"
+      :key="book.id"
+      :class="{ dragging: draggedId === book.id, 'drop-target': dropTargetId === book.id }"
+      data-testid="library-book"
+      :draggable="reorderable"
+      @dragend="draggedId = dropTargetId = null"
+      @dragenter.prevent="reorderable && draggedId && (dropTargetId = book.id)"
+      @dragover.prevent
+      @dragstart="onDragStart($event, book.id)"
+      @drop.prevent="onDrop(book.id)"
+    >
       <!-- Private book indicator removed - privacy info available in BookDialog -->
 
       <!-- Make the book image clickable only for authenticated users on other shelves -->
@@ -51,10 +63,12 @@ const props = defineProps<{
   books?: User['books']
   userIdentifier?: string // if provided, means viewing another user's shelf
   showTagDots?: boolean // Show tag color dots on book covers
+  reorderable?: boolean // Owner can drag books to set a custom order
 }>()
 
 const emit = defineEmits<{
   'import-completed': []
+  reorder: [fromId: string, toId: string]
 }>()
 
 const shelfStyle = computed(() => shelfTextureStyle(props.shelfTexture || 'wood'))
@@ -67,6 +81,8 @@ const filter = ref('')
 const showBookDialog = ref(false)
 const showImportDialog = ref(false)
 const selectedBookId = ref<string | undefined>()
+const draggedId = ref<string | null>(null)
+const dropTargetId = ref<string | null>(null)
 
 const canOpenBookDialog = computed(() => {
   // Books are always clickable - both on own shelf and public profiles
@@ -90,6 +106,20 @@ function openBookDialog(book: Book) {
   // Otherwise, open the dialog
   selectedBookId.value = book.id
   showBookDialog.value = true
+}
+
+function onDragStart(event: DragEvent, bookId: string) {
+  if (!props.reorderable) return
+  draggedId.value = bookId
+  // The cover is a link, so the browser would otherwise drag its URL around
+  event.dataTransfer?.setData('text/plain', bookId)
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+
+function onDrop(targetId: string) {
+  const fromId = draggedId.value
+  draggedId.value = dropTargetId.value = null
+  if (props.reorderable && fromId && fromId !== targetId) emit('reorder', fromId, targetId)
 }
 
 function handleImport() {
@@ -125,6 +155,17 @@ section
   align-content: flex-start
 
 section figure
+  &[draggable="true"]
+    cursor: grab
+
+  &.dragging
+    opacity: 0.4
+
+  &.drop-target
+    outline: 2px dashed rgba(255, 255, 255, 0.8)
+    outline-offset: 2px
+    border-radius: 4px
+
   align-items: flex-end
   display: flex
   height: 146px

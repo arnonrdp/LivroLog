@@ -15,6 +15,7 @@
         v-if="activeTab === 'shelf'"
         v-model="filter"
         :asc-desc="ascDesc"
+        custom-sort
         :show-no-tag="showNoTag"
         :sort-key="sortKey"
         :visible-tags="visibleTags"
@@ -28,9 +29,11 @@
       <q-tab-panel class="q-pa-none" name="shelf">
         <TheShelf
           :books="filteredBooks"
+          reorderable
           :shelf-texture="userStore.me.shelf_texture"
           :show-tag-dots="sortKey === 'tags'"
           @import-completed="onImportCompleted"
+          @reorder="onReorder"
         />
       </q-tab-panel>
 
@@ -52,16 +55,20 @@ import FollowRequestsIndicator from '@/components/social/FollowRequestsIndicator
 import type { Tag } from '@/models'
 import { useTagStore, useUserBookStore, useUserStore } from '@/stores'
 import { sortBooks } from '@/utils'
-import { computed, onMounted, ref } from 'vue'
+import { LocalStorage } from 'quasar'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const userStore = useUserStore()
 const userBookStore = useUserBookStore()
 const tagStore = useTagStore()
 
+// The chosen sort survives reloads; the custom order itself lives in the API (pivot.position)
+const savedSort = LocalStorage.getItem<{ key: string; dir: string }>('shelfSort')
+
 const activeTab = ref('shelf')
-const ascDesc = ref('desc')
+const ascDesc = ref(savedSort?.dir || 'desc')
 const filter = ref('')
-const sortKey = ref<string | number>('readIn')
+const sortKey = ref<string | number>(savedSort?.key || 'readIn')
 const showShareDialog = ref(false)
 const visibleTags = ref<string[] | null>(null) // null = show all, [] = show none tagged
 const showNoTag = ref(true)
@@ -117,18 +124,37 @@ const filteredBooks = computed(() => {
   return sortBooks(books, sortKey.value, ascDesc.value)
 })
 
+watch([sortKey, ascDesc], ([key, dir]) => LocalStorage.set('shelfSort', { key, dir }))
+
 onMounted(() => {
   userBookStore.getUserBooks()
   tagStore.getTags()
 })
 
 function onSort(label: string | number) {
-  if (sortKey.value === label) {
+  // Custom has no direction: it is exactly the order the books were dragged into
+  if (label === 'custom') {
+    sortKey.value = label
+    ascDesc.value = 'asc'
+  } else if (sortKey.value === label) {
     ascDesc.value = ascDesc.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortKey.value = label
     ascDesc.value = 'asc'
   }
+}
+
+// Dragging always starts from what is on screen, so a drag after sorting by date
+// replaces the previous custom order with the date order plus this move.
+function onReorder(fromId: string, toId: string) {
+  const ids = sortBooks(userStore.me.books || [], sortKey.value, ascDesc.value).map((book) => book.id)
+  const to = ids.indexOf(toId)
+  ids.splice(ids.indexOf(fromId), 1)
+  ids.splice(to, 0, fromId)
+
+  sortKey.value = 'custom'
+  ascDesc.value = 'asc'
+  userBookStore.putUserBooksOrder(ids)
 }
 
 function onImportCompleted() {

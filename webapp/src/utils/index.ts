@@ -7,6 +7,8 @@ const sortAccessors: Record<string, Accessor> = {
   addedIn: (b) => String(b.pivot?.added_at || b.created_at || ''),
   added_at: (b) => String(b.pivot?.added_at || b.created_at || ''),
   created_at: (b) => String(b.created_at || ''),
+  // Zero-padded so the string compare below orders positions numerically
+  custom: (b) => (b.pivot?.position == null ? '' : String(b.pivot.position).padStart(9, '0')),
   readIn: (b) => String(b.pivot?.read_at || ''),
   read_at: (b) => String(b.pivot?.read_at || ''),
   tags: (b) => {
@@ -30,6 +32,9 @@ export function sortBooks(books: Book[], sortKey: string | number, ascDesc: stri
     const aVal = getValue!(a)
     const bVal = getValue!(b)
     if (aVal === bVal) return 0
+    // Books without the value (e.g. unread ones when sorting by read date) stay at the end either way
+    if (!aVal) return 1
+    if (!bVal) return -1
     return aVal > bVal === (ascDesc === 'asc') ? 1 : -1
   })
 }

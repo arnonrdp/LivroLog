@@ -32,6 +32,7 @@ class UserBookSimplifiedResource extends JsonResource
                 'read_at' => $this->pivot->read_at ?? null,
                 'reading_status' => $this->pivot->reading_status ?? null,
                 'is_private' => $this->pivot->is_private ?? 0,
+                'position' => $this->pivot->position ?? null,
             ],
         ];
     }

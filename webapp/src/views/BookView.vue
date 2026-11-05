@@ -411,7 +411,7 @@ const primaryAmazonStore = computed(() => {
   const links = amazonLinks.value
   if (!links.length) return undefined
 
-  const region = resolvePreferredRegion(userStore.me?.preferred_amazon_region)
+  const region = resolvePreferredRegion(userStore.me?.preferred_amazon_region, book.value)
 
   return links.find((link) => link.region === region) ?? links[0]
 })

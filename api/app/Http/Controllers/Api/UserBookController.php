@@ -49,7 +49,7 @@ class UserBookController extends Controller
         }
 
         $books = $user->books()
-            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status', 'position')
             ->get();
 
         // Load tags for each book
@@ -114,7 +114,7 @@ class UserBookController extends Controller
 
         // Get book with pivot data from user's library
         $userBook = $user->books()
-            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status', 'position')
             ->where('books.id', $book->id)
             ->with(['reviews' => function ($query) {
                 $query->with('user:id,display_name,username,avatar');
@@ -369,6 +369,53 @@ class UserBookController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="/user/books/order",
+     *     operationId="putUserBooksOrder",
+     *     tags={"User Library"},
+     *     summary="Save the custom shelf order",
+     *     description="Stores the order the user dragged their books into. Books left out lose their position.",
+     *     security={{"bearerAuth": {}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="book_ids", type="array", @OA\Items(type="string", example="B-1ABC-2DEF"))
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="Order saved"),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function putOrder(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'book_ids' => 'present|array',
+            'book_ids.*' => 'string|distinct',
+        ]);
+
+        $user = $request->user();
+
+        // ponytail: one UPDATE per book; fine for shelves of a few hundred, switch to a CASE update if that grows
+        DB::transaction(function () use ($user, $validated) {
+            DB::table('users_books')->where('user_id', $user->id)->update(['position' => null]);
+
+            foreach ($validated['book_ids'] as $index => $bookId) {
+                DB::table('users_books')
+                    ->where('user_id', $user->id)
+                    ->where('book_id', $bookId)
+                    ->update(['position' => $index]);
+            }
+        });
+
+        return response()->json(['message' => 'Order saved']);
+    }
+
+    /**
      * @OA\Delete(
      *     path="/user/books/{book}",
      *     operationId="bRemoveBookFromLibrary",
@@ -593,7 +640,7 @@ class UserBookController extends Controller
 
             // Add pivot data
             $userBookData = $user->books()
-                ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+                ->withPivot('added_at', 'read_at', 'is_private', 'reading_status', 'position')
                 ->where('books.id', $newBookId)
                 ->first();
 
@@ -902,7 +949,7 @@ class UserBookController extends Controller
 
         // Get book with pivot data from target user's library
         $userBook = $targetUser->books()
-            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status')
+            ->withPivot('added_at', 'read_at', 'is_private', 'reading_status', 'position')
             ->where('books.id', $book->id)
             ->with(['reviews' => function ($query) {
                 $query->with('user:id,display_name,username,avatar');
